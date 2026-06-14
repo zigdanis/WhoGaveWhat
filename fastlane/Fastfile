@@ -1,0 +1,56 @@
+default_platform :ios
+fastlane_require 'dotenv'
+
+platform :ios do
+
+  # Read-only: confirm the App Store Connect record exists before uploading.
+  lane :check do
+    api_key = app_store_connect_api_key(
+      key_id: ENV['ASC_KEY_ID'],
+      issuer_id: ENV['ASC_ISSUER_ID'],
+      key_filepath: ENV['ASC_KEY_PATH']
+    )
+    build = latest_testflight_build_number(
+      api_key: api_key,
+      app_identifier: "pro.ziganshin.Gifts",
+      initial_build_number: 0
+    )
+    UI.message("ASC app record found. Latest TestFlight build: #{build}")
+  end
+
+  # Build the app and upload it to TestFlight.
+  lane :beta do
+    api_key = app_store_connect_api_key(
+      key_id: ENV['ASC_KEY_ID'],
+      issuer_id: ENV['ASC_ISSUER_ID'],
+      key_filepath: ENV['ASC_KEY_PATH']
+    )
+
+    # Fetch the App Store distribution certificate + provisioning profile.
+    match(
+      type: "appstore",
+      readonly: false,
+      api_key: api_key,
+      app_identifier: ["pro.ziganshin.Gifts"]
+    )
+
+    # Pick the next build number above whatever TestFlight already has.
+    latest = latest_testflight_build_number(
+      api_key: api_key,
+      app_identifier: "pro.ziganshin.Gifts",
+      initial_build_number: 0
+    )
+    increment_build_number(build_number: latest + 1)
+
+    gym(
+      scheme: "WhoGave",
+      export_method: "app-store"
+    )
+
+    pilot(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true,
+      beta_app_feedback_email: "zigdanis@gmail.com"
+    )
+  end
+end

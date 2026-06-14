@@ -24,3 +24,16 @@ Package.resolved
 *.ipa
 *.dSYM.zip
 *.dSYM
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Secrets — never commit
+.env
+.env.*
+fastlane/.env
+fastlane/.env.*
+*.p8

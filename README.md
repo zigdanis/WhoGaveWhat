@@ -1,4 +1,4 @@
-# Gifts
+# Who Gave
 
 A warm little ledger for every gift your family gives and gets. Native **iOS** app
 built with **Swift + SwiftUI**, backed by **Core Data**, implementing a design from
@@ -7,9 +7,9 @@ Claude Design.
 ## Run
 
 ```bash
-open Gifts.xcodeproj      # then ⌘R
+open WhoGave.xcodeproj      # then ⌘R
 # or build from the command line for a simulator:
-xcodebuild -project Gifts.xcodeproj -scheme Gifts \
+xcodebuild -project WhoGave.xcodeproj -scheme WhoGave \
   -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 ```
 
@@ -32,7 +32,7 @@ xcodebuild -project Gifts.xcodeproj -scheme Gifts \
 
 ## Persistence
 
-Storage is **Core Data** (`Gifts.xcdatamodeld`):
+Storage is **Core Data** (`WhoGave.xcdatamodeld`):
 
 - `CDPerson` — family members (`isFamily == true`) and external people (`isFamily == false`).
 - `CDGift` — a tracked gift, with `person` (external) and `member` (family) relationships.
@@ -45,13 +45,13 @@ SwiftUI layer consumes lightweight value types (`Gift`, `Member`, `Person`).
 
 | Path | Role |
 |------|------|
-| `Gifts/GiftsApp.swift` | App entry — builds the Core Data stack and `AppStore` |
-| `Gifts/Support/Theme.swift` | Color tokens, rounded font, ruble formatting |
-| `Gifts/Model/Models.swift` | `Gift`, `Member`, `Person`, `Flow`, `Suggestion` value types |
-| `Gifts/Model/AppStore.swift` | Observable store over Core Data — derived stats, actions |
-| `Gifts/Persistence/` | Core Data stack, managed-object subclasses, seeding |
-| `Gifts/Gifts.xcdatamodeld` | Core Data model |
-| `Gifts/Views/` | One file per screen + shared `Components` / `FlowLayout` |
+| `WhoGave/WhoGaveApp.swift` | App entry — builds the Core Data stack and `AppStore` |
+| `WhoGave/Support/Theme.swift` | Color tokens, rounded font, ruble formatting |
+| `WhoGave/Model/Models.swift` | `Gift`, `Member`, `Person`, `Flow`, `Suggestion` value types |
+| `WhoGave/Model/AppStore.swift` | Observable store over Core Data — derived stats, actions |
+| `WhoGave/Persistence/` | Core Data stack, managed-object subclasses, seeding |
+| `WhoGave/WhoGave.xcdatamodeld` | Core Data model |
+| `WhoGave/Views/` | One file per screen + shared `Components` / `FlowLayout` |
 
 ### Testing entry points
 Launch env vars jump straight to a state (used for verification / previews):
