@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		1A0000000000000000000F00 /* GiftTracker */ = {
+		1A0000000000000000000F00 /* Gifts */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = GiftTracker;
+			path = Gifts;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -25,9 +25,9 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		1A0000000000000000000400 /* GiftTracker */ = {
+		1A0000000000000000000400 /* Gifts */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1A0000000000000000000700 /* Build configuration list for PBXNativeTarget "GiftTracker" */;
+			buildConfigurationList = 1A0000000000000000000700 /* Build configuration list for PBXNativeTarget "Gifts" */;
 			buildPhases = (
 				1A0000000000000000000C00 /* Sources */,
 				1A0000000000000000000D00 /* Frameworks */,
@@ -38,11 +38,11 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				1A0000000000000000000F00 /* GiftTracker */,
+				1A0000000000000000000F00 /* Gifts */,
 			);
-			name = GiftTracker;
-			productName = GiftTracker;
-			productReference = 1A0000000000000000000500 /* GiftTracker.app */;
+			name = Gifts;
+			productName = Gifts;
+			productReference = 1A0000000000000000000500 /* Gifts.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -60,7 +60,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 1A0000000000000000000600 /* Build configuration list for PBXProject "GiftTracker" */;
+			buildConfigurationList = 1A0000000000000000000600 /* Build configuration list for PBXProject "Gifts" */;
 			compatibilityVersion = "Xcode 15.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -73,7 +73,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1A0000000000000000000400 /* GiftTracker */,
+				1A0000000000000000000400 /* Gifts */,
 			);
 		};
 /* End PBXProject section */
@@ -102,7 +102,7 @@
 		1A0000000000000000000200 = {
 			isa = PBXGroup;
 			children = (
-				1A0000000000000000000F00 /* GiftTracker */,
+				1A0000000000000000000F00 /* Gifts */,
 				1A0000000000000000000300 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -110,7 +110,7 @@
 		1A0000000000000000000300 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1A0000000000000000000500 /* GiftTracker.app */,
+				1A0000000000000000000500 /* Gifts.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -118,11 +118,11 @@
 /* End PBXGroup section */
 
 /* Begin PBXFileReference section */
-		1A0000000000000000000500 /* GiftTracker.app */ = {
+		1A0000000000000000000500 /* Gifts.app */ = {
 			isa = PBXFileReference;
 			explicitFileType = wrapper.application;
 			includeInIndex = 0;
-			path = GiftTracker.app;
+			path = Gifts.app;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXFileReference section */
@@ -183,14 +183,14 @@
 				DEVELOPMENT_TEAM = XMSU8WJG5R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Gift Tracker";
+				INFOPLIST_KEY_CFBundleDisplayName = "Gifts";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.zigdanis.gift-tracker";
+				PRODUCT_BUNDLE_IDENTIFIER = pro.ziganshin.Gifts;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -208,14 +208,14 @@
 				DEVELOPMENT_TEAM = XMSU8WJG5R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Gift Tracker";
+				INFOPLIST_KEY_CFBundleDisplayName = "Gifts";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.zigdanis.gift-tracker";
+				PRODUCT_BUNDLE_IDENTIFIER = pro.ziganshin.Gifts;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -226,7 +226,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1A0000000000000000000600 /* Build configuration list for PBXProject "GiftTracker" */ = {
+		1A0000000000000000000600 /* Build configuration list for PBXProject "Gifts" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1A0000000000000000000800 /* Debug */,
@@ -235,7 +235,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1A0000000000000000000700 /* Build configuration list for PBXNativeTarget "GiftTracker" */ = {
+		1A0000000000000000000700 /* Build configuration list for PBXNativeTarget "Gifts" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1A0000000000000000000A00 /* Debug */,

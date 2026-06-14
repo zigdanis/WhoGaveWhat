@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Gift Tracker design tokens — ported from the Claude Design prototype.
+/// Gifts design tokens — ported from the Claude Design prototype.
 /// Warm cream paper, terracotta (given) + sage (received), gold accents,
 /// friendly rounded type (Nunito → system rounded fallback).
 /// `KS` = the app's style namespace (kept short for readability at call sites).

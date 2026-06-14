@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct GiftTrackerApp: App {
+struct GiftsApp: App {
     private let persistence = PersistenceController.shared
     @StateObject private var store: AppStore
 

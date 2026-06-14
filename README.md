@@ -1,4 +1,4 @@
-# Gift Tracker
+# Gifts
 
 A warm little ledger for every gift your family gives and gets. Native **iOS** app
 built with **Swift + SwiftUI**, backed by **Core Data**, implementing a design from
@@ -7,15 +7,15 @@ Claude Design.
 ## Run
 
 ```bash
-open GiftTracker.xcodeproj      # then ⌘R
+open Gifts.xcodeproj      # then ⌘R
 # or build from the command line for a simulator:
-xcodebuild -project GiftTracker.xcodeproj -scheme GiftTracker \
+xcodebuild -project Gifts.xcodeproj -scheme Gifts \
   -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 ```
 
 - **Minimum iOS:** 18.0
 - **Dependencies:** none yet (added via **Swift Package Manager** if/when needed)
-- **Bundle id:** `com.zigdanis.gift-tracker`
+- **Bundle id:** `pro.ziganshin.Gifts`
 
 ## What's implemented
 
@@ -32,7 +32,7 @@ xcodebuild -project GiftTracker.xcodeproj -scheme GiftTracker \
 
 ## Persistence
 
-Storage is **Core Data** (`GiftTracker.xcdatamodeld`):
+Storage is **Core Data** (`Gifts.xcdatamodeld`):
 
 - `CDPerson` — family members (`isFamily == true`) and external people (`isFamily == false`).
 - `CDGift` — a tracked gift, with `person` (external) and `member` (family) relationships.
@@ -45,18 +45,18 @@ SwiftUI layer consumes lightweight value types (`Gift`, `Member`, `Person`).
 
 | Path | Role |
 |------|------|
-| `GiftTracker/GiftTrackerApp.swift` | App entry — builds the Core Data stack and `AppStore` |
-| `GiftTracker/Support/Theme.swift` | Color tokens, rounded font, ruble formatting |
-| `GiftTracker/Model/Models.swift` | `Gift`, `Member`, `Person`, `Flow`, `Suggestion` value types |
-| `GiftTracker/Model/AppStore.swift` | Observable store over Core Data — derived stats, actions |
-| `GiftTracker/Persistence/` | Core Data stack, managed-object subclasses, seeding |
-| `GiftTracker/GiftTracker.xcdatamodeld` | Core Data model |
-| `GiftTracker/Views/` | One file per screen + shared `Components` / `FlowLayout` |
+| `Gifts/GiftsApp.swift` | App entry — builds the Core Data stack and `AppStore` |
+| `Gifts/Support/Theme.swift` | Color tokens, rounded font, ruble formatting |
+| `Gifts/Model/Models.swift` | `Gift`, `Member`, `Person`, `Flow`, `Suggestion` value types |
+| `Gifts/Model/AppStore.swift` | Observable store over Core Data — derived stats, actions |
+| `Gifts/Persistence/` | Core Data stack, managed-object subclasses, seeding |
+| `Gifts/Gifts.xcdatamodeld` | Core Data model |
+| `Gifts/Views/` | One file per screen + shared `Components` / `FlowLayout` |
 
 ### Testing entry points
 Launch env vars jump straight to a state (used for verification / previews):
 `KS_START=app|signin`, `KS_TAB=home|people|insights`, `KS_SHEET=1`, `KS_DETAIL=<id>`.
 
 ```bash
-SIMCTL_CHILD_KS_START=app SIMCTL_CHILD_KS_TAB=insights xcrun simctl launch booted com.zigdanis.gift-tracker
+SIMCTL_CHILD_KS_START=app SIMCTL_CHILD_KS_TAB=insights xcrun simctl launch booted pro.ziganshin.Gifts
 ```
