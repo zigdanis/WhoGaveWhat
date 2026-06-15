@@ -26,35 +26,20 @@ jobs:
           xcodebuild -version
           swift --version
 
-      - name: Pick an iOS Simulator
-        id: sim
-        run: |
-          # Ask xcodebuild itself which simulators are *eligible* for the active
-          # toolchain. `simctl list ... available` is broader than this — it
-          # surfaces shared CoreSimulator devices the selected Xcode can't run
-          # tests on, which xcodebuild then rejects ("Unable to find a
-          # destination matching id=..."). Read only the "Available destinations"
-          # block and take the first arm64 iOS Simulator.
-          DEST_ID=$(xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
-                      -showdestinations 2>/dev/null \
-            | awk '/Ineligible destinations/{exit} {print}' \
-            | grep 'platform:iOS Simulator' | grep 'name:iPhone' \
-            | grep -oE 'id:[0-9A-Fa-f-]{36}' | head -1 | cut -d: -f2)
-          test -n "$DEST_ID" || { echo "No eligible iOS Simulator destination"; exit 1; }
-          echo "Using destination $DEST_ID"
-          echo "udid=$DEST_ID" >> "$GITHUB_OUTPUT"
-
       - name: Build & Test
-        env:
-          SIM_UDID: ${{ steps.sim.outputs.udid }}
         run: |
           set -o pipefail
           FORMATTER=cat
           command -v xcbeautify >/dev/null 2>&1 && FORMATTER=xcbeautify
+          # iPhone 17 is the default device on the Xcode 26 runner image;
+          # OS=latest pins the newest installed runtime so an ambiguous match
+          # (several iOS versions of the same device) can't fail resolution.
+          # Letting xcodebuild resolve name+OS guarantees an *eligible*
+          # destination — unlike a raw UDID from `simctl list ... available`.
           xcodebuild test \
             -project WhoGaveWhat.xcodeproj \
             -scheme WhoGaveWhat \
-            -destination "id=$SIM_UDID" \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
             -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO \
             | "$FORMATTER"
