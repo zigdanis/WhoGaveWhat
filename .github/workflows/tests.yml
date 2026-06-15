@@ -29,18 +29,20 @@ jobs:
       - name: Pick an iOS Simulator
         id: sim
         run: |
-          # Grab the first available iOS simulator the runner offers, whatever
-          # OS/device the current Xcode ships — avoids hardcoding a device that
-          # may vanish when the image updates.
-          UDID=$(xcrun simctl list devices available --json \
-            | jq -r '[.devices | to_entries[]
-                      | select(.key | test("iOS"))
-                      | .value[] | select(.isAvailable)
-                      | select(.name | test("iPhone"))
-                      | .udid] | .[0] // empty')
-          test -n "$UDID" || { echo "No available iPhone simulator on runner"; exit 1; }
-          echo "Using simulator $UDID"
-          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          # Ask xcodebuild itself which simulators are *eligible* for the active
+          # toolchain. `simctl list ... available` is broader than this — it
+          # surfaces shared CoreSimulator devices the selected Xcode can't run
+          # tests on, which xcodebuild then rejects ("Unable to find a
+          # destination matching id=..."). Read only the "Available destinations"
+          # block and take the first arm64 iOS Simulator.
+          DEST_ID=$(xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
+                      -showdestinations 2>/dev/null \
+            | awk '/Ineligible destinations/{exit} {print}' \
+            | grep 'platform:iOS Simulator' | grep 'name:iPhone' \
+            | grep -oE 'id:[0-9A-Fa-f-]{36}' | head -1 | cut -d: -f2)
+          test -n "$DEST_ID" || { echo "No eligible iOS Simulator destination"; exit 1; }
+          echo "Using destination $DEST_ID"
+          echo "udid=$DEST_ID" >> "$GITHUB_OUTPUT"
 
       - name: Build & Test
         env:
