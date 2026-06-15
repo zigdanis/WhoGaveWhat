@@ -49,7 +49,7 @@ platform :ios do
     run_tests(
       project: "WhoGaveWhat.xcodeproj",
       scheme: "WhoGaveWhat",
-      devices: ["iPhone 16"]
+      devices: ["iPhone 17"]   # iOS 26 simulator
     )
   end
 

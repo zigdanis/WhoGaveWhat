@@ -10,10 +10,10 @@ Claude Design.
 open WhoGaveWhat.xcodeproj      # then ⌘R
 # or build from the command line for a simulator:
 xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
-  -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+  -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 17' build
 ```
 
-- **Minimum iOS:** 18.0
+- **Minimum iOS:** 26.0 — built against the iOS 26 SDK, native **Liquid Glass** throughout (no back-deployment).
 - **Dependencies:** none yet (added via **Swift Package Manager** if/when needed)
 - **Bundle id:** `pro.ziganshin.WhoGaveWhat`
 
@@ -72,7 +72,7 @@ and `saveGift` write-through — against an isolated in-memory Core Data stack.
 
 ```bash
 xcodebuild test -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
-  -destination 'platform=iOS Simulator,name=iPhone 16' CODE_SIGNING_ALLOWED=NO
+  -destination 'platform=iOS Simulator,name=iPhone 17' CODE_SIGNING_ALLOWED=NO
 # or: bundle exec fastlane tests
 ```
 

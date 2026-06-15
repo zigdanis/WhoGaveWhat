@@ -1,48 +1,12 @@
 import SwiftUI
 
+/// Native sheet for adding a gift. Presentation, drag-to-dismiss, and the glass
+/// toolbar come from the system; the form keeps the app's brand styling.
 struct AddGiftSheet: View {
     @EnvironmentObject var store: AppStore
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Dim backdrop
-            Color(hex: 0x10141C, alpha: 0.42)
-                .ignoresSafeArea()
-                .transition(.opacity)
-                .onTapGesture { store.closeSheet() }
-
-            sheet
-                .transition(.move(edge: .bottom))
-        }
-    }
-
-    private var fm: FlowMeta { store.flowMeta(store.add.flow) }
-    private var sug: Suggestion { store.suggest(store.add.name) }
-    private var nameTrimmed: String { store.add.name.trimmingCharacters(in: .whitespaces) }
-    private var can: Bool { store.canSave() }
-
-    private var sheet: some View {
-        VStack(spacing: 0) {
-            // Grabber
-            Capsule().fill(Color(hex: 0xD7DDE5)).frame(width: 40, height: 5)
-                .padding(.top, 10)
-
-            // Header
-            HStack {
-                Button { store.closeSheet() } label: {
-                    Text("Cancel").font(KS.font(16, .bold)).foregroundColor(KS.muted)
-                }
-                Spacer()
-                Text("Add a gift").font(KS.font(18, .black))
-                Spacer()
-                Button { store.saveGift() } label: {
-                    Text("Save").font(KS.font(16, .black))
-                        .foregroundColor(can ? fm.main : Color(hex: 0xB4BCC7))
-                }
-                .disabled(!can)
-            }
-            .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 12)
-
+        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     flowSegment
@@ -71,18 +35,33 @@ struct AddGiftSheet: View {
 
                     saveButton
                 }
-                .padding(.horizontal, 20).padding(.top, 4).padding(.bottom, 30)
+                .padding(.horizontal, 20).padding(.top, 6).padding(.bottom, 28)
             }
             .scrollIndicators(.hidden)
+            .background(KS.bg)
+            .navigationTitle("Add a gift")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { store.closeSheet() }
+                        .tint(KS.muted2)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { store.saveGift() }
+                        .tint(fm.main)
+                        .fontWeight(.bold)
+                        .disabled(!can)
+                }
+            }
         }
-        .background(
-            UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16, style: .continuous)
-                .fill(KS.bg)
-                .shadow(color: Color(hex: 0x10141C, alpha: 0.16), radius: 22, x: 0, y: -12)
-        )
-        .padding(.top, 36)
-        .ignoresSafeArea(edges: .bottom)
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
     }
+
+    private var fm: FlowMeta { store.flowMeta(store.add.flow) }
+    private var sug: Suggestion { store.suggest(store.add.name) }
+    private var nameTrimmed: String { store.add.name.trimmingCharacters(in: .whitespaces) }
+    private var can: Bool { store.canSave() }
 
     // MARK: Pieces
 

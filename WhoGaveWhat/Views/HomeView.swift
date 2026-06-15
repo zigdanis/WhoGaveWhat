@@ -59,7 +59,7 @@ struct HomeView: View {
                     Card {
                         VStack(spacing: 0) {
                             ForEach(Array(group.items.enumerated()), id: \.element.id) { idx, gift in
-                                Button { store.openDetail(gift.personId) } label: {
+                                NavigationLink(value: gift.personId) {
                                     GiftRow(gift: gift)
                                 }
                                 .buttonStyle(.plain)

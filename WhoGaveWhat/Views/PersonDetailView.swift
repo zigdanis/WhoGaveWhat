@@ -15,19 +15,8 @@ struct PersonDetailView: View {
         let given = gs.filter { $0.flow == .given }
         let bars = occasionBars(gs)
 
-        ZStack {
-            KS.bg.ignoresSafeArea()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    Button { store.closeDetail() } label: {
-                        HStack(spacing: 3) {
-                            Text("‹").font(KS.font(24, .heavy)).padding(.top, -2)
-                            Text("Back").font(KS.font(15, .heavy))
-                        }
-                        .foregroundColor(KS.give)
-                    }
-                    .padding(.bottom, 8)
-
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
                     // Header
                     VStack(spacing: 0) {
                         AvatarView(initials: store.initials(name), color: color, size: 76)
@@ -78,14 +67,15 @@ struct PersonDetailView: View {
                             }
                         }
                     }
-                }
-                .padding(.horizontal, 18)
-                .padding(.top, 54)
-                .padding(.bottom, 40)
             }
-            .scrollIndicators(.hidden)
-            .ignoresSafeArea(edges: .top)
+            .padding(.horizontal, 18)
+            .padding(.top, 8)
+            .padding(.bottom, 40)
         }
+        .scrollIndicators(.hidden)
+        .background(KS.bg)
+        .navigationTitle(name)
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func statCard(big: String, color: Color, label: String, bigSize: CGFloat) -> some View {

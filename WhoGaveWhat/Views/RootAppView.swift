@@ -1,107 +1,80 @@
 import SwiftUI
 
+/// Native iOS 26 shell: a Liquid Glass tab bar floating over three navigation
+/// stacks. Person detail is a native push; "Add a gift" is a native sheet.
 struct RootAppView: View {
     @EnvironmentObject var store: AppStore
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Scrollable content
-            ScrollView {
-                Group {
-                    switch store.tab {
-                    case .home:     HomeView()
-                    case .people:   PeopleView()
-                    case .insights: InsightsView()
-                    }
-                }
-                .id(store.tab)
-                .transition(.opacity)
-                .padding(.top, 54)
-                .padding(.bottom, 128)
+        TabView(selection: tabSelection) {
+            stack(.home, "Home", "house") {
+                ScreenScroll { HomeView() }
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar { addButton }
             }
-            .scrollIndicators(.hidden)
-            .ignoresSafeArea(edges: .top)
-
-            // FAB
-            if showFab {
-                Button { store.openSheet() } label: {
-                    HStack(spacing: 8) {
-                        Text("+").font(KS.font(26, .medium)).padding(.top, -2)
-                        Text("Add a gift").font(KS.font(16, .heavy))
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 22).padding(.vertical, 14)
-                    .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.give))
-                    .shadow(color: KS.give.opacity(0.4), radius: 15, x: 0, y: 14)
-                }
-                .padding(.bottom, 94)
-                .transition(.scale.combined(with: .opacity))
+            stack(.people, "People", "person.2") {
+                ScreenScroll { PeopleView() }
+                    .navigationTitle("People")
+                    .toolbar { addButton }
             }
-
-            // Tab bar
-            TabBar()
-        }
-        .animation(.easeInOut(duration: 0.2), value: store.tab)
-        .animation(.easeInOut(duration: 0.2), value: showFab)
-        .overlay {
-            // Person detail
-            if let id = store.detailId {
-                PersonDetailView(entityId: id)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
-                    .zIndex(30)
+            stack(.insights, "Insights", "chart.bar") {
+                ScreenScroll { InsightsView() }
+                    .navigationTitle("Insights")
             }
         }
-        .overlay {
-            // Add gift sheet
-            if store.sheetOpen {
-                AddGiftSheet()
-                    .zIndex(40)
-            }
+        .tint(KS.give)
+        .tabBarMinimizeBehavior(.onScrollDown)
+        .sheet(isPresented: sheetBinding) {
+            AddGiftSheet()
         }
     }
 
-    private var showFab: Bool {
-        (store.tab == .home || store.tab == .people) && store.detailId == nil && !store.sheetOpen
+    /// One tab: a navigation stack that pushes `PersonDetailView` for any entity id.
+    @ViewBuilder
+    private func stack<Content: View>(_ value: Tab, _ title: String, _ icon: String,
+                                      @ViewBuilder _ content: () -> Content) -> some View {
+        NavigationStack {
+            content()
+                .navigationDestination(for: String.self) { id in
+                    PersonDetailView(entityId: id)
+                }
+        }
+        .tabItem { Label(title, systemImage: icon) }
+        .tag(value)
+    }
+
+    @ToolbarContentBuilder
+    private var addButton: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            Button { store.openSheet() } label: {
+                Image(systemName: "plus").fontWeight(.semibold)
+            }
+            .tint(KS.give)
+            .accessibilityLabel("Add a gift")
+        }
+    }
+
+    private var tabSelection: Binding<Tab> {
+        Binding(get: { store.tab }, set: { store.setTab($0) })
+    }
+
+    private var sheetBinding: Binding<Bool> {
+        Binding(get: { store.sheetOpen }, set: { if !$0 { store.closeSheet() } })
     }
 }
 
-// MARK: - Bottom tab bar
-
-private struct TabBar: View {
-    @EnvironmentObject var store: AppStore
-
-    private let tabs: [(Tab, String, String)] = [
-        (.home, "house.fill", "Home"),
-        (.people, "person.2.fill", "People"),
-        (.insights, "chart.bar.fill", "Insights"),
-    ]
+/// Shared scroll container for a tab's root screen — content scrolls under the
+/// floating glass tab bar, which insets the bottom automatically.
+private struct ScreenScroll<Content: View>: View {
+    @ViewBuilder var content: Content
 
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(tabs, id: \.0) { tab, icon, label in
-                let sel = store.tab == tab
-                Button { store.setTab(tab) } label: {
-                    VStack(spacing: 3) {
-                        Image(systemName: icon)
-                            .font(.system(size: 23, weight: sel ? .semibold : .regular))
-                            .symbolRenderingMode(.monochrome)
-                            .environment(\.symbolVariants, sel ? .fill : .none)
-                        Text(label).font(KS.font(11, .heavy))
-                    }
-                    .foregroundColor(sel ? KS.give : KS.muted4)
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.plain)
-            }
+        ScrollView {
+            content
+                .padding(.top, 4)
+                .padding(.bottom, 24)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 10)
-        .padding(.bottom, 26)
-        .background(
-            KS.bg.opacity(0.86)
-                .background(.ultraThinMaterial)
-                .overlay(Rectangle().fill(KS.cardBorder).frame(height: 1), alignment: .top)
-        )
-        .ignoresSafeArea(edges: .bottom)
+        .scrollIndicators(.hidden)
+        .background(KS.bg)
     }
 }

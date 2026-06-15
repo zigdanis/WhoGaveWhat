@@ -10,7 +10,6 @@ struct InsightsView: View {
         let paid = store.gifts.filter { $0.paidByYou }
 
         VStack(alignment: .leading, spacing: 0) {
-            Text("Insights").font(KS.font(28, .black)).tracking(-0.6)
             Text("Your year of giving, at a glance")
                 .font(KS.font(15, .bold)).foregroundColor(KS.muted)
                 .padding(.top, 1).padding(.bottom, 18)
@@ -78,7 +77,7 @@ struct InsightsView: View {
                     let agg = topPeople()
                     let maxV = agg.first?.1 ?? 1
                     ForEach(Array(agg.enumerated()), id: \.element.0.id) { idx, item in
-                        Button { store.openDetail(item.0.id) } label: {
+                        NavigationLink(value: item.0.id) {
                             TopPersonRow(person: item.0, value: item.1, maxValue: maxV)
                         }
                         .buttonStyle(.plain)

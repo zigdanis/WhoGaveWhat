@@ -5,7 +5,6 @@ struct PeopleView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("People").font(KS.font(28, .black)).tracking(-0.6)
             Text("Everyone you give to and get from")
                 .font(KS.font(15, .bold)).foregroundColor(KS.muted)
                 .padding(.top, 1).padding(.bottom, 18)
@@ -24,7 +23,7 @@ struct PeopleView: View {
         Card {
             VStack(spacing: 0) {
                 ForEach(Array(entities.enumerated()), id: \.element.0) { idx, e in
-                    Button { store.openDetail(e.0) } label: {
+                    NavigationLink(value: e.0) {
                         PersonRow(entityId: e.0, name: e.1, color: e.2, isMember: e.3)
                     }
                     .buttonStyle(.plain)
