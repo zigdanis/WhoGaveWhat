@@ -1,6 +1,6 @@
 import CoreData
 
-/// Standard Core Data stack for Who Gave, plus first-run seeding so the
+/// Standard Core Data stack for Who Gave What, plus first-run seeding so the
 /// timeline isn't empty on a fresh install.
 struct PersistenceController {
     static let shared = PersistenceController()
@@ -15,7 +15,7 @@ struct PersistenceController {
     let container: NSPersistentContainer
 
     init(inMemory: Bool = false) {
-        container = NSPersistentContainer(name: "WhoGave")
+        container = NSPersistentContainer(name: "WhoGaveWhat")
         if inMemory {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
         }

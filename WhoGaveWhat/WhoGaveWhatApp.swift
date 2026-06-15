@@ -2,7 +2,7 @@ import SwiftUI
 import CoreText
 
 @main
-struct WhoGaveApp: App {
+struct WhoGaveWhatApp: App {
     private let persistence = PersistenceController.shared
     @StateObject private var store: AppStore
 

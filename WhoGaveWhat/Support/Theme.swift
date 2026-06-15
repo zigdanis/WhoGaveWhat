@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Who Gave design tokens — ported from the Claude Design "Gift Tracker" prototype.
+/// Who Gave What design tokens — ported from the Claude Design "Gift Tracker" prototype.
 /// Cool ink + emerald palette on white paper, hairline-bordered cards, 8px corners,
 /// heavy Archivo type (bundled). `KS` = the app's style namespace.
 enum KS {

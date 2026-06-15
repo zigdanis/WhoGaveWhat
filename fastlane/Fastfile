@@ -12,7 +12,7 @@ platform :ios do
     )
     build = latest_testflight_build_number(
       api_key: api_key,
-      app_identifier: "pro.ziganshin.Gifts",
+      app_identifier: "pro.ziganshin.WhoGaveWhat",
       initial_build_number: 0
     )
     UI.message("ASC app record found. Latest TestFlight build: #{build}")
@@ -32,7 +32,7 @@ platform :ios do
       filepath: ENV['ASC_KEY_PATH']
     )
     Spaceship::ConnectAPI.token = token
-    app = Spaceship::ConnectAPI::App.find("pro.ziganshin.Gifts")
+    app = Spaceship::ConnectAPI::App.find("pro.ziganshin.WhoGaveWhat")
     UI.message("App: #{app.name} (#{app.id})")
     builds = app.get_builds(includes: "preReleaseVersion")
     if builds.empty?
@@ -57,19 +57,19 @@ platform :ios do
       type: "appstore",
       readonly: false,
       api_key: api_key,
-      app_identifier: ["pro.ziganshin.Gifts"]
+      app_identifier: ["pro.ziganshin.WhoGaveWhat"]
     )
 
     # Pick the next build number above whatever TestFlight already has.
     latest = latest_testflight_build_number(
       api_key: api_key,
-      app_identifier: "pro.ziganshin.Gifts",
+      app_identifier: "pro.ziganshin.WhoGaveWhat",
       initial_build_number: 0
     )
     increment_build_number(build_number: latest + 1)
 
     gym(
-      scheme: "WhoGave",
+      scheme: "WhoGaveWhat",
       export_method: "app-store"
     )
 

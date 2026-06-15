@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1A0000000000000000000400"
-               BuildableName = "WhoGave.app"
-               BlueprintName = "WhoGave"
-               ReferencedContainer = "container:WhoGave.xcodeproj">
+               BuildableName = "WhoGaveWhat.app"
+               BlueprintName = "WhoGaveWhat"
+               ReferencedContainer = "container:WhoGaveWhat.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -43,9 +43,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1A0000000000000000000400"
-            BuildableName = "WhoGave.app"
-            BlueprintName = "WhoGave"
-            ReferencedContainer = "container:WhoGave.xcodeproj">
+            BuildableName = "WhoGaveWhat.app"
+            BlueprintName = "WhoGaveWhat"
+            ReferencedContainer = "container:WhoGaveWhat.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -60,9 +60,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1A0000000000000000000400"
-            BuildableName = "WhoGave.app"
-            BlueprintName = "WhoGave"
-            ReferencedContainer = "container:WhoGave.xcodeproj">
+            BuildableName = "WhoGaveWhat.app"
+            BlueprintName = "WhoGaveWhat"
+            ReferencedContainer = "container:WhoGaveWhat.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

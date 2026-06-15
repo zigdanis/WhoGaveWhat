@@ -1,4 +1,4 @@
-app_identifier "pro.ziganshin.Gifts" # The bundle identifier of your app
+app_identifier "pro.ziganshin.WhoGaveWhat" # The bundle identifier of your app
 apple_id "zigdanis@gmail.com" # Your Apple email address
 team_id "XMSU8WJG5R"  # Developer Portal Team ID
 itc_team_id "1957890" # App Store Connect Team ID

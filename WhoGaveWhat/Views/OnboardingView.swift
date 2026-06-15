@@ -74,7 +74,7 @@ private struct OnbHero: View {
             .frame(width: 230, height: 200)
             .padding(.bottom, 38)
 
-            Text("Who Gave")
+            Text("Who Gave What")
                 .font(KS.font(36, .black))
                 .tracking(-0.6)
             Text("A warm little ledger for every gift your family gives and gets.")
@@ -165,7 +165,7 @@ private struct OnbLogged: View {
             Text("Logged in seconds")
                 .font(KS.font(27, .black)).tracking(-0.5)
                 .padding(.top, 36)
-            Text("Type what it was — Who Gave picks the icon and guesses the value. Adjust only if you want to.")
+            Text("Type what it was — Who Gave What picks the icon and guesses the value. Adjust only if you want to.")
                 .font(KS.font(16, .semibold))
                 .foregroundColor(KS.muted2)
                 .multilineTextAlignment(.center)

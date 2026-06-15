@@ -1,4 +1,4 @@
-# Who Gave
+# Who Gave What
 
 A warm little ledger for every gift your family gives and gets. Native **iOS** app
 built with **Swift + SwiftUI**, backed by **Core Data**, implementing a design from
@@ -7,15 +7,15 @@ Claude Design.
 ## Run
 
 ```bash
-open WhoGave.xcodeproj      # then ⌘R
+open WhoGaveWhat.xcodeproj      # then ⌘R
 # or build from the command line for a simulator:
-xcodebuild -project WhoGave.xcodeproj -scheme WhoGave \
+xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
   -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 ```
 
 - **Minimum iOS:** 18.0
 - **Dependencies:** none yet (added via **Swift Package Manager** if/when needed)
-- **Bundle id:** `pro.ziganshin.Gifts`
+- **Bundle id:** `pro.ziganshin.WhoGaveWhat`
 
 ## What's implemented
 
@@ -32,7 +32,7 @@ xcodebuild -project WhoGave.xcodeproj -scheme WhoGave \
 
 ## Persistence
 
-Storage is **Core Data** (`WhoGave.xcdatamodeld`):
+Storage is **Core Data** (`WhoGaveWhat.xcdatamodeld`):
 
 - `CDPerson` — family members (`isFamily == true`) and external people (`isFamily == false`).
 - `CDGift` — a tracked gift, with `person` (external) and `member` (family) relationships.
@@ -45,18 +45,18 @@ SwiftUI layer consumes lightweight value types (`Gift`, `Member`, `Person`).
 
 | Path | Role |
 |------|------|
-| `WhoGave/WhoGaveApp.swift` | App entry — builds the Core Data stack and `AppStore` |
-| `WhoGave/Support/Theme.swift` | Color tokens, rounded font, ruble formatting |
-| `WhoGave/Model/Models.swift` | `Gift`, `Member`, `Person`, `Flow`, `Suggestion` value types |
-| `WhoGave/Model/AppStore.swift` | Observable store over Core Data — derived stats, actions |
-| `WhoGave/Persistence/` | Core Data stack, managed-object subclasses, seeding |
-| `WhoGave/WhoGave.xcdatamodeld` | Core Data model |
-| `WhoGave/Views/` | One file per screen + shared `Components` / `FlowLayout` |
+| `WhoGaveWhat/WhoGaveWhatApp.swift` | App entry — builds the Core Data stack and `AppStore` |
+| `WhoGaveWhat/Support/Theme.swift` | Color tokens, rounded font, ruble formatting |
+| `WhoGaveWhat/Model/Models.swift` | `Gift`, `Member`, `Person`, `Flow`, `Suggestion` value types |
+| `WhoGaveWhat/Model/AppStore.swift` | Observable store over Core Data — derived stats, actions |
+| `WhoGaveWhat/Persistence/` | Core Data stack, managed-object subclasses, seeding |
+| `WhoGaveWhat/WhoGaveWhat.xcdatamodeld` | Core Data model |
+| `WhoGaveWhat/Views/` | One file per screen + shared `Components` / `FlowLayout` |
 
 ### Testing entry points
 Launch env vars jump straight to a state (used for verification / previews):
 `KS_START=app|signin`, `KS_TAB=home|people|insights`, `KS_SHEET=1`, `KS_DETAIL=<id>`.
 
 ```bash
-SIMCTL_CHILD_KS_START=app SIMCTL_CHILD_KS_TAB=insights xcrun simctl launch booted pro.ziganshin.Gifts
+SIMCTL_CHILD_KS_START=app SIMCTL_CHILD_KS_TAB=insights xcrun simctl launch booted pro.ziganshin.WhoGaveWhat
 ```

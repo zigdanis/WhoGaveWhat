@@ -1,4 +1,4 @@
 git_url("git@github.com:zigdanis/zigdanis-certificates.git")
 storage_mode("git")
 type("appstore")
-app_identifier(["pro.ziganshin.Gifts"])
+app_identifier(["pro.ziganshin.WhoGaveWhat"])

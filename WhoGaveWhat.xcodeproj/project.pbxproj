@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		1A0000000000000000000F00 /* WhoGave */ = {
+		1A0000000000000000000F00 /* WhoGaveWhat */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = WhoGave;
+			path = WhoGaveWhat;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -25,9 +25,9 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		1A0000000000000000000400 /* WhoGave */ = {
+		1A0000000000000000000400 /* WhoGaveWhat */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1A0000000000000000000700 /* Build configuration list for PBXNativeTarget "WhoGave" */;
+			buildConfigurationList = 1A0000000000000000000700 /* Build configuration list for PBXNativeTarget "WhoGaveWhat" */;
 			buildPhases = (
 				1A0000000000000000000C00 /* Sources */,
 				1A0000000000000000000D00 /* Frameworks */,
@@ -38,11 +38,11 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				1A0000000000000000000F00 /* WhoGave */,
+				1A0000000000000000000F00 /* WhoGaveWhat */,
 			);
-			name = WhoGave;
-			productName = WhoGave;
-			productReference = 1A0000000000000000000500 /* WhoGave.app */;
+			name = WhoGaveWhat;
+			productName = WhoGaveWhat;
+			productReference = 1A0000000000000000000500 /* WhoGaveWhat.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -60,7 +60,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 1A0000000000000000000600 /* Build configuration list for PBXProject "WhoGave" */;
+			buildConfigurationList = 1A0000000000000000000600 /* Build configuration list for PBXProject "WhoGaveWhat" */;
 			compatibilityVersion = "Xcode 15.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -74,7 +74,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1A0000000000000000000400 /* WhoGave */,
+				1A0000000000000000000400 /* WhoGaveWhat */,
 			);
 		};
 /* End PBXProject section */
@@ -103,7 +103,7 @@
 		1A0000000000000000000200 = {
 			isa = PBXGroup;
 			children = (
-				1A0000000000000000000F00 /* WhoGave */,
+				1A0000000000000000000F00 /* WhoGaveWhat */,
 				1A0000000000000000000300 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -111,7 +111,7 @@
 		1A0000000000000000000300 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1A0000000000000000000500 /* WhoGave.app */,
+				1A0000000000000000000500 /* WhoGaveWhat.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -119,11 +119,11 @@
 /* End PBXGroup section */
 
 /* Begin PBXFileReference section */
-		1A0000000000000000000500 /* WhoGave.app */ = {
+		1A0000000000000000000500 /* WhoGaveWhat.app */ = {
 			isa = PBXFileReference;
 			explicitFileType = wrapper.application;
 			includeInIndex = 0;
-			path = WhoGave.app;
+			path = WhoGaveWhat.app;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXFileReference section */
@@ -192,7 +192,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pro.ziganshin.Gifts;
+				PRODUCT_BUNDLE_IDENTIFIER = pro.ziganshin.WhoGaveWhat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -219,9 +219,9 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pro.ziganshin.Gifts;
+				PRODUCT_BUNDLE_IDENTIFIER = pro.ziganshin.WhoGaveWhat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "match AppStore pro.ziganshin.Gifts";
+				PROVISIONING_PROFILE_SPECIFIER = "match AppStore pro.ziganshin.WhoGaveWhat";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -231,7 +231,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1A0000000000000000000600 /* Build configuration list for PBXProject "WhoGave" */ = {
+		1A0000000000000000000600 /* Build configuration list for PBXProject "WhoGaveWhat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1A0000000000000000000800 /* Debug */,
@@ -240,7 +240,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1A0000000000000000000700 /* Build configuration list for PBXNativeTarget "WhoGave" */ = {
+		1A0000000000000000000700 /* Build configuration list for PBXNativeTarget "WhoGaveWhat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1A0000000000000000000A00 /* Debug */,
