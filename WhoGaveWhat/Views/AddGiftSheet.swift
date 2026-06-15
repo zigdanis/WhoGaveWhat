@@ -268,6 +268,10 @@ private struct PickerSheet: View {
                               select: @escaping (String) -> Void) -> some View {
         ScrollView {
             VStack(spacing: 16) {
+                // Manual-entry first — add a new option from the top of the sheet.
+                addRow(placeholder: isFamily ? "Add family member" : "Add person") {
+                    store.addCustomPerson($0, isFamily: isFamily)
+                }
                 Card {
                     VStack(spacing: 0) {
                         ForEach(Array(entities.enumerated()), id: \.element.0) { idx, e in
@@ -286,9 +290,6 @@ private struct PickerSheet: View {
                         }
                     }
                 }
-                addRow(placeholder: isFamily ? "Add family member" : "Add person") {
-                    store.addCustomPerson($0, isFamily: isFamily)
-                }
             }
             .padding(16)
         }
@@ -301,6 +302,8 @@ private struct PickerSheet: View {
     private var celebPicker: some View {
         ScrollView {
             VStack(spacing: 16) {
+                // Manual-entry first — add a new option from the top of the sheet.
+                addRow(placeholder: "Add occasion") { store.addCustomCeleb($0) }
                 Card {
                     VStack(spacing: 0) {
                         ForEach(Array(store.celebrations.enumerated()), id: \.element) { idx, c in
@@ -318,7 +321,6 @@ private struct PickerSheet: View {
                         }
                     }
                 }
-                addRow(placeholder: "Add occasion") { store.addCustomCeleb($0) }
             }
             .padding(16)
         }
@@ -331,6 +333,13 @@ private struct PickerSheet: View {
     private var emojiPicker: some View {
         ScrollView {
             VStack(spacing: 16) {
+                // Manual-entry first — type your own before the grid of choices.
+                VStack(alignment: .leading, spacing: 7) {
+                    addRow(placeholder: "Type any emoji or letter") { store.useCustomEmoji($0) }
+                    Text("Pick one below, or type your own — any single emoji or letter fits.")
+                        .font(KS.font(12, .regular)).foregroundColor(KS.muted3)
+                        .padding(.horizontal, 4)
+                }
                 Card {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 8) {
                         ForEach(store.emojiChoices, id: \.self) { e in
@@ -345,7 +354,6 @@ private struct PickerSheet: View {
                     }
                     .padding(12)
                 }
-                addRow(placeholder: "Type any emoji or letter") { store.useCustomEmoji($0) }
             }
             .padding(16)
         }
