@@ -10,7 +10,7 @@ struct SignInView: View {
                 .shadow(color: Color(hex: 0x10141C, alpha: 0.22), radius: 22, x: 0, y: 16)
 
             Text("Keep your gifts safe")
-                .font(KS.font(27, .black)).tracking(-0.5)
+                .font(KS.font(27, .bold)).tracking(-0.5)
                 .padding(.top, 26)
             Text("Sign in to back up and sync across devices — or start right now. Everything stays on this phone until you do.")
                 .font(KS.font(16, .semibold))
@@ -27,7 +27,7 @@ struct SignInView: View {
                         Image(systemName: "apple.logo")
                         Text("Continue with Apple")
                     }
-                    .font(KS.font(16, .heavy))
+                    .font(KS.font(16, .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -39,7 +39,7 @@ struct SignInView: View {
                         Text("✉️").font(.system(size: 18))
                         Text("Continue with email")
                     }
-                    .font(KS.font(16, .heavy))
+                    .font(KS.font(16, .semibold))
                     .foregroundColor(KS.ink)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -49,7 +49,7 @@ struct SignInView: View {
 
                 Button { store.enterApp() } label: {
                     Text("Maybe later — keep it on this phone")
-                        .font(KS.font(15, .heavy))
+                        .font(KS.font(15, .semibold))
                         .foregroundColor(KS.muted)
                         .padding(.vertical, 14)
                 }

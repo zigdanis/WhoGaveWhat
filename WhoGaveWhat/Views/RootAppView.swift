@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// Native iOS 26 shell: a Liquid Glass tab bar floating over three navigation
-/// stacks. Person detail is a native push; "Add a gift" is a native sheet.
+/// stacks, with a floating "Add a gift" pill pinned just above it. Person detail
+/// is a native push; "Add a gift" and Settings are native sheets.
 struct RootAppView: View {
     @EnvironmentObject var store: AppStore
 
@@ -9,24 +10,22 @@ struct RootAppView: View {
         TabView(selection: tabSelection) {
             stack(.home, "Home", "house") {
                 ScreenScroll { HomeView() }
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar { addButton }
+                    .navigationTitle("Who Gave What")
+                    .toolbar { settingsButton }
             }
             stack(.people, "People", "person.2") {
                 ScreenScroll { PeopleView() }
                     .navigationTitle("People")
-                    .toolbar { addButton }
             }
             stack(.insights, "Insights", "chart.bar") {
                 ScreenScroll { InsightsView() }
                     .navigationTitle("Insights")
             }
         }
-        .tint(KS.give)
+        .tint(KS.recv)
         .tabBarMinimizeBehavior(.onScrollDown)
-        .sheet(isPresented: sheetBinding) {
-            AddGiftSheet()
-        }
+        .sheet(isPresented: sheetBinding) { AddGiftSheet() }
+        .sheet(isPresented: settingsBinding) { SettingsView() }
     }
 
     /// One tab: a navigation stack that pushes `PersonDetailView` for any entity id.
@@ -44,13 +43,12 @@ struct RootAppView: View {
     }
 
     @ToolbarContentBuilder
-    private var addButton: some ToolbarContent {
+    private var settingsButton: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
-            Button { store.openSheet() } label: {
-                Image(systemName: "plus").fontWeight(.semibold)
+            Button { store.openSettings() } label: {
+                AvatarView(initials: "A", color: KS.ink, size: 30)
             }
-            .tint(KS.give)
-            .accessibilityLabel("Add a gift")
+            .accessibilityLabel("Settings")
         }
     }
 
@@ -61,20 +59,41 @@ struct RootAppView: View {
     private var sheetBinding: Binding<Bool> {
         Binding(get: { store.sheetOpen }, set: { if !$0 { store.closeSheet() } })
     }
+
+    private var settingsBinding: Binding<Bool> {
+        Binding(get: { store.showSettings }, set: { if !$0 { store.closeSettings() } })
+    }
 }
 
 /// Shared scroll container for a tab's root screen — content scrolls under the
-/// floating glass tab bar, which insets the bottom automatically.
+/// floating glass tab bar, and the "Add a gift" pill is pinned just above it via
+/// a bottom safe-area inset (so it never overlaps the bar on any device).
 private struct ScreenScroll<Content: View>: View {
+    @EnvironmentObject var store: AppStore
     @ViewBuilder var content: Content
 
     var body: some View {
         ScrollView {
             content
                 .padding(.top, 4)
-                .padding(.bottom, 24)
+                .padding(.bottom, 12)
         }
         .scrollIndicators(.hidden)
         .background(KS.bg)
+        .safeAreaInset(edge: .bottom) { fab }
+    }
+
+    private var fab: some View {
+        Button { store.openSheet() } label: {
+            Label("Add a gift", systemImage: "plus")
+                .font(KS.font(16, .semibold))
+                .foregroundColor(.white)
+                .padding(.horizontal, 22).padding(.vertical, 13)
+                .background(Capsule().fill(KS.ink))
+                .ksCardShadow(strong: true)
+        }
+        .buttonStyle(.plain)
+        .padding(.bottom, 6)
+        .accessibilityLabel("Add a gift")
     }
 }

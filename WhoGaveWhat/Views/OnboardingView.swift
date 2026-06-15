@@ -43,7 +43,7 @@ struct OnboardingView: View {
                 withAnimation(.easeInOut(duration: 0.25)) { store.onbNext() }
             } label: {
                 Text(store.onbStep == 2 ? "Get started" : "Continue")
-                    .font(KS.font(17, .heavy))
+                    .font(KS.font(17, .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 17)
@@ -75,7 +75,7 @@ private struct OnbHero: View {
             .padding(.bottom, 38)
 
             Text("Who Gave What")
-                .font(KS.font(36, .black))
+                .font(KS.font(36, .bold))
                 .tracking(-0.6)
             Text("A warm little ledger for every gift your family gives and gets.")
                 .font(KS.font(17, .semibold))
@@ -141,17 +141,17 @@ private struct OnbLogged: View {
             Card(strongShadow: true) {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("WHAT'S THE GIFT?")
-                        .font(KS.font(12, .heavy)).tracking(0.7).foregroundColor(KS.muted)
+                        .font(KS.font(12, .semibold)).tracking(0.7).foregroundColor(KS.muted)
                     HStack(spacing: 12) {
                         GiftSquare(emoji: "💐", tint: KS.recvTint, size: 50, fontSize: 27)
-                        Text("Bouquet of roses").font(KS.font(20, .heavy))
+                        Text("Bouquet of roses").font(KS.font(20, .semibold))
                     }
                     .padding(.top, 11)
                     HStack(spacing: 9) {
-                        Text("≈ value").font(KS.font(13, .heavy)).foregroundColor(KS.muted)
-                        Text("1 800 ₽").font(KS.font(16, .black))
+                        Text("≈ value").font(KS.font(13, .semibold)).foregroundColor(KS.muted)
+                        Text("1 800 ₽").font(KS.font(16, .bold))
                         Text("we guessed")
-                            .font(KS.font(11, .heavy))
+                            .font(KS.font(11, .semibold))
                             .foregroundColor(KS.recv)
                             .padding(.horizontal, 9).padding(.vertical, 3)
                             .background(RoundedRectangle(cornerRadius: 8).fill(KS.recvTint))
@@ -163,7 +163,7 @@ private struct OnbLogged: View {
             .frame(width: 304)
 
             Text("Logged in seconds")
-                .font(KS.font(27, .black)).tracking(-0.5)
+                .font(KS.font(27, .bold)).tracking(-0.5)
                 .padding(.top, 36)
             Text("Type what it was — Who Gave What picks the icon and guesses the value. Adjust only if you want to.")
                 .font(KS.font(16, .semibold))
@@ -192,11 +192,11 @@ private struct OnbAddsUp: View {
                     HStack(spacing: 12) {
                         AvatarView(initials: "AM", color: KS.give, size: 46)
                         VStack(alignment: .leading, spacing: 0) {
-                            Text("Aunt Maria").font(KS.font(17, .heavy))
+                            Text("Aunt Maria").font(KS.font(17, .semibold))
                             Text("6 gifts together").font(KS.font(13, .bold)).foregroundColor(KS.muted3)
                         }
                         Spacer()
-                        Text("14 700 ₽").font(KS.font(18, .black))
+                        Text("14 700 ₽").font(KS.font(18, .bold))
                     }
                     VStack(spacing: 10) {
                         ForEach(bars, id: \.0) { b in
@@ -217,7 +217,7 @@ private struct OnbAddsUp: View {
             .frame(width: 304)
 
             Text("It adds up per person")
-                .font(KS.font(27, .black)).tracking(-0.5)
+                .font(KS.font(27, .bold)).tracking(-0.5)
                 .padding(.top, 34)
             Text("Every gift links to someone, so you can look back on years of giving at a glance.")
                 .font(KS.font(16, .semibold))

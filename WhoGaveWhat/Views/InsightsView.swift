@@ -10,26 +10,33 @@ struct InsightsView: View {
         let paid = store.gifts.filter { $0.paidByYou }
 
         VStack(alignment: .leading, spacing: 0) {
-            Text("Your year of giving, at a glance")
-                .font(KS.font(15, .bold)).foregroundColor(KS.muted)
-                .padding(.top, 1).padding(.bottom, 18)
-
-            // Tracked total
+            // Circulated total with spoiler
             Card {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("TRACKED IN \(store.displayYear)")
-                        .font(KS.font(12.5, .heavy)).tracking(0.6).foregroundColor(KS.muted)
-                    Text(rub(rv + gv)).font(KS.font(34, .black)).tracking(-0.6).padding(.top, 6)
+                    Text("Circulated in \(store.displayYear)")
+                        .font(KS.font(13, .regular)).foregroundColor(KS.muted)
+                    Button { store.toggleTotal() } label: {
+                        Text(rub(rv + gv))
+                            .font(KS.font(32, .bold)).tracking(-0.6).foregroundColor(KS.ink)
+                            .blur(radius: store.revealTotal ? 0 : 9)
+                            .overlay {
+                                if !store.revealTotal {
+                                    SpoilerCover()
+                                        .padding(.horizontal, -10).padding(.vertical, -3)
+                                }
+                            }
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 7)
+
                     Text("\(store.gifts.count) gifts · \(store.people.count) people")
-                        .font(KS.font(14, .bold)).foregroundColor(KS.muted3).padding(.top, 1)
+                        .font(KS.font(14, .regular)).foregroundColor(KS.muted).padding(.top, 4)
 
                     // Stacked received/given bar
                     GeometryReader { geo in
                         HStack(spacing: 0) {
-                            Rectangle().fill(KS.recv)
-                                .frame(width: geo.size.width * CGFloat(rv / tot))
-                            Rectangle().fill(KS.give)
-                                .frame(width: geo.size.width * CGFloat(gv / tot))
+                            Rectangle().fill(KS.recv).frame(width: geo.size.width * CGFloat(rv / tot))
+                            Rectangle().fill(KS.ink).frame(width: geo.size.width * CGFloat(gv / tot))
                         }
                     }
                     .frame(height: 13)
@@ -39,90 +46,92 @@ struct InsightsView: View {
 
                     HStack(spacing: 18) {
                         legend(color: KS.recv, label: "Received", value: rub(rv))
-                        legend(color: KS.give, label: "Given", value: rub(gv))
+                        legend(color: KS.ink, label: "Given", value: rub(gv))
                     }
                     .padding(.top, 12)
                 }
                 .padding(20)
             }
 
-            // Who's really paying
+            // Who's really paying — solid ink card
             VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 9) {
-                    Text("♡").font(.system(size: 19))
-                    Text("WHO'S REALLY PAYING")
-                        .font(KS.font(12.5, .heavy)).tracking(0.6).opacity(0.92)
-                }
+                Text("Who's really paying")
+                    .font(KS.font(13, .semibold)).foregroundColor(.white.opacity(0.7))
                 Text("You covered \(paid.count) gifts")
-                    .font(KS.font(26, .black)).tracking(-0.4).padding(.top, 12)
-                Text("That's \(rub(store.sum(paid))) from your pocket — the quiet hero of the family. 💛")
-                    .font(KS.font(15, .bold)).opacity(0.92).padding(.top, 3)
+                    .font(KS.font(24, .bold)).tracking(-0.4).foregroundColor(.white).padding(.top, 10)
+                Text("That's \(rub(store.sum(paid))) from your pocket — the quiet hero of the family.")
+                    .font(KS.font(15, .regular)).foregroundColor(.white.opacity(0.8)).padding(.top, 4)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .foregroundColor(.white)
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: KS.radius, style: .continuous)
-                    .fill(LinearGradient(colors: [KS.give, KS.giveDeep],
-                                         startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .shadow(color: KS.give.opacity(0.28), radius: 15, x: 0, y: 14)
-            )
+            .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.ink))
             .padding(.top, 14)
 
-            // Top people
-            SectionHeader(text: "Top people").padding(.top, 22).padding(.bottom, 9)
-            Card {
-                VStack(spacing: 0) {
-                    let agg = topPeople()
-                    let maxV = agg.first?.1 ?? 1
-                    ForEach(Array(agg.enumerated()), id: \.element.0.id) { idx, item in
-                        NavigationLink(value: item.0.id) {
-                            TopPersonRow(person: item.0, value: item.1, maxValue: maxV)
-                        }
-                        .buttonStyle(.plain)
-                        if idx < agg.count - 1 { RowDivider() }
-                    }
-                }
-            }
+            // Top givers
+            SectionHeader(text: "Top givers").padding(.top, 22).padding(.bottom, 7)
+            rankCard(topPeople(flow: .received))
+
+            // Top receivers
+            SectionHeader(text: "Top receivers").padding(.top, 22).padding(.bottom, 7)
+            rankCard(topPeople(flow: .given))
 
             // By occasion
-            SectionHeader(text: "By occasion").padding(.top, 22).padding(.bottom, 9)
+            SectionHeader(text: "By occasion").padding(.top, 22).padding(.bottom, 7)
             Card {
                 VStack(spacing: 0) {
                     let bars = celebrationBars()
                     let maxV = bars.first?.1 ?? 1
                     ForEach(bars, id: \.0) { label, value in
-                        VStack(spacing: 6) {
+                        VStack(spacing: 7) {
                             HStack {
-                                Text(label).foregroundColor(KS.ink)
+                                Text(label).font(KS.font(13, .semibold)).foregroundColor(KS.ink)
                                 Spacer()
-                                Text(rub(value)).foregroundColor(KS.muted3)
+                                Text(rub(value)).font(KS.font(13, .regular)).foregroundColor(KS.muted)
                             }
-                            .font(KS.font(13, .heavy))
                             BarView(pct: value / maxV * 100, color: KS.gold)
                         }
-                        .padding(.bottom, 13)
+                        .padding(.bottom, 14)
                     }
                 }
-                .padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 6)
+                .padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 2)
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
+    }
+
+    @ViewBuilder
+    private func rankCard(_ agg: [(Person, Double, Int)]) -> some View {
+        Card {
+            VStack(spacing: 0) {
+                let maxV = agg.first?.1 ?? 1
+                ForEach(Array(agg.enumerated()), id: \.element.0.id) { idx, item in
+                    NavigationLink(value: item.0.id) {
+                        RankRow(person: item.0, value: item.1, count: item.2, maxValue: maxV)
+                    }
+                    .buttonStyle(.plain)
+                    if idx < agg.count - 1 { RowDivider().padding(.leading, 14) }
+                }
+            }
+        }
     }
 
     private func legend(color: Color, label: String, value: String) -> some View {
         HStack(spacing: 7) {
-            RoundedRectangle(cornerRadius: 3).fill(color).frame(width: 11, height: 11)
-            Text(label).font(KS.font(13, .heavy)).foregroundColor(KS.ink)
-            Text(value).font(KS.font(13, .heavy)).foregroundColor(KS.muted3)
+            RoundedRectangle(cornerRadius: 3).fill(color).frame(width: 10, height: 10)
+            Text(label).font(KS.font(13, .semibold)).foregroundColor(KS.ink)
+            Text(value).font(KS.font(13, .regular)).foregroundColor(KS.muted)
         }
     }
 
-    private func topPeople() -> [(Person, Double)] {
+    /// Top people by total value for a flow (received = top givers, given = top receivers).
+    private func topPeople(flow: Flow) -> [(Person, Double, Int)] {
         store.people
-            .map { p in (p, store.sum(store.gifts.filter { $0.personId == p.id })) }
-            .filter { $0.1 > 0 }
+            .map { p -> (Person, Double, Int) in
+                let gs = store.gifts.filter { $0.personId == p.id && $0.flow == flow }
+                return (p, store.sum(gs), gs.count)
+            }
+            .filter { $0.2 > 0 }
             .sorted { $0.1 > $1.1 }
             .prefix(5)
             .map { $0 }
@@ -135,24 +144,50 @@ struct InsightsView: View {
     }
 }
 
-private struct TopPersonRow: View {
+private struct RankRow: View {
     @EnvironmentObject var store: AppStore
     let person: Person
     let value: Double
+    let count: Int
     let maxValue: Double
 
     var body: some View {
         HStack(spacing: 12) {
             AvatarView(initials: store.initials(person.name), color: person.color, size: 38)
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 9) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(person.name).font(KS.font(15, .heavy))
+                    Text(person.name).font(KS.font(15, .semibold)).foregroundColor(KS.ink)
                     Spacer()
-                    Text(rub(value)).font(KS.font(14, .black))
+                    Text("\(count) \(count == 1 ? "gift" : "gifts") · \(rub(value))")
+                        .font(KS.font(13, .regular)).foregroundColor(KS.muted)
                 }
                 BarView(pct: value / maxValue * 100, color: person.color, height: 7)
             }
         }
-        .padding(.horizontal, 15).padding(.vertical, 13)
+        .padding(.horizontal, 14).padding(.vertical, 13)
+        .contentShape(Rectangle())
+    }
+}
+
+/// Shimmering "Tap to reveal" cover over the blurred circulated total.
+private struct SpoilerCover: View {
+    @State private var x: CGFloat = -1.2
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(Color(hex: 0xE4E7EC))
+            GeometryReader { geo in
+                LinearGradient(colors: [.clear, Color.white.opacity(0.65), .clear],
+                               startPoint: .leading, endPoint: .trailing)
+                    .frame(width: geo.size.width * 0.55)
+                    .offset(x: x * geo.size.width)
+            }
+            Text("Tap to reveal")
+                .font(KS.font(12.5, .semibold)).foregroundColor(KS.muted2)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: KS.radius, style: .continuous))
+        .onAppear {
+            withAnimation(.linear(duration: 1.7).repeatForever(autoreverses: false)) { x = 1.2 }
+        }
     }
 }

@@ -4,17 +4,25 @@ import CoreData
 enum Screen { case onboarding, signin, app }
 enum Tab: String { case home, people, insights }
 
-/// Draft state for the "Add a gift" sheet.
+/// Which tap-to-reveal picker the Add sheet is showing.
+enum PickerKind: String, Identifiable {
+    case person, member, celeb, emoji, date
+    var id: String { rawValue }
+}
+
+/// Draft state for the "Add a gift" sheet. Fields stay quiet (nil → "Choose")
+/// until the user fills them in.
 struct AddForm {
     var flow: Flow = .received
     var name: String = ""
+    var emoji: String? = nil            // chosen emoji; nil → use the suggestion
     var value: Int? = nil
     var valueTouched: Bool = false
     var personId: String? = nil
-    var memberId: String = "you"
+    var memberId: String? = nil         // nil → "Choose"; defaults to "you" on save
     var paidByYou: Bool = true
-    var celebration: String = "Birthday"
-    var date: String = "Today"   // Today / Yesterday / Earlier
+    var celebration: String? = nil      // nil → "Choose"
+    var date: Date = AppStore.today
 }
 
 /// The whole app's observable state. Reads from and writes through Core Data;
@@ -26,23 +34,33 @@ final class AppStore: ObservableObject {
     @Published var tab: Tab = .home
     @Published var filter: String = "all"          // all / received / given
     @Published var detailId: String? = nil
+    @Published var detailFlow: Flow = .received
     @Published var sheetOpen: Bool = false
+    @Published var picker: PickerKind? = nil
+    @Published var showSettings: Bool = false
+    @Published var revealTotal: Bool = false
     @Published var add = AddForm()
+
+    // Settings toggles
+    @Published var notifEnabled: Bool = true
+    @Published var cloudEnabled: Bool = true
 
     // Data (loaded from Core Data)
     @Published var gifts: [Gift] = []
     @Published var members: [Member] = []
     @Published var people: [Person] = []
+    @Published var celebrations: [String] = ["Birthday", "New Year", "Wedding", "Anniversary",
+                                             "Graduation", "Housewarming", "Just because"]
 
     private let context: NSManagedObjectContext
 
-    // Static display copy (frozen "today" from the design)
-    let greetingName = "Anton"
-    let todayLabel = "Saturday, 14 June"
     let displayYear = "2026"
 
-    let celebrations = ["Birthday", "New Year", "Wedding", "Anniversary",
-                        "Graduation", "Housewarming", "Just because"]
+    /// Colour palette assigned to people/members created on the fly.
+    private let newEntityPalette: [Int64] = [0x7A5CCB, 0x0E7C8C, 0x2F6FAE, 0xC26B2D, 0x12805C, 0x5B6573]
+
+    let emojiChoices = ["🎁","💐","⌚","📚","🧸","🍫","🍷","🌸","💍","📱","🎧","💸","🎟️","🎂","🪴","☕",
+                        "🪆","🧱","🧣","🕯️","🎮","👟","🧴","🍾","🖼️","🧦","🚲","🎨","🧶","🪀"]
 
     let suggestMap: [Suggestion] = [
         Suggestion(keywords: ["bouquet", "flower", "rose"], emoji: "💐", value: 1800),
@@ -98,6 +116,11 @@ final class AppStore: ObservableObject {
         giftReq.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
         let cdGifts = (try? context.fetch(giftReq)) ?? []
         gifts = cdGifts.map(Gift.init)
+
+        // Surface any occasions already used by saved gifts.
+        for g in gifts where !celebrations.contains(g.celebration) && !g.celebration.isEmpty {
+            celebrations.append(g.celebration)
+        }
     }
 
     // MARK: - Helpers
@@ -114,6 +137,12 @@ final class AppStore: ObservableObject {
         f == .received
             ? FlowMeta(main: KS.recv, deep: KS.recvDeep, tint: KS.recvTint, label: "Received", arrow: "↙")
             : FlowMeta(main: KS.give, deep: KS.giveDeep, tint: KS.giveTint, label: "Given",    arrow: "↗")
+    }
+
+    /// Effective emoji shown in the Add hero: chosen → name suggestion → gift.
+    func effEmoji(_ a: AddForm) -> String {
+        if let e = a.emoji { return e }
+        return a.name.trimmingCharacters(in: .whitespaces).isEmpty ? "🎁" : suggest(a.name).emoji
     }
 
     func initials(_ name: String) -> String {
@@ -144,10 +173,19 @@ final class AppStore: ObservableObject {
     }
 
     func shortDate(_ date: Date) -> String {
-        let comps = Calendar.current.dateComponents([.month, .day], from: date)
+        let comps = Calendar.current.dateComponents([.year, .month, .day], from: date)
         let names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-        return "\(names[(comps.month ?? 1) - 1]) \(comps.day ?? 1)"
+        let base = "\(names[(comps.month ?? 1) - 1]) \(comps.day ?? 1)"
+        return (comps.year ?? 2026) == 2026 ? base : "\(base), \(comps.year ?? 2026)"
+    }
+
+    /// "Today" / "Yesterday" / short date — used by the Add sheet date field.
+    func dateLabel(_ date: Date) -> String {
+        let cal = Calendar.current
+        if cal.isDate(date, inSameDayAs: Self.today) { return "Today" }
+        if cal.isDate(date, inSameDayAs: Self.yesterday) { return "Yesterday" }
+        return shortDate(date)
     }
 
     /// Subtitle shown under a gift row (received: from → member, given: to person · member).
@@ -160,9 +198,8 @@ final class AppStore: ObservableObject {
         }
     }
 
-    func giftMeta(_ g: Gift) -> String {
-        "\(g.celebration)  ·  \(shortDate(g.date))"
-    }
+    /// Trailing meta on a gift row — just the date, per the design.
+    func giftMeta(_ g: Gift) -> String { shortDate(g.date) }
 
     // MARK: - Derived data
 
@@ -188,26 +225,80 @@ final class AppStore: ObservableObject {
         return order.map { MonthGroup(id: $0, label: $0, items: map[$0] ?? []) }
     }
 
-    // MARK: - Actions
+    // MARK: - Navigation actions
 
     func blankAdd() -> AddForm { AddForm() }
 
     func onbNext() {
-        if onbStep < 2 {
-            onbStep += 1
-        } else {
-            screen = .signin
-        }
+        if onbStep < 2 { onbStep += 1 } else { screen = .signin }
     }
     func onbSkip() { screen = .signin }
     func enterApp() { screen = .app }
 
     func setTab(_ t: Tab) { tab = t; detailId = nil }
-    func openDetail(_ id: String) { withAnimation(.easeOut(duration: 0.26)) { detailId = id } }
+    func openDetail(_ id: String) { withAnimation(.easeOut(duration: 0.26)) { detailId = id; detailFlow = .received } }
     func closeDetail() { withAnimation(.easeOut(duration: 0.2)) { detailId = nil } }
-    func openSheet() { add = blankAdd(); withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) { sheetOpen = true } }
-    func closeSheet() { withAnimation(.easeOut(duration: 0.22)) { sheetOpen = false } }
-    func setFilter(_ f: String) { filter = f }
+    func setDetailFlow(_ f: Flow) { withAnimation(.easeOut(duration: 0.18)) { detailFlow = f } }
+    func openSettings() { showSettings = true }
+    func closeSettings() { showSettings = false }
+    func openSheet() { add = blankAdd(); sheetOpen = true }
+    func closeSheet() { sheetOpen = false; picker = nil }
+    func setFilter(_ f: String) { withAnimation(.easeOut(duration: 0.18)) { filter = f } }
+    func toggleTotal() { withAnimation(.easeInOut(duration: 0.45)) { revealTotal.toggle() } }
+
+    // MARK: - Picker actions
+
+    func openPicker(_ k: PickerKind) { picker = k }
+    func closePicker() { picker = nil }
+
+    func selectEmoji(_ e: String) { add.emoji = e; picker = nil }
+    func selectPerson(_ id: String) { add.personId = id; picker = nil }
+    func selectMember(_ id: String) { add.memberId = id; picker = nil }
+    func selectCeleb(_ c: String) { add.celebration = c; picker = nil }
+    func selectDate(_ d: Date) { add.date = d; picker = nil }
+
+    /// First extended grapheme cluster of an arbitrary string (so a typed emoji
+    /// or foreign letter fits one icon slot).
+    func firstGrapheme(_ s: String) -> String {
+        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        return t.first.map(String.init) ?? ""
+    }
+
+    func useCustomEmoji(_ raw: String) {
+        let g = firstGrapheme(raw)
+        guard !g.isEmpty else { return }
+        add.emoji = g
+        picker = nil
+    }
+
+    func addCustomCeleb(_ raw: String) {
+        let v = raw.trimmingCharacters(in: .whitespaces)
+        guard !v.isEmpty else { return }
+        if !celebrations.contains(where: { $0.caseInsensitiveCompare(v) == .orderedSame }) {
+            celebrations.insert(v, at: 0)
+        }
+        add.celebration = v
+        picker = nil
+    }
+
+    func addCustomPerson(_ raw: String, isFamily: Bool) {
+        let v = raw.trimmingCharacters(in: .whitespaces)
+        guard !v.isEmpty else { return }
+        let id = (isFamily ? "m" : "p") + String(Int(Date().timeIntervalSince1970 * 1000))
+        let color = newEntityPalette.randomElement() ?? 0x5B6573
+        let p = CDPerson(context: context)
+        p.id = id
+        p.name = v
+        p.colorHex = color
+        p.isFamily = isFamily
+        p.sortIndex = Int64((isFamily ? members.count : people.count) + 100)
+        try? context.save()
+        reload()
+        if isFamily { add.memberId = id } else { add.personId = id }
+        picker = nil
+    }
+
+    // MARK: - Save
 
     func canSave() -> Bool {
         !add.name.trimmingCharacters(in: .whitespaces).isEmpty && add.personId != nil
@@ -217,32 +308,28 @@ final class AppStore: ObservableObject {
         guard canSave(), let personId = add.personId else { return }
         let sug = suggest(add.name)
         let value = add.valueTouched ? Double(add.value ?? 0) : sug.value
+        let emoji = add.emoji ?? sug.emoji
 
         let gift = CDGift(context: context)
         gift.id = "g\(Int(Date().timeIntervalSince1970 * 1000))"
-        gift.emoji = sug.emoji
+        gift.emoji = emoji
         gift.name = add.name.trimmingCharacters(in: .whitespaces)
         gift.flow = add.flow.rawValue
         gift.person = fetchPerson(personId)
-        gift.member = fetchPerson(add.memberId)
+        gift.member = fetchPerson(add.memberId ?? "you")
         gift.paidByYou = add.flow == .given ? add.paidByYou : false
-        gift.celebration = add.celebration
-        gift.date = Self.today
+        gift.celebration = add.celebration ?? "Just because"
+        gift.date = add.date
         gift.value = value
 
-        do {
-            try context.save()
-        } catch {
-            context.rollback()
-        }
+        do { try context.save() } catch { context.rollback() }
 
-        withAnimation(.easeOut(duration: 0.25)) {
-            reload()
-            sheetOpen = false
-            tab = .home
-            filter = "all"
-            detailId = nil
-        }
+        reload()
+        sheetOpen = false
+        picker = nil
+        tab = .home
+        filter = "all"
+        detailId = nil
         add = blankAdd()
     }
 
@@ -253,14 +340,17 @@ final class AppStore: ObservableObject {
         return try? context.fetch(req).first ?? nil
     }
 
-    /// Frozen "today" used for newly added gifts, matching the design (14 Jun 2026).
-    static let today: Date = {
+    /// Frozen "today" used as the default for newly added gifts (14 Jun 2026).
+    static let today: Date = isoDate("2026-06-14")
+    static let yesterday: Date = isoDate("2026-06-13")
+
+    private static func isoDate(_ s: String) -> Date {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)
         f.timeZone = TimeZone(identifier: "UTC")
         f.dateFormat = "yyyy-MM-dd"
-        return f.date(from: "2026-06-14") ?? Date()
-    }()
+        return f.date(from: s) ?? Date()
+    }
 }
 
 // MARK: - Mapping Core Data → value types
