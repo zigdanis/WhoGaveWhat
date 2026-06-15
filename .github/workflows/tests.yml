@@ -1,0 +1,64 @@
+name: Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode.app
+
+      - name: Show versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Pick an iOS Simulator
+        id: sim
+        run: |
+          # Grab the first available iOS simulator the runner offers, whatever
+          # OS/device the current Xcode ships — avoids hardcoding a device that
+          # may vanish when the image updates.
+          UDID=$(xcrun simctl list devices available --json \
+            | jq -r '[.devices | to_entries[]
+                      | select(.key | test("iOS"))
+                      | .value[] | select(.isAvailable)
+                      | select(.name | test("iPhone"))
+                      | .udid] | .[0] // empty')
+          test -n "$UDID" || { echo "No available iPhone simulator on runner"; exit 1; }
+          echo "Using simulator $UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Build & Test
+        env:
+          SIM_UDID: ${{ steps.sim.outputs.udid }}
+        run: |
+          set -o pipefail
+          FORMATTER=cat
+          command -v xcbeautify >/dev/null 2>&1 && FORMATTER=xcbeautify
+          xcodebuild test \
+            -project WhoGaveWhat.xcodeproj \
+            -scheme WhoGaveWhat \
+            -destination "id=$SIM_UDID" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            | "$FORMATTER"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults.xcresult
+          if-no-files-found: ignore
