@@ -52,6 +52,9 @@ SwiftUI layer consumes lightweight value types (`Gift`, `Member`, `Person`).
 | `WhoGaveWhat/Persistence/` | Core Data stack, managed-object subclasses, seeding |
 | `WhoGaveWhat/WhoGaveWhat.xcdatamodeld` | Core Data model |
 | `WhoGaveWhat/Views/` | One file per screen + shared `Components` / `FlowLayout` |
+| `WhoGaveWhatTests/` | Unit tests (Swift Testing) over `AppStore` logic |
+| `fastlane/` | `tests`, `beta` (TestFlight), and diagnostic lanes |
+| `.github/workflows/tests.yml` | CI — runs the test suite on push to `master` + PRs |
 
 ### Testing entry points
 Launch env vars jump straight to a state (used for verification / previews):
@@ -60,3 +63,25 @@ Launch env vars jump straight to a state (used for verification / previews):
 ```bash
 SIMCTL_CHILD_KS_START=app SIMCTL_CHILD_KS_TAB=insights xcrun simctl launch booted pro.ziganshin.WhoGaveWhat
 ```
+
+## Tests & CI
+
+Unit tests live in `WhoGaveWhatTests/` (Swift Testing) and cover `AppStore`'s pure
+logic — suggestion mapping, name/date formatting, derived sums, `canSave`, navigation,
+and `saveGift` write-through — against an isolated in-memory Core Data stack.
+
+```bash
+xcodebuild test -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
+  -destination 'platform=iOS Simulator,name=iPhone 16' CODE_SIGNING_ALLOWED=NO
+# or: bundle exec fastlane tests
+```
+
+GitHub Actions (`.github/workflows/tests.yml`) runs the suite on every push to
+`master` and on pull requests.
+
+## Shipping
+
+`bundle exec fastlane beta` runs the tests first, then fetches signing via **match**,
+bumps the build number above the latest TestFlight build, builds with **gym**, and
+uploads to **TestFlight** with **pilot**. Requires the App Store Connect API key env
+vars (`ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH`).
