@@ -57,27 +57,6 @@ struct InsightsView: View {
             // Top receivers
             SectionHeader(text: "Top receivers").padding(.top, 22).padding(.bottom, 7)
             rankCard(topPeople(flow: .given))
-
-            // By occasion
-            SectionHeader(text: "By occasion").padding(.top, 22).padding(.bottom, 7)
-            Card {
-                VStack(spacing: 0) {
-                    let bars = celebrationBars()
-                    let maxV = bars.first?.1 ?? 1
-                    ForEach(bars, id: \.0) { label, value in
-                        VStack(spacing: 7) {
-                            HStack {
-                                Text(store.locCeleb(label)).font(KS.font(13, .semibold)).foregroundColor(KS.ink)
-                                Spacer()
-                                Text(rub(value)).font(KS.font(13, .regular)).foregroundColor(KS.muted)
-                            }
-                            BarView(pct: value / maxV * 100, color: KS.gold)
-                        }
-                        .padding(.bottom, 14)
-                    }
-                }
-                .padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 2)
-            }
         }
         .padding(.horizontal, 16)
     }
@@ -145,12 +124,6 @@ struct InsightsView: View {
             .sorted { $0.1 > $1.1 }
             .prefix(5)
             .map { $0 }
-    }
-
-    private func celebrationBars() -> [(String, Double)] {
-        var map: [String: Double] = [:]
-        for g in store.gifts { map[g.celebration, default: 0] += g.value }
-        return map.map { ($0.key, $0.value) }.sorted { $0.1 > $1.1 }
     }
 }
 

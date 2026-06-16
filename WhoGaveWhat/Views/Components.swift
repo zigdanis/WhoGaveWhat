@@ -136,9 +136,10 @@ struct GiftRow: View {
     let gift: Gift
 
     var body: some View {
-        let fm = store.flowMeta(gift.flow)
+        // Icon well stays a single neutral tint regardless of who gave or
+        // received — direction-coloured icons only confused the list.
         HStack(spacing: 12) {
-            GiftSquare(emoji: gift.emoji, tint: fm.tint)
+            GiftSquare(emoji: gift.emoji, tint: KS.iconWell)
             VStack(alignment: .leading, spacing: 2) {
                 Text(gift.name)
                     .font(KS.font(16, .semibold))

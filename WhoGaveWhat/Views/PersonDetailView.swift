@@ -5,8 +5,16 @@ import SwiftUI
 /// (avatar, per-side stats, All/Received/Given filter) rides as a quiet section.
 struct PersonDetailView: View {
     @EnvironmentObject var store: AppStore
+    @Environment(\.dismiss) private var dismiss
     let entityId: String
     @State private var filter: String = "all"
+    /// Gift awaiting delete confirmation (set by the swipe action).
+    @State private var pendingDelete: Gift?
+    /// Rename sheet state.
+    @State private var renaming = false
+    @State private var draftName = ""
+    /// Whether the big "delete this person" warning is showing.
+    @State private var confirmingPersonDelete = false
 
     private var filterOptions: [Segmented.Option] {
         [.init(key: "all", label: "All", accent: KS.ink),
@@ -20,7 +28,7 @@ struct PersonDetailView: View {
         let color = store.entityColor(entityId)
         let gs = store.gifts
             .filter { isMember ? $0.memberId == entityId : $0.personId == entityId }
-            .sorted { $0.date > $1.date }
+            .sorted(by: Gift.newestFirst)
         let recv = gs.filter { $0.flow == .received }
         let given = gs.filter { $0.flow == .given }
         let list = filter == "received" ? recv : (filter == "given" ? given : gs)
@@ -65,11 +73,12 @@ struct PersonDetailView: View {
                 Section {
                     ForEach(list) { gift in
                         NavigationLink(value: gift) { GiftRow(gift: gift) }
-                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
                             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) { store.deleteGift(gift.id) } label: {
-                                    Label("Delete", systemImage: "trash")
+                                Button(role: .destructive) { pendingDelete = gift } label: {
+                                    Image(systemName: "trash")
                                 }
+                                .accessibilityLabel("Delete")
                             }
                     }
                 }
@@ -80,6 +89,113 @@ struct PersonDetailView: View {
         .background(KS.bg)
         .navigationTitle(name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if store.canDeletePerson(entityId) {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        draftName = name
+                        renaming = true
+                    } label: {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 17, weight: .semibold))
+                    }
+                    .tint(KS.recv)
+                    .accessibilityLabel("Edit name")
+                }
+            }
+        }
+        // Confirm deleting a single gift from the swipe.
+        .confirmationDialog("Delete this gift?",
+                            isPresented: giftDeleteBinding,
+                            titleVisibility: .visible,
+                            presenting: pendingDelete) { gift in
+            Button("Delete", role: .destructive) {
+                store.deleteGift(gift.id)
+                pendingDelete = nil
+            }
+            Button("Cancel", role: .cancel) { pendingDelete = nil }
+        }
+        // Rename the person (with a Delete person option at the bottom).
+        .sheet(isPresented: $renaming) {
+            renameSheet(name: name, count: store.giftsCountInvolving(entityId))
+        }
+        // Big, hard-to-miss irreversible warning before deleting the person.
+        .confirmationDialog(personDeleteTitle(name),
+                            isPresented: $confirmingPersonDelete,
+                            titleVisibility: .visible) {
+            Button(deletePersonActionLabel(store.giftsCountInvolving(entityId)),
+                   role: .destructive) {
+                store.deletePerson(entityId)
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text(personDeleteMessage(name, count: store.giftsCountInvolving(entityId)))
+        }
+    }
+
+    /// Drives the per-gift delete dialog off the optional pending gift.
+    private var giftDeleteBinding: Binding<Bool> {
+        Binding(get: { pendingDelete != nil },
+                set: { if !$0 { pendingDelete = nil } })
+    }
+
+    // MARK: Rename + delete person
+
+    @ViewBuilder
+    private func renameSheet(name: String, count: Int) -> some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Name", text: $draftName)
+                        .font(KS.font(17, .regular))
+                }
+                Section {
+                    Button(role: .destructive) {
+                        renaming = false
+                        // Let the sheet finish dismissing before the dialog rises.
+                        confirmingPersonDelete = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "trash")
+                            Text("Delete person")
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Edit name")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { renaming = false }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save") {
+                        store.renamePerson(entityId, to: draftName)
+                        renaming = false
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(draftName.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+        }
+        .presentationDetents([.height(260)])
+    }
+
+    private func personDeleteTitle(_ name: String) -> String {
+        String(format: NSLocalizedString("Delete %@?", comment: ""), name)
+    }
+
+    private func personDeleteMessage(_ name: String, count: Int) -> String {
+        let fmt = NSLocalizedString(
+            "This permanently deletes %1$@ and all %2$lld of their gifts. This cannot be undone.",
+            comment: "")
+        return String(format: fmt, name, count)
+    }
+
+    private func deletePersonActionLabel(_ count: Int) -> String {
+        let fmt = NSLocalizedString("Delete person and %lld gifts", comment: "")
+        return String(format: fmt, count)
     }
 
     private var emptyText: String {

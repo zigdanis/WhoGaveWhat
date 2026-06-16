@@ -5,6 +5,8 @@ import SwiftUI
 /// summary card and filter ride along as plain, separator-less rows on top.
 struct HomeView: View {
     @EnvironmentObject var store: AppStore
+    /// Gift awaiting delete confirmation (set by the swipe action).
+    @State private var pendingDelete: Gift?
 
     private var filterOptions: [Segmented.Option] {
         [.init(key: "all", label: "All", accent: KS.ink),
@@ -36,11 +38,12 @@ struct HomeView: View {
                     Section {
                         ForEach(group.items) { gift in
                             NavigationLink(value: gift) { GiftRow(gift: gift) }
-                                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) { store.deleteGift(gift.id) } label: {
-                                        Label("Delete", systemImage: "trash")
+                                    Button(role: .destructive) { pendingDelete = gift } label: {
+                                        Image(systemName: "trash")
                                     }
+                                    .accessibilityLabel("Delete")
                                 }
                         }
                     } header: {
@@ -55,6 +58,22 @@ struct HomeView: View {
         .scrollContentBackground(.hidden)
         .background(KS.bg)
         .floatingAddButton()
+        .confirmationDialog("Delete this gift?",
+                            isPresented: deleteConfirmBinding,
+                            titleVisibility: .visible,
+                            presenting: pendingDelete) { gift in
+            Button("Delete", role: .destructive) {
+                store.deleteGift(gift.id)
+                pendingDelete = nil
+            }
+            Button("Cancel", role: .cancel) { pendingDelete = nil }
+        }
+    }
+
+    /// Drives the confirmation dialog off the optional pending gift.
+    private var deleteConfirmBinding: Binding<Bool> {
+        Binding(get: { pendingDelete != nil },
+                set: { if !$0 { pendingDelete = nil } })
     }
 
     // MARK: Summary

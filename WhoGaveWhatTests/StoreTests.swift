@@ -1,4 +1,5 @@
 import Testing
+import Foundation
 @testable import WhoGaveWhat
 
 /// The seeded in-memory store and the value math derived from it.
@@ -57,16 +58,24 @@ struct AddFormTests {
         // Outside person → you: value coming in → Received.
         store.add.fromId = "maria"; store.add.toId = "you"
         #expect(store.addFlow == .received)
-        #expect(store.showPaidToggle == false)
 
         // You → outside person: value going out → Given.
         store.add.fromId = "you"; store.add.toId = "maria"
         #expect(store.addFlow == .given)
-        #expect(store.showPaidToggle == false)       // you're the giver, no claim needed
 
-        // A family member (not you) gives → Given, and the "Paid by you" claim applies.
+        // A family member (not you) gives → Given.
         store.add.fromId = "marina"; store.add.toId = "igor"
         #expect(store.addFlow == .given)
+    }
+
+    @Test func paidToggleIsAlwaysOffered() {
+        let store = makeSeededStore()
+        // Regardless of direction, the user may have footed the bill themselves.
+        store.add.fromId = "maria"; store.add.toId = "you"   // received
+        #expect(store.showPaidToggle == true)
+        store.add.fromId = "you"; store.add.toId = "maria"   // given by you
+        #expect(store.showPaidToggle == true)
+        store.add.fromId = "marina"; store.add.toId = "igor" // given by family
         #expect(store.showPaidToggle == true)
     }
 }
@@ -145,18 +154,19 @@ struct SaveGiftTests {
         #expect(saved != nil)
     }
 
-    @Test func receivedGiftIsNeverMarkedPaidByYou() {
+    @Test func receivedGiftCanBeMarkedPaidByYou() {
         let store = makeSeededStore()
         store.add = AddForm()
         store.add.fromId = "maria"      // outside person gave it
         store.add.toId = "you"          // to you → Received
         store.add.name = "Soft teddy"
-        store.add.paidByYou = true      // should be forced to false for received
+        store.add.paidByYou = true      // the user footed the bill themselves
         store.saveGift()
 
+        // "Paid by you" is honoured in any direction now (it's always offered).
         let saved = store.gifts.first { $0.name == "Soft teddy" && $0.flow == .received }
         #expect(saved?.flow == .received)
-        #expect(saved?.paidByYou == false)
+        #expect(saved?.paidByYou == true)
     }
 
     @Test func familyMemberGivenKeepsPaidByYouClaim() {
@@ -173,5 +183,55 @@ struct SaveGiftTests {
         #expect(saved?.memberId == "marina")
         #expect(saved?.personId == "igor")
         #expect(saved?.paidByYou == false)
+    }
+}
+
+/// Timeline ordering: newest day first, then by creation time within a day.
+@MainActor
+struct OrderingTests {
+
+    private func gift(_ id: String, date: Date) -> Gift {
+        Gift(id: id, emoji: "🎁", name: id, flow: .received, personId: "p",
+             memberId: "you", paidByYou: false, celebration: "", date: date, value: 0)
+    }
+
+    @Test func creationSeqParsesTheIdSuffix() {
+        #expect(gift("g12", date: AppStore.today).creationSeq == 12)
+        #expect(gift("g1750000000000", date: AppStore.today).creationSeq == 1_750_000_000_000)
+    }
+
+    @Test func sameDayOrdersByCreationDescending() {
+        let earlier = gift("g1000", date: AppStore.today)
+        let later = gift("g2000", date: AppStore.today)
+        // Created later that same day → sorts above the earlier one.
+        #expect(Gift.newestFirst(later, earlier) == true)
+        #expect(Gift.newestFirst(earlier, later) == false)
+    }
+
+    @Test func newerDayBeatsCreationSeq() {
+        // Even with a much larger creation seq, an older day stays below.
+        let oldDayBigSeq = gift("g9999999999999", date: AppStore.yesterday)
+        let newDaySmallSeq = gift("g1", date: AppStore.today)
+        #expect(Gift.newestFirst(newDaySmallSeq, oldDayBigSeq) == true)
+    }
+}
+
+/// The gift row subtitle reads "giver → receiver" in both directions.
+@MainActor
+struct SubtitleTests {
+
+    @Test func subtitleIsAlwaysGiverArrowReceiver() {
+        let store = makeSeededStore()
+
+        // Received seed: outside person → household member.
+        let recv = store.gifts.first { $0.id == "g1" }!
+        #expect(store.giftSubtitle(recv) ==
+                "\(store.personName(recv.personId))  →  \(store.memberName(recv.memberId))")
+
+        // Given seed: household member → outside person (no "to"/"·" decoration).
+        let given = store.gifts.first { $0.id == "g8" }!
+        #expect(store.giftSubtitle(given) ==
+                "\(store.memberName(given.memberId))  →  \(store.personName(given.personId))")
+        #expect(!store.giftSubtitle(given).contains("·"))
     }
 }

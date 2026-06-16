@@ -39,8 +39,12 @@ struct GiftDetailView: View {
         .scrollIndicators(.hidden)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Edit") { store.openEditSheet(gift) }
-                    .fontWeight(.semibold).tint(KS.recv)
+                Button { store.openEditSheet(gift) } label: {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 17, weight: .semibold))
+                }
+                .tint(KS.recv)
+                .accessibilityLabel("Edit")
             }
         }
     }

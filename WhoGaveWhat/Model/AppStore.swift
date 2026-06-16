@@ -24,7 +24,7 @@ struct AddForm {
     var valueTouched: Bool = false
     var fromId: String? = nil           // giver  (nil → "Choose")
     var toId: String? = nil             // receiver (nil → "Choose")
-    var paidByYou: Bool = true          // only meaningful when a family member gives
+    var paidByYou: Bool = false         // did the app user foot the bill themselves?
     var celebration: String? = nil      // nil → "Choose"
     var date: Date = AppStore.today
 
@@ -196,11 +196,9 @@ final class AppStore: ObservableObject {
         return .received
     }
 
-    /// The "Paid by you" toggle only makes sense when a family member *other than
-    /// you* is the giver — that's the case the user uses it to claim as their own.
-    var showPaidToggle: Bool {
-        addFlow == .given && isHousehold(add.fromId) && add.fromId != "you"
-    }
+    /// "Paid by you" is always offered: whoever the giver or receiver is, the app
+    /// user may have footed the bill and wants to count it as their own spending.
+    var showPaidToggle: Bool { true }
 
     /// Effective emoji shown in the Add hero: chosen → AI guess → keyword → gift.
     func effEmoji(_ a: AddForm) -> String {
@@ -266,6 +264,11 @@ final class AppStore: ObservableObject {
     func personName(_ id: String) -> String { people.first { $0.id == id }?.name ?? id }
     func memberName(_ id: String) -> String { members.first { $0.id == id }?.name ?? id }
 
+    /// Display name for any entity id, whether a household member or an outsider.
+    func entityName(_ id: String) -> String {
+        members.first { $0.id == id }?.name ?? people.first { $0.id == id }?.name ?? id
+    }
+
     func entityColor(_ id: String) -> Color {
         members.first { $0.id == id }?.color ?? people.first { $0.id == id }?.color ?? KS.give
     }
@@ -310,14 +313,13 @@ final class AppStore: ObservableObject {
     func locCeleb(_ raw: String) -> String { String(localized: String.LocalizationValue(raw)) }
     func locCeleb(_ raw: String?) -> String? { raw.map(locCeleb) }
 
-    /// Subtitle shown under a gift row (received: from → member, given: to person · member).
+    /// Subtitle shown under a gift row — always "giver → receiver", regardless of
+    /// direction. Received: outside person → household member. Given: household
+    /// member → outside person.
     func giftSubtitle(_ g: Gift) -> String {
-        if g.flow == .received {
-            return "\(personName(g.personId))  →  \(memberName(g.memberId))"
-        } else {
-            let suffix = g.memberId != "you" ? "  ·  \(memberName(g.memberId))" : ""
-            return String(localized: "to \(personName(g.personId))") + suffix
-        }
+        let fromName = g.flow == .received ? personName(g.personId) : memberName(g.memberId)
+        let toName   = g.flow == .received ? memberName(g.memberId) : personName(g.personId)
+        return "\(fromName)  →  \(toName)"
     }
 
     /// Trailing meta on a gift row — just the date, per the design.
@@ -336,7 +338,7 @@ final class AppStore: ObservableObject {
     var timeline: [MonthGroup] {
         let filtered = gifts
             .filter { filter == "all" || $0.flow.rawValue == filter }
-            .sorted { $0.date > $1.date }
+            .sorted(by: Gift.newestFirst)
         var order: [String] = []
         var map: [String: [Gift]] = [:]
         for g in filtered {
@@ -400,6 +402,48 @@ final class AppStore: ObservableObject {
         return f
     }
 
+    /// "You" is the household anchor and can never be deleted.
+    func canDeletePerson(_ id: String) -> Bool { id != "you" }
+
+    /// How many gifts would be removed along with this person (those they gave or
+    /// received) — used to warn before an irreversible delete.
+    func giftsCountInvolving(_ id: String) -> Int {
+        gifts.filter { $0.personId == id || $0.memberId == id }.count
+    }
+
+    /// Delete a person and every gift they gave or received. Irreversible.
+    func deletePerson(_ id: String) {
+        guard canDeletePerson(id) else { return }
+        // Remove their gifts explicitly — the relationship rule only nullifies.
+        let giftReq = CDGift.fetchRequest()
+        giftReq.predicate = NSPredicate(format: "person.id == %@ OR member.id == %@", id, id)
+        for g in (try? context.fetch(giftReq)) ?? [] { context.delete(g) }
+
+        let personReq = CDPerson.fetchRequest()
+        personReq.predicate = NSPredicate(format: "id == %@", id)
+        personReq.fetchLimit = 1
+        if let p = try? context.fetch(personReq).first { context.delete(p) }
+
+        do { try context.save() } catch { context.rollback() }
+        reload()
+    }
+
+    /// Rename a person, keeping names unique. No-op if blank or already taken by
+    /// someone else.
+    func renamePerson(_ id: String, to newName: String) {
+        let v = newName.trimmingCharacters(in: .whitespaces)
+        guard !v.isEmpty else { return }
+        if let other = existingEntityId(named: v), other != id { return }   // name taken
+        let req = CDPerson.fetchRequest()
+        req.predicate = NSPredicate(format: "id == %@", id)
+        req.fetchLimit = 1
+        if let p = try? context.fetch(req).first {
+            p.name = v
+            do { try context.save() } catch { context.rollback() }
+            reload()
+        }
+    }
+
     /// Delete a saved gift and refresh.
     func deleteGift(_ id: String) {
         let req = CDGift.fetchRequest()
@@ -419,7 +463,12 @@ final class AppStore: ObservableObject {
     func closePicker() { picker = nil }
 
     func selectEmoji(_ e: String) { add.emoji = e; picker = nil }
-    func selectFrom(_ id: String) { add.fromId = id; picker = nil }
+    func selectFrom(_ id: String) {
+        add.fromId = id
+        // You as the giver → you paid for it by default (still user-editable).
+        add.paidByYou = (id == "you")
+        picker = nil
+    }
     func selectTo(_ id: String) { add.toId = id; picker = nil }
     func selectCeleb(_ c: String) { add.celebration = c; picker = nil }
     func selectDate(_ d: Date) { add.date = d; picker = nil }
@@ -448,12 +497,23 @@ final class AppStore: ObservableObject {
         picker = nil
     }
 
+    /// Id of an existing member/person whose name matches (case-insensitive).
+    /// Names are unique across the whole roster.
+    func existingEntityId(named name: String) -> String? {
+        let v = name.trimmingCharacters(in: .whitespaces)
+        if let m = members.first(where: { $0.name.caseInsensitiveCompare(v) == .orderedSame }) { return m.id }
+        if let p = people.first(where: { $0.name.caseInsensitiveCompare(v) == .orderedSame }) { return p.id }
+        return nil
+    }
+
     /// Create a new person/member record and return its id (no selection side
-    /// effects), so the From/To pickers can assign it to the right side.
+    /// effects), so the From/To pickers can assign it to the right side. If a
+    /// person with that name already exists, reuse it instead of duplicating.
     @discardableResult
     func createPerson(_ raw: String, isFamily: Bool) -> String? {
         let v = raw.trimmingCharacters(in: .whitespaces)
         guard !v.isEmpty else { return nil }
+        if let existing = existingEntityId(named: v) { return existing }
         let id = (isFamily ? "m" : "p") + String(Int(Date().timeIntervalSince1970 * 1000))
         let color = newEntityPalette.randomElement() ?? 0x5B6573
         let p = CDPerson(context: context)
@@ -469,7 +529,11 @@ final class AppStore: ObservableObject {
 
     /// Add a new outside person and put them on the From (giver) side.
     func addCustomFrom(_ raw: String) {
-        if let id = createPerson(raw, isFamily: false) { add.fromId = id; picker = nil }
+        if let id = createPerson(raw, isFamily: false) {
+            add.fromId = id
+            add.paidByYou = (id == "you")
+            picker = nil
+        }
     }
 
     /// Add a new outside person and put them on the To (receiver) side.
@@ -497,9 +561,9 @@ final class AppStore: ObservableObject {
         let flow = addFlow
         let memberId = flow == .received ? toId : fromId
         let personId = flow == .received ? fromId : toId
-        // You giving → you paid by definition; a family member giving → the
-        // user's "Paid by you" claim; received → not applicable.
-        let paid: Bool = flow == .given ? (memberId == "you" ? true : add.paidByYou) : false
+        // You giving → you paid by definition; otherwise honour the toggle as set
+        // (it's always available now, in any direction).
+        let paid: Bool = (fromId == "you") || add.paidByYou
 
         // Editing reuses the existing record (keeping its id); otherwise create one.
         let gift: CDGift

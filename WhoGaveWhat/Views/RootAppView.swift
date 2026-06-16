@@ -8,7 +8,7 @@ struct RootAppView: View {
 
     var body: some View {
         TabView(selection: tabSelection) {
-            stack(.home, "Home", "house") {
+            stack(.home, "Home", "Home") {
                 // Home is its own native List (smooth swipe-to-delete), so it
                 // carries its own background + floating button rather than the
                 // shared ScreenScroll wrapper.
@@ -16,11 +16,13 @@ struct RootAppView: View {
                     .navigationTitle("Who Gave What")
                     .toolbar { settingsButton }
             }
-            stack(.people, "People", "person.2") {
-                ScreenScroll { PeopleView() }
+            stack(.people, "People", "People") {
+                // People is its own native List (swipe-to-delete a person), so it
+                // carries its own background + floating button like Home.
+                PeopleView()
                     .navigationTitle("People")
             }
-            stack(.insights, "Insights", "chart.bar.xaxis") {
+            stack(.insights, "Insights", "Insights") {
                 ScreenScroll { InsightsView() }
                     .navigationTitle("Insights")
             }
@@ -32,6 +34,7 @@ struct RootAppView: View {
     }
 
     /// One tab: a navigation stack that pushes `PersonDetailView` for any entity id.
+    /// `icon` is a custom (template-rendered) asset name from `Assets.xcassets`.
     @ViewBuilder
     private func stack<Content: View>(_ value: Tab, _ title: String, _ icon: String,
                                       @ViewBuilder _ content: () -> Content) -> some View {
@@ -44,7 +47,7 @@ struct RootAppView: View {
                     GiftDetailView(giftId: gift.id)
                 }
         }
-        .tabItem { Label(LocalizedStringKey(title), systemImage: icon) }
+        .tabItem { Label(LocalizedStringKey(title), image: icon) }
         .tag(value)
     }
 

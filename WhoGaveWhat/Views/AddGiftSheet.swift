@@ -252,9 +252,7 @@ struct AddGiftSheet: View {
         .disabled(!can)
     }
 
-    private var saveTitle: LocalizedStringKey {
-        store.editingGiftId != nil ? "Save changes" : "Save gift"
-    }
+    private var saveTitle: LocalizedStringKey { "Save" }
 
     // MARK: Bindings
 
@@ -329,22 +327,22 @@ private struct PickerSheet: View {
 
     // MARK: From / To (unified person list)
 
-    /// A single list spanning the household (You + family) and outside people, so
-    /// either side of From → To can be anyone. Manual-entry adds a new outside
-    /// person straight onto the side being edited.
+    /// A single, uncategorised list spanning the household and outside people, so
+    /// either side of From → To can be anyone. "You" is always pinned to the top;
+    /// manual-entry adds a new outside person straight onto the side being edited.
     private func entityPicker(title: String, selected: String?,
                               select: @escaping (String) -> Void,
                               add: @escaping (String) -> Void) -> some View {
-        ScrollView {
+        // You first, then the rest of the household, then everyone else.
+        let you = store.members.filter { $0.id == "you" }.map { ($0.id, $0.name, $0.color) }
+        let otherMembers = store.members.filter { $0.id != "you" }.map { ($0.id, $0.name, $0.color) }
+        let outsiders = store.people.map { ($0.id, $0.name, $0.color) }
+        let entities = you + otherMembers + outsiders
+        return ScrollView {
             VStack(spacing: 16) {
                 // Manual-entry first — add a new person from the top of the sheet.
                 addRow(placeholder: "Add person") { add($0) }
-                entityGroup("Your family",
-                            store.members.map { ($0.id, $0.name, $0.color) },
-                            selected: selected, select: select)
-                entityGroup("Friends & relatives",
-                            store.people.map { ($0.id, $0.name, $0.color) },
-                            selected: selected, select: select)
+                entityList(entities, selected: selected, select: select)
             }
             .padding(16)
         }
@@ -353,27 +351,24 @@ private struct PickerSheet: View {
     }
 
     @ViewBuilder
-    private func entityGroup(_ title: String, _ entities: [(String, String, Color)],
-                             selected: String?, select: @escaping (String) -> Void) -> some View {
+    private func entityList(_ entities: [(String, String, Color)],
+                            selected: String?, select: @escaping (String) -> Void) -> some View {
         if !entities.isEmpty {
-            VStack(alignment: .leading, spacing: 7) {
-                SectionHeader(text: title)
-                Card {
-                    VStack(spacing: 0) {
-                        ForEach(Array(entities.enumerated()), id: \.element.0) { idx, e in
-                            Button { select(e.0) } label: {
-                                HStack(spacing: 12) {
-                                    AvatarView(initials: store.initials(e.1), color: e.2, size: 38)
-                                    Text(e.1).font(KS.font(16, .semibold)).foregroundColor(KS.ink)
-                                    Spacer(minLength: 8)
-                                    if selected == e.0 { checkmark }
-                                }
-                                .padding(.horizontal, 14).padding(.vertical, 11)
-                                .contentShape(Rectangle())
+            Card {
+                VStack(spacing: 0) {
+                    ForEach(Array(entities.enumerated()), id: \.element.0) { idx, e in
+                        Button { select(e.0) } label: {
+                            HStack(spacing: 12) {
+                                AvatarView(initials: store.initials(e.1), color: e.2, size: 38)
+                                Text(e.1).font(KS.font(16, .semibold)).foregroundColor(KS.ink)
+                                Spacer(minLength: 8)
+                                if selected == e.0 { checkmark }
                             }
-                            .buttonStyle(.plain)
-                            if idx < entities.count - 1 { RowDivider().padding(.leading, 14) }
+                            .padding(.horizontal, 14).padding(.vertical, 11)
+                            .contentShape(Rectangle())
                         }
+                        .buttonStyle(.plain)
+                        if idx < entities.count - 1 { RowDivider().padding(.leading, 14) }
                     }
                 }
             }

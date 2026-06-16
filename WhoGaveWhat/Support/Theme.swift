@@ -18,6 +18,7 @@ enum KS {
     static let give      = ink                      // Given accent
     static let giveDeep  = Color(hex: 0x000000)
     static let giveTint  = Color(hex: 0xEEF0F3)     // given icon wells
+    static let iconWell  = Color(hex: 0xEEF0F3)     // gift-row icon well — neutral, direction-agnostic
     static let gold      = Color(hex: 0x5B6573)     // slate — neutral occasion bars
 
     // MARK: Surfaces
