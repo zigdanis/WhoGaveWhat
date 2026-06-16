@@ -1,8 +1,10 @@
 import SwiftUI
 
-/// Native sheet for adding a gift. The form is quiet: a tinted hero card for the
-/// gift itself, then a grouped list of tap-to-reveal pickers (person, member,
-/// occasion, date) — each opens its own bottom sheet with manual-entry support.
+/// Native sheet for adding a gift. There's no Received/Given toggle any more —
+/// the user just picks who gave it (From) and who got it (To); direction is
+/// derived from whichever side is the household (see `AppStore.addFlow`). The
+/// form is quiet: a tinted hero card for the gift itself, then a grouped list of
+/// tap-to-reveal pickers (from, to, occasion, date).
 struct AddGiftSheet: View {
     @EnvironmentObject var store: AppStore
     @FocusState private var focus: Field?
@@ -14,25 +16,28 @@ struct AddGiftSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    flowSegment.padding(.bottom, 18)
-
                     heroCard
 
                     SectionHeader(text: "Details").padding(.top, 22).padding(.bottom, 7)
                     detailsCard
 
-                    if store.add.flow == .given {
+                    if store.showPaidToggle {
                         paidCard.padding(.top, 12)
                     }
 
                     saveButton.padding(.top, 24)
                 }
                 .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 30)
+                // Taps on any non-interactive part of the form (card padding,
+                // section headers, gaps) drop keyboard focus. Buttons and text
+                // fields consume their own taps first, so this only fires on the
+                // "dead" areas — closing the keyboard no matter which field was up.
+                .contentShape(Rectangle())
+                .onTapGesture { focus = nil }
             }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
-            // Tap anywhere off the keyboard (empty areas of the form) to dismiss it.
-            // Sits behind the fields, so taps on the inputs still focus them.
+            // Empty scroll area below the content also dismisses the keyboard.
             .background(KS.bg.contentShape(Rectangle()).onTapGesture { focus = nil })
             .navigationTitle(LocalizedStringKey(store.editingGiftId == nil ? "Add a gift" : "Edit gift"))
             .navigationBarTitleDisplayMode(.inline)
@@ -61,21 +66,9 @@ struct AddGiftSheet: View {
         }
     }
 
-    private var fm: FlowMeta { store.flowMeta(store.add.flow) }
-    private var sug: Suggestion { store.suggest(store.add.name) }
+    /// Tint follows the derived direction so the hero reflects received/given.
+    private var fm: FlowMeta { store.flowMeta(store.addFlow) }
     private var can: Bool { store.canSave() }
-
-    // MARK: Flow segment
-
-    private var flowSegment: some View {
-        Segmented(options: [.init(key: "received", label: "Received", accent: KS.recv),
-                            .init(key: "given", label: "Given", accent: KS.ink)],
-                  selected: store.add.flow.rawValue) { key in
-            withAnimation(.easeOut(duration: 0.15)) {
-                store.add.flow = Flow(rawValue: key) ?? .received
-            }
-        }
-    }
 
     // MARK: Hero card (emoji + name + value, each its own tappable field)
 
@@ -110,19 +103,29 @@ struct AddGiftSheet: View {
             .onTapGesture { focus = .name }
     }
 
+    /// Emoji preview. While the on-device model is enriching the typed name, the
+    /// little corner badge becomes a spinner so the guess feels live.
     private var emojiTile: some View {
         Text(store.effEmoji(store.add))
             .font(.system(size: 28))
             .frame(width: 58, height: 58)
             .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(.white))
             .overlay(alignment: .bottomTrailing) {
-                Image(systemName: "pencil")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(width: 19, height: 19)
-                    .background(Circle().fill(fm.main))
-                    .overlay(Circle().stroke(fm.tint, lineWidth: 2.5))
-                    .offset(x: 6, y: 6)
+                Group {
+                    if store.aiLoading {
+                        ProgressView()
+                            .controlSize(.mini)
+                            .tint(.white)
+                    } else {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+                .frame(width: 19, height: 19)
+                .background(Circle().fill(fm.main))
+                .overlay(Circle().stroke(fm.tint, lineWidth: 2.5))
+                .offset(x: 6, y: 6)
             }
     }
 
@@ -138,10 +141,21 @@ struct AddGiftSheet: View {
                 .fixedSize()
             Text("₽").font(KS.font(16, .semibold)).foregroundColor(KS.muted2)
             if !store.add.valueTouched {
-                Text("estimated")
-                    .font(KS.font(11, .semibold)).foregroundColor(fm.main)
+                if store.aiLoading {
+                    // Live estimate in progress — small spinner + "thinking…".
+                    HStack(spacing: 5) {
+                        ProgressView().controlSize(.mini).tint(fm.main)
+                        Text("thinking…")
+                            .font(KS.font(11, .semibold)).foregroundColor(fm.main)
+                    }
                     .padding(.horizontal, 8).padding(.vertical, 3)
                     .background(Capsule().fill(fm.tint))
+                } else {
+                    Text("estimated")
+                        .font(KS.font(11, .semibold)).foregroundColor(fm.main)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(Capsule().fill(fm.tint))
+                }
             }
             Spacer(minLength: 0)
         }
@@ -170,13 +184,11 @@ struct AddGiftSheet: View {
     private var detailsCard: some View {
         Card {
             VStack(spacing: 0) {
-                detailRow(icon: "person.fill",
-                          label: store.add.flow == .received ? "Received from" : "Given to",
-                          value: store.add.personId.map(store.personName)) { store.openPicker(.person) }
+                detailRow(icon: "person.fill", label: "From",
+                          value: store.add.fromId.map(store.anyName)) { store.openPicker(.from) }
                 RowDivider().padding(.leading, 58)
-                detailRow(icon: "person.2.fill",
-                          label: store.add.flow == .received ? "Who received it" : "On behalf of",
-                          value: store.add.memberId.map(store.memberName)) { store.openPicker(.member) }
+                detailRow(icon: "person.2.fill", label: "To",
+                          value: store.add.toId.map(store.anyName)) { store.openPicker(.to) }
                 RowDivider().padding(.leading, 58)
                 detailRow(icon: "party.popper.fill", label: "Occasion",
                           value: store.locCeleb(store.add.celebration)) { store.openPicker(.celeb) }
@@ -210,14 +222,14 @@ struct AddGiftSheet: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: Paid toggle (given only)
+    // MARK: Paid toggle (family member gave a gift)
 
     private var paidCard: some View {
         Card {
             Toggle(isOn: paidBinding) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Paid by you").font(KS.font(16, .regular)).foregroundColor(KS.ink)
-                    Text("Track who actually covered it")
+                    Text("Count this in your own giving")
                         .font(KS.font(13, .regular)).foregroundColor(KS.muted3)
                 }
             }
@@ -241,8 +253,7 @@ struct AddGiftSheet: View {
     }
 
     private var saveTitle: LocalizedStringKey {
-        if store.editingGiftId != nil { return "Save changes" }
-        return store.add.flow == .received ? "Save received gift" : "Save given gift"
+        store.editingGiftId != nil ? "Save changes" : "Save gift"
     }
 
     // MARK: Bindings
@@ -276,13 +287,13 @@ struct AddGiftSheet: View {
 
 // MARK: - Picker bottom sheets
 
-/// One tap-to-reveal picker — list (person / member / occasion), emoji grid, or
-/// date — each with manual-entry support so the user can add a new option inline.
+/// One tap-to-reveal picker — from / to (a unified person list), occasion, emoji
+/// grid, or date — each with manual-entry support so the user can add a new
+/// option inline.
 private struct PickerSheet: View {
     @EnvironmentObject var store: AppStore
     let kind: PickerKind
     @State private var customText = ""
-    @State private var tempDate = AppStore.today
 
     var body: some View {
         NavigationStack {
@@ -301,14 +312,12 @@ private struct PickerSheet: View {
     @ViewBuilder
     private var content: some View {
         switch kind {
-        case .person:
-            entityPicker(title: "Received from / Given to",
-                         entities: store.people.map { ($0.id, $0.name, $0.color) },
-                         selected: store.add.personId, isFamily: false) { store.selectPerson($0) }
-        case .member:
-            entityPicker(title: "Family member",
-                         entities: store.members.map { ($0.id, $0.name, $0.color) },
-                         selected: store.add.memberId, isFamily: true) { store.selectMember($0) }
+        case .from:
+            entityPicker(title: "From", selected: store.add.fromId,
+                         select: { store.selectFrom($0) }, add: { store.addCustomFrom($0) })
+        case .to:
+            entityPicker(title: "To", selected: store.add.toId,
+                         select: { store.selectTo($0) }, add: { store.addCustomTo($0) })
         case .celeb:
             celebPicker
         case .emoji:
@@ -318,17 +327,37 @@ private struct PickerSheet: View {
         }
     }
 
-    // MARK: People / members
+    // MARK: From / To (unified person list)
 
-    private func entityPicker(title: String, entities: [(String, String, Color)],
-                              selected: String?, isFamily: Bool,
-                              select: @escaping (String) -> Void) -> some View {
+    /// A single list spanning the household (You + family) and outside people, so
+    /// either side of From → To can be anyone. Manual-entry adds a new outside
+    /// person straight onto the side being edited.
+    private func entityPicker(title: String, selected: String?,
+                              select: @escaping (String) -> Void,
+                              add: @escaping (String) -> Void) -> some View {
         ScrollView {
             VStack(spacing: 16) {
-                // Manual-entry first — add a new option from the top of the sheet.
-                addRow(placeholder: isFamily ? "Add family member" : "Add person") {
-                    store.addCustomPerson($0, isFamily: isFamily)
-                }
+                // Manual-entry first — add a new person from the top of the sheet.
+                addRow(placeholder: "Add person") { add($0) }
+                entityGroup("Your family",
+                            store.members.map { ($0.id, $0.name, $0.color) },
+                            selected: selected, select: select)
+                entityGroup("Friends & relatives",
+                            store.people.map { ($0.id, $0.name, $0.color) },
+                            selected: selected, select: select)
+            }
+            .padding(16)
+        }
+        .scrollIndicators(.hidden)
+        .navigationTitle(LocalizedStringKey(title))
+    }
+
+    @ViewBuilder
+    private func entityGroup(_ title: String, _ entities: [(String, String, Color)],
+                             selected: String?, select: @escaping (String) -> Void) -> some View {
+        if !entities.isEmpty {
+            VStack(alignment: .leading, spacing: 7) {
+                SectionHeader(text: title)
                 Card {
                     VStack(spacing: 0) {
                         ForEach(Array(entities.enumerated()), id: \.element.0) { idx, e in
@@ -348,10 +377,7 @@ private struct PickerSheet: View {
                     }
                 }
             }
-            .padding(16)
         }
-        .scrollIndicators(.hidden)
-        .navigationTitle(LocalizedStringKey(title))
     }
 
     // MARK: Occasion
@@ -453,6 +479,9 @@ private struct PickerSheet: View {
 
     // MARK: Date
 
+    /// Today / Yesterday pills plus a graphical calendar. Tapping a pill or a day
+    /// applies the date immediately and closes the sheet — there's no separate
+    /// confirm button.
     private var datePicker: some View {
         ScrollView {
             VStack(spacing: 16) {
@@ -461,31 +490,32 @@ private struct PickerSheet: View {
                     quickDate("Yesterday", AppStore.yesterday)
                 }
                 Card {
-                    DatePicker("", selection: $tempDate, displayedComponents: .date)
+                    DatePicker("", selection: dateApplyBinding, displayedComponents: .date)
                         .datePickerStyle(.graphical)
                         .tint(KS.recv)
                         .padding(.horizontal, 10).padding(.vertical, 6)
                 }
-                Button { store.selectDate(tempDate) } label: {
-                    Text("Use this date")
-                        .font(KS.font(17, .semibold)).foregroundColor(.white)
-                        .frame(maxWidth: .infinity).padding(.vertical, 15)
-                        .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.ink))
-                }
-                .buttonStyle(.plain)
             }
             .padding(16)
         }
         .scrollIndicators(.hidden)
         .navigationTitle("Pick a date")
-        .onAppear { tempDate = store.add.date }
+    }
+
+    /// Picking a day in the calendar applies it (and dismisses) immediately.
+    private var dateApplyBinding: Binding<Date> {
+        Binding(get: { store.add.date }, set: { store.selectDate($0) })
     }
 
     private func quickDate(_ label: String, _ date: Date) -> some View {
-        Button { store.selectDate(date) } label: {
-            Text(LocalizedStringKey(label)).font(KS.font(15, .semibold)).foregroundColor(KS.ink)
+        let selected = Calendar.current.isDate(store.add.date, inSameDayAs: date)
+        return Button { store.selectDate(date) } label: {
+            Text(LocalizedStringKey(label))
+                .font(KS.font(15, .semibold))
+                .foregroundColor(selected ? .white : KS.ink)
                 .frame(maxWidth: .infinity).padding(.vertical, 13)
-                .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.card))
+                .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous)
+                    .fill(selected ? KS.ink : KS.card))
         }
         .buttonStyle(.plain)
     }

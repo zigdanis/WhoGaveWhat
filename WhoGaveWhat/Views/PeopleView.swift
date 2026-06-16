@@ -51,8 +51,8 @@ struct PersonRow: View {
                     .font(KS.font(13, .regular)).foregroundColor(KS.muted3)
             }
             Spacer(minLength: 8)
-            // Per-person turnover hidden until tapped.
-            AmountSpoiler(amount: store.sum(gs))
+            Text(rub(store.sum(gs)))
+                .font(KS.font(15, .semibold)).foregroundColor(KS.ink)
             Chevron()
         }
         .padding(.horizontal, 14).padding(.vertical, 13)

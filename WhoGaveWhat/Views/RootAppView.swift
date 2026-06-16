@@ -9,7 +9,10 @@ struct RootAppView: View {
     var body: some View {
         TabView(selection: tabSelection) {
             stack(.home, "Home", "house") {
-                ScreenScroll { HomeView() }
+                // Home is its own native List (smooth swipe-to-delete), so it
+                // carries its own background + floating button rather than the
+                // shared ScreenScroll wrapper.
+                HomeView()
                     .navigationTitle("Who Gave What")
                     .toolbar { settingsButton }
             }
@@ -73,8 +76,7 @@ struct RootAppView: View {
 /// Shared scroll container for a tab's root screen — content scrolls under the
 /// floating glass tab bar, and the "Add a gift" pill is pinned just above it via
 /// a bottom safe-area inset (so it never overlaps the bar on any device).
-private struct ScreenScroll<Content: View>: View {
-    @EnvironmentObject var store: AppStore
+struct ScreenScroll<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -85,20 +87,33 @@ private struct ScreenScroll<Content: View>: View {
         }
         .scrollIndicators(.hidden)
         .background(KS.bg)
-        .safeAreaInset(edge: .bottom) { fab }
+        .floatingAddButton()
     }
+}
 
-    private var fab: some View {
+/// The floating "Add a gift" button — a rounded-rect pill (Claude Design) pinned
+/// just above the tab bar. Shared by `ScreenScroll` and Home's native List.
+struct AddGiftFAB: View {
+    @EnvironmentObject var store: AppStore
+
+    var body: some View {
         Button { store.openSheet() } label: {
             Label("Add a gift", systemImage: "plus")
                 .font(KS.font(16, .semibold))
                 .foregroundColor(.white)
                 .padding(.horizontal, 22).padding(.vertical, 13)
-                .background(Capsule().fill(KS.ink))
+                .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.ink))
                 .ksCardShadow(strong: true)
         }
         .buttonStyle(.plain)
         .padding(.bottom, 6)
         .accessibilityLabel("Add a gift")
+    }
+}
+
+extension View {
+    /// Pin the floating "Add a gift" button above the tab bar.
+    func floatingAddButton() -> some View {
+        safeAreaInset(edge: .bottom) { AddGiftFAB() }
     }
 }

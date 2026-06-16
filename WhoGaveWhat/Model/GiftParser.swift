@@ -13,6 +13,18 @@ import FoundationModels
 enum GiftParser {
     struct Result { let emoji: String; let value: Double }
 
+    /// Whether the on-device model is usable right now. False on the simulator,
+    /// on devices without Apple Intelligence, when the user hasn't enabled it, or
+    /// while the model is still downloading — callers skip the spinner then.
+    static var isAvailable: Bool {
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) {
+            if case .available = SystemLanguageModel.default.availability { return true }
+        }
+        #endif
+        return false
+    }
+
     /// Returns nil when the on-device model can't be used, so callers fall back
     /// to the keyword heuristic.
     static func parse(_ name: String) async -> Result? {

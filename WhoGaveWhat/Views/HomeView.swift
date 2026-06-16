@@ -1,5 +1,8 @@
 import SwiftUI
 
+/// Home timeline as a native `List` — so swipe-to-delete and tap-to-open are the
+/// system's own gestures (smooth, reliable) rather than a hand-rolled drag. The
+/// summary card and filter ride along as plain, separator-less rows on top.
 struct HomeView: View {
     @EnvironmentObject var store: AppStore
 
@@ -10,50 +13,63 @@ struct HomeView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Summary card
-            Card {
-                HStack(spacing: 0) {
-                    summaryColumn(arrow: "↙", label: "Received", color: KS.recv,
-                                  value: rub(store.sum(store.received)), count: store.received.count)
-                    Rectangle().fill(KS.track).frame(width: 1).padding(.vertical, 2)
-                    summaryColumn(arrow: "↗", label: "Given", color: KS.ink,
-                                  value: rub(store.sum(store.given)), count: store.given.count)
-                }
-                .padding(.vertical, 18).padding(.horizontal, 6)
+        List {
+            // Summary + filter — quiet rows with no card chrome of their own.
+            Section {
+                summaryCard
+                Segmented(options: filterOptions, selected: store.filter) { store.setFilter($0) }
+                    .padding(.top, 4)
             }
+            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
 
-            // Filter
-            Segmented(options: filterOptions, selected: store.filter) { store.setFilter($0) }
-                .padding(.top, 16)
-
-            // Timeline groups — or an empty placeholder when nothing matches.
             if store.timeline.isEmpty {
-                emptyState.padding(.top, 64)
+                Section {
+                    emptyState
+                        .listRowInsets(EdgeInsets(top: 48, leading: 16, bottom: 16, trailing: 16))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                }
             } else {
                 ForEach(store.timeline) { group in
-                    VStack(alignment: .leading, spacing: 0) {
-                        SectionHeader(text: group.label)
-                            .padding(.bottom, 7)
-                        Card {
-                            VStack(spacing: 0) {
-                                ForEach(Array(group.items.enumerated()), id: \.element.id) { idx, gift in
-                                    SwipeToDelete(onDelete: { store.deleteGift(gift.id) }) {
-                                        NavigationLink(value: gift) {
-                                            GiftRow(gift: gift)
-                                        }
-                                        .buttonStyle(.plain)
+                    Section {
+                        ForEach(group.items) { gift in
+                            NavigationLink(value: gift) { GiftRow(gift: gift) }
+                                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) { store.deleteGift(gift.id) } label: {
+                                        Label("Delete", systemImage: "trash")
                                     }
-                                    if idx < group.items.count - 1 { RowDivider().padding(.leading, 14) }
                                 }
-                            }
                         }
+                    } header: {
+                        Text(group.label)
+                            .font(KS.font(13, .regular)).foregroundColor(KS.muted)
+                            .textCase(nil)
                     }
-                    .padding(.top, 20)
                 }
             }
         }
-        .padding(.horizontal, 16)
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(KS.bg)
+        .floatingAddButton()
+    }
+
+    // MARK: Summary
+
+    private var summaryCard: some View {
+        Card {
+            HStack(spacing: 0) {
+                summaryColumn(arrow: "↙", label: "Received", color: KS.recv,
+                              value: rub(store.sum(store.received)), count: store.received.count)
+                Rectangle().fill(KS.track).frame(width: 1).padding(.vertical, 2)
+                summaryColumn(arrow: "↗", label: "Given", color: KS.ink,
+                              value: rub(store.sum(store.given)), count: store.given.count)
+            }
+            .padding(.vertical, 18).padding(.horizontal, 6)
+        }
     }
 
     /// Quiet placeholder shown when the current filter has no gifts — a faint

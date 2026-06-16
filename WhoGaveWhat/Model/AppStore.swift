@@ -6,21 +6,25 @@ enum Tab: String { case home, people, insights }
 
 /// Which tap-to-reveal picker the Add sheet is showing.
 enum PickerKind: String, Identifiable {
-    case person, member, celeb, emoji, date
+    case from, to, celeb, emoji, date
     var id: String { rawValue }
 }
 
 /// Draft state for the "Add a gift" sheet. Fields stay quiet (nil → "Choose")
 /// until the user fills them in.
+///
+/// Direction is no longer a manual toggle: the user picks who gave it (`fromId`)
+/// and who got it (`toId`); each can be "you", a family member, or an outside
+/// person. Received vs Given is derived from whichever side is the household —
+/// see `AppStore.addFlow`.
 struct AddForm {
-    var flow: Flow = .received
     var name: String = ""
     var emoji: String? = nil            // chosen emoji; nil → use AI / suggestion
     var value: Int? = nil
     var valueTouched: Bool = false
-    var personId: String? = nil
-    var memberId: String? = nil         // nil → "Choose"; defaults to "you" on save
-    var paidByYou: Bool = true
+    var fromId: String? = nil           // giver  (nil → "Choose")
+    var toId: String? = nil             // receiver (nil → "Choose")
+    var paidByYou: Bool = true          // only meaningful when a family member gives
     var celebration: String? = nil      // nil → "Choose"
     var date: Date = AppStore.today
 
@@ -50,6 +54,12 @@ final class AppStore: ObservableObject {
 
     /// In-flight on-device enrichment of the Add sheet's gift name (debounced).
     private var aiTask: Task<Void, Never>?
+    /// True while the on-device model is actively thinking about the typed name,
+    /// so the Add sheet can show a small spinner on the icon + estimate.
+    @Published var aiLoading: Bool = false
+
+    /// Persists that the user has seen onboarding, so it only shows on first launch.
+    private let onboardedKey = "didOnboard"
 
     // Settings toggles
     @Published var notifEnabled: Bool = true
@@ -98,11 +108,17 @@ final class AppStore: ObservableObject {
         Suggestion(keywords: ["scarf", "шарф", "платок"], emoji: "🧣", value: 2200),
         Suggestion(keywords: ["candle", "свеч"], emoji: "🕯️", value: 1000),
         Suggestion(keywords: ["game", "console", "игра", "игров", "пристав", "консол"], emoji: "🎮", value: 5500),
+        Suggestion(keywords: ["pizza", "пицц"], emoji: "🍕", value: 900),
+        Suggestion(keywords: ["coffee beans", "tea", "чай"], emoji: "🍵", value: 700),
     ]
 
     init(context: NSManagedObjectContext) {
         self.context = context
         reload()
+
+        // Onboarding shows only on the very first launch; afterwards go straight
+        // into the app (the user already chose how to start).
+        if UserDefaults.standard.bool(forKey: onboardedKey) { screen = .app }
 
         // UI-testing / preview entry points (e.g. -setenv KS_START app).
         let env = ProcessInfo.processInfo.environment
@@ -154,6 +170,38 @@ final class AppStore: ObservableObject {
             : FlowMeta(main: KS.give, deep: KS.giveDeep, tint: KS.giveTint, label: "Given",    arrow: "↗")
     }
 
+    // MARK: - From → To direction
+
+    /// True when `id` is a household member (includes "you").
+    func isHousehold(_ id: String?) -> Bool {
+        guard let id else { return false }
+        return members.contains { $0.id == id }
+    }
+
+    /// Display name for any entity id (household member or outside person).
+    func anyName(_ id: String) -> String {
+        members.first { $0.id == id }?.name ?? people.first { $0.id == id }?.name ?? id
+    }
+
+    /// Received vs Given derived from the From → To pickers, from the user's
+    /// household perspective: value coming *in* to the household is Received,
+    /// value going *out* is Given. Defaults to Received until a side is chosen.
+    var addFlow: Flow {
+        let fromHH = isHousehold(add.fromId)
+        let toHH = isHousehold(add.toId)
+        if toHH && !fromHH { return .received }
+        if fromHH && !toHH { return .given }
+        if add.fromId == "you" { return .given }
+        if add.toId == "you" { return .received }
+        return .received
+    }
+
+    /// The "Paid by you" toggle only makes sense when a family member *other than
+    /// you* is the giver — that's the case the user uses it to claim as their own.
+    var showPaidToggle: Bool {
+        addFlow == .given && isHousehold(add.fromId) && add.fromId != "you"
+    }
+
     /// Effective emoji shown in the Add hero: chosen → AI guess → keyword → gift.
     func effEmoji(_ a: AddForm) -> String {
         if let e = a.emoji { return e }
@@ -180,17 +228,29 @@ final class AppStore: ObservableObject {
 
     private func scheduleEnrichment(for name: String) {
         aiTask?.cancel()
+        aiLoading = false
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.count >= 2 else { return }
+        // No on-device model on this device (older hardware, Apple Intelligence
+        // off, model not downloaded) → keep the instant keyword heuristic and
+        // don't show a spinner that would never resolve.
+        guard GiftParser.isAvailable else { return }
         aiTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 600_000_000)   // debounce typing
             guard let self, !Task.isCancelled else { return }
             guard self.add.name.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed else { return }
-            guard let result = await GiftParser.parse(trimmed) else { return }
+            self.aiLoading = true
+            let result = await GiftParser.parse(trimmed)
             guard !Task.isCancelled,
-                  self.add.name.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed else { return }
-            self.add.aiEmoji = result.emoji
-            if result.value > 0 { self.add.aiValue = result.value }
+                  self.add.name.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed else {
+                self.aiLoading = false
+                return
+            }
+            if let result {
+                self.add.aiEmoji = result.emoji
+                if result.value > 0 { self.add.aiValue = result.value }
+            }
+            self.aiLoading = false
         }
     }
 
@@ -295,7 +355,10 @@ final class AppStore: ObservableObject {
         if onbStep < 2 { onbStep += 1 } else { screen = .signin }
     }
     func onbSkip() { screen = .signin }
-    func enterApp() { screen = .app }
+    func enterApp() {
+        UserDefaults.standard.set(true, forKey: onboardedKey)
+        screen = .app
+    }
 
     func setTab(_ t: Tab) { tab = t; detailId = nil }
     func openDetail(_ id: String) { withAnimation(.easeOut(duration: 0.26)) { detailId = id; detailFlow = .received } }
@@ -303,27 +366,34 @@ final class AppStore: ObservableObject {
     func setDetailFlow(_ f: Flow) { withAnimation(.easeOut(duration: 0.18)) { detailFlow = f } }
     func openSettings() { showSettings = true }
     func closeSettings() { showSettings = false }
-    func openSheet() { aiTask?.cancel(); editingGiftId = nil; add = blankAdd(); sheetOpen = true }
-    func closeSheet() { aiTask?.cancel(); sheetOpen = false; picker = nil; editingGiftId = nil }
+    func openSheet() { aiTask?.cancel(); aiLoading = false; editingGiftId = nil; add = blankAdd(); sheetOpen = true }
+    func closeSheet() { aiTask?.cancel(); aiLoading = false; sheetOpen = false; picker = nil; editingGiftId = nil }
 
     /// Open the Add sheet pre-filled to edit an existing gift.
     func openEditSheet(_ g: Gift) {
         aiTask?.cancel()
+        aiLoading = false
         editingGiftId = g.id
         add = formFrom(g)
         sheetOpen = true
     }
 
     /// Build a draft form from a saved gift (the inverse of `saveGift`).
+    /// Received: from = the outside person, to = the household member.
+    /// Given:    from = the household member, to = the outside person.
     func formFrom(_ g: Gift) -> AddForm {
         var f = AddForm()
-        f.flow = g.flow
         f.name = g.name
         f.emoji = g.emoji
         f.value = Int(g.value)
         f.valueTouched = true
-        f.personId = g.personId
-        f.memberId = g.memberId
+        if g.flow == .received {
+            f.fromId = g.personId
+            f.toId = g.memberId
+        } else {
+            f.fromId = g.memberId
+            f.toId = g.personId
+        }
         f.paidByYou = g.paidByYou
         f.celebration = g.celebration
         f.date = g.date
@@ -349,8 +419,8 @@ final class AppStore: ObservableObject {
     func closePicker() { picker = nil }
 
     func selectEmoji(_ e: String) { add.emoji = e; picker = nil }
-    func selectPerson(_ id: String) { add.personId = id; picker = nil }
-    func selectMember(_ id: String) { add.memberId = id; picker = nil }
+    func selectFrom(_ id: String) { add.fromId = id; picker = nil }
+    func selectTo(_ id: String) { add.toId = id; picker = nil }
     func selectCeleb(_ c: String) { add.celebration = c; picker = nil }
     func selectDate(_ d: Date) { add.date = d; picker = nil }
 
@@ -378,9 +448,12 @@ final class AppStore: ObservableObject {
         picker = nil
     }
 
-    func addCustomPerson(_ raw: String, isFamily: Bool) {
+    /// Create a new person/member record and return its id (no selection side
+    /// effects), so the From/To pickers can assign it to the right side.
+    @discardableResult
+    func createPerson(_ raw: String, isFamily: Bool) -> String? {
         let v = raw.trimmingCharacters(in: .whitespaces)
-        guard !v.isEmpty else { return }
+        guard !v.isEmpty else { return nil }
         let id = (isFamily ? "m" : "p") + String(Int(Date().timeIntervalSince1970 * 1000))
         let color = newEntityPalette.randomElement() ?? 0x5B6573
         let p = CDPerson(context: context)
@@ -391,22 +464,42 @@ final class AppStore: ObservableObject {
         p.sortIndex = Int64((isFamily ? members.count : people.count) + 100)
         try? context.save()
         reload()
-        if isFamily { add.memberId = id } else { add.personId = id }
-        picker = nil
+        return id
+    }
+
+    /// Add a new outside person and put them on the From (giver) side.
+    func addCustomFrom(_ raw: String) {
+        if let id = createPerson(raw, isFamily: false) { add.fromId = id; picker = nil }
+    }
+
+    /// Add a new outside person and put them on the To (receiver) side.
+    func addCustomTo(_ raw: String) {
+        if let id = createPerson(raw, isFamily: false) { add.toId = id; picker = nil }
     }
 
     // MARK: - Save
 
     func canSave() -> Bool {
-        !add.name.trimmingCharacters(in: .whitespaces).isEmpty && add.personId != nil
+        !add.name.trimmingCharacters(in: .whitespaces).isEmpty
+            && add.fromId != nil && add.toId != nil && add.fromId != add.toId
     }
 
     func saveGift() {
-        guard canSave(), let personId = add.personId else { return }
+        guard canSave(), let fromId = add.fromId, let toId = add.toId else { return }
         aiTask?.cancel()
+        aiLoading = false
         let sug = suggest(add.name)
         let value = add.valueTouched ? Double(add.value ?? 0) : (add.aiValue ?? sug.value)
         let emoji = add.emoji ?? add.aiEmoji ?? sug.emoji
+
+        // Map From/To onto the stored shape: `member` is the household side,
+        // `person` is the outside party; `flow` is the household's perspective.
+        let flow = addFlow
+        let memberId = flow == .received ? toId : fromId
+        let personId = flow == .received ? fromId : toId
+        // You giving → you paid by definition; a family member giving → the
+        // user's "Paid by you" claim; received → not applicable.
+        let paid: Bool = flow == .given ? (memberId == "you" ? true : add.paidByYou) : false
 
         // Editing reuses the existing record (keeping its id); otherwise create one.
         let gift: CDGift
@@ -418,10 +511,10 @@ final class AppStore: ObservableObject {
         }
         gift.emoji = emoji
         gift.name = add.name.trimmingCharacters(in: .whitespaces)
-        gift.flow = add.flow.rawValue
+        gift.flow = flow.rawValue
         gift.person = fetchPerson(personId)
-        gift.member = fetchPerson(add.memberId ?? "you")
-        gift.paidByYou = add.flow == .given ? add.paidByYou : false
+        gift.member = fetchPerson(memberId)
+        gift.paidByYou = paid
         gift.celebration = add.celebration ?? "Just because"
         gift.date = add.date
         gift.value = value

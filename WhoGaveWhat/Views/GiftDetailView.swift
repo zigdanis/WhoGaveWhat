@@ -7,7 +7,6 @@ struct GiftDetailView: View {
     @EnvironmentObject var store: AppStore
     @Environment(\.dismiss) private var dismiss
     let giftId: String
-    @State private var confirmDelete = false
 
     var body: some View {
         Group {
@@ -43,15 +42,6 @@ struct GiftDetailView: View {
                 Button("Edit") { store.openEditSheet(gift) }
                     .fontWeight(.semibold).tint(KS.recv)
             }
-        }
-        .confirmationDialog("Delete this gift?", isPresented: $confirmDelete, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
-                store.deleteGift(giftId)
-                dismiss()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This can't be undone.")
         }
     }
 
@@ -91,15 +81,14 @@ struct GiftDetailView: View {
     // MARK: Details
 
     private func detailsCard(_ g: Gift, _ fm: FlowMeta) -> some View {
-        Card {
+        // From (giver) → To (receiver), matching the Add sheet's framing.
+        let fromName = g.flow == .received ? store.personName(g.personId) : store.memberName(g.memberId)
+        let toName = g.flow == .received ? store.memberName(g.memberId) : store.personName(g.personId)
+        return Card {
             VStack(spacing: 0) {
-                detailRow(fm, icon: "person.fill",
-                          label: g.flow == .received ? "Received from" : "Given to",
-                          value: store.personName(g.personId))
+                detailRow(fm, icon: "person.fill", label: "From", value: fromName)
                 RowDivider().padding(.leading, 58)
-                detailRow(fm, icon: "person.2.fill",
-                          label: g.flow == .received ? "Who received it" : "On behalf of",
-                          value: store.memberName(g.memberId))
+                detailRow(fm, icon: "person.2.fill", label: "To", value: toName)
                 RowDivider().padding(.leading, 58)
                 detailRow(fm, icon: "party.popper.fill", label: "Occasion",
                           value: store.locCeleb(g.celebration))
@@ -125,12 +114,16 @@ struct GiftDetailView: View {
 
     // MARK: Delete
 
+    /// Quiet text button (no card background) so it doesn't draw the eye — delete
+    /// happens immediately, no confirmation.
     private var deleteButton: some View {
-        Button(role: .destructive) { confirmDelete = true } label: {
+        Button(role: .destructive) {
+            store.deleteGift(giftId)
+            dismiss()
+        } label: {
             Text("Delete gift")
-                .font(KS.font(17, .semibold)).foregroundColor(Color(hex: 0xE5484D))
-                .frame(maxWidth: .infinity).padding(.vertical, 16)
-                .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.card))
+                .font(KS.font(16, .regular)).foregroundColor(Color(hex: 0xE5484D))
+                .frame(maxWidth: .infinity).padding(.vertical, 12)
         }
         .buttonStyle(.plain)
     }

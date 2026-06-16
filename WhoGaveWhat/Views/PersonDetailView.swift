@@ -1,9 +1,18 @@
 import SwiftUI
 
+/// A person's gift history. Built as a native `List` so its rows open / swipe-to-
+/// delete exactly like Home, reusing `GiftRow` + `GiftDetailView`. The header
+/// (avatar, per-side stats, All/Received/Given filter) rides as a quiet section.
 struct PersonDetailView: View {
     @EnvironmentObject var store: AppStore
     let entityId: String
-    @State private var flow: Flow = .received
+    @State private var filter: String = "all"
+
+    private var filterOptions: [Segmented.Option] {
+        [.init(key: "all", label: "All", accent: KS.ink),
+         .init(key: "received", label: "Received", accent: KS.recv),
+         .init(key: "given", label: "Given", accent: KS.ink)]
+    }
 
     var body: some View {
         let isMember = store.isMember(entityId)
@@ -14,12 +23,11 @@ struct PersonDetailView: View {
             .sorted { $0.date > $1.date }
         let recv = gs.filter { $0.flow == .received }
         let given = gs.filter { $0.flow == .given }
-        let bars = occasionBars(gs)
-        let list = flow == .received ? recv : given
+        let list = filter == "received" ? recv : (filter == "given" ? given : gs)
 
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // Header
+        List {
+            // Header + stats + filter — quiet rows, no separators.
+            Section {
                 VStack(spacing: 0) {
                     AvatarView(initials: store.initials(name), color: color, size: 76)
                     Text(name).font(KS.font(24, .bold)).tracking(-0.4).foregroundColor(KS.ink).padding(.top, 13)
@@ -27,7 +35,6 @@ struct PersonDetailView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, 6)
 
-                // Stats: count + value per side
                 HStack(spacing: 10) {
                     statCard(arrow: "↙", label: "Received", color: KS.recv,
                              count: recv.count, value: store.sum(recv))
@@ -36,62 +43,51 @@ struct PersonDetailView: View {
                 }
                 .padding(.top, 18)
 
-                // By occasion
-                if !bars.isEmpty {
-                    SectionHeader(text: "By occasion").padding(.top, 22).padding(.bottom, 7)
-                    Card {
-                        VStack(spacing: 0) {
-                            let maxV = bars.first?.1 ?? 1
-                            ForEach(bars, id: \.0) { label, value in
-                                VStack(spacing: 7) {
-                                    HStack {
-                                        Text(store.locCeleb(label)).font(KS.font(13, .semibold)).foregroundColor(KS.ink)
-                                        Spacer()
-                                        Text(rub(value)).font(KS.font(13, .regular)).foregroundColor(KS.muted)
-                                    }
-                                    BarView(pct: value / maxV * 100, color: color)
+                Segmented(options: filterOptions, selected: filter) { key in
+                    withAnimation(.easeOut(duration: 0.18)) { filter = key }
+                }
+                .padding(.top, 18)
+            }
+            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 8, trailing: 16))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+
+            if list.isEmpty {
+                Section {
+                    Text(LocalizedStringKey(emptyText))
+                        .font(KS.font(14, .regular)).foregroundColor(KS.muted4)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 30)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                }
+            } else {
+                Section {
+                    ForEach(list) { gift in
+                        NavigationLink(value: gift) { GiftRow(gift: gift) }
+                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) { store.deleteGift(gift.id) } label: {
+                                    Label("Delete", systemImage: "trash")
                                 }
-                                .padding(.bottom, 14)
                             }
-                        }
-                        .padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 2)
-                    }
-                }
-
-                // Received / Given toggle
-                Segmented(options: [.init(key: "received", label: "Received", accent: KS.recv),
-                                    .init(key: "given", label: "Given", accent: KS.ink)],
-                          selected: flow.rawValue) { key in
-                    withAnimation(.easeOut(duration: 0.18)) { flow = Flow(rawValue: key) ?? .received }
-                }
-                .padding(.top, 22)
-                .padding(.bottom, 12)
-
-                if list.isEmpty {
-                    Card {
-                        Text(LocalizedStringKey(flow == .given ? "No gifts given yet." : "No gifts received yet."))
-                            .font(KS.font(14, .regular)).foregroundColor(KS.muted4)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 30)
-                    }
-                } else {
-                    Card {
-                        VStack(spacing: 0) {
-                            ForEach(Array(list.enumerated()), id: \.element.id) { idx, gift in
-                                GiftRow(gift: gift)
-                                if idx < list.count - 1 { RowDivider().padding(.leading, 14) }
-                            }
-                        }
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 110)
         }
-        .scrollIndicators(.hidden)
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
         .background(KS.bg)
         .navigationTitle(name)
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var emptyText: String {
+        switch filter {
+        case "given": return "No gifts given yet."
+        case "received": return "No gifts received yet."
+        default: return "No gifts yet"
+        }
     }
 
     private func statCard(arrow: String, label: String, color: Color, count: Int, value: Double) -> some View {
@@ -108,11 +104,5 @@ struct PersonDetailView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(15)
         }
-    }
-
-    private func occasionBars(_ gs: [Gift]) -> [(String, Double)] {
-        var map: [String: Double] = [:]
-        for g in gs { map[g.celebration, default: 0] += g.value }
-        return map.map { ($0.key, $0.value) }.sorted { $0.1 > $1.1 }
     }
 }

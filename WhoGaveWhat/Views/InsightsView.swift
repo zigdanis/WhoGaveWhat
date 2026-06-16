@@ -44,20 +44,11 @@ struct InsightsView: View {
                 .padding(20)
             }
 
-            // Who's really paying — solid ink card
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Who's really paying")
-                    .font(KS.font(13, .semibold)).foregroundColor(.white.opacity(0.7))
-                Text("You covered \(store.giftsCount(paid.count))")
-                    .font(KS.font(24, .bold)).tracking(-0.4).foregroundColor(.white).padding(.top, 10)
-                Text("That's \(rub(store.sum(paid))) from your pocket — the quiet hero of the family.")
-                    .font(KS.font(15, .regular)).foregroundColor(.white.opacity(0.8)).padding(.top, 4)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.ink))
-            .padding(.top, 14)
+            // Headline insight — solid ink card. When you've received more than
+            // you've given, flip it to a "you're ahead" message instead of the
+            // "who's really paying" one (which only lands when you've paid a lot).
+            spotlightCard(received: rv, given: gv, paid: paid)
+                .padding(.top, 14)
 
             // Top givers
             SectionHeader(text: "Top givers").padding(.top, 22).padding(.bottom, 7)
@@ -89,6 +80,34 @@ struct InsightsView: View {
             }
         }
         .padding(.horizontal, 16)
+    }
+
+    /// The big ink headline card. Two flavours, chosen by the balance of giving.
+    @ViewBuilder
+    private func spotlightCard(received: Double, given: Double, paid: [Gift]) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if received > given {
+                // You're a net receiver — celebrate it rather than guilt-trip.
+                Text("On the receiving end")
+                    .font(KS.font(13, .semibold)).foregroundColor(.white.opacity(0.7))
+                Text("You've received \(rub(received))")
+                    .font(KS.font(24, .bold)).tracking(-0.4).foregroundColor(.white).padding(.top, 10)
+                Text("That's \(rub(received - given)) more than you've given back — you're well loved. Maybe time to return the favour?")
+                    .font(KS.font(15, .regular)).foregroundColor(.white.opacity(0.8)).padding(.top, 4)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text("Who's really paying")
+                    .font(KS.font(13, .semibold)).foregroundColor(.white.opacity(0.7))
+                Text("You covered \(store.giftsCount(paid.count))")
+                    .font(KS.font(24, .bold)).tracking(-0.4).foregroundColor(.white).padding(.top, 10)
+                Text("That's \(rub(store.sum(paid))) from your pocket — the quiet hero of the family.")
+                    .font(KS.font(15, .regular)).foregroundColor(.white.opacity(0.8)).padding(.top, 4)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.ink))
     }
 
     @ViewBuilder
@@ -149,10 +168,8 @@ private struct RankRow: View {
                 HStack(alignment: .firstTextBaseline, spacing: 5) {
                     Text(person.name).font(KS.font(15, .semibold)).foregroundColor(KS.ink)
                     Spacer(minLength: 8)
-                    Text(verbatim: "\(store.giftsCount(count)) · ")
+                    Text(verbatim: "\(store.giftsCount(count)) · \(rub(value))")
                         .font(KS.font(13, .regular)).foregroundColor(KS.muted)
-                    // Per-person turnover hidden until tapped.
-                    AmountSpoiler(amount: value, font: KS.font(13, .regular), color: KS.muted)
                 }
                 BarView(pct: value / maxValue * 100, color: person.color, height: 7)
             }

@@ -239,12 +239,8 @@
         }
       }
     },
-    "" : {
-
-    },
-    "%lld" : {
-
-    },
+    "" : {},
+    "%lld" : {},
     "%lld gifts" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -385,18 +381,10 @@
         }
       }
     },
-    "✉️" : {
-
-    },
-    "₽" : {
-
-    },
-    "0" : {
-
-    },
-    "1 800 ₽" : {
-
-    },
+    "✉️" : {},
+    "₽" : {},
+    "0" : {},
+    "1 800 ₽" : {},
     "6 gifts together" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -414,9 +402,7 @@
         }
       }
     },
-    "14 700 ₽" : {
-
-    },
+    "14 700 ₽" : {},
     "About" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2368,6 +2354,142 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ваша семья"
+          }
+        }
+      }
+    },
+    "From" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "От"
+          }
+        }
+      }
+    },
+    "To" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кому"
+          }
+        }
+      }
+    },
+    "Save gift" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save gift"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранить подарок"
+          }
+        }
+      }
+    },
+    "thinking…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "thinking…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "думаю…"
+          }
+        }
+      }
+    },
+    "Count this in your own giving" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Count this in your own giving"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Учитывать в ваших подарках"
+          }
+        }
+      }
+    },
+    "On the receiving end" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On the receiving end"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вы больше получаете"
+          }
+        }
+      }
+    },
+    "You've received %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've received %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вы получили %@"
+          }
+        }
+      }
+    },
+    "That's %@ more than you've given back — you're well loved. Maybe time to return the favour?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That's %@ more than you've given back — you're well loved. Maybe time to return the favour?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Это на %@ больше, чем вы подарили в ответ — вас очень любят. Может, пора ответить тем же?"
           }
         }
       }
