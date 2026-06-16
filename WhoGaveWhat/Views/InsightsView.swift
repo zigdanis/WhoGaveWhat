@@ -29,7 +29,7 @@ struct InsightsView: View {
                     .buttonStyle(.plain)
                     .padding(.top, 7)
 
-                    Text("\(store.gifts.count) gifts · \(store.people.count) people")
+                    Text(verbatim: "\(store.giftsCount(store.gifts.count)) · \(store.peopleCount(store.people.count))")
                         .font(KS.font(14, .regular)).foregroundColor(KS.muted).padding(.top, 4)
 
                     // Stacked received/given bar
@@ -57,7 +57,7 @@ struct InsightsView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text("Who's really paying")
                     .font(KS.font(13, .semibold)).foregroundColor(.white.opacity(0.7))
-                Text("You covered \(paid.count) gifts")
+                Text("You covered \(store.giftsCount(paid.count))")
                     .font(KS.font(24, .bold)).tracking(-0.4).foregroundColor(.white).padding(.top, 10)
                 Text("That's \(rub(store.sum(paid))) from your pocket — the quiet hero of the family.")
                     .font(KS.font(15, .regular)).foregroundColor(.white.opacity(0.8)).padding(.top, 4)
@@ -85,7 +85,7 @@ struct InsightsView: View {
                     ForEach(bars, id: \.0) { label, value in
                         VStack(spacing: 7) {
                             HStack {
-                                Text(label).font(KS.font(13, .semibold)).foregroundColor(KS.ink)
+                                Text(store.locCeleb(label)).font(KS.font(13, .semibold)).foregroundColor(KS.ink)
                                 Spacer()
                                 Text(rub(value)).font(KS.font(13, .regular)).foregroundColor(KS.muted)
                             }
@@ -119,7 +119,7 @@ struct InsightsView: View {
     private func legend(color: Color, label: String, value: String) -> some View {
         HStack(spacing: 7) {
             RoundedRectangle(cornerRadius: 3).fill(color).frame(width: 10, height: 10)
-            Text(label).font(KS.font(13, .semibold)).foregroundColor(KS.ink)
+            Text(LocalizedStringKey(label)).font(KS.font(13, .semibold)).foregroundColor(KS.ink)
             Text(value).font(KS.font(13, .regular)).foregroundColor(KS.muted)
         }
     }
@@ -158,7 +158,7 @@ private struct RankRow: View {
                 HStack(alignment: .firstTextBaseline) {
                     Text(person.name).font(KS.font(15, .semibold)).foregroundColor(KS.ink)
                     Spacer()
-                    Text("\(count) \(count == 1 ? "gift" : "gifts") · \(rub(value))")
+                    Text(verbatim: "\(store.giftsCount(count)) · \(rub(value))")
                         .font(KS.font(13, .regular)).foregroundColor(KS.muted)
                 }
                 BarView(pct: value / maxValue * 100, color: person.color, height: 7)

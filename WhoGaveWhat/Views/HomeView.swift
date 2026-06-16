@@ -54,11 +54,11 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
                 Text(arrow).font(KS.font(15, .semibold))
-                Text(label).font(KS.font(13, .semibold))
+                Text(LocalizedStringKey(label)).font(KS.font(13, .semibold))
             }
             .foregroundColor(color)
             Text(value).font(KS.font(23, .bold)).tracking(-0.3).foregroundColor(KS.ink).padding(.top, 8)
-            Text("\(count) gifts").font(KS.font(13, .regular)).foregroundColor(KS.muted).padding(.top, 1)
+            Text(store.giftsCount(count)).font(KS.font(13, .regular)).foregroundColor(KS.muted).padding(.top, 1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 14)

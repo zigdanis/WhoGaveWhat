@@ -91,9 +91,9 @@ struct SettingsView: View {
     private func valueRow(icon: String, tint: Color, label: String, value: String) -> some View {
         HStack(spacing: 12) {
             iconTile(icon, tint)
-            Text(label).font(KS.font(16, .regular)).foregroundColor(KS.ink)
+            Text(LocalizedStringKey(label)).font(KS.font(16, .regular)).foregroundColor(KS.ink)
             Spacer(minLength: 8)
-            Text(value).font(KS.font(16, .regular)).foregroundColor(KS.muted)
+            Text(LocalizedStringKey(value)).font(KS.font(16, .regular)).foregroundColor(KS.muted)
             Chevron()
         }
         .padding(.horizontal, 14).padding(.vertical, 9)
@@ -102,7 +102,7 @@ struct SettingsView: View {
     private func actionRow(icon: String, tint: Color, label: String) -> some View {
         HStack(spacing: 12) {
             iconTile(icon, tint)
-            Text(label).font(KS.font(16, .regular)).foregroundColor(KS.ink)
+            Text(LocalizedStringKey(label)).font(KS.font(16, .regular)).foregroundColor(KS.ink)
             Spacer(minLength: 8)
             Chevron()
         }
@@ -113,7 +113,7 @@ struct SettingsView: View {
         HStack(spacing: 12) {
             iconTile(icon, tint)
             Toggle(isOn: bind) {
-                Text(label).font(KS.font(16, .regular)).foregroundColor(KS.ink)
+                Text(LocalizedStringKey(label)).font(KS.font(16, .regular)).foregroundColor(KS.ink)
             }
             .tint(KS.emerald)
         }

@@ -163,30 +163,43 @@ final class AppStore: ObservableObject {
 
     func isMember(_ id: String) -> Bool { members.contains { $0.id == id } }
 
-    func monthLabel(_ date: Date) -> String {
-        let comps = Calendar.current.dateComponents([.year, .month], from: date)
-        let names = ["January", "February", "March", "April", "May", "June",
-                     "July", "August", "September", "October", "November", "December"]
-        let m = names[(comps.month ?? 1) - 1]
-        let y = comps.year ?? 2026
-        return y == 2026 ? m : "\(m) \(y)"
+    /// Month (+ year unless it's the display year). Localized to `locale` so the
+    /// month name and ordering follow the user's language; tests pin `en_US`.
+    func monthLabel(_ date: Date, locale: Locale = .current) -> String {
+        let year = Calendar.current.component(.year, from: date)
+        let style = year == 2026
+            ? Date.FormatStyle.dateTime.month(.wide)
+            : Date.FormatStyle.dateTime.month(.wide).year()
+        return date.formatted(style.locale(locale))
     }
 
-    func shortDate(_ date: Date) -> String {
-        let comps = Calendar.current.dateComponents([.year, .month, .day], from: date)
-        let names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-        let base = "\(names[(comps.month ?? 1) - 1]) \(comps.day ?? 1)"
-        return (comps.year ?? 2026) == 2026 ? base : "\(base), \(comps.year ?? 2026)"
+    /// Abbreviated month + day (+ year unless the display year), localized.
+    func shortDate(_ date: Date, locale: Locale = .current) -> String {
+        let year = Calendar.current.component(.year, from: date)
+        let style = year == 2026
+            ? Date.FormatStyle.dateTime.month(.abbreviated).day()
+            : Date.FormatStyle.dateTime.month(.abbreviated).day().year()
+        return date.formatted(style.locale(locale))
     }
 
     /// "Today" / "Yesterday" / short date — used by the Add sheet date field.
-    func dateLabel(_ date: Date) -> String {
+    func dateLabel(_ date: Date, locale: Locale = .current) -> String {
         let cal = Calendar.current
-        if cal.isDate(date, inSameDayAs: Self.today) { return "Today" }
-        if cal.isDate(date, inSameDayAs: Self.yesterday) { return "Yesterday" }
-        return shortDate(date)
+        if cal.isDate(date, inSameDayAs: Self.today) { return String(localized: "Today") }
+        if cal.isDate(date, inSameDayAs: Self.yesterday) { return String(localized: "Yesterday") }
+        return shortDate(date, locale: locale)
     }
+
+    // MARK: - Localized display helpers
+
+    /// Localized "N gifts" / "N people" with correct plural forms per language.
+    func giftsCount(_ n: Int) -> String { String(localized: "\(n) gifts") }
+    func peopleCount(_ n: Int) -> String { String(localized: "\(n) people") }
+
+    /// Localize a known occasion (stored canonically in English); custom
+    /// user-entered occasions fall back to their own text.
+    func locCeleb(_ raw: String) -> String { String(localized: String.LocalizationValue(raw)) }
+    func locCeleb(_ raw: String?) -> String? { raw.map(locCeleb) }
 
     /// Subtitle shown under a gift row (received: from → member, given: to person · member).
     func giftSubtitle(_ g: Gift) -> String {
@@ -194,7 +207,7 @@ final class AppStore: ObservableObject {
             return "\(personName(g.personId))  →  \(memberName(g.memberId))"
         } else {
             let suffix = g.memberId != "you" ? "  ·  \(memberName(g.memberId))" : ""
-            return "to \(personName(g.personId))\(suffix)"
+            return String(localized: "to \(personName(g.personId))") + suffix
         }
     }
 

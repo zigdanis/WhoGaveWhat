@@ -126,7 +126,7 @@ struct AddGiftSheet: View {
                           value: store.add.memberId.map(store.memberName)) { store.openPicker(.member) }
                 RowDivider().padding(.leading, 58)
                 detailRow(icon: "party.popper.fill", label: "Occasion",
-                          value: store.add.celebration) { store.openPicker(.celeb) }
+                          value: store.locCeleb(store.add.celebration)) { store.openPicker(.celeb) }
                 RowDivider().padding(.leading, 58)
                 detailRow(icon: "calendar", label: "Date",
                           value: store.dateLabel(store.add.date)) { store.openPicker(.date) }
@@ -143,9 +143,9 @@ struct AddGiftSheet: View {
                     .foregroundColor(fm.main)
                     .frame(width: 34, height: 34)
                     .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(fm.tint))
-                Text(label).font(KS.font(16, .regular)).foregroundColor(KS.ink)
+                Text(LocalizedStringKey(label)).font(KS.font(16, .regular)).foregroundColor(KS.ink)
                 Spacer(minLength: 8)
-                Text(value ?? "Choose")
+                Text(value ?? String(localized: "Choose"))
                     .font(KS.font(16, value == nil ? .regular : .semibold))
                     .foregroundColor(value == nil ? KS.placeholder : fm.main)
                     .lineLimit(1)
@@ -294,7 +294,7 @@ private struct PickerSheet: View {
             .padding(16)
         }
         .scrollIndicators(.hidden)
-        .navigationTitle(title)
+        .navigationTitle(LocalizedStringKey(title))
     }
 
     // MARK: Occasion
@@ -309,7 +309,7 @@ private struct PickerSheet: View {
                         ForEach(Array(store.celebrations.enumerated()), id: \.element) { idx, c in
                             Button { store.selectCeleb(c) } label: {
                                 HStack {
-                                    Text(c).font(KS.font(16, .regular)).foregroundColor(KS.ink)
+                                    Text(store.locCeleb(c)).font(KS.font(16, .regular)).foregroundColor(KS.ink)
                                     Spacer(minLength: 8)
                                     if store.add.celebration == c { checkmark }
                                 }
@@ -393,7 +393,7 @@ private struct PickerSheet: View {
 
     private func quickDate(_ label: String, _ date: Date) -> some View {
         Button { store.selectDate(date) } label: {
-            Text(label).font(KS.font(15, .semibold)).foregroundColor(KS.ink)
+            Text(LocalizedStringKey(label)).font(KS.font(15, .semibold)).foregroundColor(KS.ink)
                 .frame(maxWidth: .infinity).padding(.vertical, 13)
                 .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.card))
         }
@@ -411,7 +411,7 @@ private struct PickerSheet: View {
     private func addRow(placeholder: String, add: @escaping (String) -> Void) -> some View {
         Card {
             HStack(spacing: 10) {
-                TextField(placeholder, text: $customText)
+                TextField(LocalizedStringKey(placeholder), text: $customText)
                     .font(KS.font(16, .regular)).tint(KS.recv)
                 Button {
                     add(customText); customText = ""

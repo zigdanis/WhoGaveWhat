@@ -42,7 +42,7 @@ struct OnboardingView: View {
             Button {
                 withAnimation(.easeInOut(duration: 0.25)) { store.onbNext() }
             } label: {
-                Text(store.onbStep == 2 ? "Get started" : "Continue")
+                Text(LocalizedStringKey(store.onbStep == 2 ? "Get started" : "Continue"))
                     .font(KS.font(17, .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -202,7 +202,7 @@ private struct OnbAddsUp: View {
                         ForEach(bars, id: \.0) { b in
                             VStack(spacing: 5) {
                                 HStack {
-                                    Text(b.0); Spacer(); Text(b.1)
+                                    Text(LocalizedStringKey(b.0)); Spacer(); Text(b.1)
                                 }
                                 .font(KS.font(12.5, .bold))
                                 .foregroundColor(KS.muted2)

@@ -45,7 +45,7 @@ struct PersonDetailView: View {
                             ForEach(bars, id: \.0) { label, value in
                                 VStack(spacing: 7) {
                                     HStack {
-                                        Text(label).font(KS.font(13, .semibold)).foregroundColor(KS.ink)
+                                        Text(store.locCeleb(label)).font(KS.font(13, .semibold)).foregroundColor(KS.ink)
                                         Spacer()
                                         Text(rub(value)).font(KS.font(13, .regular)).foregroundColor(KS.muted)
                                     }
@@ -69,7 +69,7 @@ struct PersonDetailView: View {
 
                 if list.isEmpty {
                     Card {
-                        Text(flow == .given ? "No gifts given yet." : "No gifts received yet.")
+                        Text(LocalizedStringKey(flow == .given ? "No gifts given yet." : "No gifts received yet."))
                             .font(KS.font(14, .regular)).foregroundColor(KS.muted4)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 30)
@@ -99,7 +99,7 @@ struct PersonDetailView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
                     Text(arrow).font(KS.font(15, .semibold))
-                    Text(label).font(KS.font(13, .semibold))
+                    Text(LocalizedStringKey(label)).font(KS.font(13, .semibold))
                 }
                 .foregroundColor(color)
                 Text("\(count)").font(KS.font(25, .bold)).tracking(-0.4).foregroundColor(KS.ink).padding(.top, 9)

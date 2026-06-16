@@ -22,18 +22,19 @@ struct FormattingTests {
 
     @Test func monthLabelDropsTheCurrentYear() {
         let store = makeSeededStore()
+        let en = Locale(identifier: "en_US")
         let cal = Calendar.current
         let june2026 = cal.date(from: DateComponents(year: 2026, month: 6, day: 14))!
-        #expect(store.monthLabel(june2026) == "June")
+        #expect(store.monthLabel(june2026, locale: en) == "June")
         let dec2025 = cal.date(from: DateComponents(year: 2025, month: 12, day: 25))!
-        #expect(store.monthLabel(dec2025) == "December 2025")
+        #expect(store.monthLabel(dec2025, locale: en) == "December 2025")
     }
 
     @Test func shortDateFormatsMonthAndDay() {
         let store = makeSeededStore()
         let cal = Calendar.current
         let d = cal.date(from: DateComponents(year: 2026, month: 6, day: 14))!
-        #expect(store.shortDate(d) == "Jun 14")
+        #expect(store.shortDate(d, locale: Locale(identifier: "en_US")) == "Jun 14")
     }
 
     @Test func frozenTodayIsJune14th2026() {

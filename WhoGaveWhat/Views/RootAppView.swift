@@ -38,7 +38,7 @@ struct RootAppView: View {
                     PersonDetailView(entityId: id)
                 }
         }
-        .tabItem { Label(title, systemImage: icon) }
+        .tabItem { Label(LocalizedStringKey(title), systemImage: icon) }
         .tag(value)
     }
 

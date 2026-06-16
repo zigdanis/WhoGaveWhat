@@ -56,7 +56,7 @@ struct Segmented: View {
             ForEach(options, id: \.key) { o in
                 let sel = o.key == selected
                 Button { onSelect(o.key) } label: {
-                    Text(o.label)
+                    Text(LocalizedStringKey(o.label))
                         .font(KS.font(14, .semibold))
                         .foregroundColor(sel ? o.accent : KS.chipText)
                         .frame(maxWidth: .infinity)
@@ -98,7 +98,7 @@ struct BarView: View {
 struct SectionHeader: View {
     let text: String
     var body: some View {
-        Text(text)
+        Text(LocalizedStringKey(text))
             .font(KS.font(13, .regular))
             .foregroundColor(KS.muted)
             .padding(.horizontal, 4)

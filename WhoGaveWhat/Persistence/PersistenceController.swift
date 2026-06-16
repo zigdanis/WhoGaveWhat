@@ -35,6 +35,11 @@ struct PersistenceController {
         let count = (try? ctx.count(for: CDPerson.fetchRequest())) ?? 0
         guard count == 0 else { return }
 
+        // Localize the sample dataset's display text so a fresh install reads in
+        // the user's language. Occasions stay canonical English (see below) so
+        // they group/translate consistently with the picker.
+        func loc(_ s: String) -> String { String(localized: String.LocalizationValue(s)) }
+
         var byId: [String: CDPerson] = [:]
         func makePerson(_ id: String, _ name: String, _ color: Int64, family: Bool, _ idx: Int) {
             let p = CDPerson(context: ctx)
@@ -47,7 +52,7 @@ struct PersistenceController {
             ("you", "You", 0x12161C), ("marina", "Marina", 0x12805C),
             ("sofia", "Sofia", 0x5B6573), ("alisa", "Alisa", 0x2F6FAE),
         ]
-        for (i, m) in members.enumerated() { makePerson(m.0, m.1, m.2, family: true, i) }
+        for (i, m) in members.enumerated() { makePerson(m.0, loc(m.1), m.2, family: true, i) }
 
         // External people
         let people: [(String, String, Int64)] = [
@@ -55,7 +60,7 @@ struct PersistenceController {
             ("igor", "Igor", 0x2F6FAE), ("olga", "Olga", 0x5B6573),
             ("lena", "Lena", 0x7A5CCB), ("dmitri", "Dmitri", 0x0E7C8C),
         ]
-        for (i, p) in people.enumerated() { makePerson(p.0, p.1, p.2, family: false, i) }
+        for (i, p) in people.enumerated() { makePerson(p.0, loc(p.1), p.2, family: false, i) }
 
         // Gifts: (id, emoji, name, flow, personId, memberId, paid, celebration, iso, value)
         let gifts: [(String, String, String, String, String, String, Bool, String, String, Double)] = [
@@ -79,7 +84,7 @@ struct PersistenceController {
 
         for g in gifts {
             let gift = CDGift(context: ctx)
-            gift.id = g.0; gift.emoji = g.1; gift.name = g.2; gift.flow = g.3
+            gift.id = g.0; gift.emoji = g.1; gift.name = loc(g.2); gift.flow = g.3
             gift.person = byId[g.4]; gift.member = byId[g.5]
             gift.paidByYou = g.6; gift.celebration = g.7
             gift.date = f.date(from: g.8); gift.value = g.9
