@@ -5,28 +5,25 @@ struct OnboardingView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Skip
+            // Skip — pinned to the very top-right corner.
             HStack {
                 Spacer()
                 Button { store.onbSkip() } label: {
                     Text("Skip").font(KS.font(15, .bold)).foregroundColor(KS.muted)
+                        .padding(.horizontal, 6).padding(.vertical, 6)
+                        .contentShape(Rectangle())
                 }
             }
-            .frame(height: 22)
+            .padding(.top, 2)
 
-            Spacer()
-
-            Group {
-                switch store.onbStep {
-                case 0: OnbHero()
-                case 1: OnbLogged()
-                default: OnbAddsUp()
-                }
+            // Swipeable pager — drag back and forth between steps.
+            TabView(selection: stepBinding) {
+                page(OnbHero()).tag(0)
+                page(OnbLogged()).tag(1)
+                page(OnbAddsUp()).tag(2)
             }
-            .id(store.onbStep)
-            .transition(.opacity)
-
-            Spacer()
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .animation(.easeInOut(duration: 0.25), value: store.onbStep)
 
             // Dots
             HStack(spacing: 7) {
@@ -50,11 +47,28 @@ struct OnboardingView: View {
                     .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.give))
                     .shadow(color: KS.give.opacity(0.32), radius: 13, x: 0, y: 12)
             }
+            // Plain style: the default button fade made the CTA flicker on each tap.
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 26)
-        .padding(.top, 60)
+        .padding(.top, 8)
         .padding(.bottom, 30)
         .animation(.easeInOut(duration: 0.25), value: store.onbStep)
+    }
+
+    /// Binding that lets a swipe update the current step (and vice-versa).
+    private var stepBinding: Binding<Int> {
+        Binding(get: { store.onbStep }, set: { store.onbStep = $0 })
+    }
+
+    /// Vertically centers a step's content within the pager.
+    private func page<V: View>(_ content: V) -> some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 0)
+            content
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -77,7 +91,7 @@ private struct OnbHero: View {
             Text("Who Gave What")
                 .font(KS.font(36, .bold))
                 .tracking(-0.6)
-            Text("A warm little ledger for every gift your family gives and gets.")
+            Text("Never forget who gave what — or what you gave back.")
                 .font(KS.font(17, .semibold))
                 .foregroundColor(KS.muted2)
                 .multilineTextAlignment(.center)

@@ -21,42 +21,55 @@ struct SignInView: View {
                 .padding(.top, 12)
             Spacer()
 
-            VStack(spacing: 11) {
+            VStack(spacing: 12) {
+                // Primary, recommended path — registration is optional for now, so
+                // make starting without an account the prominent, eye-catching CTA.
                 Button { store.enterApp() } label: {
-                    HStack(spacing: 9) {
-                        Image(systemName: "apple.logo")
-                        Text("Continue with Apple")
-                    }
-                    .font(KS.font(16, .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.ink))
+                    Text("Start without an account")
+                        .font(KS.font(17, .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 17)
+                        .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.give))
+                        .shadow(color: KS.give.opacity(0.32), radius: 13, x: 0, y: 12)
                 }
+                .buttonStyle(.plain)
 
-                Button { store.enterApp() } label: {
-                    HStack(spacing: 9) {
-                        Text("✉️").font(.system(size: 18))
-                        Text("Continue with email")
-                    }
-                    .font(KS.font(16, .semibold))
-                    .foregroundColor(KS.ink)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.card))
-                    .overlay(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).stroke(KS.border, lineWidth: 1.5))
-                }
+                // Sign-in isn't wired up yet — the rows below are disabled
+                // placeholders so it's clear there's nothing to tap.
+                Text("Sign-in is coming soon")
+                    .font(KS.font(13, .semibold)).foregroundColor(KS.muted3)
+                    .padding(.top, 8)
 
-                Button { store.enterApp() } label: {
-                    Text("Maybe later — keep it on this phone")
-                        .font(KS.font(15, .semibold))
-                        .foregroundColor(KS.muted)
-                        .padding(.vertical, 14)
-                }
+                placeholder(title: "Continue with Apple") { Image(systemName: "apple.logo") }
             }
         }
         .padding(.horizontal, 26)
         .padding(.top, 64)
         .padding(.bottom, 40)
+    }
+
+    /// A login option that isn't available yet — styled as a dimmed, inert
+    /// placeholder with a "Soon" badge so users don't try to tap it.
+    private func placeholder<Icon: View>(title: LocalizedStringKey,
+                                         @ViewBuilder icon: () -> Icon) -> some View {
+        HStack(spacing: 9) {
+            icon()
+            Text(title)
+            Spacer(minLength: 8)
+            Text("Soon")
+                .font(KS.font(11, .bold)).foregroundColor(KS.muted2)
+                .padding(.horizontal, 9).padding(.vertical, 3)
+                .background(Capsule().fill(KS.track))
+        }
+        .font(KS.font(16, .semibold))
+        .foregroundColor(KS.muted3)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16).padding(.horizontal, 16)
+        .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.card))
+        .overlay(RoundedRectangle(cornerRadius: KS.radius, style: .continuous)
+            .stroke(KS.border, lineWidth: 1.5))
+        .opacity(0.5)
+        .allowsHitTesting(false)
     }
 }

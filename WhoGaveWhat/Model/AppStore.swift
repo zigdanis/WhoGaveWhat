@@ -15,7 +15,7 @@ enum PickerKind: String, Identifiable {
 struct AddForm {
     var flow: Flow = .received
     var name: String = ""
-    var emoji: String? = nil            // chosen emoji; nil → use the suggestion
+    var emoji: String? = nil            // chosen emoji; nil → use AI / suggestion
     var value: Int? = nil
     var valueTouched: Bool = false
     var personId: String? = nil
@@ -23,6 +23,12 @@ struct AddForm {
     var paidByYou: Bool = true
     var celebration: String? = nil      // nil → "Choose"
     var date: Date = AppStore.today
+
+    // On-device (Apple Intelligence) enrichment of the typed name. Filled in
+    // asynchronously; sits *between* a user's explicit choice and the keyword
+    // heuristic so it never overrides what the user picked themselves.
+    var aiEmoji: String? = nil
+    var aiValue: Double? = nil
 }
 
 /// The whole app's observable state. Reads from and writes through Core Data;
@@ -38,8 +44,12 @@ final class AppStore: ObservableObject {
     @Published var sheetOpen: Bool = false
     @Published var picker: PickerKind? = nil
     @Published var showSettings: Bool = false
-    @Published var revealTotal: Bool = false
     @Published var add = AddForm()
+    /// When set, the Add sheet is editing this existing gift instead of creating one.
+    @Published var editingGiftId: String? = nil
+
+    /// In-flight on-device enrichment of the Add sheet's gift name (debounced).
+    private var aiTask: Task<Void, Never>?
 
     // Settings toggles
     @Published var notifEnabled: Bool = true
@@ -62,27 +72,32 @@ final class AppStore: ObservableObject {
     let emojiChoices = ["🎁","💐","⌚","📚","🧸","🍫","🍷","🌸","💍","📱","🎧","💸","🎟️","🎂","🪴","☕",
                         "🪆","🧱","🧣","🕯️","🎮","👟","🧴","🍾","🖼️","🧦","🚲","🎨","🧶","🪀"]
 
+    // Keyword heuristic for instant emoji + rough estimate. Matched as
+    // case-insensitive substrings, so partial Russian stems ("шокол") catch all
+    // inflections ("шоколад", "шоколадка", "шоколадные"). Order matters: the
+    // first entry that matches wins, so put toys ("игрушк") before games ("игра").
     let suggestMap: [Suggestion] = [
-        Suggestion(keywords: ["bouquet", "flower", "rose"], emoji: "💐", value: 1800),
-        Suggestion(keywords: ["watch"], emoji: "⌚", value: 9000),
-        Suggestion(keywords: ["book"], emoji: "📚", value: 900),
-        Suggestion(keywords: ["teddy", "bear", "plush"], emoji: "🧸", value: 1500),
-        Suggestion(keywords: ["chocolate", "candy", "sweets"], emoji: "🍫", value: 700),
-        Suggestion(keywords: ["wine"], emoji: "🍷", value: 1900),
-        Suggestion(keywords: ["perfume"], emoji: "🌸", value: 3500),
-        Suggestion(keywords: ["necklace", "ring", "jewel", "bracelet", "earring"], emoji: "💍", value: 6000),
-        Suggestion(keywords: ["phone", "iphone"], emoji: "📱", value: 40000),
-        Suggestion(keywords: ["headphone", "earbud", "airpod"], emoji: "🎧", value: 5000),
-        Suggestion(keywords: ["money", "cash", "envelope"], emoji: "💸", value: 5000),
-        Suggestion(keywords: ["card", "voucher", "ticket"], emoji: "🎟️", value: 3000),
-        Suggestion(keywords: ["cake"], emoji: "🎂", value: 1200),
-        Suggestion(keywords: ["plant", "pot"], emoji: "🪴", value: 1200),
-        Suggestion(keywords: ["mug", "cup", "coffee"], emoji: "☕", value: 800),
-        Suggestion(keywords: ["doll", "matryoshka"], emoji: "🪆", value: 1400),
-        Suggestion(keywords: ["lego", "blocks"], emoji: "🧱", value: 4000),
-        Suggestion(keywords: ["scarf"], emoji: "🧣", value: 2200),
-        Suggestion(keywords: ["candle"], emoji: "🕯️", value: 1000),
-        Suggestion(keywords: ["game", "console"], emoji: "🎮", value: 5500),
+        Suggestion(keywords: ["bouquet", "flower", "rose", "букет", "цвет", "роза", "роз"], emoji: "💐", value: 1800),
+        Suggestion(keywords: ["watch", "часы"], emoji: "⌚", value: 9000),
+        Suggestion(keywords: ["book", "книг", "книж"], emoji: "📚", value: 900),
+        Suggestion(keywords: ["teddy", "bear", "plush", "игрушк", "мишк", "медвед", "плюш"], emoji: "🧸", value: 1500),
+        Suggestion(keywords: ["chocolate", "candy", "sweets", "шокол", "конфет", "сладост"], emoji: "🍫", value: 700),
+        Suggestion(keywords: ["wine", "вино", "вина"], emoji: "🍷", value: 1900),
+        Suggestion(keywords: ["perfume", "духи", "парфюм"], emoji: "🌸", value: 3500),
+        Suggestion(keywords: ["necklace", "ring", "jewel", "bracelet", "earring",
+                              "кольц", "ожерель", "колье", "брасле", "серьг", "серёж", "украшен", "цепочк"], emoji: "💍", value: 6000),
+        Suggestion(keywords: ["phone", "iphone", "телефон", "айфон", "смартфон"], emoji: "📱", value: 40000),
+        Suggestion(keywords: ["headphone", "earbud", "airpod", "наушник"], emoji: "🎧", value: 5000),
+        Suggestion(keywords: ["money", "cash", "envelope", "деньг", "купюр", "конверт", "налич"], emoji: "💸", value: 5000),
+        Suggestion(keywords: ["card", "voucher", "ticket", "билет", "сертификат", "ваучер"], emoji: "🎟️", value: 3000),
+        Suggestion(keywords: ["cake", "торт"], emoji: "🎂", value: 1200),
+        Suggestion(keywords: ["plant", "pot", "растен", "горшк"], emoji: "🪴", value: 1200),
+        Suggestion(keywords: ["mug", "cup", "coffee", "кружк", "чашк", "кофе"], emoji: "☕", value: 800),
+        Suggestion(keywords: ["doll", "matryoshka", "кукл", "матрёшк", "матрешк"], emoji: "🪆", value: 1400),
+        Suggestion(keywords: ["lego", "blocks", "лего", "конструктор"], emoji: "🧱", value: 4000),
+        Suggestion(keywords: ["scarf", "шарф", "платок"], emoji: "🧣", value: 2200),
+        Suggestion(keywords: ["candle", "свеч"], emoji: "🕯️", value: 1000),
+        Suggestion(keywords: ["game", "console", "игра", "игров", "пристав", "консол"], emoji: "🎮", value: 5500),
     ]
 
     init(context: NSManagedObjectContext) {
@@ -139,10 +154,44 @@ final class AppStore: ObservableObject {
             : FlowMeta(main: KS.give, deep: KS.giveDeep, tint: KS.giveTint, label: "Given",    arrow: "↗")
     }
 
-    /// Effective emoji shown in the Add hero: chosen → name suggestion → gift.
+    /// Effective emoji shown in the Add hero: chosen → AI guess → keyword → gift.
     func effEmoji(_ a: AddForm) -> String {
         if let e = a.emoji { return e }
+        if let e = a.aiEmoji { return e }
         return a.name.trimmingCharacters(in: .whitespaces).isEmpty ? "🎁" : suggest(a.name).emoji
+    }
+
+    /// Estimated value shown while the user hasn't typed one: AI guess → keyword.
+    func effValue(_ a: AddForm) -> Double {
+        a.aiValue ?? suggest(a.name).value
+    }
+
+    // MARK: - On-device enrichment
+
+    /// Update the draft name and (debounced) ask the on-device model for a better
+    /// emoji + price. Stale AI guesses are cleared immediately so the keyword
+    /// heuristic fills the gap until the model answers.
+    func setName(_ s: String) {
+        add.name = s
+        add.aiEmoji = nil
+        add.aiValue = nil
+        scheduleEnrichment(for: s)
+    }
+
+    private func scheduleEnrichment(for name: String) {
+        aiTask?.cancel()
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2 else { return }
+        aiTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 600_000_000)   // debounce typing
+            guard let self, !Task.isCancelled else { return }
+            guard self.add.name.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed else { return }
+            guard let result = await GiftParser.parse(trimmed) else { return }
+            guard !Task.isCancelled,
+                  self.add.name.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed else { return }
+            self.add.aiEmoji = result.emoji
+            if result.value > 0 { self.add.aiValue = result.value }
+        }
     }
 
     func initials(_ name: String) -> String {
@@ -254,10 +303,45 @@ final class AppStore: ObservableObject {
     func setDetailFlow(_ f: Flow) { withAnimation(.easeOut(duration: 0.18)) { detailFlow = f } }
     func openSettings() { showSettings = true }
     func closeSettings() { showSettings = false }
-    func openSheet() { add = blankAdd(); sheetOpen = true }
-    func closeSheet() { sheetOpen = false; picker = nil }
+    func openSheet() { aiTask?.cancel(); editingGiftId = nil; add = blankAdd(); sheetOpen = true }
+    func closeSheet() { aiTask?.cancel(); sheetOpen = false; picker = nil; editingGiftId = nil }
+
+    /// Open the Add sheet pre-filled to edit an existing gift.
+    func openEditSheet(_ g: Gift) {
+        aiTask?.cancel()
+        editingGiftId = g.id
+        add = formFrom(g)
+        sheetOpen = true
+    }
+
+    /// Build a draft form from a saved gift (the inverse of `saveGift`).
+    func formFrom(_ g: Gift) -> AddForm {
+        var f = AddForm()
+        f.flow = g.flow
+        f.name = g.name
+        f.emoji = g.emoji
+        f.value = Int(g.value)
+        f.valueTouched = true
+        f.personId = g.personId
+        f.memberId = g.memberId
+        f.paidByYou = g.paidByYou
+        f.celebration = g.celebration
+        f.date = g.date
+        return f
+    }
+
+    /// Delete a saved gift and refresh.
+    func deleteGift(_ id: String) {
+        let req = CDGift.fetchRequest()
+        req.predicate = NSPredicate(format: "id == %@", id)
+        req.fetchLimit = 1
+        if let cd = try? context.fetch(req).first {
+            context.delete(cd)
+            do { try context.save() } catch { context.rollback() }
+            reload()
+        }
+    }
     func setFilter(_ f: String) { withAnimation(.easeOut(duration: 0.18)) { filter = f } }
-    func toggleTotal() { withAnimation(.easeInOut(duration: 0.45)) { revealTotal.toggle() } }
 
     // MARK: - Picker actions
 
@@ -319,12 +403,19 @@ final class AppStore: ObservableObject {
 
     func saveGift() {
         guard canSave(), let personId = add.personId else { return }
+        aiTask?.cancel()
         let sug = suggest(add.name)
-        let value = add.valueTouched ? Double(add.value ?? 0) : sug.value
-        let emoji = add.emoji ?? sug.emoji
+        let value = add.valueTouched ? Double(add.value ?? 0) : (add.aiValue ?? sug.value)
+        let emoji = add.emoji ?? add.aiEmoji ?? sug.emoji
 
-        let gift = CDGift(context: context)
-        gift.id = "g\(Int(Date().timeIntervalSince1970 * 1000))"
+        // Editing reuses the existing record (keeping its id); otherwise create one.
+        let gift: CDGift
+        if let editId = editingGiftId, let existing = fetchGift(editId) {
+            gift = existing
+        } else {
+            gift = CDGift(context: context)
+            gift.id = "g\(Int(Date().timeIntervalSince1970 * 1000))"
+        }
         gift.emoji = emoji
         gift.name = add.name.trimmingCharacters(in: .whitespaces)
         gift.flow = add.flow.rawValue
@@ -340,14 +431,26 @@ final class AppStore: ObservableObject {
         reload()
         sheetOpen = false
         picker = nil
-        tab = .home
-        filter = "all"
-        detailId = nil
+        // A fresh save jumps Home back to the unfiltered timeline; an edit leaves
+        // the current tab/filter alone so the open detail screen stays put.
+        if editingGiftId == nil {
+            tab = .home
+            filter = "all"
+            detailId = nil
+        }
+        editingGiftId = nil
         add = blankAdd()
     }
 
     private func fetchPerson(_ id: String) -> CDPerson? {
         let req = CDPerson.fetchRequest()
+        req.predicate = NSPredicate(format: "id == %@", id)
+        req.fetchLimit = 1
+        return try? context.fetch(req).first ?? nil
+    }
+
+    private func fetchGift(_ id: String) -> CDGift? {
+        let req = CDGift.fetchRequest()
         req.predicate = NSPredicate(format: "id == %@", id)
         req.fetchLimit = 1
         return try? context.fetch(req).first ?? nil

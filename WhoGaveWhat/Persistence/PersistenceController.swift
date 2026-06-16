@@ -1,20 +1,17 @@
 import CoreData
 
-/// Standard Core Data stack for Who Gave What, plus first-run seeding so the
-/// timeline isn't empty on a fresh install.
+/// Standard Core Data stack for Who Gave What. A fresh install starts EMPTY —
+/// the user fills in their own people and gifts. Previews and tests opt into the
+/// sample dataset via `seed:` so they have something to render / assert against.
 struct PersistenceController {
     static let shared = PersistenceController()
 
-    /// In-memory stack for previews / tests.
-    static let preview: PersistenceController = {
-        let controller = PersistenceController(inMemory: true)
-        controller.seedIfNeeded()
-        return controller
-    }()
+    /// In-memory stack for previews / tests, seeded with the sample dataset.
+    static let preview = PersistenceController(inMemory: true, seed: true)
 
     let container: NSPersistentContainer
 
-    init(inMemory: Bool = false) {
+    init(inMemory: Bool = false, seed: Bool = false) {
         container = NSPersistentContainer(name: "WhoGaveWhat")
         if inMemory {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
@@ -25,7 +22,30 @@ struct PersistenceController {
             }
         }
         container.viewContext.automaticallyMergesChangesFromParent = true
-        seedIfNeeded()
+        if seed {
+            seedIfNeeded()
+        } else if !inMemory {
+            // Real install: no sample data, but ensure the "You" household member
+            // exists so given/received gifts always have a coherent owner.
+            ensureSelf()
+        }
+    }
+
+    // MARK: - Self member (fresh install)
+
+    /// Creates the single "You" family member if the store has no people yet, so
+    /// the app starts empty-but-coherent (the household is just you, to begin).
+    func ensureSelf() {
+        let ctx = container.viewContext
+        let count = (try? ctx.count(for: CDPerson.fetchRequest())) ?? 0
+        guard count == 0 else { return }
+        let you = CDPerson(context: ctx)
+        you.id = "you"
+        you.name = String(localized: "You")
+        you.colorHex = 0x12161C
+        you.isFamily = true
+        you.sortIndex = 0
+        try? ctx.save()
     }
 
     // MARK: - Seeding

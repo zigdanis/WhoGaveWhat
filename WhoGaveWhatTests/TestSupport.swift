@@ -6,6 +6,6 @@ import CoreData
 /// Core Data stack, so tests can mutate freely without bleeding into each other.
 @MainActor
 func makeSeededStore() -> AppStore {
-    let controller = PersistenceController(inMemory: true)
+    let controller = PersistenceController(inMemory: true, seed: true)
     return AppStore(context: controller.container.viewContext)
 }

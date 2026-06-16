@@ -5,6 +5,10 @@ import SwiftUI
 /// occasion, date) — each opens its own bottom sheet with manual-entry support.
 struct AddGiftSheet: View {
     @EnvironmentObject var store: AppStore
+    @FocusState private var focus: Field?
+
+    /// The two inline text inputs in the hero card.
+    private enum Field { case name, value }
 
     var body: some View {
         NavigationStack {
@@ -26,17 +30,32 @@ struct AddGiftSheet: View {
                 .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 30)
             }
             .scrollIndicators(.hidden)
-            .background(KS.bg)
-            .navigationTitle("Add a gift")
+            .scrollDismissesKeyboard(.interactively)
+            // Tap anywhere off the keyboard (empty areas of the form) to dismiss it.
+            // Sits behind the fields, so taps on the inputs still focus them.
+            .background(KS.bg.contentShape(Rectangle()).onTapGesture { focus = nil })
+            .navigationTitle(LocalizedStringKey(store.editingGiftId == nil ? "Add a gift" : "Edit gift"))
             .navigationBarTitleDisplayMode(.inline)
+            // Paint the nav bar the same grouped grey as the body so the sheet
+            // reads as one uniform surface (no white top / grey middle seam).
+            .toolbarBackground(KS.bg, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { store.closeSheet() }.tint(KS.muted2)
                 }
             }
+            // Opening a picker must drop keyboard focus so it doesn't bounce back
+            // onto the previously-edited text field when the picker sheet closes.
+            .onChange(of: store.picker) { _, _ in focus = nil }
+            // Open the keyboard on the gift title the moment the sheet settles.
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focus = .name }
+            }
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .presentationBackground(KS.bg)
         .sheet(item: pickerBinding) { kind in
             PickerSheet(kind: kind)
         }
@@ -58,24 +77,37 @@ struct AddGiftSheet: View {
         }
     }
 
-    // MARK: Hero card (emoji + name + inline value)
+    // MARK: Hero card (emoji + name + value, each its own tappable field)
 
     private var heroCard: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Button { store.openPicker(.emoji) } label: { emojiTile }
-                .buttonStyle(.plain)
-
-            VStack(alignment: .leading, spacing: 7) {
-                TextField("Bouquet, watch, money…", text: nameBinding)
-                    .font(KS.font(19, .bold)).foregroundColor(KS.ink)
-                    .tint(fm.main)
-                valueRow
+        VStack(spacing: 12) {
+            HStack(alignment: .center, spacing: 14) {
+                Button { store.openPicker(.emoji) } label: { emojiTile }
+                    .buttonStyle(.plain)
+                nameField
             }
-            .padding(.top, 4)
+            valueField
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(fm.tint))
+    }
+
+    /// Gift title — a tall white field; the whole surface focuses the input so
+    /// the tap target is forgiving.
+    private var nameField: some View {
+        TextField("Bouquet, watch, money…", text: nameBinding)
+            .font(KS.font(18, .bold)).foregroundColor(KS.ink)
+            .tint(fm.main)
+            .focused($focus, equals: .name)
+            .submitLabel(.next)
+            .onSubmit { focus = .value }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 14)
+            .frame(height: 58)
+            .background(fieldSurface)
+            .contentShape(Rectangle())
+            .onTapGesture { focus = .name }
     }
 
     private var emojiTile: some View {
@@ -94,22 +126,43 @@ struct AddGiftSheet: View {
             }
     }
 
-    private var valueRow: some View {
-        HStack(spacing: 5) {
+    /// Approximate value — its own tall white field, separated from the title so
+    /// each is easy to hit. Tapping anywhere on the row focuses the number input.
+    private var valueField: some View {
+        HStack(spacing: 6) {
             TextField("0", text: valueBinding)
-                .font(KS.font(15, .semibold)).foregroundColor(KS.ink)
+                .font(KS.font(16, .semibold)).foregroundColor(KS.ink)
                 .keyboardType(.numberPad)
                 .tint(fm.main)
+                .focused($focus, equals: .value)
                 .fixedSize()
-            Text("₽").font(KS.font(15, .semibold)).foregroundColor(KS.muted2)
+            Text("₽").font(KS.font(16, .semibold)).foregroundColor(KS.muted2)
             if !store.add.valueTouched {
                 Text("estimated")
                     .font(KS.font(11, .semibold)).foregroundColor(fm.main)
-                    .padding(.horizontal, 7).padding(.vertical, 2)
-                    .background(Capsule().fill(.white.opacity(0.75)))
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Capsule().fill(fm.tint))
             }
             Spacer(minLength: 0)
         }
+        .padding(.horizontal, 14)
+        .frame(height: 54)
+        .frame(maxWidth: .infinity)
+        .background(fieldSurface)
+        .contentShape(Rectangle())
+        .onTapGesture { focus = .value }
+    }
+
+    /// Shared white, lightly-bordered surface that lifts the inputs off the
+    /// tinted hero card and the grouped background behind it.
+    private var fieldSurface: some View {
+        RoundedRectangle(cornerRadius: KS.radius, style: .continuous)
+            .fill(KS.card)
+            .overlay(
+                RoundedRectangle(cornerRadius: KS.radius, style: .continuous)
+                    .stroke(KS.border, lineWidth: 1)
+            )
+            .ksCardShadow()
     }
 
     // MARK: Detail pickers
@@ -177,7 +230,7 @@ struct AddGiftSheet: View {
 
     private var saveButton: some View {
         Button { store.saveGift() } label: {
-            Text(store.add.flow == .received ? "Save received gift" : "Save given gift")
+            Text(saveTitle)
                 .font(KS.font(17, .semibold)).foregroundColor(.white)
                 .frame(maxWidth: .infinity).padding(.vertical, 16)
                 .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous)
@@ -187,16 +240,21 @@ struct AddGiftSheet: View {
         .disabled(!can)
     }
 
+    private var saveTitle: LocalizedStringKey {
+        if store.editingGiftId != nil { return "Save changes" }
+        return store.add.flow == .received ? "Save received gift" : "Save given gift"
+    }
+
     // MARK: Bindings
 
     private var nameBinding: Binding<String> {
-        Binding(get: { store.add.name }, set: { store.add.name = $0 })
+        Binding(get: { store.add.name }, set: { store.setName($0) })
     }
 
     private var valueBinding: Binding<String> {
         Binding(
             get: {
-                let eff = store.add.valueTouched ? store.add.value : Int(sug.value)
+                let eff = store.add.valueTouched ? store.add.value : Int(store.effValue(store.add))
                 return eff.map(String.init) ?? ""
             },
             set: { newVal in
@@ -231,14 +289,13 @@ private struct PickerSheet: View {
             content
                 .background(KS.bg)
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { store.closePicker() }.tint(KS.muted2)
-                    }
-                }
+                .toolbarBackground(KS.bg, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
         }
+        // No Cancel button — these sheets are dismissed with a swipe down.
         .presentationDetents(kind == .date ? [.large] : [.medium, .large])
         .presentationDragIndicator(.visible)
+        .presentationBackground(KS.bg)
     }
 
     @ViewBuilder
@@ -333,10 +390,11 @@ private struct PickerSheet: View {
     private var emojiPicker: some View {
         ScrollView {
             VStack(spacing: 16) {
-                // Manual-entry first — type your own before the grid of choices.
+                // Manual-entry first — type your own before the grid of choices,
+                // with a live preview of the single character that will be used.
                 VStack(alignment: .leading, spacing: 7) {
-                    addRow(placeholder: "Type any emoji or letter") { store.useCustomEmoji($0) }
-                    Text("Pick one below, or type your own — any single emoji or letter fits.")
+                    iconAddRow
+                    Text("Pick one below, or type your own — any letter or symbol fits.")
                         .font(KS.font(12, .regular)).foregroundColor(KS.muted3)
                         .padding(.horizontal, 4)
                 }
@@ -358,7 +416,39 @@ private struct PickerSheet: View {
             .padding(16)
         }
         .scrollIndicators(.hidden)
-        .navigationTitle("Pick an emoji")
+        .navigationTitle("Icon")
+    }
+
+    /// Manual icon entry with a live preview tile: only the first character is
+    /// used as the icon, so the preview makes that obvious as you type.
+    private var iconAddRow: some View {
+        Card {
+            HStack(spacing: 12) {
+                Text(iconPreview)
+                    .font(.system(size: 24))
+                    .frame(width: 46, height: 46)
+                    .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.track))
+                TextField("Type any icon or letter", text: $customText)
+                    .font(KS.font(16, .regular)).tint(KS.recv)
+                Button {
+                    store.useCustomEmoji(customText); customText = ""
+                } label: {
+                    Text("Add").font(KS.font(15, .semibold)).foregroundColor(.white)
+                        .padding(.horizontal, 16).padding(.vertical, 8)
+                        .background(Capsule().fill(addDisabled ? KS.muted4 : KS.ink))
+                }
+                .buttonStyle(.plain)
+                .disabled(addDisabled)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 10)
+        }
+    }
+
+    /// First character of the typed text (the part actually used), or a gift
+    /// fallback while the field is empty.
+    private var iconPreview: String {
+        let g = store.firstGrapheme(customText)
+        return g.isEmpty ? "🎁" : g
     }
 
     // MARK: Date

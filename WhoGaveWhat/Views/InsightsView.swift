@@ -10,24 +10,15 @@ struct InsightsView: View {
         let paid = store.gifts.filter { $0.paidByYou }
 
         VStack(alignment: .leading, spacing: 0) {
-            // Circulated total with spoiler
+            // Circulated total — shown openly (per-person amounts below are the
+            // ones hidden behind spoilers instead).
             Card {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Circulated in \(store.displayYear)")
                         .font(KS.font(13, .regular)).foregroundColor(KS.muted)
-                    Button { store.toggleTotal() } label: {
-                        Text(rub(rv + gv))
-                            .font(KS.font(32, .bold)).tracking(-0.6).foregroundColor(KS.ink)
-                            .blur(radius: store.revealTotal ? 0 : 9)
-                            .overlay {
-                                if !store.revealTotal {
-                                    SpoilerCover()
-                                        .padding(.horizontal, -10).padding(.vertical, -3)
-                                }
-                            }
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.top, 7)
+                    Text(rub(rv + gv))
+                        .font(KS.font(32, .bold)).tracking(-0.6).foregroundColor(KS.ink)
+                        .padding(.top, 7)
 
                     Text(verbatim: "\(store.giftsCount(store.gifts.count)) · \(store.peopleCount(store.people.count))")
                         .font(KS.font(14, .regular)).foregroundColor(KS.muted).padding(.top, 4)
@@ -155,39 +146,18 @@ private struct RankRow: View {
         HStack(spacing: 12) {
             AvatarView(initials: store.initials(person.name), color: person.color, size: 38)
             VStack(alignment: .leading, spacing: 9) {
-                HStack(alignment: .firstTextBaseline) {
+                HStack(alignment: .firstTextBaseline, spacing: 5) {
                     Text(person.name).font(KS.font(15, .semibold)).foregroundColor(KS.ink)
-                    Spacer()
-                    Text(verbatim: "\(store.giftsCount(count)) · \(rub(value))")
+                    Spacer(minLength: 8)
+                    Text(verbatim: "\(store.giftsCount(count)) · ")
                         .font(KS.font(13, .regular)).foregroundColor(KS.muted)
+                    // Per-person turnover hidden until tapped.
+                    AmountSpoiler(amount: value, font: KS.font(13, .regular), color: KS.muted)
                 }
                 BarView(pct: value / maxValue * 100, color: person.color, height: 7)
             }
         }
         .padding(.horizontal, 14).padding(.vertical, 13)
         .contentShape(Rectangle())
-    }
-}
-
-/// Shimmering "Tap to reveal" cover over the blurred circulated total.
-private struct SpoilerCover: View {
-    @State private var x: CGFloat = -1.2
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(Color(hex: 0xE4E7EC))
-            GeometryReader { geo in
-                LinearGradient(colors: [.clear, Color.white.opacity(0.65), .clear],
-                               startPoint: .leading, endPoint: .trailing)
-                    .frame(width: geo.size.width * 0.55)
-                    .offset(x: x * geo.size.width)
-            }
-            Text("Tap to reveal")
-                .font(KS.font(12.5, .semibold)).foregroundColor(KS.muted2)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: KS.radius, style: .continuous))
-        .onAppear {
-            withAnimation(.linear(duration: 1.7).repeatForever(autoreverses: false)) { x = 1.2 }
-        }
     }
 }

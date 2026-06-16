@@ -17,7 +17,7 @@ struct RootAppView: View {
                 ScreenScroll { PeopleView() }
                     .navigationTitle("People")
             }
-            stack(.insights, "Insights", "chart.bar") {
+            stack(.insights, "Insights", "chart.bar.xaxis") {
                 ScreenScroll { InsightsView() }
                     .navigationTitle("Insights")
             }
@@ -37,6 +37,9 @@ struct RootAppView: View {
                 .navigationDestination(for: String.self) { id in
                     PersonDetailView(entityId: id)
                 }
+                .navigationDestination(for: Gift.self) { gift in
+                    GiftDetailView(giftId: gift.id)
+                }
         }
         .tabItem { Label(LocalizedStringKey(title), systemImage: icon) }
         .tag(value)
@@ -46,7 +49,9 @@ struct RootAppView: View {
     private var settingsButton: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Button { store.openSettings() } label: {
-                AvatarView(initials: "A", color: KS.ink, size: 30)
+                Image(systemName: "gearshape")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(KS.ink)
             }
             .accessibilityLabel("Settings")
         }
