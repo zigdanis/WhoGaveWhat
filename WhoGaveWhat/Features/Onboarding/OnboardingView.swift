@@ -1,14 +1,15 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    @EnvironmentObject var store: AppStore
+    let router: AppRouter
+    @State private var step = 0
 
     var body: some View {
         VStack(spacing: 0) {
             // Skip — pinned to the very top-right corner.
             HStack {
                 Spacer()
-                Button { store.onbSkip() } label: {
+                Button { router.showSignIn() } label: {
                     Text("Skip").font(KS.font(15, .bold)).foregroundColor(KS.muted)
                         .padding(.horizontal, 6).padding(.vertical, 6)
                         .contentShape(Rectangle())
@@ -23,23 +24,25 @@ struct OnboardingView: View {
                 page(OnbAddsUp()).tag(2)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .animation(.easeInOut(duration: 0.25), value: store.onbStep)
+            .animation(.easeInOut(duration: 0.25), value: step)
 
             // Dots
             HStack(spacing: 7) {
                 ForEach(0..<3, id: \.self) { i in
                     Capsule()
-                        .fill(i == store.onbStep ? KS.give : Color(hex: 0xD7DDE5))
-                        .frame(width: i == store.onbStep ? 22 : 7, height: 7)
+                        .fill(i == step ? KS.give : Color(hex: 0xD7DDE5))
+                        .frame(width: i == step ? 22 : 7, height: 7)
                 }
             }
             .padding(.bottom, 24)
 
             // CTA
             Button {
-                withAnimation(.easeInOut(duration: 0.25)) { store.onbNext() }
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    if step == 2 { router.showSignIn() } else { step += 1 }
+                }
             } label: {
-                Text(LocalizedStringKey(store.onbStep == 2 ? "Get started" : "Continue"))
+                Text(step == 2 ? "Get started" : "Continue")
                     .font(KS.font(17, .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -53,12 +56,12 @@ struct OnboardingView: View {
         .padding(.horizontal, 26)
         .padding(.top, 8)
         .padding(.bottom, 30)
-        .animation(.easeInOut(duration: 0.25), value: store.onbStep)
+        .animation(.easeInOut(duration: 0.25), value: step)
     }
 
     /// Binding that lets a swipe update the current step (and vice-versa).
     private var stepBinding: Binding<Int> {
-        Binding(get: { store.onbStep }, set: { store.onbStep = $0 })
+        $step
     }
 
     /// Vertically centers a step's content within the pager.

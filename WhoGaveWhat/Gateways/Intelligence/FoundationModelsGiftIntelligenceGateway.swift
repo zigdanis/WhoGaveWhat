@@ -7,16 +7,16 @@ import FoundationModels
 /// rough ruble estimate. Uses Apple's on-device language model (iOS 26+, Apple
 /// Intelligence) when available; works in any language, including Russian.
 ///
-/// Callers keep the synchronous keyword heuristic (`AppStore.suggest`) for
+/// Callers keep the synchronous keyword heuristic (`SuggestGiftUseCase`) for
 /// instant feedback and only *layer* this on top — so when the model is absent
 /// (older devices, simulator, Apple Intelligence off) nothing regresses.
-enum GiftParser {
-    struct Result { let emoji: String; let value: Double }
+@MainActor
+final class FoundationModelsGiftIntelligenceGateway: GiftIntelligenceGateway {
 
     /// Whether the on-device model is usable right now. False on the simulator,
     /// on devices without Apple Intelligence, when the user hasn't enabled it, or
     /// while the model is still downloading — callers skip the spinner then.
-    static var isAvailable: Bool {
+    var isAvailable: Bool {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
             if case .available = SystemLanguageModel.default.availability { return true }
@@ -27,7 +27,7 @@ enum GiftParser {
 
     /// Returns nil when the on-device model can't be used, so callers fall back
     /// to the keyword heuristic.
-    static func parse(_ name: String) async -> Result? {
+    func suggestGift(named name: String) async -> GiftIntelligenceResult? {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.count >= 2 else { return nil }
         #if canImport(FoundationModels)
@@ -40,7 +40,7 @@ enum GiftParser {
 
     #if canImport(FoundationModels)
     @available(iOS 26.0, *)
-    private static func parseWithModel(_ text: String) async throws -> Result? {
+    private func parseWithModel(_ text: String) async throws -> GiftIntelligenceResult? {
         guard case .available = SystemLanguageModel.default.availability else { return nil }
 
         let session = LanguageModelSession(instructions: """
@@ -64,7 +64,7 @@ enum GiftParser {
         // survive intact and any stray words the model appends are dropped.
         let emoji = g.emoji.trimmingCharacters(in: .whitespacesAndNewlines).first.map(String.init) ?? ""
         guard !emoji.isEmpty else { return nil }
-        return Result(emoji: emoji, value: max(0, g.rubleValue).rounded())
+        return GiftIntelligenceResult(emoji: emoji, value: max(0, g.rubleValue).rounded())
     }
     #endif
 }

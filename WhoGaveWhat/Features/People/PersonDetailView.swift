@@ -4,9 +4,9 @@ import SwiftUI
 /// delete exactly like Home, reusing `GiftRow` + `GiftDetailView`. The header
 /// (avatar, per-side stats, All/Received/Given filter) rides as a quiet section.
 struct PersonDetailView: View {
-    @EnvironmentObject var store: AppStore
     @Environment(\.dismiss) private var dismiss
     let entityId: String
+    let composition: AppComposition
     @State private var filter: String = "all"
     /// Gift awaiting delete confirmation (set by the swipe action).
     @State private var pendingDelete: Gift?
@@ -23,12 +23,14 @@ struct PersonDetailView: View {
     }
 
     var body: some View {
-        let isMember = store.isMember(entityId)
-        let name = isMember ? store.memberName(entityId) : store.personName(entityId)
-        let color = store.entityColor(entityId)
-        let gs = store.gifts
-            .filter { isMember ? $0.memberId == entityId : $0.personId == entityId }
-            .sorted(by: Gift.newestFirst)
+        let isMember = composition.data.isHouseholdMember(entityId)
+        let name = composition.data.entityName(entityId)
+        let color = Color(hex: composition.data.entityColorHex(entityId))
+        let gs = composition.loadPersonGifts.execute(
+            personID: entityId,
+            isHouseholdMember: isMember,
+            gifts: composition.data.gifts
+        )
         let recv = gs.filter { $0.flow == .received }
         let given = gs.filter { $0.flow == .given }
         let list = filter == "received" ? recv : (filter == "given" ? given : gs)
@@ -37,7 +39,7 @@ struct PersonDetailView: View {
             // Header + stats + filter — quiet rows, no separators.
             Section {
                 VStack(spacing: 0) {
-                    AvatarView(initials: store.initials(name), color: color, size: 76)
+                    AvatarView(initials: name.initials, color: color, size: 76)
                     Text(name).font(KS.font(24, .bold)).tracking(-0.4).foregroundColor(KS.ink).padding(.top, 13)
                 }
                 .frame(maxWidth: .infinity)
@@ -45,9 +47,9 @@ struct PersonDetailView: View {
 
                 HStack(spacing: 10) {
                     statCard(arrow: "↙", label: "Received", color: KS.recv,
-                             count: recv.count, value: store.sum(recv))
+                             count: recv.count, value: recv.totalValue)
                     statCard(arrow: "↗", label: "Given", color: KS.ink,
-                             count: given.count, value: store.sum(given))
+                             count: given.count, value: given.totalValue)
                 }
                 .padding(.top, 18)
 
@@ -72,7 +74,11 @@ struct PersonDetailView: View {
             } else {
                 Section {
                     ForEach(list) { gift in
-                        NavigationLink(value: gift) { GiftRow(gift: gift) }
+                        NavigationLink(value: gift) {
+                            GiftRow(gift: gift,
+                                    subtitle: composition.data.giftSubtitle(gift),
+                                    dateLabel: gift.date.giftShortLabel())
+                        }
                             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
                             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                 Button(role: .destructive) { pendingDelete = gift } label: {
@@ -90,7 +96,7 @@ struct PersonDetailView: View {
         .navigationTitle(name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if store.canDeletePerson(entityId) {
+            if composition.deletePersonUseCase.canDelete(id: entityId) {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         draftName = name
@@ -110,27 +116,27 @@ struct PersonDetailView: View {
                             titleVisibility: .visible,
                             presenting: pendingDelete) { gift in
             Button("Delete", role: .destructive) {
-                store.deleteGift(gift.id)
+                composition.deleteGift(id: gift.id)
                 pendingDelete = nil
             }
             Button("Cancel", role: .cancel) { pendingDelete = nil }
         }
         // Rename the person (with a Delete person option at the bottom).
         .sheet(isPresented: $renaming) {
-            renameSheet(name: name, count: store.giftsCountInvolving(entityId))
+            renameSheet(name: name, count: giftsCount)
         }
         // Big, hard-to-miss irreversible warning before deleting the person.
         .confirmationDialog(personDeleteTitle(name),
                             isPresented: $confirmingPersonDelete,
                             titleVisibility: .visible) {
-            Button(deletePersonActionLabel(store.giftsCountInvolving(entityId)),
+            Button(deletePersonActionLabel(giftsCount),
                    role: .destructive) {
-                store.deletePerson(entityId)
+                composition.deletePerson(id: entityId)
                 dismiss()
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text(personDeleteMessage(name, count: store.giftsCountInvolving(entityId)))
+            Text(personDeleteMessage(name, count: giftsCount))
         }
     }
 
@@ -171,7 +177,7 @@ struct PersonDetailView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") {
-                        store.renamePerson(entityId, to: draftName)
+                        composition.renamePerson(id: entityId, newName: draftName)
                         renaming = false
                     }
                     .fontWeight(.semibold)
@@ -204,6 +210,10 @@ struct PersonDetailView: View {
         case "received": return "No gifts received yet."
         default: return "No gifts yet"
         }
+    }
+
+    private var giftsCount: Int {
+        composition.data.gifts.filter { $0.personId == entityId || $0.memberId == entityId }.count
     }
 
     private func statCard(arrow: String, label: String, color: Color, count: Int, value: Double) -> some View {

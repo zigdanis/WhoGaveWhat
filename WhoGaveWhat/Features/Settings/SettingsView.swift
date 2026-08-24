@@ -3,7 +3,9 @@ import SwiftUI
 /// Settings, presented as a native sheet in the Settings-app idiom: a profile
 /// banner over grouped cards. Toggles are native; everything else is a quiet row.
 struct SettingsView: View {
-    @EnvironmentObject var store: AppStore
+    let router: AppRouter
+    @State private var notifEnabled = true
+    @State private var cloudEnabled = true
 
     var body: some View {
         NavigationStack {
@@ -58,7 +60,7 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { store.closeSettings() }.fontWeight(.semibold).tint(KS.recv)
+                    Button("Done") { router.dismissSettings() }.fontWeight(.semibold).tint(KS.recv)
                 }
             }
         }
@@ -121,9 +123,9 @@ struct SettingsView: View {
     }
 
     private var notifBinding: Binding<Bool> {
-        Binding(get: { store.notifEnabled }, set: { store.notifEnabled = $0 })
+        $notifEnabled
     }
     private var cloudBinding: Binding<Bool> {
-        Binding(get: { store.cloudEnabled }, set: { store.cloudEnabled = $0 })
+        $cloudEnabled
     }
 }

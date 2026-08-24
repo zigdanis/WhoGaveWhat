@@ -2,18 +2,16 @@ import SwiftUI
 
 @main
 struct WhoGaveWhatApp: App {
-    private let persistence = PersistenceController.shared
-    @StateObject private var store: AppStore
+    private let persistence = CoreDataStack.shared
+    @State private var composition: AppComposition
 
     init() {
-        let ctx = PersistenceController.shared.container.viewContext
-        _store = StateObject(wrappedValue: AppStore(context: ctx))
+        _composition = State(initialValue: AppComposition(stack: .shared))
     }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(store)
+            ContentView(composition: composition)
                 .environment(\.managedObjectContext, persistence.container.viewContext)
         }
     }

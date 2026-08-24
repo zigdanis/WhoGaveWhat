@@ -1,26 +1,30 @@
 import SwiftUI
 
 struct InsightsView: View {
-    @EnvironmentObject var store: AppStore
+    let composition: AppComposition
 
     var body: some View {
-        let rv = store.sum(store.received)
-        let gv = store.sum(store.given)
+        let insights = composition.buildInsights.execute(
+            gifts: composition.data.gifts,
+            people: composition.data.people
+        )
+        let rv = insights.receivedValue
+        let gv = insights.givenValue
         let tot = max(rv + gv, 1)
-        let paid = store.gifts.filter { $0.paidByYou }
+        let paid = insights.paidByYou
 
         VStack(alignment: .leading, spacing: 0) {
             // Circulated total — shown openly (per-person amounts below are the
             // ones hidden behind spoilers instead).
             Card {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("Circulated in \(store.displayYear)")
+                    Text("Circulated in 2026")
                         .font(KS.font(13, .regular)).foregroundColor(KS.muted)
                     Text(rub(rv + gv))
                         .font(KS.font(32, .bold)).tracking(-0.6).foregroundColor(KS.ink)
                         .padding(.top, 7)
 
-                    Text(verbatim: "\(store.giftsCount(store.gifts.count)) · \(store.peopleCount(store.people.count))")
+                    Text(verbatim: "\(LocalizedCount.gifts(composition.data.gifts.count)) · \(LocalizedCount.people(composition.data.people.count))")
                         .font(KS.font(14, .regular)).foregroundColor(KS.muted).padding(.top, 4)
 
                     // Stacked received/given bar
@@ -52,11 +56,11 @@ struct InsightsView: View {
 
             // Top givers
             SectionHeader(text: "Top givers").padding(.top, 22).padding(.bottom, 7)
-            rankCard(topPeople(flow: .received))
+            rankCard(insights.topGivers)
 
             // Top receivers
             SectionHeader(text: "Top receivers").padding(.top, 22).padding(.bottom, 7)
-            rankCard(topPeople(flow: .given))
+            rankCard(insights.topReceivers)
         }
         .padding(.horizontal, 16)
     }
@@ -77,9 +81,9 @@ struct InsightsView: View {
             } else {
                 Text("Who's really paying")
                     .font(KS.font(13, .semibold)).foregroundColor(.white.opacity(0.7))
-                Text("You covered \(store.giftsCount(paid.count))")
+                Text("You covered \(LocalizedCount.gifts(paid.count))")
                     .font(KS.font(24, .bold)).tracking(-0.4).foregroundColor(.white).padding(.top, 10)
-                Text("That's \(rub(store.sum(paid))) from your pocket — the quiet hero of the family.")
+                Text("That's \(rub(paid.totalValue)) from your pocket — the quiet hero of the family.")
                     .font(KS.font(15, .regular)).foregroundColor(.white.opacity(0.8)).padding(.top, 4)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -90,16 +94,16 @@ struct InsightsView: View {
     }
 
     @ViewBuilder
-    private func rankCard(_ agg: [(Person, Double, Int)]) -> some View {
+    private func rankCard(_ rankings: [RankedPerson]) -> some View {
         Card {
             VStack(spacing: 0) {
-                let maxV = agg.first?.1 ?? 1
-                ForEach(Array(agg.enumerated()), id: \.element.0.id) { idx, item in
-                    NavigationLink(value: item.0.id) {
-                        RankRow(person: item.0, value: item.1, count: item.2, maxValue: maxV)
+                let maxV = rankings.first?.value ?? 1
+                ForEach(Array(rankings.enumerated()), id: \.element.id) { idx, item in
+                    NavigationLink(value: item.person.id) {
+                        RankRow(person: item.person, value: item.value, count: item.count, maxValue: maxV)
                     }
                     .buttonStyle(.plain)
-                    if idx < agg.count - 1 { RowDivider().padding(.leading, 14) }
+                    if idx < rankings.count - 1 { RowDivider().padding(.leading, 14) }
                 }
             }
         }
@@ -113,22 +117,9 @@ struct InsightsView: View {
         }
     }
 
-    /// Top people by total value for a flow (received = top givers, given = top receivers).
-    private func topPeople(flow: Flow) -> [(Person, Double, Int)] {
-        store.people
-            .map { p -> (Person, Double, Int) in
-                let gs = store.gifts.filter { $0.personId == p.id && $0.flow == flow }
-                return (p, store.sum(gs), gs.count)
-            }
-            .filter { $0.2 > 0 }
-            .sorted { $0.1 > $1.1 }
-            .prefix(5)
-            .map { $0 }
-    }
 }
 
 private struct RankRow: View {
-    @EnvironmentObject var store: AppStore
     let person: Person
     let value: Double
     let count: Int
@@ -136,12 +127,12 @@ private struct RankRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AvatarView(initials: store.initials(person.name), color: person.color, size: 38)
+            AvatarView(initials: person.name.initials, color: person.color, size: 38)
             VStack(alignment: .leading, spacing: 9) {
                 HStack(alignment: .firstTextBaseline, spacing: 5) {
                     Text(person.name).font(KS.font(15, .semibold)).foregroundColor(KS.ink)
                     Spacer(minLength: 8)
-                    Text(verbatim: "\(store.giftsCount(count)) · \(rub(value))")
+                    Text(verbatim: "\(LocalizedCount.gifts(count)) · \(rub(value))")
                         .font(KS.font(13, .regular)).foregroundColor(KS.muted)
                 }
                 BarView(pct: value / maxValue * 100, color: person.color, height: 7)

@@ -3,11 +3,11 @@ import CoreData
 /// Standard Core Data stack for Who Gave What. A fresh install starts EMPTY —
 /// the user fills in their own people and gifts. Previews and tests opt into the
 /// sample dataset via `seed:` so they have something to render / assert against.
-struct PersistenceController {
-    static let shared = PersistenceController()
+struct CoreDataStack {
+    static let shared = CoreDataStack()
 
     /// In-memory stack for previews / tests, seeded with the sample dataset.
-    static let preview = PersistenceController(inMemory: true, seed: true)
+    static let preview = CoreDataStack(inMemory: true, seed: true)
 
     let container: NSPersistentContainer
 

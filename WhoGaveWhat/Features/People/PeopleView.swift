@@ -5,34 +5,34 @@ import SwiftUI
 /// every gift they gave or received, so it's gated behind a big, hard-to-miss
 /// warning that rises from the bottom.
 struct PeopleView: View {
-    @EnvironmentObject var store: AppStore
+    let composition: AppComposition
     /// Person id awaiting the irreversible delete warning (set by the swipe).
     @State private var pendingDelete: String?
 
     var body: some View {
         List {
             section(header: "Your family",
-                    entities: store.members.map { ($0.id, $0.name, $0.color, true) })
+                    entities: composition.data.members.map { ($0.id, $0.name, $0.color, true) })
             section(header: "Friends & relatives",
-                    entities: store.people.map { ($0.id, $0.name, $0.color, false) })
+                    entities: composition.data.people.map { ($0.id, $0.name, $0.color, false) })
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(KS.bg)
-        .floatingAddButton()
+        .floatingAddButton(composition: composition)
         .confirmationDialog(personDeleteTitle,
                             isPresented: deleteBinding,
                             titleVisibility: .visible,
                             presenting: pendingDelete) { id in
-            Button(deletePersonActionLabel(store.giftsCountInvolving(id)),
+            Button(deletePersonActionLabel(giftsCount(involving: id)),
                    role: .destructive) {
-                store.deletePerson(id)
+                composition.deletePerson(id: id)
                 pendingDelete = nil
             }
             Button("Cancel", role: .cancel) { pendingDelete = nil }
         } message: { id in
-            Text(personDeleteMessage(store.entityName(id),
-                                     count: store.giftsCountInvolving(id)))
+            Text(personDeleteMessage(composition.data.entityName(id),
+                                     count: giftsCount(involving: id)))
         }
     }
 
@@ -42,12 +42,13 @@ struct PeopleView: View {
             Section {
                 ForEach(entities, id: \.0) { e in
                     NavigationLink(value: e.0) {
-                        PersonRow(entityId: e.0, name: e.1, color: e.2, isMember: e.3)
+                        PersonRow(entityId: e.0, name: e.1, color: e.2,
+                                  gifts: gifts(for: e.0, isMember: e.3))
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 12))
                     // "You" is the household anchor — never deletable.
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        if store.canDeletePerson(e.0) {
+                        if composition.deletePersonUseCase.canDelete(id: e.0) {
                             Button(role: .destructive) { pendingDelete = e.0 } label: {
                                 Image(systemName: "trash")
                             }
@@ -70,7 +71,7 @@ struct PeopleView: View {
 
     private var personDeleteTitle: String {
         guard let id = pendingDelete else { return "" }
-        return String(format: NSLocalizedString("Delete %@?", comment: ""), store.entityName(id))
+        return String(format: NSLocalizedString("Delete %@?", comment: ""), composition.data.entityName(id))
     }
 
     private func personDeleteMessage(_ name: String, count: Int) -> String {
@@ -84,29 +85,39 @@ struct PeopleView: View {
         let fmt = NSLocalizedString("Delete person and %lld gifts", comment: "")
         return String(format: fmt, count)
     }
+
+    private func gifts(for id: String, isMember: Bool) -> [Gift] {
+        composition.loadPersonGifts.execute(
+            personID: id,
+            isHouseholdMember: isMember,
+            gifts: composition.data.gifts
+        )
+    }
+
+    private func giftsCount(involving id: String) -> Int {
+        composition.data.gifts.filter { $0.personId == id || $0.memberId == id }.count
+    }
 }
 
 struct PersonRow: View {
-    @EnvironmentObject var store: AppStore
     let entityId: String
     let name: String
     let color: Color
-    let isMember: Bool
+    let gifts: [Gift]
 
     var body: some View {
-        let gs = store.gifts.filter { isMember ? $0.memberId == entityId : $0.personId == entityId }
-        let r = gs.filter { $0.flow == .received }.count
-        let gv = gs.filter { $0.flow == .given }.count
+        let r = gifts.filter { $0.flow == .received }.count
+        let gv = gifts.filter { $0.flow == .given }.count
 
         HStack(spacing: 12) {
-            AvatarView(initials: store.initials(name), color: color, size: 42)
+            AvatarView(initials: name.initials, color: color, size: 42)
             VStack(alignment: .leading, spacing: 2) {
                 Text(name).font(KS.font(16, .semibold)).foregroundColor(KS.ink)
                 Text("\(r) received · \(gv) given")
                     .font(KS.font(13, .regular)).foregroundColor(KS.muted3)
             }
             Spacer(minLength: 8)
-            Text(rub(store.sum(gs)))
+            Text(rub(gifts.totalValue))
                 .font(KS.font(15, .semibold)).foregroundColor(KS.ink)
             Chevron()
         }

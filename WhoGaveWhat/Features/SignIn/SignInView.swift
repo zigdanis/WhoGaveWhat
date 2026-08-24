@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SignInView: View {
-    @EnvironmentObject var store: AppStore
+    let composition: AppComposition
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,7 +24,10 @@ struct SignInView: View {
             VStack(spacing: 12) {
                 // Primary, recommended path — registration is optional for now, so
                 // make starting without an account the prominent, eye-catching CTA.
-                Button { store.enterApp() } label: {
+                Button {
+                    composition.completeOnboarding.execute()
+                    composition.router.showMainApp()
+                } label: {
                     Text("Start without an account")
                         .font(KS.font(17, .semibold))
                         .foregroundColor(.white)

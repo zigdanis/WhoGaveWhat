@@ -1,25 +1,25 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var store: AppStore
+    let composition: AppComposition
 
     var body: some View {
         ZStack {
             KS.bg.ignoresSafeArea()
-            switch store.screen {
+            switch composition.router.screen {
             case .onboarding:
-                OnboardingView()
+                OnboardingView(router: composition.router)
                     .transition(.opacity)
-            case .signin:
-                SignInView()
+            case .signIn:
+                SignInView(composition: composition)
                     .transition(.opacity)
-            case .app:
-                RootAppView()
+            case .main:
+                RootAppView(composition: composition)
                     .transition(.opacity)
             }
         }
         .foregroundColor(KS.ink)
-        .animation(.easeInOut(duration: 0.25), value: store.screen)
+        .animation(.easeInOut(duration: 0.25), value: composition.router.screen)
         .preferredColorScheme(.light)
     }
 }

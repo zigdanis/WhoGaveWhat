@@ -4,7 +4,8 @@ import SwiftUI
 /// system's own gestures (smooth, reliable) rather than a hand-rolled drag. The
 /// summary card and filter ride along as plain, separator-less rows on top.
 struct HomeView: View {
-    @EnvironmentObject var store: AppStore
+    let composition: AppComposition
+    @State private var filter = "all"
     /// Gift awaiting delete confirmation (set by the swipe action).
     @State private var pendingDelete: Gift?
 
@@ -19,14 +20,14 @@ struct HomeView: View {
             // Summary + filter — quiet rows with no card chrome of their own.
             Section {
                 summaryCard
-                Segmented(options: filterOptions, selected: store.filter) { store.setFilter($0) }
+                Segmented(options: filterOptions, selected: filter) { filter = $0 }
                     .padding(.top, 4)
             }
             .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
 
-            if store.timeline.isEmpty {
+            if timeline.isEmpty {
                 Section {
                     emptyState
                         .listRowInsets(EdgeInsets(top: 48, leading: 16, bottom: 16, trailing: 16))
@@ -34,10 +35,14 @@ struct HomeView: View {
                         .listRowSeparator(.hidden)
                 }
             } else {
-                ForEach(store.timeline) { group in
+                ForEach(timeline) { group in
                     Section {
-                        ForEach(group.items) { gift in
-                            NavigationLink(value: gift) { GiftRow(gift: gift) }
+                        ForEach(group.gifts) { gift in
+                            NavigationLink(value: gift) {
+                                GiftRow(gift: gift,
+                                        subtitle: composition.data.giftSubtitle(gift),
+                                        dateLabel: gift.date.giftShortLabel())
+                            }
                                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                     Button(role: .destructive) { pendingDelete = gift } label: {
@@ -57,13 +62,13 @@ struct HomeView: View {
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(KS.bg)
-        .floatingAddButton()
+        .floatingAddButton(composition: composition)
         .confirmationDialog("Delete this gift?",
                             isPresented: deleteConfirmBinding,
                             titleVisibility: .visible,
                             presenting: pendingDelete) { gift in
             Button("Delete", role: .destructive) {
-                store.deleteGift(gift.id)
+                composition.deleteGift(id: gift.id)
                 pendingDelete = nil
             }
             Button("Cancel", role: .cancel) { pendingDelete = nil }
@@ -82,10 +87,10 @@ struct HomeView: View {
         Card {
             HStack(spacing: 0) {
                 summaryColumn(arrow: "↙", label: "Received", color: KS.recv,
-                              value: rub(store.sum(store.received)), count: store.received.count)
+                              value: rub(received.totalValue), count: received.count)
                 Rectangle().fill(KS.track).frame(width: 1).padding(.vertical, 2)
                 summaryColumn(arrow: "↗", label: "Given", color: KS.ink,
-                              value: rub(store.sum(store.given)), count: store.given.count)
+                              value: rub(given.totalValue), count: given.count)
             }
             .padding(.vertical, 18).padding(.horizontal, 6)
         }
@@ -104,7 +109,7 @@ struct HomeView: View {
                 .font(KS.font(14, .regular)).foregroundColor(KS.muted)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 260)
-            Button { store.openSheet() } label: {
+            Button { composition.router.presentNewGift() } label: {
                 Text("Add your first gift")
                     .font(KS.font(15, .semibold)).foregroundColor(KS.emerald)
             }
@@ -122,9 +127,15 @@ struct HomeView: View {
             }
             .foregroundColor(color)
             Text(value).font(KS.font(23, .bold)).tracking(-0.3).foregroundColor(KS.ink).padding(.top, 8)
-            Text(store.giftsCount(count)).font(KS.font(13, .regular)).foregroundColor(KS.muted).padding(.top, 1)
+            Text(LocalizedCount.gifts(count)).font(KS.font(13, .regular)).foregroundColor(KS.muted).padding(.top, 1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 14)
+    }
+
+    private var received: [Gift] { composition.data.gifts.filter { $0.flow == .received } }
+    private var given: [Gift] { composition.data.gifts.filter { $0.flow == .given } }
+    private var timeline: [GiftTimelineSection] {
+        composition.buildTimeline.execute(gifts: composition.data.gifts, filter: filter)
     }
 }

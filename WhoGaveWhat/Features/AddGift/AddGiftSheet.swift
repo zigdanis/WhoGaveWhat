@@ -2,12 +2,22 @@ import SwiftUI
 
 /// Native sheet for adding a gift. There's no Received/Given toggle any more —
 /// the user just picks who gave it (From) and who got it (To); direction is
-/// derived from whichever side is the household (see `AppStore.addFlow`). The
+/// derived from whichever side belongs to the household. The
 /// form is quiet: a tinted hero card for the gift itself, then a grouped list of
 /// tap-to-reveal pickers (from, to, occasion, date).
 struct AddGiftSheet: View {
-    @EnvironmentObject var store: AppStore
+    let composition: AppComposition
+    @State private var state: AddGiftState
     @FocusState private var focus: Field?
+
+    init(route: GiftSheetRoute, composition: AppComposition) {
+        self.composition = composition
+        _state = State(initialValue: AddGiftState(
+            route: route,
+            data: composition.data,
+            suggestGift: composition.suggestGift
+        ))
+    }
 
     /// The two inline text inputs in the hero card.
     private enum Field { case name, value }
@@ -21,7 +31,7 @@ struct AddGiftSheet: View {
                     SectionHeader(text: "Details").padding(.top, 22).padding(.bottom, 7)
                     detailsCard
 
-                    if store.showPaidToggle {
+                    if showPaidToggle {
                         paidCard.padding(.top, 12)
                     }
 
@@ -39,7 +49,7 @@ struct AddGiftSheet: View {
             .scrollDismissesKeyboard(.interactively)
             // Empty scroll area below the content also dismisses the keyboard.
             .background(KS.bg.contentShape(Rectangle()).onTapGesture { focus = nil })
-            .navigationTitle(LocalizedStringKey(store.editingGiftId == nil ? "Add a gift" : "Edit gift"))
+            .navigationTitle(state.editingGiftID == nil ? "Add a gift" : "Edit gift")
             .navigationBarTitleDisplayMode(.inline)
             // Paint the nav bar the same grouped grey as the body so the sheet
             // reads as one uniform surface (no white top / grey middle seam).
@@ -47,12 +57,12 @@ struct AddGiftSheet: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { store.closeSheet() }.tint(KS.muted2)
+                    Button("Cancel") { composition.router.dismissGiftSheet() }.tint(KS.muted2)
                 }
             }
             // Opening a picker must drop keyboard focus so it doesn't bounce back
             // onto the previously-edited text field when the picker sheet closes.
-            .onChange(of: store.picker) { _, _ in focus = nil }
+            .onChange(of: state.picker) { _, _ in focus = nil }
             // Open the keyboard on the gift title the moment the sheet settles.
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focus = .name }
@@ -62,20 +72,25 @@ struct AddGiftSheet: View {
         .presentationDragIndicator(.visible)
         .presentationBackground(KS.bg)
         .sheet(item: pickerBinding) { kind in
-            PickerSheet(kind: kind)
+            PickerSheet(kind: kind, state: state, composition: composition)
         }
+        .onDisappear { state.cancel() }
     }
 
     /// Tint follows the derived direction so the hero reflects received/given.
-    private var fm: FlowMeta { store.flowMeta(store.addFlow) }
-    private var can: Bool { store.canSave() }
+    private var fm: GiftFlowAppearance {
+        state.flow(householdIDs: composition.data.householdIDs,
+                   saveGift: composition.saveGiftUseCase).appearance
+    }
+    private var can: Bool { state.input.canSave }
+    private var showPaidToggle: Bool { state.draft.fromID != nil && state.draft.toID != nil }
 
     // MARK: Hero card (emoji + name + value, each its own tappable field)
 
     private var heroCard: some View {
         VStack(spacing: 12) {
             HStack(alignment: .center, spacing: 14) {
-                Button { store.openPicker(.emoji) } label: { emojiTile }
+                Button { state.open(.emoji) } label: { emojiTile }
                     .buttonStyle(.plain)
                 nameField
             }
@@ -106,13 +121,13 @@ struct AddGiftSheet: View {
     /// Emoji preview. While the on-device model is enriching the typed name, the
     /// little corner badge becomes a spinner so the guess feels live.
     private var emojiTile: some View {
-        Text(store.effEmoji(store.add))
+        Text(state.effectiveEmoji)
             .font(.system(size: 28))
             .frame(width: 58, height: 58)
             .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(.white))
             .overlay(alignment: .bottomTrailing) {
                 Group {
-                    if store.aiLoading {
+                    if state.aiLoading {
                         ProgressView()
                             .controlSize(.mini)
                             .tint(.white)
@@ -140,8 +155,8 @@ struct AddGiftSheet: View {
                 .focused($focus, equals: .value)
                 .fixedSize()
             Text("₽").font(KS.font(16, .semibold)).foregroundColor(KS.muted2)
-            if !store.add.valueTouched {
-                if store.aiLoading {
+            if !state.draft.valueTouched {
+                if state.aiLoading {
                     // Live estimate in progress — small spinner + "thinking…".
                     HStack(spacing: 5) {
                         ProgressView().controlSize(.mini).tint(fm.main)
@@ -185,16 +200,16 @@ struct AddGiftSheet: View {
         Card {
             VStack(spacing: 0) {
                 detailRow(icon: "person.fill", label: "From",
-                          value: store.add.fromId.map(store.anyName)) { store.openPicker(.from) }
+                          value: state.draft.fromID.map(composition.data.entityName)) { state.open(.from) }
                 RowDivider().padding(.leading, 58)
                 detailRow(icon: "person.2.fill", label: "To",
-                          value: store.add.toId.map(store.anyName)) { store.openPicker(.to) }
+                          value: state.draft.toID.map(composition.data.entityName)) { state.open(.to) }
                 RowDivider().padding(.leading, 58)
                 detailRow(icon: "party.popper.fill", label: "Occasion",
-                          value: store.locCeleb(store.add.celebration)) { store.openPicker(.celeb) }
+                          value: state.draft.celebration.map(composition.data.localizedCelebration)) { state.open(.celeb) }
                 RowDivider().padding(.leading, 58)
                 detailRow(icon: "calendar", label: "Date",
-                          value: store.dateLabel(store.add.date)) { store.openPicker(.date) }
+                          value: state.draft.date.giftInputLabel()) { state.open(.date) }
             }
         }
     }
@@ -241,7 +256,7 @@ struct AddGiftSheet: View {
     // MARK: Save
 
     private var saveButton: some View {
-        Button { store.saveGift() } label: {
+        Button { state.save(using: composition) } label: {
             Text(saveTitle)
                 .font(KS.font(17, .semibold)).foregroundColor(.white)
                 .frame(maxWidth: .infinity).padding(.vertical, 16)
@@ -257,29 +272,29 @@ struct AddGiftSheet: View {
     // MARK: Bindings
 
     private var nameBinding: Binding<String> {
-        Binding(get: { store.add.name }, set: { store.setName($0) })
+        Binding(get: { state.draft.name }, set: { state.setName($0) })
     }
 
     private var valueBinding: Binding<String> {
         Binding(
             get: {
-                let eff = store.add.valueTouched ? store.add.value : Int(store.effValue(store.add))
-                return eff.map(String.init) ?? ""
+                let value = state.draft.valueTouched ? state.draft.value : Int(state.effectiveValue)
+                return value.map(String.init) ?? ""
             },
             set: { newVal in
                 let digits = newVal.filter(\.isNumber)
-                store.add.value = digits.isEmpty ? 0 : Int(digits)
-                store.add.valueTouched = true
+                state.draft.value = digits.isEmpty ? 0 : Int(digits)
+                state.draft.valueTouched = true
             }
         )
     }
 
     private var paidBinding: Binding<Bool> {
-        Binding(get: { store.add.paidByYou }, set: { store.add.paidByYou = $0 })
+        Binding(get: { state.draft.paidByYou }, set: { state.draft.paidByYou = $0 })
     }
 
-    private var pickerBinding: Binding<PickerKind?> {
-        Binding(get: { store.picker }, set: { if $0 == nil { store.closePicker() } })
+    private var pickerBinding: Binding<AddGiftPicker?> {
+        Binding(get: { state.picker }, set: { if $0 == nil { state.closePicker() } })
     }
 }
 
@@ -289,8 +304,9 @@ struct AddGiftSheet: View {
 /// grid, or date — each with manual-entry support so the user can add a new
 /// option inline.
 private struct PickerSheet: View {
-    @EnvironmentObject var store: AppStore
-    let kind: PickerKind
+    let kind: AddGiftPicker
+    let state: AddGiftState
+    let composition: AppComposition
     @State private var customText = ""
 
     var body: some View {
@@ -311,11 +327,11 @@ private struct PickerSheet: View {
     private var content: some View {
         switch kind {
         case .from:
-            entityPicker(title: "From", selected: store.add.fromId,
-                         select: { store.selectFrom($0) }, add: { store.addCustomFrom($0) })
+            entityPicker(title: "From", selected: state.draft.fromID,
+                         select: { state.selectFrom($0) }, add: { addPerson($0, selectFrom: true) })
         case .to:
-            entityPicker(title: "To", selected: store.add.toId,
-                         select: { store.selectTo($0) }, add: { store.addCustomTo($0) })
+            entityPicker(title: "To", selected: state.draft.toID,
+                         select: { state.selectTo($0) }, add: { addPerson($0, selectFrom: false) })
         case .celeb:
             celebPicker
         case .emoji:
@@ -334,9 +350,9 @@ private struct PickerSheet: View {
                               select: @escaping (String) -> Void,
                               add: @escaping (String) -> Void) -> some View {
         // You first, then the rest of the household, then everyone else.
-        let you = store.members.filter { $0.id == "you" }.map { ($0.id, $0.name, $0.color) }
-        let otherMembers = store.members.filter { $0.id != "you" }.map { ($0.id, $0.name, $0.color) }
-        let outsiders = store.people.map { ($0.id, $0.name, $0.color) }
+        let you = composition.data.members.filter { $0.id == "you" }.map { ($0.id, $0.name, $0.color) }
+        let otherMembers = composition.data.members.filter { $0.id != "you" }.map { ($0.id, $0.name, $0.color) }
+        let outsiders = composition.data.people.map { ($0.id, $0.name, $0.color) }
         let entities = you + otherMembers + outsiders
         return ScrollView {
             VStack(spacing: 16) {
@@ -359,7 +375,7 @@ private struct PickerSheet: View {
                     ForEach(Array(entities.enumerated()), id: \.element.0) { idx, e in
                         Button { select(e.0) } label: {
                             HStack(spacing: 12) {
-                                AvatarView(initials: store.initials(e.1), color: e.2, size: 38)
+                                AvatarView(initials: e.1.initials, color: e.2, size: 38)
                                 Text(e.1).font(KS.font(16, .semibold)).foregroundColor(KS.ink)
                                 Spacer(minLength: 8)
                                 if selected == e.0 { checkmark }
@@ -381,21 +397,24 @@ private struct PickerSheet: View {
         ScrollView {
             VStack(spacing: 16) {
                 // Manual-entry first — add a new option from the top of the sheet.
-                addRow(placeholder: "Add occasion") { store.addCustomCeleb($0) }
+                addRow(placeholder: "Add occasion") { celebration in
+                    composition.data.addCelebration(celebration)
+                    state.selectCelebration(celebration)
+                }
                 Card {
                     VStack(spacing: 0) {
-                        ForEach(Array(store.celebrations.enumerated()), id: \.element) { idx, c in
-                            Button { store.selectCeleb(c) } label: {
+                        ForEach(Array(composition.data.celebrations.enumerated()), id: \.element.id) { idx, celebration in
+                            Button { state.selectCelebration(celebration.name) } label: {
                                 HStack {
-                                    Text(store.locCeleb(c)).font(KS.font(16, .regular)).foregroundColor(KS.ink)
+                                    Text(composition.data.localizedCelebration(celebration.name)).font(KS.font(16, .regular)).foregroundColor(KS.ink)
                                     Spacer(minLength: 8)
-                                    if store.add.celebration == c { checkmark }
+                                    if state.draft.celebration == celebration.name { checkmark }
                                 }
                                 .padding(.horizontal, 14).padding(.vertical, 12)
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
-                            if idx < store.celebrations.count - 1 { RowDivider().padding(.leading, 14) }
+                            if idx < composition.data.celebrations.count - 1 { RowDivider().padding(.leading, 14) }
                         }
                     }
                 }
@@ -421,12 +440,12 @@ private struct PickerSheet: View {
                 }
                 Card {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 8) {
-                        ForEach(store.emojiChoices, id: \.self) { e in
-                            Button { store.selectEmoji(e) } label: {
+                        ForEach(emojiChoices, id: \.self) { e in
+                            Button { state.selectEmoji(e) } label: {
                                 Text(e).font(.system(size: 26))
                                     .frame(maxWidth: .infinity).frame(height: 48)
                                     .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous)
-                                        .fill(store.add.emoji == e ? KS.recvTint : KS.track))
+                                        .fill(state.draft.emoji == e ? KS.recvTint : KS.track))
                             }
                             .buttonStyle(.plain)
                         }
@@ -452,7 +471,7 @@ private struct PickerSheet: View {
                 TextField("Type any icon or letter", text: $customText)
                     .font(KS.font(16, .regular)).tint(KS.recv)
                 Button {
-                    store.useCustomEmoji(customText); customText = ""
+                    state.useCustomEmoji(customText); customText = ""
                 } label: {
                     Text("Add").font(KS.font(15, .semibold)).foregroundColor(.white)
                         .padding(.horizontal, 16).padding(.vertical, 8)
@@ -468,7 +487,7 @@ private struct PickerSheet: View {
     /// First character of the typed text (the part actually used), or a gift
     /// fallback while the field is empty.
     private var iconPreview: String {
-        let g = store.firstGrapheme(customText)
+        let g = customText.firstGrapheme
         return g.isEmpty ? "🎁" : g
     }
 
@@ -481,8 +500,8 @@ private struct PickerSheet: View {
         ScrollView {
             VStack(spacing: 16) {
                 HStack(spacing: 10) {
-                    quickDate("Today", AppStore.today)
-                    quickDate("Yesterday", AppStore.yesterday)
+                    quickDate("Today", AppDate.today)
+                    quickDate("Yesterday", AppDate.yesterday)
                 }
                 Card {
                     DatePicker("", selection: dateApplyBinding, displayedComponents: .date)
@@ -499,12 +518,12 @@ private struct PickerSheet: View {
 
     /// Picking a day in the calendar applies it (and dismisses) immediately.
     private var dateApplyBinding: Binding<Date> {
-        Binding(get: { store.add.date }, set: { store.selectDate($0) })
+        Binding(get: { state.draft.date }, set: { state.selectDate($0) })
     }
 
     private func quickDate(_ label: String, _ date: Date) -> some View {
-        let selected = Calendar.current.isDate(store.add.date, inSameDayAs: date)
-        return Button { store.selectDate(date) } label: {
+        let selected = Calendar.current.isDate(state.draft.date, inSameDayAs: date)
+        return Button { state.selectDate(date) } label: {
             Text(LocalizedStringKey(label))
                 .font(KS.font(15, .semibold))
                 .foregroundColor(selected ? .white : KS.ink)
@@ -544,5 +563,15 @@ private struct PickerSheet: View {
 
     private var addDisabled: Bool {
         customText.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    private var emojiChoices: [String] {
+        ["🎁", "💐", "⌚", "📚", "🧸", "🍫", "🍷", "🌸", "💍", "📱",
+         "🎧", "💸", "🎟️", "🎂", "🪴", "☕", "🪆", "🧱", "🧣", "🕯️"]
+    }
+
+    private func addPerson(_ name: String, selectFrom: Bool) {
+        guard let id = composition.createPerson(name: name, isFamily: false) else { return }
+        if selectFrom { state.selectFrom(id) } else { state.selectTo(id) }
     }
 }
