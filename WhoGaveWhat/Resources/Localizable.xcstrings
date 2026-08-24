@@ -147,6 +147,23 @@
         }
       }
     },
+    "Approx. value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approx. value"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Примерная стоимость"
+          }
+        }
+      }
+    },
     "₽" : {
 
     },
@@ -1076,6 +1093,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подарок"
+          }
+        }
+      }
+    },
+    "Gift name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gift name"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Название подарка"
           }
         }
       }
