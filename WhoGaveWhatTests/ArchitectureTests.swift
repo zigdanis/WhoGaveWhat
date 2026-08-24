@@ -47,6 +47,18 @@ struct SaveGiftInputTests {
 }
 
 @MainActor
+struct AddGiftDraftTests {
+    @Test func newGiftStartsWithSimpleDefaults() {
+        let draft = AddGiftDraft()
+        #expect(draft.fromID == "you")
+        #expect(draft.toID == nil)
+        #expect(draft.celebration == "Just because")
+        #expect(draft.date == AppDate.today)
+        #expect(!draft.valueTouched)
+    }
+}
+
+@MainActor
 struct RouterTests {
     @Test func routesScreensTabsAndSheetsIndependently() {
         let router = AppRouter(didCompleteOnboarding: false, launchEnvironment: [:])
