@@ -10,9 +10,9 @@ struct HomeView: View {
     @State private var pendingDelete: Gift?
 
     private var filterOptions: [Segmented.Option] {
-        [.init(key: "all", label: "All", accent: KS.ink),
-         .init(key: "received", label: "Received", accent: KS.recv),
-         .init(key: "given", label: "Given", accent: KS.ink)]
+        [.init(key: "all", label: "All", accent: Color.ink),
+         .init(key: "received", label: "Received", accent: Color.recv),
+         .init(key: "given", label: "Given", accent: Color.ink)]
     }
 
     var body: some View {
@@ -53,7 +53,7 @@ struct HomeView: View {
                         }
                     } header: {
                         Text(group.label)
-                            .font(KS.font(13, .regular)).foregroundColor(KS.muted)
+                            .font(Font.app(13, .regular)).foregroundColor(Color.muted)
                             .textCase(nil)
                     }
                 }
@@ -61,7 +61,7 @@ struct HomeView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(KS.bg)
+        .background(Color.bg)
         .floatingAddButton(composition: composition)
         .confirmationDialog("Delete this gift?",
                             isPresented: deleteConfirmBinding,
@@ -86,10 +86,10 @@ struct HomeView: View {
     private var summaryCard: some View {
         Card {
             HStack(spacing: 0) {
-                summaryColumn(arrow: "↙", label: "Received", color: KS.recv,
+                summaryColumn(arrow: "↙", label: "Received", color: Color.recv,
                               value: rub(received.totalValue), count: received.count)
-                Rectangle().fill(KS.track).frame(width: 1).padding(.vertical, 2)
-                summaryColumn(arrow: "↗", label: "Given", color: KS.ink,
+                Rectangle().fill(Color.track).frame(width: 1).padding(.vertical, 2)
+                summaryColumn(arrow: "↗", label: "Given", color: Color.ink,
                               value: rub(given.totalValue), count: given.count)
             }
             .padding(.vertical, 18).padding(.horizontal, 6)
@@ -102,16 +102,16 @@ struct HomeView: View {
         VStack(spacing: 12) {
             Image(systemName: "gift")
                 .font(.system(size: 46, weight: .light))
-                .foregroundColor(KS.muted4)
+                .foregroundColor(Color.muted4)
             Text("No gifts yet")
-                .font(KS.font(17, .semibold)).foregroundColor(KS.muted2)
+                .font(Font.app(17, .semibold)).foregroundColor(Color.muted2)
             Text("Nothing here yet — add your first to start tracking.")
-                .font(KS.font(14, .regular)).foregroundColor(KS.muted)
+                .font(Font.app(14, .regular)).foregroundColor(Color.muted)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 260)
             Button { composition.router.presentNewGift() } label: {
                 Text("Add your first gift")
-                    .font(KS.font(15, .semibold)).foregroundColor(KS.emerald)
+                    .font(Font.app(15, .semibold)).foregroundColor(Color.emerald)
             }
             .buttonStyle(.plain)
             .padding(.top, 2)
@@ -122,12 +122,12 @@ struct HomeView: View {
     private func summaryColumn(arrow: String, label: String, color: Color, value: String, count: Int) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
-                Text(arrow).font(KS.font(15, .semibold))
-                Text(LocalizedStringKey(label)).font(KS.font(13, .semibold))
+                Text(arrow).font(Font.app(15, .semibold))
+                Text(LocalizedStringKey(label)).font(Font.app(13, .semibold))
             }
             .foregroundColor(color)
-            Text(value).font(KS.font(23, .bold)).tracking(-0.3).foregroundColor(KS.ink).padding(.top, 8)
-            Text(LocalizedCount.gifts(count)).font(KS.font(13, .regular)).foregroundColor(KS.muted).padding(.top, 1)
+            Text(value).font(Font.app(23, .bold)).tracking(-0.3).foregroundColor(Color.ink).padding(.top, 8)
+            Text(LocalizedCount.gifts(count)).font(Font.app(13, .regular)).foregroundColor(Color.muted).padding(.top, 1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 14)

@@ -8,15 +8,15 @@ struct AvatarView: View {
 
     var body: some View {
         Text(initials)
-            .font(KS.font(size * 0.4, .semibold))
+            .font(Font.app(size * 0.4, .semibold))
             .foregroundColor(.white)
             .frame(width: size, height: size)
-            .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(color))
+            .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(color))
             .overlay {
                 if selected {
-                    RoundedRectangle(cornerRadius: KS.radius, style: .continuous)
+                    RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
                         .stroke(Color.white, lineWidth: 3).padding(-1.5)
-                        .background(RoundedRectangle(cornerRadius: KS.radius + 2, style: .continuous)
+                        .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius + 2, style: .continuous)
                             .stroke(color, lineWidth: 2).padding(-3.5))
                 }
             }

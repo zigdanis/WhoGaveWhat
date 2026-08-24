@@ -17,13 +17,13 @@ struct Segmented: View {
                 let isSelected = option.key == selected
                 Button { onSelect(option.key) } label: {
                     Text(option.label)
-                        .font(KS.font(14, .semibold))
-                        .foregroundColor(isSelected ? .white : KS.chipText)
+                        .font(Font.app(14, .semibold))
+                        .foregroundColor(isSelected ? .white : Color.chipText)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 7)
                         .background(RoundedRectangle(cornerRadius: 7, style: .continuous)
-                            .fill(isSelected ? KS.emerald : Color.clear)
-                            .shadow(color: isSelected ? KS.emerald.opacity(0.35) : .clear,
+                            .fill(isSelected ? Color.emerald : Color.clear)
+                            .shadow(color: isSelected ? Color.emerald.opacity(0.35) : .clear,
                                     radius: 2, x: 0, y: 1))
                         .contentShape(Rectangle())
                 }
@@ -31,6 +31,6 @@ struct Segmented: View {
             }
         }
         .padding(2)
-        .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(KS.track))
+        .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.track))
     }
 }

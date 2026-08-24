@@ -23,9 +23,9 @@ struct IconMark: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: corner, style: .continuous).fill(KS.ink)
+            RoundedRectangle(cornerRadius: corner, style: .continuous).fill(Color.ink)
             TriangleShape(points: give).fill(Color.white)
-            TriangleShape(points: take).fill(KS.emerald)
+            TriangleShape(points: take).fill(Color.emerald)
         }
         .frame(width: size, height: size)
     }

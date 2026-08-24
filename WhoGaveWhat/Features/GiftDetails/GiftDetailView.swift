@@ -17,7 +17,7 @@ struct GiftDetailView: View {
                 Color.clear.onAppear { dismiss() }
             }
         }
-        .background(KS.bg)
+        .background(Color.bg)
         .navigationTitle("Gift")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -43,7 +43,7 @@ struct GiftDetailView: View {
                     Image(systemName: "pencil")
                         .font(.system(size: 17, weight: .semibold))
                 }
-                .tint(KS.recv)
+                .tint(Color.recv)
                 .accessibilityLabel("Edit")
             }
         }
@@ -57,29 +57,29 @@ struct GiftDetailView: View {
                 Text(g.emoji)
                     .font(.system(size: 28))
                     .frame(width: 58, height: 58)
-                    .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(.white))
+                    .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(.white))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(g.name).font(KS.font(18, .bold)).foregroundColor(KS.ink).lineLimit(2)
+                    Text(g.name).font(Font.app(18, .bold)).foregroundColor(Color.ink).lineLimit(2)
                     HStack(spacing: 5) {
                         Text(fm.arrow)
                         Text(fm.label)
                     }
-                    .font(KS.font(13, .semibold)).foregroundColor(fm.main)
+                    .font(Font.app(13, .semibold)).foregroundColor(fm.main)
                 }
                 Spacer(minLength: 8)
             }
             HStack(spacing: 6) {
-                Text(rub(g.value)).font(KS.font(17, .semibold)).foregroundColor(KS.ink)
+                Text(rub(g.value)).font(Font.app(17, .semibold)).foregroundColor(Color.ink)
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 14)
             .frame(height: 50)
             .frame(maxWidth: .infinity)
-            .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.card))
+            .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(Color.card))
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(fm.tint))
+        .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(fm.tint))
     }
 
     // MARK: Details
@@ -108,10 +108,10 @@ struct GiftDetailView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(fm.main)
                 .frame(width: 34, height: 34)
-                .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(fm.tint))
-            Text(LocalizedStringKey(label)).font(KS.font(16, .regular)).foregroundColor(KS.ink)
+                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(fm.tint))
+            Text(LocalizedStringKey(label)).font(Font.app(16, .regular)).foregroundColor(Color.ink)
             Spacer(minLength: 8)
-            Text(value).font(KS.font(16, .semibold)).foregroundColor(fm.main).lineLimit(1)
+            Text(value).font(Font.app(16, .semibold)).foregroundColor(fm.main).lineLimit(1)
         }
         .padding(.horizontal, 14).padding(.vertical, 12)
     }
@@ -126,7 +126,7 @@ struct GiftDetailView: View {
             dismiss()
         } label: {
             Text("Delete gift")
-                .font(KS.font(16, .regular)).foregroundColor(Color(hex: 0xE5484D))
+                .font(Font.app(16, .regular)).foregroundColor(Color(hex: 0xE5484D))
                 .frame(maxWidth: .infinity).padding(.vertical, 12)
         }
         .buttonStyle(.plain)

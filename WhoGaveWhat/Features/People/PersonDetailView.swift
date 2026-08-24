@@ -17,9 +17,9 @@ struct PersonDetailView: View {
     @State private var confirmingPersonDelete = false
 
     private var filterOptions: [Segmented.Option] {
-        [.init(key: "all", label: "All", accent: KS.ink),
-         .init(key: "received", label: "Received", accent: KS.recv),
-         .init(key: "given", label: "Given", accent: KS.ink)]
+        [.init(key: "all", label: "All", accent: Color.ink),
+         .init(key: "received", label: "Received", accent: Color.recv),
+         .init(key: "given", label: "Given", accent: Color.ink)]
     }
 
     var body: some View {
@@ -40,15 +40,15 @@ struct PersonDetailView: View {
             Section {
                 VStack(spacing: 0) {
                     AvatarView(initials: name.initials, color: color, size: 76)
-                    Text(name).font(KS.font(24, .bold)).tracking(-0.4).foregroundColor(KS.ink).padding(.top, 13)
+                    Text(name).font(Font.app(24, .bold)).tracking(-0.4).foregroundColor(Color.ink).padding(.top, 13)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, 6)
 
                 HStack(spacing: 10) {
-                    statCard(arrow: "↙", label: "Received", color: KS.recv,
+                    statCard(arrow: "↙", label: "Received", color: Color.recv,
                              count: recv.count, value: recv.totalValue)
-                    statCard(arrow: "↗", label: "Given", color: KS.ink,
+                    statCard(arrow: "↗", label: "Given", color: Color.ink,
                              count: given.count, value: given.totalValue)
                 }
                 .padding(.top, 18)
@@ -65,7 +65,7 @@ struct PersonDetailView: View {
             if list.isEmpty {
                 Section {
                     Text(LocalizedStringKey(emptyText))
-                        .font(KS.font(14, .regular)).foregroundColor(KS.muted4)
+                        .font(Font.app(14, .regular)).foregroundColor(Color.muted4)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 30)
                         .listRowBackground(Color.clear)
@@ -92,7 +92,7 @@ struct PersonDetailView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(KS.bg)
+        .background(Color.bg)
         .navigationTitle(name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -105,7 +105,7 @@ struct PersonDetailView: View {
                         Image(systemName: "pencil")
                             .font(.system(size: 17, weight: .semibold))
                     }
-                    .tint(KS.recv)
+                    .tint(Color.recv)
                     .accessibilityLabel("Edit name")
                 }
             }
@@ -154,7 +154,7 @@ struct PersonDetailView: View {
             Form {
                 Section {
                     TextField("Name", text: $draftName)
-                        .font(KS.font(17, .regular))
+                        .font(Font.app(17, .regular))
                 }
                 Section {
                     Button(role: .destructive) {
@@ -220,12 +220,12 @@ struct PersonDetailView: View {
         Card {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
-                    Text(arrow).font(KS.font(15, .semibold))
-                    Text(LocalizedStringKey(label)).font(KS.font(13, .semibold))
+                    Text(arrow).font(Font.app(15, .semibold))
+                    Text(LocalizedStringKey(label)).font(Font.app(13, .semibold))
                 }
                 .foregroundColor(color)
-                Text("\(count)").font(KS.font(25, .bold)).tracking(-0.4).foregroundColor(KS.ink).padding(.top, 9)
-                Text("gifts · \(rub(value))").font(KS.font(13, .regular)).foregroundColor(KS.muted).padding(.top, 2)
+                Text("\(count)").font(Font.app(25, .bold)).tracking(-0.4).foregroundColor(Color.ink).padding(.top, 9)
+                Text("gifts · \(rub(value))").font(Font.app(13, .regular)).foregroundColor(Color.muted).padding(.top, 2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(15)

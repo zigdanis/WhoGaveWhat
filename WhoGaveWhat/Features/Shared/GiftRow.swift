@@ -8,23 +8,23 @@ struct GiftRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            GiftSquare(emoji: gift.emoji, tint: KS.iconWell)
+            GiftSquare(emoji: gift.emoji, tint: Color.iconWell)
             VStack(alignment: .leading, spacing: 2) {
                 Text(gift.name)
-                    .font(KS.font(16, .semibold))
-                    .foregroundColor(KS.ink)
+                    .font(Font.app(16, .semibold))
+                    .foregroundColor(Color.ink)
                     .lineLimit(1)
                 Text(subtitle)
-                    .font(KS.font(13, .regular))
-                    .foregroundColor(KS.muted3)
+                    .font(Font.app(13, .regular))
+                    .foregroundColor(Color.muted3)
                     .lineLimit(1)
             }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 2) {
-                Text(rub(gift.value)).font(KS.font(16, .semibold)).foregroundColor(KS.ink)
+                Text(rub(gift.value)).font(Font.app(16, .semibold)).foregroundColor(Color.ink)
                 Text(dateLabel)
-                    .font(KS.font(12, .regular))
-                    .foregroundColor(KS.muted4)
+                    .font(Font.app(12, .regular))
+                    .foregroundColor(Color.muted4)
                     .lineLimit(1)
             }
         }

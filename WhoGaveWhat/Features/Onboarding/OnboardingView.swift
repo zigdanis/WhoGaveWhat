@@ -10,7 +10,7 @@ struct OnboardingView: View {
             HStack {
                 Spacer()
                 Button { router.showSignIn() } label: {
-                    Text("Skip").font(KS.font(15, .bold)).foregroundColor(KS.muted)
+                    Text("Skip").font(Font.app(15, .bold)).foregroundColor(Color.muted)
                         .padding(.horizontal, 6).padding(.vertical, 6)
                         .contentShape(Rectangle())
                 }
@@ -30,7 +30,7 @@ struct OnboardingView: View {
             HStack(spacing: 7) {
                 ForEach(0..<3, id: \.self) { i in
                     Capsule()
-                        .fill(i == step ? KS.give : Color(hex: 0xD7DDE5))
+                        .fill(i == step ? Color.give : Color(hex: 0xD7DDE5))
                         .frame(width: i == step ? 22 : 7, height: 7)
                 }
             }
@@ -43,12 +43,12 @@ struct OnboardingView: View {
                 }
             } label: {
                 Text(step == 2 ? "Get started" : "Continue")
-                    .font(KS.font(17, .semibold))
+                    .font(Font.app(17, .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 17)
-                    .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.give))
-                    .shadow(color: KS.give.opacity(0.32), radius: 13, x: 0, y: 12)
+                    .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(Color.give))
+                    .shadow(color: Color.give.opacity(0.32), radius: 13, x: 0, y: 12)
             }
             // Plain style: the default button fade made the CTA flicker on each tap.
             .buttonStyle(.plain)
@@ -81,9 +81,9 @@ private struct OnbHero: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                FloatingTile(emoji: "💐", size: 84, corner: KS.radius, bg: .white, fontSize: 42, delay: 0)
+                FloatingTile(emoji: "💐", size: 84, corner: DesignMetrics.cornerRadius, bg: .white, fontSize: 42, delay: 0)
                     .offset(x: -73, y: -33)
-                FloatingTile(emoji: "⌚", size: 78, corner: KS.radius, bg: .white, fontSize: 38, delay: 0.6)
+                FloatingTile(emoji: "⌚", size: 78, corner: DesignMetrics.cornerRadius, bg: .white, fontSize: 38, delay: 0.6)
                     .offset(x: 73, y: -67)
                 FloatingMark(size: 94, delay: 0.3)
                     .offset(x: 0, y: 47)
@@ -92,11 +92,11 @@ private struct OnbHero: View {
             .padding(.bottom, 38)
 
             Text("Who Gave What")
-                .font(KS.font(36, .bold))
+                .font(Font.app(36, .bold))
                 .tracking(-0.6)
             Text("Never forget who gave what — or what you gave back.")
-                .font(KS.font(17, .semibold))
-                .foregroundColor(KS.muted2)
+                .font(Font.app(17, .semibold))
+                .foregroundColor(Color.muted2)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
                 .frame(maxWidth: 286)
@@ -158,20 +158,20 @@ private struct OnbLogged: View {
             Card(strongShadow: true) {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("WHAT'S THE GIFT?")
-                        .font(KS.font(12, .semibold)).tracking(0.7).foregroundColor(KS.muted)
+                        .font(Font.app(12, .semibold)).tracking(0.7).foregroundColor(Color.muted)
                     HStack(spacing: 12) {
-                        GiftSquare(emoji: "💐", tint: KS.recvTint, size: 50, fontSize: 27)
-                        Text("Bouquet of roses").font(KS.font(20, .semibold))
+                        GiftSquare(emoji: "💐", tint: Color.recvTint, size: 50, fontSize: 27)
+                        Text("Bouquet of roses").font(Font.app(20, .semibold))
                     }
                     .padding(.top, 11)
                     HStack(spacing: 9) {
-                        Text("≈ value").font(KS.font(13, .semibold)).foregroundColor(KS.muted)
-                        Text("1 800 ₽").font(KS.font(16, .bold))
+                        Text("≈ value").font(Font.app(13, .semibold)).foregroundColor(Color.muted)
+                        Text("1 800 ₽").font(Font.app(16, .bold))
                         Text("we guessed")
-                            .font(KS.font(11, .semibold))
-                            .foregroundColor(KS.recv)
+                            .font(Font.app(11, .semibold))
+                            .foregroundColor(Color.recv)
                             .padding(.horizontal, 9).padding(.vertical, 3)
-                            .background(RoundedRectangle(cornerRadius: 8).fill(KS.recvTint))
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.recvTint))
                     }
                     .padding(.top, 15)
                 }
@@ -180,11 +180,11 @@ private struct OnbLogged: View {
             .frame(width: 304)
 
             Text("Logged in seconds")
-                .font(KS.font(27, .bold)).tracking(-0.5)
+                .font(Font.app(27, .bold)).tracking(-0.5)
                 .padding(.top, 36)
             Text("Type what it was — Who Gave What picks the icon and guesses the value. Adjust only if you want to.")
-                .font(KS.font(16, .semibold))
-                .foregroundColor(KS.muted2)
+                .font(Font.app(16, .semibold))
+                .foregroundColor(Color.muted2)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
                 .frame(maxWidth: 292)
@@ -197,9 +197,9 @@ private struct OnbLogged: View {
 
 private struct OnbAddsUp: View {
     private let bars: [(String, String, Double, Color)] = [
-        ("Birthday", "6 200 ₽", 0.84, KS.give),
-        ("Anniversary", "4 500 ₽", 0.61, KS.gold),
-        ("New Year", "4 000 ₽", 0.54, KS.recv),
+        ("Birthday", "6 200 ₽", 0.84, Color.give),
+        ("Anniversary", "4 500 ₽", 0.61, Color.gold),
+        ("New Year", "4 000 ₽", 0.54, Color.recv),
     ]
 
     var body: some View {
@@ -207,13 +207,13 @@ private struct OnbAddsUp: View {
             Card(strongShadow: true) {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(spacing: 12) {
-                        AvatarView(initials: "AM", color: KS.give, size: 46)
+                        AvatarView(initials: "AM", color: Color.give, size: 46)
                         VStack(alignment: .leading, spacing: 0) {
-                            Text("Aunt Maria").font(KS.font(17, .semibold))
-                            Text("6 gifts together").font(KS.font(13, .bold)).foregroundColor(KS.muted3)
+                            Text("Aunt Maria").font(Font.app(17, .semibold))
+                            Text("6 gifts together").font(Font.app(13, .bold)).foregroundColor(Color.muted3)
                         }
                         Spacer()
-                        Text("14 700 ₽").font(KS.font(18, .bold))
+                        Text("14 700 ₽").font(Font.app(18, .bold))
                     }
                     VStack(spacing: 10) {
                         ForEach(bars, id: \.0) { b in
@@ -221,8 +221,8 @@ private struct OnbAddsUp: View {
                                 HStack {
                                     Text(LocalizedStringKey(b.0)); Spacer(); Text(b.1)
                                 }
-                                .font(KS.font(12.5, .bold))
-                                .foregroundColor(KS.muted2)
+                                .font(Font.app(12.5, .bold))
+                                .foregroundColor(Color.muted2)
                                 BarView(pct: b.2 * 100, color: b.3, height: 7)
                             }
                         }
@@ -234,11 +234,11 @@ private struct OnbAddsUp: View {
             .frame(width: 304)
 
             Text("It adds up per person")
-                .font(KS.font(27, .bold)).tracking(-0.5)
+                .font(Font.app(27, .bold)).tracking(-0.5)
                 .padding(.top, 34)
             Text("Every gift links to someone, so you can look back on years of giving at a glance.")
-                .font(KS.font(16, .semibold))
-                .foregroundColor(KS.muted2)
+                .font(Font.app(16, .semibold))
+                .foregroundColor(Color.muted2)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
                 .frame(maxWidth: 292)

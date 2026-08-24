@@ -18,7 +18,7 @@ struct PeopleView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(KS.bg)
+        .background(Color.bg)
         .floatingAddButton(composition: composition)
         .confirmationDialog(personDeleteTitle,
                             isPresented: deleteBinding,
@@ -58,7 +58,7 @@ struct PeopleView: View {
                 }
             } header: {
                 Text(LocalizedStringKey(header))
-                    .font(KS.font(13, .regular)).foregroundColor(KS.muted)
+                    .font(Font.app(13, .regular)).foregroundColor(Color.muted)
                     .textCase(nil)
             }
         }
@@ -112,13 +112,13 @@ struct PersonRow: View {
         HStack(spacing: 12) {
             AvatarView(initials: name.initials, color: color, size: 42)
             VStack(alignment: .leading, spacing: 2) {
-                Text(name).font(KS.font(16, .semibold)).foregroundColor(KS.ink)
+                Text(name).font(Font.app(16, .semibold)).foregroundColor(Color.ink)
                 Text("\(r) received · \(gv) given")
-                    .font(KS.font(13, .regular)).foregroundColor(KS.muted3)
+                    .font(Font.app(13, .regular)).foregroundColor(Color.muted3)
             }
             Spacer(minLength: 8)
             Text(rub(gifts.totalValue))
-                .font(KS.font(15, .semibold)).foregroundColor(KS.ink)
+                .font(Font.app(15, .semibold)).foregroundColor(Color.ink)
             Chevron()
         }
         .padding(.horizontal, 0).padding(.vertical, 13)

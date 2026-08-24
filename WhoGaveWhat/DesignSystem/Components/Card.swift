@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct Card<Content: View>: View {
-    var corner: CGFloat = KS.radius
+    var corner: CGFloat = DesignMetrics.cornerRadius
     var strongShadow = false
     @ViewBuilder var content: Content
 
     var body: some View {
         content
-            .background(RoundedRectangle(cornerRadius: corner, style: .continuous).fill(KS.card))
+            .background(RoundedRectangle(cornerRadius: corner, style: .continuous).fill(Color.card))
             .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
             .modifier(OptionalLift(on: strongShadow))
     }

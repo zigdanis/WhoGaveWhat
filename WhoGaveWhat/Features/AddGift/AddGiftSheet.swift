@@ -48,16 +48,16 @@ struct AddGiftSheet: View {
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
             // Empty scroll area below the content also dismisses the keyboard.
-            .background(KS.bg.contentShape(Rectangle()).onTapGesture { focus = nil })
+            .background(Color.bg.contentShape(Rectangle()).onTapGesture { focus = nil })
             .navigationTitle(state.editingGiftID == nil ? "Add a gift" : "Edit gift")
             .navigationBarTitleDisplayMode(.inline)
             // Paint the nav bar the same grouped grey as the body so the sheet
             // reads as one uniform surface (no white top / grey middle seam).
-            .toolbarBackground(KS.bg, for: .navigationBar)
+            .toolbarBackground(Color.bg, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { composition.router.dismissGiftSheet() }.tint(KS.muted2)
+                    Button("Cancel") { composition.router.dismissGiftSheet() }.tint(Color.muted2)
                 }
             }
             // Opening a picker must drop keyboard focus so it doesn't bounce back
@@ -70,7 +70,7 @@ struct AddGiftSheet: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        .presentationBackground(KS.bg)
+        .presentationBackground(Color.bg)
         .sheet(item: pickerBinding) { kind in
             PickerSheet(kind: kind, state: state, composition: composition)
         }
@@ -98,14 +98,14 @@ struct AddGiftSheet: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(fm.tint))
+        .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(fm.tint))
     }
 
     /// Gift title — a tall white field; the whole surface focuses the input so
     /// the tap target is forgiving.
     private var nameField: some View {
         TextField("Bouquet, watch, money…", text: nameBinding)
-            .font(KS.font(18, .bold)).foregroundColor(KS.ink)
+            .font(Font.app(18, .bold)).foregroundColor(Color.ink)
             .tint(fm.main)
             .focused($focus, equals: .name)
             .submitLabel(.next)
@@ -124,7 +124,7 @@ struct AddGiftSheet: View {
         Text(state.effectiveEmoji)
             .font(.system(size: 28))
             .frame(width: 58, height: 58)
-            .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(.white))
+            .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(.white))
             .overlay(alignment: .bottomTrailing) {
                 Group {
                     if state.aiLoading {
@@ -149,25 +149,25 @@ struct AddGiftSheet: View {
     private var valueField: some View {
         HStack(spacing: 6) {
             TextField("0", text: valueBinding)
-                .font(KS.font(16, .semibold)).foregroundColor(KS.ink)
+                .font(Font.app(16, .semibold)).foregroundColor(Color.ink)
                 .keyboardType(.numberPad)
                 .tint(fm.main)
                 .focused($focus, equals: .value)
                 .fixedSize()
-            Text("₽").font(KS.font(16, .semibold)).foregroundColor(KS.muted2)
+            Text("₽").font(Font.app(16, .semibold)).foregroundColor(Color.muted2)
             if !state.draft.valueTouched {
                 if state.aiLoading {
                     // Live estimate in progress — small spinner + "thinking…".
                     HStack(spacing: 5) {
                         ProgressView().controlSize(.mini).tint(fm.main)
                         Text("thinking…")
-                            .font(KS.font(11, .semibold)).foregroundColor(fm.main)
+                            .font(Font.app(11, .semibold)).foregroundColor(fm.main)
                     }
                     .padding(.horizontal, 8).padding(.vertical, 3)
                     .background(Capsule().fill(fm.tint))
                 } else {
                     Text("estimated")
-                        .font(KS.font(11, .semibold)).foregroundColor(fm.main)
+                        .font(Font.app(11, .semibold)).foregroundColor(fm.main)
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(Capsule().fill(fm.tint))
                 }
@@ -185,11 +185,11 @@ struct AddGiftSheet: View {
     /// Shared white, lightly-bordered surface that lifts the inputs off the
     /// tinted hero card and the grouped background behind it.
     private var fieldSurface: some View {
-        RoundedRectangle(cornerRadius: KS.radius, style: .continuous)
-            .fill(KS.card)
+        RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
+            .fill(Color.card)
             .overlay(
-                RoundedRectangle(cornerRadius: KS.radius, style: .continuous)
-                    .stroke(KS.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
+                    .stroke(Color.border, lineWidth: 1)
             )
             .ksCardShadow()
     }
@@ -222,12 +222,12 @@ struct AddGiftSheet: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(fm.main)
                     .frame(width: 34, height: 34)
-                    .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(fm.tint))
-                Text(LocalizedStringKey(label)).font(KS.font(16, .regular)).foregroundColor(KS.ink)
+                    .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(fm.tint))
+                Text(LocalizedStringKey(label)).font(Font.app(16, .regular)).foregroundColor(Color.ink)
                 Spacer(minLength: 8)
                 Text(value ?? String(localized: "Choose"))
-                    .font(KS.font(16, value == nil ? .regular : .semibold))
-                    .foregroundColor(value == nil ? KS.placeholder : fm.main)
+                    .font(Font.app(16, value == nil ? .regular : .semibold))
+                    .foregroundColor(value == nil ? Color.placeholder : fm.main)
                     .lineLimit(1)
                 Chevron()
             }
@@ -243,12 +243,12 @@ struct AddGiftSheet: View {
         Card {
             Toggle(isOn: paidBinding) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Paid by you").font(KS.font(16, .regular)).foregroundColor(KS.ink)
+                    Text("Paid by you").font(Font.app(16, .regular)).foregroundColor(Color.ink)
                     Text("Count this in your own giving")
-                        .font(KS.font(13, .regular)).foregroundColor(KS.muted3)
+                        .font(Font.app(13, .regular)).foregroundColor(Color.muted3)
                 }
             }
-            .tint(KS.emerald)
+            .tint(Color.emerald)
             .padding(.horizontal, 14).padding(.vertical, 10)
         }
     }
@@ -258,10 +258,10 @@ struct AddGiftSheet: View {
     private var saveButton: some View {
         Button { state.save(using: composition) } label: {
             Text(saveTitle)
-                .font(KS.font(17, .semibold)).foregroundColor(.white)
+                .font(Font.app(17, .semibold)).foregroundColor(.white)
                 .frame(maxWidth: .infinity).padding(.vertical, 16)
-                .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous)
-                    .fill(can ? KS.ink : Color(hex: 0xC3CAD3)))
+                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
+                    .fill(can ? Color.ink : Color(hex: 0xC3CAD3)))
         }
         .buttonStyle(.plain)
         .disabled(!can)
@@ -312,15 +312,15 @@ private struct PickerSheet: View {
     var body: some View {
         NavigationStack {
             content
-                .background(KS.bg)
+                .background(Color.bg)
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbarBackground(KS.bg, for: .navigationBar)
+                .toolbarBackground(Color.bg, for: .navigationBar)
                 .toolbarBackground(.visible, for: .navigationBar)
         }
         // No Cancel button — these sheets are dismissed with a swipe down.
         .presentationDetents(kind == .date ? [.large] : [.medium, .large])
         .presentationDragIndicator(.visible)
-        .presentationBackground(KS.bg)
+        .presentationBackground(Color.bg)
     }
 
     @ViewBuilder
@@ -376,7 +376,7 @@ private struct PickerSheet: View {
                         Button { select(e.0) } label: {
                             HStack(spacing: 12) {
                                 AvatarView(initials: e.1.initials, color: e.2, size: 38)
-                                Text(e.1).font(KS.font(16, .semibold)).foregroundColor(KS.ink)
+                                Text(e.1).font(Font.app(16, .semibold)).foregroundColor(Color.ink)
                                 Spacer(minLength: 8)
                                 if selected == e.0 { checkmark }
                             }
@@ -406,7 +406,7 @@ private struct PickerSheet: View {
                         ForEach(Array(composition.data.celebrations.enumerated()), id: \.element.id) { idx, celebration in
                             Button { state.selectCelebration(celebration.name) } label: {
                                 HStack {
-                                    Text(composition.data.localizedCelebration(celebration.name)).font(KS.font(16, .regular)).foregroundColor(KS.ink)
+                                    Text(composition.data.localizedCelebration(celebration.name)).font(Font.app(16, .regular)).foregroundColor(Color.ink)
                                     Spacer(minLength: 8)
                                     if state.draft.celebration == celebration.name { checkmark }
                                 }
@@ -435,7 +435,7 @@ private struct PickerSheet: View {
                 VStack(alignment: .leading, spacing: 7) {
                     iconAddRow
                     Text("Pick one below, or type your own — any letter or symbol fits.")
-                        .font(KS.font(12, .regular)).foregroundColor(KS.muted3)
+                        .font(Font.app(12, .regular)).foregroundColor(Color.muted3)
                         .padding(.horizontal, 4)
                 }
                 Card {
@@ -444,8 +444,8 @@ private struct PickerSheet: View {
                             Button { state.selectEmoji(e) } label: {
                                 Text(e).font(.system(size: 26))
                                     .frame(maxWidth: .infinity).frame(height: 48)
-                                    .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous)
-                                        .fill(state.draft.emoji == e ? KS.recvTint : KS.track))
+                                    .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
+                                        .fill(state.draft.emoji == e ? Color.recvTint : Color.track))
                             }
                             .buttonStyle(.plain)
                         }
@@ -467,15 +467,15 @@ private struct PickerSheet: View {
                 Text(iconPreview)
                     .font(.system(size: 24))
                     .frame(width: 46, height: 46)
-                    .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.track))
+                    .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(Color.track))
                 TextField("Type any icon or letter", text: $customText)
-                    .font(KS.font(16, .regular)).tint(KS.recv)
+                    .font(Font.app(16, .regular)).tint(Color.recv)
                 Button {
                     state.useCustomEmoji(customText); customText = ""
                 } label: {
-                    Text("Add").font(KS.font(15, .semibold)).foregroundColor(.white)
+                    Text("Add").font(Font.app(15, .semibold)).foregroundColor(.white)
                         .padding(.horizontal, 16).padding(.vertical, 8)
-                        .background(Capsule().fill(addDisabled ? KS.muted4 : KS.ink))
+                        .background(Capsule().fill(addDisabled ? Color.muted4 : Color.ink))
                 }
                 .buttonStyle(.plain)
                 .disabled(addDisabled)
@@ -506,7 +506,7 @@ private struct PickerSheet: View {
                 Card {
                     DatePicker("", selection: dateApplyBinding, displayedComponents: .date)
                         .datePickerStyle(.graphical)
-                        .tint(KS.recv)
+                        .tint(Color.recv)
                         .padding(.horizontal, 10).padding(.vertical, 6)
                 }
             }
@@ -525,11 +525,11 @@ private struct PickerSheet: View {
         let selected = Calendar.current.isDate(state.draft.date, inSameDayAs: date)
         return Button { state.selectDate(date) } label: {
             Text(LocalizedStringKey(label))
-                .font(KS.font(15, .semibold))
-                .foregroundColor(selected ? .white : KS.ink)
+                .font(Font.app(15, .semibold))
+                .foregroundColor(selected ? .white : Color.ink)
                 .frame(maxWidth: .infinity).padding(.vertical, 13)
-                .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous)
-                    .fill(selected ? KS.ink : KS.card))
+                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
+                    .fill(selected ? Color.ink : Color.card))
         }
         .buttonStyle(.plain)
     }
@@ -539,20 +539,20 @@ private struct PickerSheet: View {
     private var checkmark: some View {
         Image(systemName: "checkmark")
             .font(.system(size: 15, weight: .semibold))
-            .foregroundColor(KS.recv)
+            .foregroundColor(Color.recv)
     }
 
     private func addRow(placeholder: String, add: @escaping (String) -> Void) -> some View {
         Card {
             HStack(spacing: 10) {
                 TextField(LocalizedStringKey(placeholder), text: $customText)
-                    .font(KS.font(16, .regular)).tint(KS.recv)
+                    .font(Font.app(16, .regular)).tint(Color.recv)
                 Button {
                     add(customText); customText = ""
                 } label: {
-                    Text("Add").font(KS.font(15, .semibold)).foregroundColor(.white)
+                    Text("Add").font(Font.app(15, .semibold)).foregroundColor(.white)
                         .padding(.horizontal, 16).padding(.vertical, 8)
-                        .background(Capsule().fill(addDisabled ? KS.muted4 : KS.ink))
+                        .background(Capsule().fill(addDisabled ? Color.muted4 : Color.ink))
                 }
                 .buttonStyle(.plain)
                 .disabled(addDisabled)

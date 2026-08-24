@@ -16,39 +16,39 @@ struct SettingsView: View {
                     SectionHeader(text: "Preferences").padding(.top, 24).padding(.bottom, 7)
                     Card {
                         VStack(spacing: 0) {
-                            valueRow(icon: "rublesign.circle.fill", tint: KS.recv, label: "Currency", value: "Ruble ₽")
+                            valueRow(icon: "rublesign.circle.fill", tint: Color.recv, label: "Currency", value: "Ruble ₽")
                             RowDivider().padding(.leading, 58)
-                            toggleRow(icon: "bell.fill", tint: KS.ink, label: "Notifications", bind: notifBinding)
+                            toggleRow(icon: "bell.fill", tint: Color.ink, label: "Notifications", bind: notifBinding)
                             RowDivider().padding(.leading, 58)
-                            valueRow(icon: "rectangle.stack.fill", tint: KS.recv, label: "Default view", value: "All gifts")
+                            valueRow(icon: "rectangle.stack.fill", tint: Color.recv, label: "Default view", value: "All gifts")
                         }
                     }
 
                     SectionHeader(text: "Data & sync").padding(.top, 24).padding(.bottom, 7)
                     Card {
                         VStack(spacing: 0) {
-                            toggleRow(icon: "icloud.fill", tint: KS.recv, label: "iCloud sync", bind: cloudBinding)
+                            toggleRow(icon: "icloud.fill", tint: Color.recv, label: "iCloud sync", bind: cloudBinding)
                             RowDivider().padding(.leading, 58)
-                            actionRow(icon: "square.and.arrow.up.fill", tint: KS.ink, label: "Export data")
+                            actionRow(icon: "square.and.arrow.up.fill", tint: Color.ink, label: "Export data")
                         }
                     }
 
                     SectionHeader(text: "About").padding(.top, 24).padding(.bottom, 7)
                     Card {
                         VStack(spacing: 0) {
-                            actionRow(icon: "star.fill", tint: KS.recv, label: "Rate Who Gave What")
+                            actionRow(icon: "star.fill", tint: Color.recv, label: "Rate Who Gave What")
                             RowDivider().padding(.leading, 58)
-                            actionRow(icon: "hand.raised.fill", tint: KS.ink, label: "Privacy Policy")
+                            actionRow(icon: "hand.raised.fill", tint: Color.ink, label: "Privacy Policy")
                             RowDivider().padding(.leading, 58)
-                            valueRow(icon: "info.circle.fill", tint: KS.gold, label: "Version", value: "2.0")
+                            valueRow(icon: "info.circle.fill", tint: Color.gold, label: "Version", value: "2.0")
                         }
                     }
 
                     Button { } label: {
                         Text("Sign out")
-                            .font(KS.font(16, .semibold)).foregroundColor(Color(hex: 0xE5484D))
+                            .font(Font.app(16, .semibold)).foregroundColor(Color(hex: 0xE5484D))
                             .frame(maxWidth: .infinity).padding(.vertical, 15)
-                            .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.card))
+                            .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(Color.card))
                     }
                     .buttonStyle(.plain)
                     .padding(.top, 24)
@@ -56,11 +56,11 @@ struct SettingsView: View {
                 .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 30)
             }
             .scrollIndicators(.hidden)
-            .background(KS.bg)
+            .background(Color.bg)
             .navigationTitle("Settings")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { router.dismissSettings() }.fontWeight(.semibold).tint(KS.recv)
+                    Button("Done") { router.dismissSettings() }.fontWeight(.semibold).tint(Color.recv)
                 }
             }
         }
@@ -69,11 +69,11 @@ struct SettingsView: View {
     private var profileCard: some View {
         Card {
             HStack(spacing: 14) {
-                AvatarView(initials: "A", color: KS.ink, size: 52)
+                AvatarView(initials: "A", color: Color.ink, size: 52)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Anton").font(KS.font(18, .semibold)).foregroundColor(KS.ink)
+                    Text("Anton").font(Font.app(18, .semibold)).foregroundColor(Color.ink)
                     Text("Apple Account, iCloud & more")
-                        .font(KS.font(13, .regular)).foregroundColor(KS.muted3)
+                        .font(Font.app(13, .regular)).foregroundColor(Color.muted3)
                 }
                 Spacer(minLength: 8)
                 Chevron()
@@ -93,9 +93,9 @@ struct SettingsView: View {
     private func valueRow(icon: String, tint: Color, label: String, value: String) -> some View {
         HStack(spacing: 12) {
             iconTile(icon, tint)
-            Text(LocalizedStringKey(label)).font(KS.font(16, .regular)).foregroundColor(KS.ink)
+            Text(LocalizedStringKey(label)).font(Font.app(16, .regular)).foregroundColor(Color.ink)
             Spacer(minLength: 8)
-            Text(LocalizedStringKey(value)).font(KS.font(16, .regular)).foregroundColor(KS.muted)
+            Text(LocalizedStringKey(value)).font(Font.app(16, .regular)).foregroundColor(Color.muted)
             Chevron()
         }
         .padding(.horizontal, 14).padding(.vertical, 9)
@@ -104,7 +104,7 @@ struct SettingsView: View {
     private func actionRow(icon: String, tint: Color, label: String) -> some View {
         HStack(spacing: 12) {
             iconTile(icon, tint)
-            Text(LocalizedStringKey(label)).font(KS.font(16, .regular)).foregroundColor(KS.ink)
+            Text(LocalizedStringKey(label)).font(Font.app(16, .regular)).foregroundColor(Color.ink)
             Spacer(minLength: 8)
             Chevron()
         }
@@ -115,9 +115,9 @@ struct SettingsView: View {
         HStack(spacing: 12) {
             iconTile(icon, tint)
             Toggle(isOn: bind) {
-                Text(LocalizedStringKey(label)).font(KS.font(16, .regular)).foregroundColor(KS.ink)
+                Text(LocalizedStringKey(label)).font(Font.app(16, .regular)).foregroundColor(Color.ink)
             }
-            .tint(KS.emerald)
+            .tint(Color.emerald)
         }
         .padding(.horizontal, 14).padding(.vertical, 5)
     }

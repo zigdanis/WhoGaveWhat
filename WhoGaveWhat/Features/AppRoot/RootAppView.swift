@@ -27,7 +27,7 @@ struct RootAppView: View {
                     .navigationTitle("Insights")
             }
         }
-        .tint(KS.recv)
+        .tint(Color.recv)
         .tabBarMinimizeBehavior(.onScrollDown)
         .sheet(item: giftSheetBinding) { route in
             AddGiftSheet(route: route, composition: composition)
@@ -59,7 +59,7 @@ struct RootAppView: View {
             Button { composition.router.presentSettings() } label: {
                 Image(systemName: "gearshape")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(KS.ink)
+                    .foregroundColor(Color.ink)
             }
             .accessibilityLabel("Settings")
         }
@@ -94,7 +94,7 @@ struct ScreenScroll<Content: View>: View {
                 .padding(.bottom, 12)
         }
         .scrollIndicators(.hidden)
-        .background(KS.bg)
+        .background(Color.bg)
         .floatingAddButton(composition: composition)
     }
 }
@@ -107,10 +107,10 @@ struct AddGiftFAB: View {
     var body: some View {
         Button { router.presentNewGift() } label: {
             Label("Add a gift", systemImage: "plus")
-                .font(KS.font(16, .semibold))
+                .font(Font.app(16, .semibold))
                 .foregroundColor(.white)
                 .padding(.horizontal, 22).padding(.vertical, 13)
-                .background(RoundedRectangle(cornerRadius: KS.radius, style: .continuous).fill(KS.ink))
+                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(Color.ink))
                 .ksCardShadow(strong: true)
         }
         .buttonStyle(.plain)
