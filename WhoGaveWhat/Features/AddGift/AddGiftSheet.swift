@@ -7,7 +7,7 @@ struct AddGiftSheet: View {
     let composition: AppComposition
     @State private var state: AddGiftState
     @State private var showsDetails: Bool
-    @FocusState private var focus: Field?
+    @FocusState private var focus: AddGiftField?
 
     init(route: GiftSheetRoute, composition: AppComposition) {
         self.composition = composition
@@ -19,16 +19,37 @@ struct AddGiftSheet: View {
         _showsDetails = State(initialValue: route.editingGiftID != nil)
     }
 
-    private enum Field { case name, value }
-
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    basicsCard
-                    detailsDisclosure.padding(.top, 16)
+                    GiftBasicsSection(
+                        name: nameBinding,
+                        focus: $focus,
+                        fromName: state.draft.fromID.map(composition.data.entityName) ?? String(localized: "You"),
+                        toName: state.draft.toID.map(composition.data.entityName),
+                        isEditing: state.editingGiftID != nil,
+                        accent: fm.main,
+                        tint: fm.tint,
+                        onSelectFrom: { state.open(.from) },
+                        onSelectTo: { state.open(.to) }
+                    )
+                    GiftDetailsDisclosure(isExpanded: $showsDetails) {
+                        focus = nil
+                    }
+                    .padding(.top, 16)
                     if showsDetails {
-                        detailsCard.padding(.top, 10)
+                        GiftDetailsSection(
+                            dateLabel: state.draft.date.giftInputLabel(),
+                            occasionLabel: state.draft.celebration.map(composition.data.localizedCelebration),
+                            value: valueBinding,
+                            focus: $focus,
+                            accent: fm.main,
+                            tint: fm.tint,
+                            onSelectDate: { state.open(.date) },
+                            onSelectOccasion: { state.open(.celeb) }
+                        )
+                        .padding(.top, 10)
                     }
                     saveButton.padding(.top, 24)
                 }
@@ -72,168 +93,12 @@ struct AddGiftSheet: View {
         .onDisappear { state.cancel() }
     }
 
-    /// Tint follows the derived direction so the hero reflects received/given.
+    /// Tint follows the derived direction for the form's controls.
     private var fm: GiftFlowAppearance {
         state.flow(householdIDs: composition.data.householdIDs,
                    saveGift: composition.saveGiftUseCase).appearance
     }
     private var can: Bool { state.input.canSave }
-
-    // MARK: Basic fields
-
-    private var basicsCard: some View {
-        VStack(spacing: 12) {
-            TextField("Gift name", text: nameBinding)
-                .font(Font.app(18, .semibold)).foregroundColor(Color.ink)
-                .tint(fm.main)
-                .focused($focus, equals: .name)
-                .submitLabel(.done)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 14)
-                .frame(height: 58)
-                .background(fieldSurface)
-                .contentShape(Rectangle())
-                .onTapGesture { focus = .name }
-
-            Card {
-                VStack(spacing: 0) {
-                    senderRow
-                    RowDivider().padding(.leading, 58)
-                    detailRow(icon: "person.2.fill", label: "To",
-                              value: state.draft.toID.map(composition.data.entityName)) {
-                        state.open(.to)
-                    }
-                }
-            }
-        }
-    }
-
-    private var senderRow: some View {
-        Group {
-            if state.editingGiftID != nil {
-                Button { state.open(.from) } label: {
-                    senderRowContent
-                }
-                .buttonStyle(.plain)
-            } else {
-                senderRowContent
-            }
-        }
-    }
-
-    private var senderRowContent: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "person.fill")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(fm.main)
-                .frame(width: 34, height: 34)
-                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(fm.tint))
-            Text("From").font(Font.app(16, .regular)).foregroundColor(Color.ink)
-            Spacer(minLength: 8)
-            Text(state.draft.fromID.map(composition.data.entityName) ?? String(localized: "You"))
-                .font(Font.app(16, .semibold)).foregroundColor(fm.main)
-            if state.editingGiftID != nil { Chevron() }
-        }
-        .padding(.horizontal, 14).padding(.vertical, 10)
-        .contentShape(Rectangle())
-    }
-
-    private var detailsDisclosure: some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                showsDetails.toggle()
-                if !showsDetails { focus = nil }
-            }
-        } label: {
-            HStack(spacing: 8) {
-                Text("Details")
-                    .font(Font.app(16, .semibold))
-                    .foregroundColor(Color.ink)
-                Spacer(minLength: 8)
-                Image(systemName: showsDetails ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Color.muted2)
-            }
-            .padding(.horizontal, 4)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityValue(showsDetails ? "Shown" : "Hidden")
-    }
-
-    /// Shared white, lightly-bordered surface that lifts the inputs off the
-    /// tinted hero card and the grouped background behind it.
-    private var fieldSurface: some View {
-        RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-            .fill(Color.card)
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-                    .stroke(Color.border, lineWidth: 1)
-            )
-            .ksCardShadow()
-    }
-
-    // MARK: Detail fields
-
-    private var detailsCard: some View {
-        Card {
-            VStack(spacing: 0) {
-                detailRow(icon: "calendar", label: "Date",
-                          value: state.draft.date.giftInputLabel()) { state.open(.date) }
-                RowDivider().padding(.leading, 58)
-                detailRow(icon: "party.popper.fill", label: "Occasion",
-                          value: state.draft.celebration.map(composition.data.localizedCelebration)) { state.open(.celeb) }
-                RowDivider().padding(.leading, 58)
-                approximateValueRow
-            }
-        }
-    }
-
-    private var approximateValueRow: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "rublesign.circle")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(fm.main)
-                .frame(width: 34, height: 34)
-                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(fm.tint))
-            Text("Approx. value").font(Font.app(16, .regular)).foregroundColor(Color.ink)
-            Spacer(minLength: 8)
-            TextField("0", text: valueBinding)
-                .font(Font.app(16, .semibold)).foregroundColor(Color.ink)
-                .keyboardType(.numberPad)
-                .tint(fm.main)
-                .focused($focus, equals: .value)
-                .multilineTextAlignment(.trailing)
-                .frame(minWidth: 60, maxWidth: 110)
-            Text("₽").font(Font.app(16, .semibold)).foregroundColor(Color.muted2)
-        }
-        .padding(.horizontal, 14).padding(.vertical, 10)
-        .contentShape(Rectangle())
-        .onTapGesture { focus = .value }
-    }
-
-    private func detailRow(icon: String, label: String, value: String?,
-                           action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(fm.main)
-                    .frame(width: 34, height: 34)
-                    .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(fm.tint))
-                Text(LocalizedStringKey(label)).font(Font.app(16, .regular)).foregroundColor(Color.ink)
-                Spacer(minLength: 8)
-                Text(value ?? String(localized: "Choose"))
-                    .font(Font.app(16, value == nil ? .regular : .semibold))
-                    .foregroundColor(value == nil ? Color.placeholder : fm.main)
-                    .lineLimit(1)
-                Chevron()
-            }
-            .padding(.horizontal, 14).padding(.vertical, 10)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
 
     // MARK: Save
 
@@ -273,6 +138,219 @@ struct AddGiftSheet: View {
 
     private var pickerBinding: Binding<AddGiftPicker?> {
         Binding(get: { state.picker }, set: { if $0 == nil { state.closePicker() } })
+    }
+}
+
+private enum AddGiftField: Hashable {
+    case name
+    case value
+}
+
+private struct GiftBasicsSection: View {
+    @Binding var name: String
+    @FocusState.Binding var focus: AddGiftField?
+    let fromName: String
+    let toName: String?
+    let isEditing: Bool
+    let accent: Color
+    let tint: Color
+    let onSelectFrom: () -> Void
+    let onSelectTo: () -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            TextField("Gift name", text: $name)
+                .font(Font.app(18, .semibold)).foregroundColor(Color.ink)
+                .tint(accent)
+                .focused($focus, equals: .name)
+                .submitLabel(.done)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 14)
+                .frame(height: 58)
+                .background(fieldSurface)
+                .contentShape(Rectangle())
+                .onTapGesture { focus = .name }
+
+            Card {
+                VStack(spacing: 0) {
+                    senderRow
+                    RowDivider().padding(.leading, 58)
+                    GiftEntryRow(
+                        icon: "person.2.fill",
+                        label: "To",
+                        value: toName,
+                        accent: accent,
+                        tint: tint,
+                        onTap: onSelectTo
+                    )
+                }
+            }
+        }
+    }
+
+    private var senderRow: some View {
+        Group {
+            if isEditing {
+                Button(action: onSelectFrom) {
+                    senderRowContent
+                }
+                .buttonStyle(.plain)
+            } else {
+                senderRowContent
+            }
+        }
+    }
+
+    private var senderRowContent: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "person.fill")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(accent)
+                .frame(width: 34, height: 34)
+                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(tint))
+            Text("From").font(Font.app(16, .regular)).foregroundColor(Color.ink)
+            Spacer(minLength: 8)
+            Text(fromName).font(Font.app(16, .semibold)).foregroundColor(accent)
+            if isEditing { Chevron() }
+        }
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .contentShape(Rectangle())
+    }
+
+    private var fieldSurface: some View {
+        RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
+            .fill(Color.card)
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
+                    .stroke(Color.border, lineWidth: 1)
+            )
+            .ksCardShadow()
+    }
+}
+
+private struct GiftDetailsDisclosure: View {
+    @Binding var isExpanded: Bool
+    let onCollapse: () -> Void
+
+    var body: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isExpanded.toggle()
+                if !isExpanded { onCollapse() }
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Text("Details")
+                    .font(Font.app(16, .semibold))
+                    .foregroundColor(Color.ink)
+                Spacer(minLength: 8)
+                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Color.muted2)
+            }
+            .padding(.horizontal, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(isExpanded ? "Shown" : "Hidden")
+    }
+}
+
+private struct GiftDetailsSection: View {
+    let dateLabel: String
+    let occasionLabel: String?
+    @Binding var value: String
+    @FocusState.Binding var focus: AddGiftField?
+    let accent: Color
+    let tint: Color
+    let onSelectDate: () -> Void
+    let onSelectOccasion: () -> Void
+
+    var body: some View {
+        Card {
+            VStack(spacing: 0) {
+                GiftEntryRow(
+                    icon: "calendar",
+                    label: "Date",
+                    value: dateLabel,
+                    accent: accent,
+                    tint: tint,
+                    onTap: onSelectDate
+                )
+                RowDivider().padding(.leading, 58)
+                GiftEntryRow(
+                    icon: "party.popper.fill",
+                    label: "Occasion",
+                    value: occasionLabel,
+                    accent: accent,
+                    tint: tint,
+                    onTap: onSelectOccasion
+                )
+                RowDivider().padding(.leading, 58)
+                ApproximateValueRow(value: $value, focus: $focus, accent: accent, tint: tint)
+            }
+        }
+    }
+}
+
+private struct GiftEntryRow: View {
+    let icon: String
+    let label: LocalizedStringKey
+    let value: String?
+    let accent: Color
+    let tint: Color
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(accent)
+                    .frame(width: 34, height: 34)
+                    .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(tint))
+                Text(label).font(Font.app(16, .regular)).foregroundColor(Color.ink)
+                Spacer(minLength: 8)
+                Text(value ?? String(localized: "Choose"))
+                    .font(Font.app(16, value == nil ? .regular : .semibold))
+                    .foregroundColor(value == nil ? Color.placeholder : accent)
+                    .lineLimit(1)
+                Chevron()
+            }
+            .padding(.horizontal, 14).padding(.vertical, 10)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct ApproximateValueRow: View {
+    @Binding var value: String
+    @FocusState.Binding var focus: AddGiftField?
+    let accent: Color
+    let tint: Color
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "rublesign.circle")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(accent)
+                .frame(width: 34, height: 34)
+                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(tint))
+            Text("Approx. value").font(Font.app(16, .regular)).foregroundColor(Color.ink)
+            Spacer(minLength: 8)
+            TextField("0", text: $value)
+                .font(Font.app(16, .semibold)).foregroundColor(Color.ink)
+                .keyboardType(.numberPad)
+                .tint(accent)
+                .focused($focus, equals: .value)
+                .multilineTextAlignment(.trailing)
+                .frame(minWidth: 60, maxWidth: 110)
+            Text("₽").font(Font.app(16, .semibold)).foregroundColor(Color.muted2)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .contentShape(Rectangle())
+        .onTapGesture { focus = .value }
     }
 }
 
