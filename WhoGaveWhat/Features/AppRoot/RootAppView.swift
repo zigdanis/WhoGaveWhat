@@ -13,8 +13,7 @@ struct RootAppView: View {
                 // carries its own background + floating button rather than the
                 // shared ScreenScroll wrapper.
                 HomeView(composition: composition)
-                    .navigationTitle("Who Gave What")
-                    .toolbar { settingsButton }
+                    .toolbar(.hidden, for: .navigationBar)
             }
             stack(.people, "People", "People") {
                 // People is its own native List (swipe-to-delete a person), so it
@@ -51,18 +50,6 @@ struct RootAppView: View {
         }
         .tabItem { Label(LocalizedStringKey(title), image: icon) }
         .tag(value)
-    }
-
-    @ToolbarContentBuilder
-    private var settingsButton: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
-            Button { composition.router.presentSettings() } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(Color.ink)
-            }
-            .accessibilityLabel("Settings")
-        }
     }
 
     private var tabSelection: Binding<AppTab> {
