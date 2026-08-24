@@ -22,6 +22,12 @@ Package.resolved
 # Editor
 .vscode/
 
+# Zed / xcode-build-server (machine-specific absolute paths)
+buildServer.json
+
+# Generated Xcode project workspace metadata
+WhoGaveWhat.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+
 # Misc
 *.hmap
 *.ipa
