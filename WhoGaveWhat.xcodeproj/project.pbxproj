@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXContainerItemProxy section */
@@ -16,17 +16,14 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXFileReference section */
+		1A0000000000000000000500 /* WhoGaveWhat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WhoGaveWhat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2A0000000000000000001005 /* WhoGaveWhatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WhoGaveWhatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		1A0000000000000000000F00 /* WhoGaveWhat */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = WhoGaveWhat;
-			sourceTree = "<group>";
-		};
-		2A0000000000000000001007 /* WhoGaveWhatTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = WhoGaveWhatTests;
-			sourceTree = "<group>";
-		};
+		1A0000000000000000000F00 /* WhoGaveWhat */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = WhoGaveWhat; sourceTree = "<group>"; };
+		2A0000000000000000001007 /* WhoGaveWhatTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = WhoGaveWhatTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,6 +42,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1A0000000000000000000200 = {
+			isa = PBXGroup;
+			children = (
+				1A0000000000000000000F00 /* WhoGaveWhat */,
+				2A0000000000000000001007 /* WhoGaveWhatTests */,
+				1A0000000000000000000300 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		1A0000000000000000000300 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1A0000000000000000000500 /* WhoGaveWhat.app */,
+				2A0000000000000000001005 /* WhoGaveWhatTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
 		1A0000000000000000000400 /* WhoGaveWhat */ = {
@@ -169,44 +187,6 @@
 		};
 /* End PBXTargetDependency section */
 
-/* Begin PBXGroup section */
-		1A0000000000000000000200 = {
-			isa = PBXGroup;
-			children = (
-				1A0000000000000000000F00 /* WhoGaveWhat */,
-				2A0000000000000000001007 /* WhoGaveWhatTests */,
-				1A0000000000000000000300 /* Products */,
-			);
-			sourceTree = "<group>";
-		};
-		1A0000000000000000000300 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				1A0000000000000000000500 /* WhoGaveWhat.app */,
-				2A0000000000000000001005 /* WhoGaveWhatTests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-/* End PBXGroup section */
-
-/* Begin PBXFileReference section */
-		1A0000000000000000000500 /* WhoGaveWhat.app */ = {
-			isa = PBXFileReference;
-			explicitFileType = wrapper.application;
-			includeInIndex = 0;
-			path = WhoGaveWhat.app;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		2A0000000000000000001005 /* WhoGaveWhatTests.xctest */ = {
-			isa = PBXFileReference;
-			explicitFileType = wrapper.cfbundle;
-			includeInIndex = 0;
-			path = WhoGaveWhatTests.xctest;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXFileReference section */
-
 /* Begin XCBuildConfiguration section */
 		1A0000000000000000000800 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -263,8 +243,8 @@
 				DEVELOPMENT_TEAM = XMSU8WJG5R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_CFBundleDisplayName = "Who Gave";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -290,8 +270,8 @@
 				DEVELOPMENT_TEAM = XMSU8WJG5R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_CFBundleDisplayName = "Who Gave";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
