@@ -176,7 +176,7 @@ private struct GiftBasicsSection: View {
                     senderRow
                     RowDivider().padding(.leading, 58)
                     GiftEntryRow(
-                        icon: "person.2.fill",
+                        icon: .asset("ArrowRightToLine"),
                         label: "To",
                         value: toName,
                         accent: accent,
@@ -203,11 +203,7 @@ private struct GiftBasicsSection: View {
 
     private var senderRowContent: some View {
         HStack(spacing: 12) {
-            Image(systemName: "person.fill")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(accent)
-                .frame(width: 34, height: 34)
-                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(tint))
+            GiftEntryIconView(icon: .asset("ArrowRightFromLine"), accent: accent, tint: tint)
             Text("From").font(Font.app(16, .regular)).foregroundColor(Color.ink)
             Spacer(minLength: 8)
             Text(fromName).font(Font.app(16, .semibold)).foregroundColor(accent)
@@ -270,7 +266,7 @@ private struct GiftDetailsSection: View {
         Card {
             VStack(spacing: 0) {
                 GiftEntryRow(
-                    icon: "calendar",
+                    icon: .system("calendar"),
                     label: "Date",
                     value: dateLabel,
                     accent: accent,
@@ -279,7 +275,7 @@ private struct GiftDetailsSection: View {
                 )
                 RowDivider().padding(.leading, 58)
                 GiftEntryRow(
-                    icon: "party.popper.fill",
+                    icon: .system("party.popper.fill"),
                     label: "Occasion",
                     value: occasionLabel,
                     accent: accent,
@@ -294,7 +290,7 @@ private struct GiftDetailsSection: View {
 }
 
 private struct GiftEntryRow: View {
-    let icon: String
+    let icon: GiftEntryIcon
     let label: LocalizedStringKey
     let value: String?
     let accent: Color
@@ -304,11 +300,7 @@ private struct GiftEntryRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(accent)
-                    .frame(width: 34, height: 34)
-                    .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(tint))
+                GiftEntryIconView(icon: icon, accent: accent, tint: tint)
                 Text(label).font(Font.app(16, .regular)).foregroundColor(Color.ink)
                 Spacer(minLength: 8)
                 Text(value ?? String(localized: "Choose"))
@@ -321,6 +313,39 @@ private struct GiftEntryRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+private enum GiftEntryIcon {
+    case system(String)
+    case asset(String)
+}
+
+private struct GiftEntryIconView: View {
+    let icon: GiftEntryIcon
+    let accent: Color
+    let tint: Color
+
+    var body: some View {
+        iconImage
+            .foregroundColor(accent)
+            .frame(width: 34, height: 34)
+            .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(tint))
+            .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private var iconImage: some View {
+        switch icon {
+        case .system(let name):
+            Image(systemName: name)
+                .font(.system(size: 15, weight: .semibold))
+        case .asset(let name):
+            Image(name)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 18, height: 18)
+        }
     }
 }
 

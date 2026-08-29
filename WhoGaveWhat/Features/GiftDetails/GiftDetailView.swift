@@ -90,25 +90,22 @@ struct GiftDetailView: View {
         let toName = g.flow == .received ? composition.data.memberName(g.memberId) : composition.data.personName(g.personId)
         return Card {
             VStack(spacing: 0) {
-                detailRow(fm, icon: "person.fill", label: "From", value: fromName)
+                detailRow(fm, icon: .asset("ArrowRightFromLine"), label: "From", value: fromName)
                 RowDivider().padding(.leading, 58)
-                detailRow(fm, icon: "person.2.fill", label: "To", value: toName)
+                detailRow(fm, icon: .asset("ArrowRightToLine"), label: "To", value: toName)
                 RowDivider().padding(.leading, 58)
-                detailRow(fm, icon: "party.popper.fill", label: "Occasion",
+                detailRow(fm, icon: .system("party.popper.fill"), label: "Occasion",
                           value: composition.data.localizedCelebration(g.celebration))
                 RowDivider().padding(.leading, 58)
-                detailRow(fm, icon: "calendar", label: "Date", value: g.date.giftInputLabel())
+                detailRow(fm, icon: .system("calendar"), label: "Date", value: g.date.giftInputLabel())
             }
         }
     }
 
-    private func detailRow(_ fm: GiftFlowAppearance, icon: String, label: String, value: String) -> some View {
+    private func detailRow(_ fm: GiftFlowAppearance, icon: GiftDetailIcon,
+                           label: String, value: String) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(fm.main)
-                .frame(width: 34, height: 34)
-                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(fm.tint))
+            GiftDetailIconView(icon: icon, accent: fm.main, tint: fm.tint)
             Text(LocalizedStringKey(label)).font(Font.app(16, .regular)).foregroundColor(Color.ink)
             Spacer(minLength: 8)
             Text(value).font(Font.app(16, .semibold)).foregroundColor(fm.main).lineLimit(1)
@@ -130,5 +127,38 @@ struct GiftDetailView: View {
                 .frame(maxWidth: .infinity).padding(.vertical, 12)
         }
         .buttonStyle(.plain)
+    }
+}
+
+private enum GiftDetailIcon {
+    case system(String)
+    case asset(String)
+}
+
+private struct GiftDetailIconView: View {
+    let icon: GiftDetailIcon
+    let accent: Color
+    let tint: Color
+
+    var body: some View {
+        iconImage
+            .foregroundColor(accent)
+            .frame(width: 34, height: 34)
+            .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(tint))
+            .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private var iconImage: some View {
+        switch icon {
+        case .system(let name):
+            Image(systemName: name)
+                .font(.system(size: 15, weight: .semibold))
+        case .asset(let name):
+            Image(name)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 18, height: 18)
+        }
     }
 }
