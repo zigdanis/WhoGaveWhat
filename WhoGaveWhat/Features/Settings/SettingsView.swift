@@ -40,6 +40,13 @@ struct SettingsView: View {
                             RowDivider().padding(.leading, 58)
                             actionRow(icon: "hand.raised.fill", tint: Color.ink, label: "Privacy Policy")
                             RowDivider().padding(.leading, 58)
+                            NavigationLink {
+                                ThirdPartyLicensesView()
+                            } label: {
+                                actionRow(icon: "doc.text.fill", tint: Color.recv, label: "Third-party licenses")
+                            }
+                            .buttonStyle(.plain)
+                            RowDivider().padding(.leading, 58)
                             valueRow(icon: "info.circle.fill", tint: Color.gold, label: "Version", value: "2.0")
                         }
                     }

@@ -45,6 +45,16 @@ struct HomeView: View {
         .scrollContentBackground(.hidden)
         .background(Color.bg)
         .floatingAddButton(composition: composition)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    composition.router.presentSettings()
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                }
+                .accessibilityLabel("Settings")
+            }
+        }
         .confirmationDialog("Delete this gift?",
                             isPresented: deleteConfirmBinding,
                             titleVisibility: .visible,
