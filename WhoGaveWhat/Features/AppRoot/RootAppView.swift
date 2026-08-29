@@ -13,7 +13,6 @@ struct RootAppView: View {
                 // carries its own background + floating button rather than the
                 // shared ScreenScroll wrapper.
                 HomeView(composition: composition)
-                    .toolbar(.hidden, for: .navigationBar)
             }
             stack(.people, "People", "People") {
                 // People is its own native List (swipe-to-delete a person), so it
