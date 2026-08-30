@@ -3,27 +3,22 @@ name: xcodebuildmcp-cli
 description: Official skill for the XcodeBuildMCP CLI. Use when doing iOS/macOS/watchOS/tvOS/visionOS work (build, test, run, debug, log, UI automation).
 ---
 
-# XcodeBuildMCP CLI
-
-Use XcodeBuildMCP tools via the `xcodebuildmcp` executable instead of raw `xcodebuild`, `xcrun`, or `simctl`.
-
-## WhoGaveWhat Version Policy
-
-This project pins XcodeBuildMCP `2.7.0`. Follow `AGENTS.md` and `docs/xcodebuildmcp.md`; do not install or invoke `@latest`.
-
 ## Step 1: Ensure the CLI Exists
 
 Check availability:
+
 ```bash
 xcodebuildmcp --help
 ```
 
 If missing, install the project-pinned version:
+
 ```bash
 npm install --global xcodebuildmcp@2.7.0
 ```
 
 Re-check after install:
+
 ```bash
 xcodebuildmcp --help
 ```
@@ -31,6 +26,7 @@ xcodebuildmcp --help
 ## Step 2: Use Help-First Discovery
 
 Discover workflows and arguments from the CLI itself:
+
 ```bash
 xcodebuildmcp --help
 xcodebuildmcp tools
@@ -50,6 +46,7 @@ Use this discovery path instead of memorizing static tool lists.
 ## Capability Overview
 
 `xcodebuildmcp` supports:
+
 - simulator and device build/test/run
 - debugging and log capture
 - UI automation
