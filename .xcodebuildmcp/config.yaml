@@ -1,0 +1,6 @@
+schemaVersion: 1
+sessionDefaults:
+  projectPath: ./WhoGaveWhat.xcodeproj
+  scheme: WhoGaveWhat
+  simulatorName: iPhone 17 Pro
+sentryDisabled: true
