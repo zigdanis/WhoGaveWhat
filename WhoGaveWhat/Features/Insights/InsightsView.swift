@@ -6,7 +6,7 @@ struct InsightsView: View {
     var body: some View {
         let insights = composition.buildInsights.execute(
             gifts: composition.data.gifts,
-            people: composition.data.people
+            people: composition.data.contacts
         )
         let rv = insights.receivedValue
         let gv = insights.givenValue
@@ -24,7 +24,7 @@ struct InsightsView: View {
                         .font(Font.app(32, .bold)).tracking(-0.6).foregroundColor(Color.ink)
                         .padding(.top, 7)
 
-                    Text(verbatim: "\(LocalizedCount.gifts(composition.data.gifts.count)) · \(LocalizedCount.people(composition.data.people.count))")
+                    Text(verbatim: "\(LocalizedCount.gifts(composition.data.gifts.count)) · \(LocalizedCount.people(composition.data.contacts.count))")
                         .font(Font.app(14, .regular)).foregroundColor(Color.muted).padding(.top, 4)
 
                     // Stacked received/given bar

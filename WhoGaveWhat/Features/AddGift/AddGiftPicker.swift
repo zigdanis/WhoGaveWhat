@@ -1,7 +1,7 @@
 enum AddGiftPicker: Identifiable {
     case from
     case to
-    case celeb
+    case occasion
     case emoji
     case date
 

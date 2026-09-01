@@ -11,8 +11,9 @@ struct SaveGiftInput: Equatable {
     var fromID: String?
     var toID: String?
     var paidByYou: Bool
-    var celebration: String?
+    var occasion: String?
     var date: Date
+    var createdAt: Date?
 
     var canSave: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty
@@ -27,14 +28,12 @@ struct SaveGiftUseCase {
     let giftGateway: GiftGateway
     let suggestGift: SuggestGiftUseCase
 
-    func flow(for input: SaveGiftInput, householdIDs: Set<String>) -> GiftFlow {
-        let fromHousehold = input.fromID.map(householdIDs.contains) ?? false
-        let toHousehold = input.toID.map(householdIDs.contains) ?? false
-        if toHousehold && !fromHousehold { return .received }
-        if fromHousehold && !toHousehold { return .given }
-        if input.fromID == "you" { return .given }
-        if input.toID == "you" { return .received }
-        return .received
+    func direction(for input: SaveGiftInput, householdIDs: Set<String>) -> GiftDirection {
+        GiftDirectionResolver.resolve(
+            giverID: input.fromID ?? "",
+            recipientID: input.toID ?? "",
+            householdIDs: householdIDs
+        )
     }
 
     @discardableResult
@@ -44,20 +43,19 @@ struct SaveGiftUseCase {
         }
 
         let suggestion = suggestGift.instantSuggestion(for: input.name)
-        let flow = flow(for: input, householdIDs: householdIDs)
-        let memberID = flow == .received ? toID : fromID
-        let personID = flow == .received ? fromID : toID
+        let direction = direction(for: input, householdIDs: householdIDs)
         let gift = Gift(
-            id: input.editingGiftID ?? "g\(Int(Date().timeIntervalSince1970 * 1_000))",
+            id: input.editingGiftID ?? "g\(UUID().uuidString)",
             emoji: input.emoji ?? input.aiEmoji ?? suggestion.emoji,
             name: input.name.trimmingCharacters(in: .whitespaces),
-            flow: flow,
-            personId: personID,
-            memberId: memberID,
+            direction: direction,
+            giverID: fromID,
+            recipientID: toID,
             paidByYou: fromID == "you" || input.paidByYou,
-            celebration: input.celebration ?? "Just because",
+            occasion: input.occasion ?? "Just because",
             date: input.date,
-            value: input.valueTouched ? Double(input.value ?? 0) : (input.aiValue ?? suggestion.value)
+            value: input.valueTouched ? Double(input.value ?? 0) : (input.aiValue ?? suggestion.value),
+            createdAt: input.createdAt ?? Date()
         )
         try giftGateway.save(gift)
         return gift

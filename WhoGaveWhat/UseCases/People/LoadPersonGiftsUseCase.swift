@@ -1,7 +1,7 @@
 struct LoadPersonGiftsUseCase {
-    func execute(personID: String, isHouseholdMember: Bool, gifts: [Gift]) -> [Gift] {
+    func execute(personID: String, gifts: [Gift]) -> [Gift] {
         gifts
-            .filter { isHouseholdMember ? $0.memberId == personID : $0.personId == personID }
+            .filter { $0.giverID == personID || $0.recipientID == personID }
             .sorted(by: Gift.newestFirst)
     }
 }

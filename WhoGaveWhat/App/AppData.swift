@@ -5,78 +5,66 @@ import Observation
 @Observable
 final class AppData {
     private(set) var gifts: [Gift] = []
-    private(set) var members: [HouseholdMember] = []
     private(set) var people: [Person] = []
-    private(set) var celebrations: [Celebration] = AppData.defaultCelebrations
+    private(set) var householdMembers: [Person] = []
+    private(set) var contacts: [Person] = []
+    private(set) var occasions: [Occasion] = AppData.defaultOccasions
 
-    static let defaultCelebrations = [
-        Celebration(name: "Birthday"),
-        Celebration(name: "New Year"),
-        Celebration(name: "Wedding"),
-        Celebration(name: "Anniversary"),
-        Celebration(name: "Graduation"),
-        Celebration(name: "Housewarming"),
-        Celebration(name: "Just because"),
+    static let defaultOccasions = [
+        Occasion(name: "Birthday"),
+        Occasion(name: "New Year"),
+        Occasion(name: "Wedding"),
+        Occasion(name: "Anniversary"),
+        Occasion(name: "Graduation"),
+        Occasion(name: "Housewarming"),
+        Occasion(name: "Just because"),
     ]
 
     func replaceGifts(_ gifts: [Gift]) {
         self.gifts = gifts
-        let savedCelebrations = gifts.map(\.celebration).filter { !$0.isEmpty }
-        celebrations = savedCelebrations.reduce(into: Self.defaultCelebrations) { result, name in
-            if !result.contains(where: { $0.name == name }) { result.append(Celebration(name: name)) }
+        let savedOccasions = gifts.map(\.occasion).filter { !$0.isEmpty }
+        occasions = savedOccasions.reduce(into: Self.defaultOccasions) { result, name in
+            if !result.contains(where: { $0.name == name }) { result.append(Occasion(name: name)) }
         }
     }
 
     func replacePeople(_ snapshot: PeopleSnapshot) {
-        members = snapshot.members
         people = snapshot.people
+        householdMembers = snapshot.householdMembers
+        contacts = snapshot.contacts
     }
 
-    func addCelebration(_ celebration: String) {
-        let celebration = celebration.trimmingCharacters(in: .whitespaces)
-        guard !celebration.isEmpty else { return }
-        if !celebrations.contains(where: {
-            $0.name.caseInsensitiveCompare(celebration) == .orderedSame
+    func addOccasion(_ occasion: String) {
+        let occasion = occasion.trimmingCharacters(in: .whitespaces)
+        guard !occasion.isEmpty else { return }
+        if !occasions.contains(where: {
+            $0.name.caseInsensitiveCompare(occasion) == .orderedSame
         }) {
-            celebrations.insert(Celebration(name: celebration), at: 0)
+            occasions.insert(Occasion(name: occasion), at: 0)
         }
     }
 
     var peopleSnapshot: PeopleSnapshot {
-        PeopleSnapshot(members: members, people: people)
+        PeopleSnapshot(people: people)
     }
 
     var householdIDs: Set<String> {
-        Set(members.map(\.id))
-    }
-
-    func isHouseholdMember(_ id: String) -> Bool {
-        householdIDs.contains(id)
-    }
-
-    func personName(_ id: String) -> String {
-        people.first { $0.id == id }?.name ?? id
-    }
-
-    func memberName(_ id: String) -> String {
-        members.first { $0.id == id }?.name ?? id
+        Set(householdMembers.map(\.id))
     }
 
     func entityName(_ id: String) -> String {
-        members.first { $0.id == id }?.name ?? people.first { $0.id == id }?.name ?? id
+        people.first { $0.id == id }?.name ?? id
     }
 
     func entityColorHex(_ id: String) -> UInt {
-        members.first { $0.id == id }?.colorHex ?? people.first { $0.id == id }?.colorHex ?? 0x12161C
+        people.first { $0.id == id }?.colorHex ?? 0x12161C
     }
 
     func giftSubtitle(_ gift: Gift) -> String {
-        let giver = gift.flow == .received ? personName(gift.personId) : memberName(gift.memberId)
-        let receiver = gift.flow == .received ? memberName(gift.memberId) : personName(gift.personId)
-        return "\(giver)  →  \(receiver)"
+        "\(entityName(gift.giverID))  →  \(entityName(gift.recipientID))"
     }
 
-    func localizedCelebration(_ celebration: String) -> String {
-        String(localized: String.LocalizationValue(celebration))
+    func localizedOccasion(_ occasion: String) -> String {
+        String(localized: String.LocalizationValue(occasion))
     }
 }

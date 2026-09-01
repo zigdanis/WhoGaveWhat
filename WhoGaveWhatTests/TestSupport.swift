@@ -26,15 +26,12 @@ final class TestGiftGateway: GiftGateway {
         gifts.append(gift)
     }
     func deleteGift(id: String) throws { gifts.removeAll { $0.id == id } }
-    func deleteGifts(involving personID: String) throws {
-        gifts.removeAll { $0.personId == personID || $0.memberId == personID }
-    }
 }
 
 @MainActor
 func makeTestComposition() -> AppComposition {
     AppComposition(
-        stack: CoreDataStack(inMemory: true, seed: true),
+        store: try! SwiftDataStore(inMemory: true, seed: true),
         preferences: TestPreferencesGateway(),
         intelligence: TestIntelligenceGateway()
     )
@@ -59,6 +56,6 @@ func makeGiftInput(
         editingGiftID: nil, name: name, emoji: nil, aiEmoji: nil,
         value: value, aiValue: nil, valueTouched: valueTouched,
         fromID: fromID, toID: toID, paidByYou: paidByYou,
-        celebration: nil, date: AppDate.today
+        occasion: nil, date: AppDate.today, createdAt: nil
     )
 }

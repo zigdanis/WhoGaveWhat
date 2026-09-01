@@ -41,13 +41,13 @@ struct AddGiftSheet: View {
                     if showsDetails {
                         GiftDetailsSection(
                             dateLabel: state.draft.date.giftInputLabel(),
-                            occasionLabel: state.draft.celebration.map(composition.data.localizedCelebration),
+                            occasionLabel: state.draft.occasion.map(composition.data.localizedOccasion),
                             value: valueBinding,
                             focus: $focus,
                             accent: fm.main,
                             tint: fm.tint,
                             onSelectDate: { state.open(.date) },
-                            onSelectOccasion: { state.open(.celeb) }
+                            onSelectOccasion: { state.open(.occasion) }
                         )
                         .padding(.top, 10)
                     }
@@ -94,8 +94,8 @@ struct AddGiftSheet: View {
     }
 
     /// Tint follows the derived direction for the form's controls.
-    private var fm: GiftFlowAppearance {
-        state.flow(householdIDs: composition.data.householdIDs,
+    private var fm: GiftDirectionAppearance {
+        state.direction(householdIDs: composition.data.householdIDs,
                    saveGift: composition.saveGiftUseCase).appearance
     }
     private var can: Bool { state.input.canSave }
@@ -413,8 +413,8 @@ private struct PickerSheet: View {
         case .to:
             entityPicker(title: "To", selected: state.draft.toID,
                          select: { state.selectTo($0) }, add: { addPerson($0, selectFrom: false) })
-        case .celeb:
-            celebPicker
+        case .occasion:
+            occasionPicker
         case .emoji:
             emojiPicker
         case .date:
@@ -431,9 +431,9 @@ private struct PickerSheet: View {
                               select: @escaping (String) -> Void,
                               add: @escaping (String) -> Void) -> some View {
         // You first, then the rest of the household, then everyone else.
-        let you = composition.data.members.filter { $0.id == "you" }.map { ($0.id, $0.name, $0.color) }
-        let otherMembers = composition.data.members.filter { $0.id != "you" }.map { ($0.id, $0.name, $0.color) }
-        let outsiders = composition.data.people.map { ($0.id, $0.name, $0.color) }
+        let you = composition.data.householdMembers.filter { $0.id == "you" }.map { ($0.id, $0.name, $0.color) }
+        let otherMembers = composition.data.householdMembers.filter { $0.id != "you" }.map { ($0.id, $0.name, $0.color) }
+        let outsiders = composition.data.contacts.map { ($0.id, $0.name, $0.color) }
         let entities = you + otherMembers + outsiders
         return ScrollView {
             VStack(spacing: 16) {
@@ -474,28 +474,28 @@ private struct PickerSheet: View {
 
     // MARK: Occasion
 
-    private var celebPicker: some View {
+    private var occasionPicker: some View {
         ScrollView {
             VStack(spacing: 16) {
                 // Manual-entry first — add a new option from the top of the sheet.
-                addRow(placeholder: "Add occasion") { celebration in
-                    composition.data.addCelebration(celebration)
-                    state.selectCelebration(celebration)
+                addRow(placeholder: "Add occasion") { occasion in
+                    composition.data.addOccasion(occasion)
+                    state.selectOccasion(occasion)
                 }
                 Card {
                     VStack(spacing: 0) {
-                        ForEach(Array(composition.data.celebrations.enumerated()), id: \.element.id) { idx, celebration in
-                            Button { state.selectCelebration(celebration.name) } label: {
+                        ForEach(Array(composition.data.occasions.enumerated()), id: \.element.id) { idx, occasion in
+                            Button { state.selectOccasion(occasion.name) } label: {
                                 HStack {
-                                    Text(composition.data.localizedCelebration(celebration.name)).font(Font.app(16, .regular)).foregroundColor(Color.ink)
+                                    Text(composition.data.localizedOccasion(occasion.name)).font(Font.app(16, .regular)).foregroundColor(Color.ink)
                                     Spacer(minLength: 8)
-                                    if state.draft.celebration == celebration.name { checkmark }
+                                    if state.draft.occasion == occasion.name { checkmark }
                                 }
                                 .padding(.horizontal, 14).padding(.vertical, 12)
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
-                            if idx < composition.data.celebrations.count - 1 { RowDivider().padding(.leading, 14) }
+                            if idx < composition.data.occasions.count - 1 { RowDivider().padding(.leading, 14) }
                         }
                     }
                 }

@@ -5,7 +5,7 @@ protocol PeopleGateway: AnyObject {
         id: String,
         name: String,
         colorHex: UInt,
-        isFamily: Bool,
+        role: PersonRole,
         sortIndex: Int
     ) throws
     func renamePerson(id: String, name: String) throws

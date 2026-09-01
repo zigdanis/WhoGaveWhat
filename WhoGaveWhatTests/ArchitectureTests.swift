@@ -7,15 +7,16 @@ struct SeededDataTests {
     @Test func loadsTheSampleDatasetThroughGateways() {
         let composition = makeTestComposition()
         #expect(composition.data.gifts.count == 12)
-        #expect(composition.data.members.count == 4)
-        #expect(composition.data.people.count == 6)
+        #expect(composition.data.householdMembers.count == 4)
+        #expect(composition.data.contacts.count == 6)
+        #expect(composition.data.people.count == 10)
     }
 
     @Test func insightsSplitAndSumGifts() {
         let composition = makeTestComposition()
         let insights = composition.buildInsights.execute(
             gifts: composition.data.gifts,
-            people: composition.data.people
+            people: composition.data.contacts
         )
         #expect(insights.received.count == 7)
         #expect(insights.given.count == 5)
@@ -40,9 +41,9 @@ struct SaveGiftInputTests {
         let composition = makeTestComposition()
         let ids = composition.data.householdIDs
         let useCase = composition.saveGiftUseCase
-        #expect(useCase.flow(for: makeGiftInput(fromID: "maria", toID: "you"), householdIDs: ids) == .received)
-        #expect(useCase.flow(for: makeGiftInput(fromID: "you", toID: "maria"), householdIDs: ids) == .given)
-        #expect(useCase.flow(for: makeGiftInput(fromID: "marina", toID: "igor"), householdIDs: ids) == .given)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "you"), householdIDs: ids) == .received)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "maria"), householdIDs: ids) == .given)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "marina", toID: "igor"), householdIDs: ids) == .given)
     }
 }
 
@@ -52,7 +53,7 @@ struct AddGiftDraftTests {
         let draft = AddGiftDraft()
         #expect(draft.fromID == "you")
         #expect(draft.toID == nil)
-        #expect(draft.celebration == "Just because")
+        #expect(draft.occasion == "Just because")
         #expect(draft.date == AppDate.today)
         #expect(!draft.valueTouched)
     }
@@ -87,9 +88,9 @@ struct SaveGiftTests {
         let saved = gateway.gifts.first { $0.name == "Bottle of wine" }
         #expect(saved?.value == 1_900)
         #expect(saved?.emoji == "🍷")
-        #expect(saved?.flow == .given)
-        #expect(saved?.personId == "igor")
-        #expect(saved?.memberId == "you")
+        #expect(saved?.direction == .given)
+        #expect(saved?.giverID == "you")
+        #expect(saved?.recipientID == "igor")
         #expect(saved?.paidByYou == true)
     }
 
@@ -107,7 +108,7 @@ struct SaveGiftTests {
             name: "Soft teddy", fromID: "maria", toID: "you", paidByYou: true
         ), householdIDs: ["you"])
         let saved = gateway.gifts.first { $0.name == "Soft teddy" }
-        #expect(saved?.flow == .received)
+        #expect(saved?.direction == .received)
         #expect(saved?.paidByYou == true)
     }
 
@@ -117,34 +118,43 @@ struct SaveGiftTests {
             name: "Marina's wine", fromID: "marina", toID: "igor"
         ), householdIDs: ["you", "marina"])
         let saved = gateway.gifts.first { $0.name == "Marina's wine" }
-        #expect(saved?.flow == .given)
-        #expect(saved?.memberId == "marina")
-        #expect(saved?.personId == "igor")
+        #expect(saved?.direction == .given)
+        #expect(saved?.giverID == "marina")
+        #expect(saved?.recipientID == "igor")
         #expect(saved?.paidByYou == false)
+    }
+
+    @Test func editingPreservesStableIDAndCreationTime() throws {
+        let (useCase, gateway) = makeSaveGiftUseCase()
+        let createdAt = Date(timeIntervalSince1970: 123)
+        var input = makeGiftInput(name: "Edited gift", fromID: "you", toID: "igor")
+        input.editingGiftID = "existing-id"
+        input.createdAt = createdAt
+
+        try useCase.execute(input, householdIDs: ["you"])
+
+        #expect(gateway.gifts.first?.id == "existing-id")
+        #expect(gateway.gifts.first?.createdAt == createdAt)
     }
 }
 
 struct OrderingTests {
-    private func gift(_ id: String, date: Date) -> Gift {
-        Gift(id: id, emoji: "🎁", name: id, flow: .received, personId: "p",
-             memberId: "you", paidByYou: false, celebration: "", date: date, value: 0)
-    }
-
-    @Test func creationSeqParsesTheIdSuffix() {
-        #expect(gift("g12", date: AppDate.today).creationSeq == 12)
-        #expect(gift("g1750000000000", date: AppDate.today).creationSeq == 1_750_000_000_000)
+    private func gift(_ id: String, date: Date, createdAt: Date) -> Gift {
+        Gift(id: id, emoji: "🎁", name: id, direction: .received, giverID: "p",
+             recipientID: "you", paidByYou: false, occasion: "", date: date, value: 0,
+             createdAt: createdAt)
     }
 
     @Test func sameDayOrdersByCreationDescending() {
-        let earlier = gift("g1000", date: AppDate.today)
-        let later = gift("g2000", date: AppDate.today)
+        let earlier = gift("arbitrary-newer-id", date: AppDate.today, createdAt: AppDate.yesterday)
+        let later = gift("arbitrary-older-id", date: AppDate.today, createdAt: AppDate.today)
         #expect(Gift.newestFirst(later, earlier))
         #expect(!Gift.newestFirst(earlier, later))
     }
 
-    @Test func newerDayBeatsCreationSeq() {
-        let oldDay = gift("g9999999999999", date: AppDate.yesterday)
-        let newDay = gift("g1", date: AppDate.today)
+    @Test func newerGiftDateBeatsCreationTime() {
+        let oldDay = gift("old", date: AppDate.yesterday, createdAt: AppDate.today)
+        let newDay = gift("new", date: AppDate.today, createdAt: AppDate.yesterday)
         #expect(Gift.newestFirst(newDay, oldDay))
     }
 }
@@ -156,10 +166,10 @@ struct SubtitleTests {
         let data = composition.data
         let received = data.gifts.first { $0.id == "g1" }!
         #expect(data.giftSubtitle(received) ==
-                "\(data.personName(received.personId))  →  \(data.memberName(received.memberId))")
+                "\(data.entityName(received.giverID))  →  \(data.entityName(received.recipientID))")
         let given = data.gifts.first { $0.id == "g8" }!
         #expect(data.giftSubtitle(given) ==
-                "\(data.memberName(given.memberId))  →  \(data.personName(given.personId))")
+                "\(data.entityName(given.giverID))  →  \(data.entityName(given.recipientID))")
         #expect(!data.giftSubtitle(given).contains("·"))
     }
 }

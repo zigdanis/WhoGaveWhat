@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Who Gave What — SwiftData Rewrite Plan</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050505;
+      --panel: #0f0f0f;
+      --text: #f4f4f1;
+      --muted: #a7a7a0;
+      --line: #2a2a27;
+      --accent: #ffffff;
+      --good: #a9d5b7;
+      --warn: #e0c48b;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.58;
+    }
+    main {
+      width: min(920px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 56px 0 80px;
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 28px;
+      margin-bottom: 36px;
+    }
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(2.1rem, 6vw, 4.4rem);
+      line-height: 0.98;
+      letter-spacing: -0.035em;
+    }
+    h2 {
+      margin: 48px 0 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      font-size: 1.4rem;
+      line-height: 1.2;
+    }
+    h3 { margin: 28px 0 10px; font-size: 1rem; }
+    p { margin: 0 0 14px; color: var(--muted); }
+    a { color: var(--text); text-underline-offset: 0.2em; }
+    ul, ol { margin: 0 0 18px; padding-left: 1.3rem; color: var(--muted); }
+    li + li { margin-top: 8px; }
+    strong { color: var(--text); }
+    code {
+      color: var(--text);
+      background: #171717;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 0.1rem 0.28rem;
+    }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0 22px; }
+    th, td {
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      color: var(--muted);
+    }
+    th { color: var(--text); background: var(--panel); }
+    .lede { max-width: 760px; color: var(--text); font-size: 1.1rem; }
+    .toc, .callout {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 18px 20px;
+      margin: 28px 0 10px;
+    }
+    .toc ul { margin-bottom: 0; columns: 2; }
+    .tldr { border-left: 3px solid var(--accent); }
+    .tldr p { margin: 0; color: var(--text); }
+    .good { color: var(--good); }
+    .warn { color: var(--warn); }
+    @media (max-width: 640px) {
+      main { width: min(100% - 24px, 920px); padding-top: 32px; }
+      .toc ul { columns: 1; }
+      table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>SwiftData rewrite plan</h1>
+      <p class="lede">Replace Core Data completely, improve the app’s domain model while compatibility is irrelevant, and deliver the result as a reviewed pull request with no migration machinery.</p>
+    </header>
+
+    <aside class="callout tldr" aria-label="TLDR">
+      <p><strong>TLDR:</strong> Start from current <code>master</code>, model every gift as an explicit <code>giver → recipient</code> relationship, unify household members and contacts into one role-aware person type, keep SwiftData behind the existing gateways, remove every Core Data artifact, and add in-memory persistence coverage. There will be no migration plan, importer, or legacy-store cleanup path.</p>
+    </aside>
+
+    <nav class="toc" aria-label="Table of contents">
+      <ul>
+        <li><a href="#context">Context</a></li>
+        <li><a href="#constraints">Constraints</a></li>
+        <li><a href="#model">Proposed model</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#work-plan">Work plan</a></li>
+        <li><a href="#files">File map</a></li>
+        <li><a href="#risks">Risks</a></li>
+        <li><a href="#verification">Verification</a></li>
+      </ul>
+    </nav>
+
+    <section aria-labelledby="context">
+      <h2 id="context">Context</h2>
+      <p>The current app isolates persistence behind <code>GiftGateway</code> and <code>PeopleGateway</code>, while SwiftUI reads plain value snapshots from <code>AppData</code>. That boundary is worth preserving: views should not gain <code>@Query</code>, <code>ModelContext</code>, or direct <code>@Model</code> dependencies as part of this rewrite.</p>
+      <p>The current Core Data schema assumes each gift always pairs one household member with one external person. The UI is more flexible: any tracked person can be the giver or recipient. This is the central schema mismatch to fix while the app has no published data to preserve.</p>
+    </section>
+
+    <section aria-labelledby="constraints">
+      <h2 id="constraints">Constraints</h2>
+      <ul>
+        <li><strong>No migration:</strong> no <code>SchemaMigrationPlan</code>, Core Data importer, old-store reader, compatibility shim, or cleanup routine.</li>
+        <li><strong>Fresh namespace:</strong> use a distinctly named SwiftData configuration so existing development Core Data files are never interpreted as SwiftData.</li>
+        <li><strong>Stable app boundary:</strong> SwiftData storage objects remain private to persistence adapters; features and use cases continue using plain domain values.</li>
+        <li><strong>Stable identity:</strong> person and gift IDs must survive edits and remain suitable for SwiftUI lists and navigation.</li>
+        <li><strong>Tooling:</strong> all Xcode, test, Simulator, accessibility, and screenshot work goes through the repository-pinned XcodeBuildMCP CLI.</li>
+        <li><strong>Delivery:</strong> implement on a branch based on freshly fetched <code>origin/master</code>, open a PR in English, respond to review bots, and continue until required checks are green.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="model">
+      <h2 id="model">Proposed model</h2>
+
+      <h3>Domain values</h3>
+      <table>
+        <thead><tr><th>Current</th><th>Replacement</th><th>Reason</th></tr></thead>
+        <tbody>
+          <tr><td><code>HouseholdMember</code> + <code>Person</code></td><td><code>Person</code> + <code>PersonRole</code></td><td>One identity type with <code>household</code> or <code>contact</code> role removes duplicated lookups and picker plumbing.</td></tr>
+          <tr><td><code>GiftFlow</code></td><td><code>GiftDirection</code></td><td>Direction is household-relative presentation logic, resolved from giver, recipient, and household IDs.</td></tr>
+          <tr><td><code>personId</code> + <code>memberId</code></td><td><code>giverID</code> + <code>recipientID</code></td><td>Represents what the user actually records and permits every valid giver/recipient pairing.</td></tr>
+          <tr><td><code>Celebration</code></td><td><code>Occasion</code></td><td>Matches existing user-facing language.</td></tr>
+          <tr><td>ID-parsed creation order</td><td><code>createdAt</code></td><td>Ordering becomes explicit and independent of ID formatting.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>SwiftData records</h3>
+      <p><code>StoredPerson</code> stores a unique stable ID, name, color, role, sort index, gifts given, and gifts received. <code>StoredGift</code> stores a unique stable ID, content fields, occasion, event date, creation date, value/payment metadata, and required giver/recipient relationships.</p>
+      <p>Use explicit inverse relationships. Person deletion must remove every gift involving that person. Prefer modeled cascade behavior when SwiftData accepts the dual inverse schema cleanly; otherwise perform an explicit same-context delete of involving gifts before deleting the person, covered by an integration test.</p>
+      <p><code>GiftDirection</code> should not be the source of truth in storage. Resolve it from the endpoints and current household roles so it cannot drift from the actual relationship.</p>
+    </section>
+
+    <section aria-labelledby="architecture">
+      <h2 id="architecture">Architecture</h2>
+      <ol>
+        <li><code>SwiftDataStore</code> owns one <code>Schema</code>, named <code>ModelConfiguration</code>, <code>ModelContainer</code>, and main-actor <code>ModelContext</code>.</li>
+        <li><code>SwiftDataGiftGateway</code> and <code>SwiftDataPeopleGateway</code> perform fetch, mapping, save, and delete operations.</li>
+        <li>Gateways map storage records to framework-independent <code>Gift</code> and <code>Person</code> values.</li>
+        <li>Use cases preserve validation and business logic; <code>SaveGiftUseCase</code> assigns UUID-backed IDs and preserves <code>createdAt</code> during edits.</li>
+        <li><code>AppData</code> continues publishing value snapshots to SwiftUI, with narrow household/contact projections and stable list identity.</li>
+      </ol>
+      <aside class="callout">
+        <p><strong>Fresh-install behavior:</strong> the production store creates only the required “You” household anchor. Sample data is limited to preview/test stores; it is not silently inserted into a real user store.</p>
+      </aside>
+    </section>
+
+    <section aria-labelledby="work-plan">
+      <h2 id="work-plan">Work plan</h2>
+      <ol>
+        <li>Fetch <code>origin/master</code>, verify a clean worktree, and create <code>feature/swiftdata</code> from the fetched commit.</li>
+        <li>Reshape domain values first: unified people, endpoint-based gifts, occasion naming, explicit creation order, and centralized direction resolution.</li>
+        <li>Add the SwiftData schema and store with a fresh configuration name and in-memory/seed modes.</li>
+        <li>Replace Core Data gateways with SwiftData gateways while preserving protocol boundaries.</li>
+        <li>Update app composition, use cases, app state, and feature call sites.</li>
+        <li>Delete all Core Data source, managed-object definitions, and the entire <code>.xcdatamodeld</code> bundle.</li>
+        <li>Update test support and add persistence integration tests.</li>
+        <li>Run static cleanup checks, full build/tests, and the affected app scenario on the preferred Simulator.</li>
+        <li>Open the PR, process automated and human review, push fixes, and repeat checks until green.</li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="files">
+      <h2 id="files">File map</h2>
+      <h3>Add</h3>
+      <ul>
+        <li><code>Infrastructure/Persistence/SwiftDataModels.swift</code></li>
+        <li><code>Infrastructure/Persistence/SwiftDataStore.swift</code></li>
+        <li><code>Infrastructure/Persistence/SwiftDataPersistenceError.swift</code></li>
+        <li><code>Gateways/SwiftData/SwiftDataGiftGateway.swift</code></li>
+        <li><code>Gateways/SwiftData/SwiftDataPeopleGateway.swift</code></li>
+        <li><code>Models/GiftDirection.swift</code> and <code>Models/Occasion.swift</code></li>
+        <li><code>WhoGaveWhatTests/SwiftDataPersistenceTests.swift</code></li>
+      </ul>
+      <h3>Remove</h3>
+      <ul>
+        <li><code>Gateways/CoreData/</code></li>
+        <li><code>Infrastructure/Persistence/CoreDataModels.swift</code></li>
+        <li><code>Infrastructure/Persistence/CoreDataStack.swift</code></li>
+        <li><code>Infrastructure/Persistence/WhoGaveWhat.xcdatamodeld/</code></li>
+        <li><code>Models/HouseholdMember.swift</code>, <code>GiftFlow.swift</code>, and <code>Celebration.swift</code></li>
+      </ul>
+      <h3>Update</h3>
+      <p>App composition/state, gift and people use cases, add/edit gift UI, home/details/people/insights views, design color helpers, test support, architecture tests, and README persistence documentation.</p>
+    </section>
+
+    <section aria-labelledby="risks">
+      <h2 id="risks">Risks</h2>
+      <ul>
+        <li><strong>Relationship rules:</strong> dual giver/recipient inverses and cascade deletion must be exercised by a real in-memory <code>ModelContainer</code>.</li>
+        <li><strong>Edit ordering:</strong> an edit must retain the original <code>createdAt</code>, or same-day gifts will jump unexpectedly.</li>
+        <li><strong>Direction edge cases:</strong> household-to-household and contact-to-contact gifts need a documented deterministic fallback.</li>
+        <li><strong>Fresh-store startup:</strong> app composition must load the “You” anchor before pickers and onboarding flows rely on it.</li>
+        <li><strong>Delete atomicity:</strong> deleting involving gifts and the person should occur in one context transaction/save.</li>
+        <li><strong>Environment gap:</strong> Linux can run repository/static checks and invoke the CLI, but Xcode compilation and Simulator verification require a macOS runner.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="verification">
+      <h2 id="verification">Verification</h2>
+      <h3>Persistence tests</h3>
+      <ul>
+        <li>Fresh production-style store contains only “You”; preview/test seed has 12 gifts, 4 household people, and 6 contacts.</li>
+        <li>Gift insert, reload, update without duplication, delete, and <code>createdAt</code> preservation.</li>
+        <li>Person create, role mapping, rename, reload, and deletion.</li>
+        <li>Deleting a person removes gifts where they are either giver or recipient while preserving unrelated gifts.</li>
+        <li>Separate in-memory stores are isolated and use the new configuration namespace.</li>
+      </ul>
+      <h3>Static checks</h3>
+      <ul>
+        <li><code>git diff --check</code></li>
+        <li>No imports or symbols for Core Data, managed objects, old endpoint names, or old domain type names.</li>
+        <li>No <code>.xcdatamodeld</code>, migration plan, importer, old-store reader, or cleanup code remains.</li>
+      </ul>
+      <h3>Xcode and UI</h3>
+      <ul>
+        <li>Use XcodeBuildMCP to discover the project/scheme and an already-running compatible Simulator; otherwise prefer iPhone 17 Pro.</li>
+        <li>Run the complete test suite and a clean build/build-and-run.</li>
+        <li>Walk onboarding into the app, add received and given gifts, edit a gift, inspect details, rename a person, and delete a person.</li>
+        <li>Capture a fresh accessibility snapshot and screenshot, then inspect layout, clipping, overlap, contrast, and readability.</li>
+        <li>Watch PR checks and review bots, address actionable findings, and continue until required checks are green.</li>
+      </ul>
+      <p class="warn"><strong>Verification needed on macOS:</strong> this workspace is currently on Linux, where XcodeBuildMCP can be installed and invoked but reports <code>spawn xcodebuild ENOENT</code>. Compilation, tests, and Simulator evidence must therefore come from the macOS CI/review runner.</p>
+    </section>
+  </main>
+</body>
+</html>
