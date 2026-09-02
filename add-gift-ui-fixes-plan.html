@@ -105,7 +105,7 @@
     <section aria-labelledby="constraints">
       <h2 id="constraints">Constraints</h2>
       <ul>
-        <li>Do not delete a legacy <code>you</code> record when gifts still reference it.</li>
+        <li>Do not delete an existing legacy <code>you</code> record; it may already represent an ordinary renamed person.</li>
         <li>Changing the currency preference changes display metadata only; it does not convert historical amounts.</li>
         <li>Use stable person IDs and cached filtering so selection and focus survive SwiftUI updates.</li>
         <li>Use <code>xcodebuildmcp</code> for all build, test, simulator, automation, and screenshot work.</li>
@@ -117,7 +117,7 @@
       <h2 id="approach">Proposed Approach</h2>
 
       <h3>Neutral people and gift endpoints</h3>
-      <p>Stop bootstrapping a self person, default both endpoint IDs to nil, and remove all ID-based behavior for <code>you</code>. Keep the existing <code>paidByYou</code> persistence field for compatibility, but never derive it from a person ID. Delete only an unreferenced legacy self record; retain a referenced one as an ordinary renameable and deletable person.</p>
+      <p>Stop bootstrapping a self person, default both endpoint IDs to nil, and remove all ID-based behavior for <code>you</code>. Keep the existing <code>paidByYou</code> persistence field for compatibility, but never derive it from a person ID. Conservatively retain every existing legacy self record as an ordinary renameable and deletable person.</p>
 
       <h3>Shared person picker</h3>
       <p>Use the same picker for From and To. An observable picker state will cache filtered people, preserve an existing selection, provisionally select the first matching person as the query changes, and write that selection to the draft immediately so swipe dismissal keeps it. Row taps select and dismiss; Add creates or reuses an exact match, selects it, and dismisses.</p>
@@ -158,7 +158,7 @@
     <section aria-labelledby="risks">
       <h2 id="risks">Risks</h2>
       <ul>
-        <li>A referenced legacy self record must remain to avoid cascading gift deletion.</li>
+        <li>Every existing legacy self record must remain because its identity may already have been repurposed through rename.</li>
         <li>Calendar component conversion must consistently use the same locale, calendar, and time zone to avoid a one-day shift.</li>
         <li>Measured detents must tolerate keyboard changes, long translations, and larger Dynamic Type without clipping.</li>
         <li>App Store storefront inference is unavailable in the current architecture, so the initial currency is locale-derived as allowed.</li>

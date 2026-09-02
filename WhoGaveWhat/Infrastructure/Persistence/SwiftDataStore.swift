@@ -41,22 +41,7 @@ final class SwiftDataStore {
 
         if seed {
             try seedIfNeeded()
-        } else {
-            try removeUnreferencedLegacySelf()
         }
-    }
-
-    func removeUnreferencedLegacySelf() throws {
-        let legacyID = "you"
-        var descriptor = FetchDescriptor<StoredPerson>(predicate: #Predicate { person in
-            person.id == legacyID
-        })
-        descriptor.fetchLimit = 1
-        guard let legacySelf = try context.fetch(descriptor).first,
-              legacySelf.giftsGiven.isEmpty,
-              legacySelf.giftsReceived.isEmpty else { return }
-        context.delete(legacySelf)
-        try context.save()
     }
 
     private func seedIfNeeded() throws {
