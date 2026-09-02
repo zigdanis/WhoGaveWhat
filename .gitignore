@@ -33,6 +33,7 @@ WhoGaveWhat.xcodeproj/project.xcworkspace/contents.xcworkspacedata
 *.ipa
 *.dSYM.zip
 *.dSYM
+*.xcresult
 
 # fastlane
 fastlane/report.xml
