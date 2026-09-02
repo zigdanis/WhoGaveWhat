@@ -403,7 +403,7 @@ private struct PickerSheet: View {
                 .toolbarBackground(.visible, for: .navigationBar)
         }
         // No Cancel button — these sheets are dismissed with a swipe down.
-        .presentationDetents(kind == .date ? [.large] : [.medium, .large])
+        .presentationDetents(kind == .date ? [.height(470)] : [.medium, .large])
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.bg)
     }
@@ -540,35 +540,33 @@ private struct PickerSheet: View {
 
     // MARK: Date
 
-    /// Today / Yesterday pills plus a graphical calendar. Tapping a pill or a day
-    /// applies the date immediately and closes the sheet — there's no separate
-    /// confirm button.
+    /// Today / Yesterday pills plus a UIKit calendar. Calendar page navigation is
+    /// independent from day selection, so only an explicit day tap dismisses.
     private var datePicker: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                HStack(spacing: 10) {
-                    quickDate("Today", AppDate.today)
-                    quickDate("Yesterday", AppDate.yesterday)
-                }
-                Card {
-                    DatePicker("", selection: dateApplyBinding, displayedComponents: .date)
-                        .datePickerStyle(.graphical)
-                        .tint(Color.recv)
-                        .padding(.horizontal, 10).padding(.vertical, 6)
-                }
+        VStack(spacing: 16) {
+            HStack(spacing: 10) {
+                quickDate("Today", AppDate.today, accessibilityIdentifier: "date-picker.today")
+                quickDate("Yesterday", AppDate.yesterday, accessibilityIdentifier: "date-picker.yesterday")
             }
-            .padding(16)
+            Card {
+                CalendarDatePicker(
+                    selectedDate: state.draft.date,
+                    onSelectDate: state.selectDate
+                )
+                .frame(height: 320)
+                .padding(.horizontal, 6)
+                .accessibilityIdentifier("date-picker.calendar")
+            }
         }
-        .scrollIndicators(.hidden)
+        .padding(16)
         .navigationTitle("Pick a date")
     }
 
-    /// Picking a day in the calendar applies it (and dismisses) immediately.
-    private var dateApplyBinding: Binding<Date> {
-        Binding(get: { state.draft.date }, set: { state.selectDate($0) })
-    }
-
-    private func quickDate(_ label: String, _ date: Date) -> some View {
+    private func quickDate(
+        _ label: String,
+        _ date: Date,
+        accessibilityIdentifier: String
+    ) -> some View {
         let selected = Calendar.current.isDate(state.draft.date, inSameDayAs: date)
         return Button { state.selectDate(date) } label: {
             Text(LocalizedStringKey(label))
@@ -579,6 +577,7 @@ private struct PickerSheet: View {
                     .fill(selected ? Color.ink : Color.card))
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(accessibilityIdentifier)
     }
 
     // MARK: Shared bits
