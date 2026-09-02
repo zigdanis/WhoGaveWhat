@@ -87,3 +87,9 @@ GitHub Actions (`.github/workflows/tests.yml`) runs the suite on every push to
 bumps the build number above the latest TestFlight build, builds with **gym**, and
 uploads to **TestFlight** with **pilot**. Requires the App Store Connect API key env
 vars (`ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH`).
+
+## License
+
+Who Gave What is available under the [MIT License](LICENSE). Bundled third-party
+fonts and icons remain subject to the licenses listed in
+[`WhoGaveWhat/Resources/THIRD_PARTY_NOTICES.md`](WhoGaveWhat/Resources/THIRD_PARTY_NOTICES.md).
