@@ -24,7 +24,7 @@ struct GiftDetailView: View {
 
     @ViewBuilder
     private func content(_ gift: Gift) -> some View {
-        let fm = gift.flow.appearance
+        let fm = gift.direction.appearance
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 heroCard(gift, fm)
@@ -51,7 +51,7 @@ struct GiftDetailView: View {
 
     // MARK: Hero (emoji + name + value)
 
-    private func heroCard(_ g: Gift, _ fm: GiftFlowAppearance) -> some View {
+    private func heroCard(_ g: Gift, _ fm: GiftDirectionAppearance) -> some View {
         VStack(spacing: 12) {
             HStack(alignment: .center, spacing: 14) {
                 Text(g.emoji)
@@ -84,10 +84,10 @@ struct GiftDetailView: View {
 
     // MARK: Details
 
-    private func detailsCard(_ g: Gift, _ fm: GiftFlowAppearance) -> some View {
+    private func detailsCard(_ g: Gift, _ fm: GiftDirectionAppearance) -> some View {
         // From (giver) → To (receiver), matching the Add sheet's framing.
-        let fromName = g.flow == .received ? composition.data.personName(g.personId) : composition.data.memberName(g.memberId)
-        let toName = g.flow == .received ? composition.data.memberName(g.memberId) : composition.data.personName(g.personId)
+        let fromName = composition.data.entityName(g.giverID)
+        let toName = composition.data.entityName(g.recipientID)
         return Card {
             VStack(spacing: 0) {
                 detailRow(fm, icon: .asset("ArrowRightFromLine"), label: "From", value: fromName)
@@ -95,14 +95,14 @@ struct GiftDetailView: View {
                 detailRow(fm, icon: .asset("ArrowRightToLine"), label: "To", value: toName)
                 RowDivider().padding(.leading, 58)
                 detailRow(fm, icon: .system("party.popper.fill"), label: "Occasion",
-                          value: composition.data.localizedCelebration(g.celebration))
+                          value: composition.data.localizedOccasion(g.occasion))
                 RowDivider().padding(.leading, 58)
                 detailRow(fm, icon: .system("calendar"), label: "Date", value: g.date.giftInputLabel())
             }
         }
     }
 
-    private func detailRow(_ fm: GiftFlowAppearance, icon: GiftDetailIcon,
+    private func detailRow(_ fm: GiftDirectionAppearance, icon: GiftDetailIcon,
                            label: String, value: String) -> some View {
         HStack(spacing: 12) {
             GiftDetailIconView(icon: icon, accent: fm.main, tint: fm.tint)

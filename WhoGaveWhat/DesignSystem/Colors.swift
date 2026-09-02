@@ -6,7 +6,7 @@ extension Color {
     static let emerald = Color(hex: 0x1FA971)
     static let emeraldDeep = Color(hex: 0x12805C)
 
-    // MARK: Gift flows
+    // MARK: Gift directions
     static let recv = emeraldDeep
     static let recvDeep = Color(hex: 0x0E6B4D)
     static let recvTint = Color(hex: 0xE6F2EC)
@@ -47,15 +47,11 @@ extension Color {
     }
 }
 
-extension HouseholdMember {
-    var color: Color { Color(hex: colorHex) }
-}
-
 extension Person {
     var color: Color { Color(hex: colorHex) }
 }
 
-struct GiftFlowAppearance {
+struct GiftDirectionAppearance {
     let main: Color
     let deep: Color
     let tint: Color
@@ -63,11 +59,11 @@ struct GiftFlowAppearance {
     let arrow: String
 }
 
-extension GiftFlow {
-    var appearance: GiftFlowAppearance {
+extension GiftDirection {
+    var appearance: GiftDirectionAppearance {
         switch self {
         case .received:
-            GiftFlowAppearance(
+            GiftDirectionAppearance(
                 main: .recv,
                 deep: .recvDeep,
                 tint: .recvTint,
@@ -75,7 +71,7 @@ extension GiftFlow {
                 arrow: "↙"
             )
         case .given:
-            GiftFlowAppearance(
+            GiftDirectionAppearance(
                 main: .give,
                 deep: .giveDeep,
                 tint: .giveTint,

@@ -19,22 +19,21 @@ final class AppComposition {
     let buildInsights = BuildInsightsUseCase()
     let completeOnboarding: CompleteOnboardingUseCase
 
-    convenience init(stack: CoreDataStack) {
+    convenience init(store: SwiftDataStore) {
         self.init(
-            stack: stack,
+            store: store,
             preferences: UserDefaultsPreferencesGateway(),
             intelligence: FoundationModelsGiftIntelligenceGateway()
         )
     }
 
     init(
-        stack: CoreDataStack,
+        store: SwiftDataStore,
         preferences: PreferencesGateway,
         intelligence: GiftIntelligenceGateway
     ) {
-        let context = stack.container.viewContext
-        let giftGateway = CoreDataGiftGateway(context: context)
-        let peopleGateway = CoreDataPeopleGateway(context: context)
+        let giftGateway = SwiftDataGiftGateway(context: store.context)
+        let peopleGateway = SwiftDataPeopleGateway(context: store.context)
         let suggestGift = SuggestGiftUseCase(intelligenceGateway: intelligence)
         let createPerson = CreatePersonUseCase(gateway: peopleGateway)
 
@@ -49,10 +48,7 @@ final class AppComposition {
             gateway: peopleGateway,
             createPerson: createPerson
         )
-        deletePersonUseCase = DeletePersonUseCase(
-            peopleGateway: peopleGateway,
-            giftGateway: giftGateway
-        )
+        deletePersonUseCase = DeletePersonUseCase(peopleGateway: peopleGateway)
         completeOnboarding = CompleteOnboardingUseCase(preferencesGateway: preferences)
 
         reloadData()

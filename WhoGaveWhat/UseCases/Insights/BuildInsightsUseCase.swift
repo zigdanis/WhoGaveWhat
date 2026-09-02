@@ -19,21 +19,26 @@ struct GiftInsights: Equatable {
 
 struct BuildInsightsUseCase {
     func execute(gifts: [Gift], people: [Person]) -> GiftInsights {
-        let received = gifts.filter { $0.flow == .received }
-        let given = gifts.filter { $0.flow == .given }
+        let received = gifts.filter { $0.direction == .received }
+        let given = gifts.filter { $0.direction == .given }
         return GiftInsights(
             received: received,
             given: given,
             paidByYou: gifts.filter(\.paidByYou),
-            topGivers: ranking(flow: .received, gifts: gifts, people: people),
-            topReceivers: ranking(flow: .given, gifts: gifts, people: people)
+            topGivers: ranking(direction: .received, gifts: gifts, people: people),
+            topReceivers: ranking(direction: .given, gifts: gifts, people: people)
         )
     }
 
-    private func ranking(flow: GiftFlow, gifts: [Gift], people: [Person]) -> [RankedPerson] {
+    private func ranking(direction: GiftDirection, gifts: [Gift], people: [Person]) -> [RankedPerson] {
         people
             .map { person in
-                let matching = gifts.filter { $0.personId == person.id && $0.flow == flow }
+                let matching = gifts.filter { gift in
+                    guard gift.direction == direction else { return false }
+                    return direction == .received
+                        ? gift.giverID == person.id
+                        : gift.recipientID == person.id
+                }
                 return RankedPerson(person: person, value: matching.totalValue, count: matching.count)
             }
             .filter { $0.count > 0 }

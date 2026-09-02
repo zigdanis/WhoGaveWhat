@@ -23,11 +23,12 @@ final class AddGiftState {
                 emoji: gift.emoji,
                 value: Int(gift.value),
                 valueTouched: true,
-                fromID: gift.flow == .received ? gift.personId : gift.memberId,
-                toID: gift.flow == .received ? gift.memberId : gift.personId,
+                fromID: gift.giverID,
+                toID: gift.recipientID,
                 paidByYou: gift.paidByYou,
-                celebration: gift.celebration,
-                date: gift.date
+                occasion: gift.occasion,
+                date: gift.date,
+                createdAt: gift.createdAt
             )
         }
     }
@@ -44,8 +45,9 @@ final class AddGiftState {
             fromID: draft.fromID,
             toID: draft.toID,
             paidByYou: draft.paidByYou,
-            celebration: draft.celebration,
-            date: draft.date
+            occasion: draft.occasion,
+            date: draft.date,
+            createdAt: draft.createdAt
         )
     }
 
@@ -58,8 +60,8 @@ final class AddGiftState {
         return draft.aiValue ?? suggestGift.instantSuggestion(for: draft.name).value
     }
 
-    func flow(householdIDs: Set<String>, saveGift: SaveGiftUseCase) -> GiftFlow {
-        saveGift.flow(for: input, householdIDs: householdIDs)
+    func direction(householdIDs: Set<String>, saveGift: SaveGiftUseCase) -> GiftDirection {
+        saveGift.direction(for: input, householdIDs: householdIDs)
     }
 
     func setName(_ name: String) {
@@ -98,10 +100,10 @@ final class AddGiftState {
         picker = nil
     }
     func selectTo(_ id: String) { draft.toID = id; picker = nil }
-    func selectCelebration(_ celebration: String) {
-        let celebration = celebration.trimmingCharacters(in: .whitespaces)
-        guard !celebration.isEmpty else { return }
-        draft.celebration = celebration
+    func selectOccasion(_ occasion: String) {
+        let occasion = occasion.trimmingCharacters(in: .whitespaces)
+        guard !occasion.isEmpty else { return }
+        draft.occasion = occasion
         picker = nil
     }
     func selectEmoji(_ emoji: String) { draft.emoji = emoji; picker = nil }

@@ -8,8 +8,9 @@ struct AddGiftDraft {
     var fromID: String? = "you"
     var toID: String?
     var paidByYou = false
-    var celebration: String? = "Just because"
+    var occasion: String? = "Just because"
     var date = AppDate.today
+    var createdAt: Date?
     var aiEmoji: String?
     var aiValue: Double?
 }

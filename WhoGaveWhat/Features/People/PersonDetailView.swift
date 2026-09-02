@@ -23,16 +23,26 @@ struct PersonDetailView: View {
     }
 
     var body: some View {
-        let isMember = composition.data.isHouseholdMember(entityId)
         let name = composition.data.entityName(entityId)
         let color = Color(hex: composition.data.entityColorHex(entityId))
         let gs = composition.loadPersonGifts.execute(
             personID: entityId,
-            isHouseholdMember: isMember,
             gifts: composition.data.gifts
         )
-        let recv = gs.filter { $0.flow == .received }
-        let given = gs.filter { $0.flow == .given }
+        let recv = gs.filter {
+            GiftDirectionResolver.resolve(
+                giverID: $0.giverID,
+                recipientID: $0.recipientID,
+                relativeTo: entityId
+            ) == .received
+        }
+        let given = gs.filter {
+            GiftDirectionResolver.resolve(
+                giverID: $0.giverID,
+                recipientID: $0.recipientID,
+                relativeTo: entityId
+            ) == .given
+        }
         let list = filter == "received" ? recv : (filter == "given" ? given : gs)
 
         List {
@@ -213,7 +223,7 @@ struct PersonDetailView: View {
     }
 
     private var giftsCount: Int {
-        composition.data.gifts.filter { $0.personId == entityId || $0.memberId == entityId }.count
+        composition.data.gifts.filter { $0.giverID == entityId || $0.recipientID == entityId }.count
     }
 
     private func statCard(arrow: String, label: String, color: Color, count: Int, value: Double) -> some View {

@@ -1,16 +1,15 @@
 # Who Gave What
 
 A warm little ledger for every gift your family gives and gets. Native **iOS** app
-built with **Swift + SwiftUI**, backed by **Core Data**, implementing a design from
+built with **Swift + SwiftUI**, backed by **SwiftData**, implementing a design from
 Claude Design.
 
 ## Run
 
 ```bash
 open WhoGaveWhat.xcodeproj      # then ⌘R
-# or build from the command line for a simulator:
-xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
-  -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 17' build
+# or use the repository-configured CLI:
+xcodebuildmcp simulator build-and-run
 ```
 
 - **Minimum iOS:** 26.0 — built against the iOS 26 SDK, native **Liquid Glass** throughout (no back-deployment).
@@ -24,23 +23,24 @@ xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
   enter the app). Real auth + remote sync is intentionally deferred.
 - **Home** — year summary (↙ Received / ↗ Given), filter chips, gifts grouped by month.
 - **Add a gift** — type a name → live emoji + value guess; Received/Given segment,
-  person + family-member pickers, "Paid by you" toggle, celebration, date. Saving writes
-  to Core Data and updates the timeline.
+  unified person picker, "Paid by you" toggle, occasion, date. Saving writes
+  to SwiftData and updates the timeline.
 - **People** — family + friends/relatives, each with running totals.
 - **Person detail** — per-person stats, by-occasion chart, full history.
 - **Insights** — received vs. given split, "Who's really paying" card, top people, by occasion.
 
 ## Persistence
 
-Storage is currently **Core Data** (`Infrastructure/Persistence/WhoGaveWhat.xcdatamodeld`):
+Storage is **SwiftData**, isolated behind `GiftGateway` and `PeopleGateway`:
 
-- `CDPerson` — family members (`isFamily == true`) and external people (`isFamily == false`).
-- `CDGift` — a tracked gift, with `person` (external) and `member` (family) relationships.
+- `StoredPerson` persists one unified person model with a household or contact role.
+- `StoredGift` persists required giver and recipient relationships, occasion, gift
+  date, and explicit creation time. Direction is derived from the endpoint roles.
 
-`CoreDataStack` owns the stack and seeds sample data on first launch. Core Data is
-contained behind `GiftGateway` and `PeopleGateway`; features and use cases work with
-plain Swift models. This boundary is intended to make a later SwiftData migration a
-separate persistence change rather than another UI rewrite.
+`SwiftDataStore` owns a distinctly named `WhoGaveWhatSwiftData` store. The app has not
+shipped, so this schema intentionally starts fresh: there is no legacy import,
+migration, or cleanup path. Features and use cases continue to work with plain Swift
+value models rather than SwiftData records.
 
 ## Structure
 
@@ -51,7 +51,7 @@ separate persistence change rather than another UI rewrite.
 | `WhoGaveWhat/Models/` | Framework-independent app value types |
 | `WhoGaveWhat/UseCases/` | Named gift, people, insights and onboarding scenarios |
 | `WhoGaveWhat/Gateways/` | Persistence, intelligence and preferences contracts plus adapters |
-| `WhoGaveWhat/Infrastructure/` | Core Data stack, managed-object subclasses and schema |
+| `WhoGaveWhat/Infrastructure/` | SwiftData container and private persistence records |
 | `WhoGaveWhat/DesignSystem/` | Colors, theme tokens, reusable components and layouts |
 | `WhoGaveWhat/Helpers/` | Small cross-feature formatting extensions |
 | `WhoGaveWhat/Resources/` | Assets, fonts and localization catalogs |
@@ -64,18 +64,17 @@ Launch env vars jump straight to a state (used for verification / previews):
 `KS_START=app|signin`, `KS_TAB=home|people|insights`, `KS_SHEET=1`.
 
 ```bash
-SIMCTL_CHILD_KS_START=app SIMCTL_CHILD_KS_TAB=insights xcrun simctl launch booted pro.ziganshin.WhoGaveWhat
+xcodebuildmcp simulator launch-app --bundle-id pro.ziganshin.WhoGaveWhat --json '{"env":{"KS_START":"app","KS_TAB":"insights"}}'
 ```
 
 ## Tests & CI
 
 Unit tests live in `WhoGaveWhatTests/` (Swift Testing) and cover formatting, gift
 suggestions, save validation and direction, router behavior, insights, and persistence
-write-through against isolated in-memory Core Data stacks.
+write-through against isolated in-memory SwiftData stores.
 
 ```bash
-xcodebuild test -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
-  -destination 'platform=iOS Simulator,name=iPhone 17' CODE_SIGNING_ALLOWED=NO
+xcodebuildmcp simulator test
 # or: bundle exec fastlane tests
 ```
 

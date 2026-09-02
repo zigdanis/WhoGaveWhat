@@ -9,7 +9,7 @@ struct GiftTimelineSection: Identifiable, Equatable {
 struct BuildGiftTimelineUseCase {
     func execute(gifts: [Gift], filter: String, locale: Locale = .current) -> [GiftTimelineSection] {
         let filtered = gifts
-            .filter { filter == "all" || $0.flow.rawValue == filter }
+            .filter { filter == "all" || $0.direction.rawValue == filter }
             .sorted(by: Gift.newestFirst)
         let grouped = Dictionary(grouping: filtered) { $0.date.giftMonthLabel(locale: locale) }
         var seen = Set<String>()

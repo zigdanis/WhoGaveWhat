@@ -12,9 +12,9 @@ struct PeopleView: View {
     var body: some View {
         List {
             section(header: "Your family",
-                    entities: composition.data.members.map { ($0.id, $0.name, $0.color, true) })
+                    entities: composition.data.householdMembers.map { ($0.id, $0.name, $0.color) })
             section(header: "Friends & relatives",
-                    entities: composition.data.people.map { ($0.id, $0.name, $0.color, false) })
+                    entities: composition.data.contacts.map { ($0.id, $0.name, $0.color) })
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
@@ -37,13 +37,13 @@ struct PeopleView: View {
     }
 
     @ViewBuilder
-    private func section(header: String, entities: [(String, String, Color, Bool)]) -> some View {
+    private func section(header: String, entities: [(String, String, Color)]) -> some View {
         if !entities.isEmpty {
             Section {
                 ForEach(entities, id: \.0) { e in
                     NavigationLink(value: e.0) {
                         PersonRow(entityId: e.0, name: e.1, color: e.2,
-                                  gifts: gifts(for: e.0, isMember: e.3))
+                                  gifts: gifts(for: e.0))
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 12))
                     // "You" is the household anchor — never deletable.
@@ -86,16 +86,15 @@ struct PeopleView: View {
         return String(format: fmt, count)
     }
 
-    private func gifts(for id: String, isMember: Bool) -> [Gift] {
+    private func gifts(for id: String) -> [Gift] {
         composition.loadPersonGifts.execute(
             personID: id,
-            isHouseholdMember: isMember,
             gifts: composition.data.gifts
         )
     }
 
     private func giftsCount(involving id: String) -> Int {
-        composition.data.gifts.filter { $0.personId == id || $0.memberId == id }.count
+        composition.data.gifts.filter { $0.giverID == id || $0.recipientID == id }.count
     }
 }
 
@@ -106,8 +105,20 @@ struct PersonRow: View {
     let gifts: [Gift]
 
     var body: some View {
-        let r = gifts.filter { $0.flow == .received }.count
-        let gv = gifts.filter { $0.flow == .given }.count
+        let r = gifts.filter {
+            GiftDirectionResolver.resolve(
+                giverID: $0.giverID,
+                recipientID: $0.recipientID,
+                relativeTo: entityId
+            ) == .received
+        }.count
+        let gv = gifts.filter {
+            GiftDirectionResolver.resolve(
+                giverID: $0.giverID,
+                recipientID: $0.recipientID,
+                relativeTo: entityId
+            ) == .given
+        }.count
 
         HStack(spacing: 12) {
             AvatarView(initials: name.initials, color: color, size: 42)
