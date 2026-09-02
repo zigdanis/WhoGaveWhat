@@ -12,5 +12,4 @@ struct AddGiftDraft {
     var date = AppDate.today
     var createdAt: Date?
     var aiEmoji: String?
-    var aiValue: Double?
 }

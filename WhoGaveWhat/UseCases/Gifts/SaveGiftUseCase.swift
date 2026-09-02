@@ -6,7 +6,6 @@ struct SaveGiftInput: Equatable {
     var emoji: String?
     var aiEmoji: String?
     var value: Int?
-    var aiValue: Double?
     var valueTouched: Bool
     var fromID: String?
     var toID: String?
@@ -54,7 +53,7 @@ struct SaveGiftUseCase {
             paidByYou: input.paidByYou,
             occasion: input.occasion ?? "Just because",
             date: input.date,
-            value: input.valueTouched ? Double(input.value ?? 0) : (input.aiValue ?? suggestion.value),
+            value: input.valueTouched ? Double(input.value ?? 0) : 0,
             createdAt: input.createdAt ?? Date()
         )
         try giftGateway.save(gift)

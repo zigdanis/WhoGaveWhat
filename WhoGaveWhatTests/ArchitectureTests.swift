@@ -41,8 +41,8 @@ struct SaveGiftInputTests {
         let composition = makeTestComposition()
         let ids = composition.data.householdIDs
         let useCase = composition.saveGiftUseCase
-        #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "you"), householdIDs: ids) == .received)
-        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "maria"), householdIDs: ids) == .given)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "anton"), householdIDs: ids) == .received)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "anton", toID: "maria"), householdIDs: ids) == .given)
         #expect(useCase.direction(for: makeGiftInput(fromID: "marina", toID: "igor"), householdIDs: ids) == .given)
     }
 
@@ -180,14 +180,14 @@ struct CurrencyPreferenceTests {
 
 @MainActor
 struct SaveGiftTests {
-    @Test func savingUsesSuggestedValueAndReloadsData() {
+    @Test func savingUsesSuggestedEmojiButLeavesUntouchedValueAtZero() {
         let (useCase, gateway) = makeSaveGiftUseCase()
         _ = try? useCase.execute(
             makeGiftInput(name: "Bottle of wine", fromID: "you", toID: "igor"),
             householdIDs: ["you", "marina"]
         )
         let saved = gateway.gifts.first { $0.name == "Bottle of wine" }
-        #expect(saved?.value == 1_900)
+        #expect(saved?.value == 0)
         #expect(saved?.emoji == "🍷")
         #expect(saved?.direction == .given)
         #expect(saved?.giverID == "you")
