@@ -105,8 +105,20 @@ struct PersonRow: View {
     let gifts: [Gift]
 
     var body: some View {
-        let r = gifts.filter { $0.direction == .received }.count
-        let gv = gifts.filter { $0.direction == .given }.count
+        let r = gifts.filter {
+            GiftDirectionResolver.resolve(
+                giverID: $0.giverID,
+                recipientID: $0.recipientID,
+                relativeTo: entityId
+            ) == .received
+        }.count
+        let gv = gifts.filter {
+            GiftDirectionResolver.resolve(
+                giverID: $0.giverID,
+                recipientID: $0.recipientID,
+                relativeTo: entityId
+            ) == .given
+        }.count
 
         HStack(spacing: 12) {
             AvatarView(initials: name.initials, color: color, size: 42)

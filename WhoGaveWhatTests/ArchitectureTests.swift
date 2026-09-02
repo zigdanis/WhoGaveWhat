@@ -45,6 +45,39 @@ struct SaveGiftInputTests {
         #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "maria"), householdIDs: ids) == .given)
         #expect(useCase.direction(for: makeGiftInput(fromID: "marina", toID: "igor"), householdIDs: ids) == .given)
     }
+
+    @Test func directionFallsBackToReceivedForSameSideEndpoints() {
+        let useCase = makeSaveGiftUseCase().0
+        let householdIDs: Set<String> = ["you", "marina", "sofia"]
+
+        #expect(useCase.direction(for: makeGiftInput(fromID: "marina", toID: "sofia"), householdIDs: householdIDs) == .received)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "igor"), householdIDs: householdIDs) == .received)
+    }
+
+    @Test func directionUsesYouAsTheSameSideViewpoint() {
+        let useCase = makeSaveGiftUseCase().0
+
+        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "marina"), householdIDs: ["you", "marina"]) == .given)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "marina", toID: "you"), householdIDs: ["you", "marina"]) == .received)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "maria"), householdIDs: []) == .given)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "you"), householdIDs: []) == .received)
+    }
+}
+
+struct GiftDirectionResolverTests {
+    @Test func resolvesYouToAliceFromBothEndpoints() {
+        #expect(GiftDirectionResolver.resolve(giverID: "you", recipientID: "alice", relativeTo: "you") == .given)
+        #expect(GiftDirectionResolver.resolve(giverID: "you", recipientID: "alice", relativeTo: "alice") == .received)
+    }
+
+    @Test func resolvesContactToContactFromBothEndpoints() {
+        #expect(GiftDirectionResolver.resolve(giverID: "contact-a", recipientID: "contact-b", relativeTo: "contact-a") == .given)
+        #expect(GiftDirectionResolver.resolve(giverID: "contact-a", recipientID: "contact-b", relativeTo: "contact-b") == .received)
+    }
+
+    @Test func returnsNilForNonEndpoint() {
+        #expect(GiftDirectionResolver.resolve(giverID: "contact-a", recipientID: "contact-b", relativeTo: "observer") == nil)
+    }
 }
 
 @MainActor

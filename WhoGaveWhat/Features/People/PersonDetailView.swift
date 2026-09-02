@@ -29,8 +29,20 @@ struct PersonDetailView: View {
             personID: entityId,
             gifts: composition.data.gifts
         )
-        let recv = gs.filter { $0.direction == .received }
-        let given = gs.filter { $0.direction == .given }
+        let recv = gs.filter {
+            GiftDirectionResolver.resolve(
+                giverID: $0.giverID,
+                recipientID: $0.recipientID,
+                relativeTo: entityId
+            ) == .received
+        }
+        let given = gs.filter {
+            GiftDirectionResolver.resolve(
+                giverID: $0.giverID,
+                recipientID: $0.recipientID,
+                relativeTo: entityId
+            ) == .given
+        }
         let list = filter == "received" ? recv : (filter == "given" ? given : gs)
 
         List {
