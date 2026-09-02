@@ -6,6 +6,8 @@ struct AddGiftSheet: View {
     let composition: AppComposition
     @State private var state: AddGiftState
     @State private var showsDetails: Bool
+    @State private var compactHeight: CGFloat = 420
+    @State private var selectedDetent: PresentationDetent
     @FocusState private var focus: AddGiftField?
 
     init(route: GiftSheetRoute, composition: AppComposition) {
@@ -15,7 +17,9 @@ struct AddGiftSheet: View {
             data: composition.data,
             suggestGift: composition.suggestGift
         ))
-        _showsDetails = State(initialValue: route.editingGiftID != nil)
+        let startsExpanded = route.editingGiftID != nil
+        _showsDetails = State(initialValue: startsExpanded)
+        _selectedDetent = State(initialValue: startsExpanded ? .large : .height(420))
     }
 
     var body: some View {
@@ -55,6 +59,11 @@ struct AddGiftSheet: View {
                     saveButton.padding(.top, 24)
                 }
                 .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 30)
+                .onGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.size.height
+                } action: { contentHeight in
+                    updateCompactHeight(for: contentHeight)
+                }
                 // Taps on any non-interactive part of the form (card padding,
                 // section headers, gaps) drop keyboard focus. Buttons and text
                 // fields consume their own taps first, so this only fires on the
@@ -80,12 +89,15 @@ struct AddGiftSheet: View {
             // Opening a picker must drop keyboard focus so it doesn't bounce back
             // onto the previously-edited text field when the picker sheet closes.
             .onChange(of: state.picker) { _, _ in focus = nil }
+            .onChange(of: showsDetails) { _, isExpanded in
+                selectedDetent = isExpanded ? .large : .height(compactHeight)
+            }
             // Open the keyboard on the gift title the moment the sheet settles.
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focus = .name }
             }
         }
-        .presentationDetents([.large])
+        .presentationDetents([.height(compactHeight), .large], selection: $selectedDetent)
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.bg)
         .sheet(item: pickerBinding) { kind in
@@ -140,6 +152,14 @@ struct AddGiftSheet: View {
 
     private var pickerBinding: Binding<AddGiftPicker?> {
         Binding(get: { state.picker }, set: { if $0 == nil { state.closePicker() } })
+    }
+
+    private func updateCompactHeight(for contentHeight: CGFloat) {
+        guard !showsDetails else { return }
+        let measuredHeight = min(max(contentHeight + 56, 360), 560)
+        guard abs(measuredHeight - compactHeight) > 1 else { return }
+        compactHeight = measuredHeight
+        selectedDetent = .height(measuredHeight)
     }
 }
 
