@@ -1,9 +1,8 @@
 import SwiftUI
 
-/// Everyone you track, as a native `List` so a person can be swiped away (except
-/// "you", the household anchor). Deleting a person is irreversible and also wipes
-/// every gift they gave or received, so it's gated behind a big, hard-to-miss
-/// warning that rises from the bottom.
+/// Everyone you track, as a native `List` so a person can be swiped away.
+/// Deleting a person is irreversible and also wipes every gift they gave or
+/// received, so it's gated behind a big, hard-to-miss warning.
 struct PeopleView: View {
     let composition: AppComposition
     /// Person id awaiting the irreversible delete warning (set by the swipe).
@@ -46,7 +45,6 @@ struct PeopleView: View {
                                   gifts: gifts(for: e.0))
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 12))
-                    // "You" is the household anchor — never deletable.
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         if composition.deletePersonUseCase.canDelete(id: e.0) {
                             Button(role: .destructive) { pendingDelete = e.0 } label: {

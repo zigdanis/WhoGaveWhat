@@ -145,14 +145,31 @@ struct SwiftDataPersistenceTests {
         #expect(SwiftDataStore.storeName == "WhoGaveWhatSwiftData")
     }
 
-    @Test func productionStyleStoreBootstrapsOnlyTheSelfAnchor() throws {
-        let store = try SwiftDataStore(inMemory: true, bootstrapsSelf: true)
+    @Test func newStoreDoesNotBootstrapASelfPerson() throws {
+        let store = try SwiftDataStore(inMemory: true)
         let people = try SwiftDataPeopleGateway(context: store.context).loadPeople()
 
-        #expect(people.people.count == 1)
-        #expect(people.people.first?.id == "you")
-        #expect(people.people.first?.role == .household)
+        #expect(people.people.isEmpty)
         #expect(try SwiftDataGiftGateway(context: store.context).loadGifts().isEmpty)
+    }
+
+    @Test func removesOnlyAnUnreferencedLegacySelfPerson() throws {
+        let store = try SwiftDataStore(inMemory: true)
+        let peopleGateway = SwiftDataPeopleGateway(context: store.context)
+        try createPerson(id: "you", role: .household, using: peopleGateway)
+        try store.removeUnreferencedLegacySelf()
+        #expect(try peopleGateway.loadPeople().people.isEmpty)
+
+        try createPerson(id: "you", role: .household, using: peopleGateway)
+        try createPerson(id: "friend", role: .contact, using: peopleGateway)
+        try SwiftDataGiftGateway(context: store.context).save(
+            makeGift(id: "legacy-gift", giverID: "you", recipientID: "friend")
+        )
+
+        try store.removeUnreferencedLegacySelf()
+
+        #expect(Set(try peopleGateway.loadPeople().people.map(\.id)) == ["you", "friend"])
+        #expect(try SwiftDataGiftGateway(context: store.context).loadGifts().map(\.id) == ["legacy-gift"])
     }
 
     @Test func inMemoryStoresAreIsolated() throws {

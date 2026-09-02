@@ -1,8 +1,7 @@
 import SwiftUI
 
-/// Native sheet for adding a gift. New gifts start with the current user as the
-/// sender, so the first pass only asks for a name and receiver. Less frequent
-/// fields remain behind the Details disclosure.
+/// Native sheet for adding or editing a gift. Both sides of the relationship are
+/// explicit, while less frequent fields remain behind the Details disclosure.
 struct AddGiftSheet: View {
     let composition: AppComposition
     @State private var state: AddGiftState
@@ -26,9 +25,8 @@ struct AddGiftSheet: View {
                     GiftBasicsSection(
                         name: nameBinding,
                         focus: $focus,
-                        fromName: state.draft.fromID.map(composition.data.entityName) ?? String(localized: "You"),
+                        fromName: state.draft.fromID.map(composition.data.entityName),
                         toName: state.draft.toID.map(composition.data.entityName),
-                        isEditing: state.editingGiftID != nil,
                         accent: fm.main,
                         tint: fm.tint,
                         onSelectFrom: { state.open(.from) },
@@ -149,9 +147,8 @@ private enum AddGiftField: Hashable {
 private struct GiftBasicsSection: View {
     @Binding var name: String
     @FocusState.Binding var focus: AddGiftField?
-    let fromName: String
+    let fromName: String?
     let toName: String?
-    let isEditing: Bool
     let accent: Color
     let tint: Color
     let onSelectFrom: () -> Void
@@ -173,7 +170,14 @@ private struct GiftBasicsSection: View {
 
             Card {
                 VStack(spacing: 0) {
-                    senderRow
+                    GiftEntryRow(
+                        icon: .asset("ArrowRightFromLine"),
+                        label: "From",
+                        value: fromName,
+                        accent: accent,
+                        tint: tint,
+                        onTap: onSelectFrom
+                    )
                     RowDivider().padding(.leading, 58)
                     GiftEntryRow(
                         icon: .asset("ArrowRightToLine"),
@@ -186,31 +190,6 @@ private struct GiftBasicsSection: View {
                 }
             }
         }
-    }
-
-    private var senderRow: some View {
-        Group {
-            if isEditing {
-                Button(action: onSelectFrom) {
-                    senderRowContent
-                }
-                .buttonStyle(.plain)
-            } else {
-                senderRowContent
-            }
-        }
-    }
-
-    private var senderRowContent: some View {
-        HStack(spacing: 12) {
-            GiftEntryIconView(icon: .asset("ArrowRightFromLine"), accent: accent, tint: tint)
-            Text("From").font(Font.app(16, .regular)).foregroundColor(Color.ink)
-            Spacer(minLength: 8)
-            Text(fromName).font(Font.app(16, .semibold)).foregroundColor(accent)
-            if isEditing { Chevron() }
-        }
-        .padding(.horizontal, 14).padding(.vertical, 10)
-        .contentShape(Rectangle())
     }
 
     private var fieldSurface: some View {
@@ -425,16 +404,14 @@ private struct PickerSheet: View {
     // MARK: From / To (unified person list)
 
     /// A single, uncategorised list spanning the household and outside people, so
-    /// either side of From → To can be anyone. "You" is always pinned to the top;
-    /// manual-entry adds a new outside person straight onto the side being edited.
+    /// either side of From → To can be anyone. Manual entry adds a new outside
+    /// person straight onto the side being edited.
     private func entityPicker(title: String, selected: String?,
                               select: @escaping (String) -> Void,
                               add: @escaping (String) -> Void) -> some View {
-        // You first, then the rest of the household, then everyone else.
-        let you = composition.data.householdMembers.filter { $0.id == "you" }.map { ($0.id, $0.name, $0.color) }
-        let otherMembers = composition.data.householdMembers.filter { $0.id != "you" }.map { ($0.id, $0.name, $0.color) }
+        let members = composition.data.householdMembers.map { ($0.id, $0.name, $0.color) }
         let outsiders = composition.data.contacts.map { ($0.id, $0.name, $0.color) }
-        let entities = you + otherMembers + outsiders
+        let entities = members + outsiders
         return ScrollView {
             VStack(spacing: 16) {
                 // Manual-entry first — add a new person from the top of the sheet.

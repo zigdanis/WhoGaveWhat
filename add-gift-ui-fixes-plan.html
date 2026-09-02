@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Add Gift UI Fixes Plan</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050505;
+      --panel: #0f0f0f;
+      --text: #f4f4f1;
+      --muted: #a7a7a0;
+      --line: #2a2a27;
+      --accent: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+    main {
+      width: min(920px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 56px 0 80px;
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 28px;
+      margin-bottom: 36px;
+    }
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(2.1rem, 6vw, 4.6rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+    }
+    h2 {
+      margin: 48px 0 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      font-size: 1.35rem;
+      line-height: 1.2;
+    }
+    h3 { margin: 26px 0 10px; font-size: 1rem; }
+    p { margin: 0 0 14px; color: var(--muted); }
+    a { color: var(--text); text-underline-offset: 0.2em; }
+    ul, ol { margin: 0 0 18px; padding-left: 1.25rem; color: var(--muted); }
+    li + li { margin-top: 8px; }
+    .lede { max-width: 760px; color: var(--text); font-size: 1.1rem; }
+    .toc, .tldr {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 18px 20px;
+      margin: 28px 0 10px;
+    }
+    .tldr { border-left: 3px solid var(--accent); }
+    .tldr p, .toc ul { margin: 0; }
+    .tldr p { color: var(--text); }
+    code {
+      color: var(--text);
+      background: #171717;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 0.1rem 0.28rem;
+    }
+    @media (max-width: 640px) {
+      main { width: min(100% - 24px, 920px); padding-top: 32px; }
+      h1 { letter-spacing: -0.02em; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Add Gift UI Fixes</h1>
+      <p class="lede">Implementation plan for neutral gift relationships, reusable person selection, predictable calendar behavior, locale-aware currency, and content-sized sheets.</p>
+    </header>
+
+    <aside class="tldr" aria-label="TLDR">
+      <p><strong>TLDR:</strong> Remove every implicit “You” assumption, make From and To share a live-filtered picker, separate calendar navigation from day selection, persist a locale-inferred currency preference, and let Add Gift move between fitted and full-height presentations.</p>
+    </aside>
+
+    <nav class="toc" aria-label="Table of contents">
+      <ul>
+        <li><a href="#context">Context</a></li>
+        <li><a href="#constraints">Constraints</a></li>
+        <li><a href="#approach">Proposed Approach</a></li>
+        <li><a href="#work-plan">Work Plan</a></li>
+        <li><a href="#verification">Verification</a></li>
+        <li><a href="#risks">Risks</a></li>
+      </ul>
+    </nav>
+
+    <section aria-labelledby="context">
+      <h2 id="context">Context</h2>
+      <p>The current flow creates and special-cases a person whose ID is <code>you</code>, treats the sender differently from the recipient, conflates calendar navigation with selection, hardcodes ruble display, and presents several sheets at more height than their content requires.</p>
+      <p>The change must preserve existing gifts and SwiftData compatibility while making new stores and new gifts neutral about the user’s participation.</p>
+    </section>
+
+    <section aria-labelledby="constraints">
+      <h2 id="constraints">Constraints</h2>
+      <ul>
+        <li>Do not delete a legacy <code>you</code> record when gifts still reference it.</li>
+        <li>Changing the currency preference changes display metadata only; it does not convert historical amounts.</li>
+        <li>Use stable person IDs and cached filtering so selection and focus survive SwiftUI updates.</li>
+        <li>Use <code>xcodebuildmcp</code> for all build, test, simulator, automation, and screenshot work.</li>
+        <li>Reuse an already booted simulator; otherwise prefer iPhone 17 Pro.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="approach">
+      <h2 id="approach">Proposed Approach</h2>
+
+      <h3>Neutral people and gift endpoints</h3>
+      <p>Stop bootstrapping a self person, default both endpoint IDs to nil, and remove all ID-based behavior for <code>you</code>. Keep the existing <code>paidByYou</code> persistence field for compatibility, but never derive it from a person ID. Delete only an unreferenced legacy self record; retain a referenced one as an ordinary renameable and deletable person.</p>
+
+      <h3>Shared person picker</h3>
+      <p>Use the same picker for From and To. An observable picker state will cache filtered people, preserve an existing selection, provisionally select the first matching person as the query changes, and write that selection to the draft immediately so swipe dismissal keeps it. Row taps select and dismiss; Add creates or reuses an exact match, selects it, and dismisses.</p>
+
+      <h3>Calendar and sheet sizing</h3>
+      <p>Wrap <code>UICalendarView</code> so month and year navigation never triggers dismissal. Only its single-date delegate callback commits and closes; Today and Yesterday keep their current direct behavior. Present the date picker fitted to its content. Measure the collapsed Add Gift form for a compact detent and animate to full height when details are shown.</p>
+
+      <h3>Currency preference</h3>
+      <p>Persist an ISO-4217 code through the preferences gateway. Initialize it once from the current locale, falling back to USD, and expose a Settings picker. Replace hardcoded ruble formatting with locale-aware currency formatting using the selected code. Keep the approximate-value field empty until edited and show a formatted zero-value placeholder.</p>
+    </section>
+
+    <section aria-labelledby="work-plan">
+      <h2 id="work-plan">Work Plan</h2>
+      <ol>
+        <li><strong>Remove implicit self behavior.</strong> Update SwiftData initialization, draft defaults, save/direction logic, people deletion UI, and preview data. Add non-destructive legacy cleanup coverage.</li>
+        <li><strong>Unify person selection.</strong> Extract person-picker state and UI, connect both From and To, implement cached filtering and provisional selection, and add focused state/use-case tests.</li>
+        <li><strong>Fix date selection.</strong> Add the UIKit calendar bridge, retain quick-date buttons, and fit the date sheet to its content.</li>
+        <li><strong>Add currency preference.</strong> Extend preferences and composition, inject the selected code, add Settings UI, centralize formatting, and update every monetary display.</li>
+        <li><strong>Adapt Add Gift presentation.</strong> Add measured compact and large detents, expand on details, collapse when details hide, and retain scrolling and keyboard avoidance.</li>
+        <li><strong>Review and harden.</strong> Run an independent review, land each correction as a focused commit, re-review, and monitor the pull request until checks and feedback are clear.</li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="verification">
+      <h2 id="verification">Verification</h2>
+      <ul>
+        <li>Run the full test target through <code>xcodebuildmcp simulator test</code>.</li>
+        <li>Verify a fresh store has no “You” person and Add Gift opens compactly with unset endpoints.</li>
+        <li>Verify live person filtering, first-result checkmark, persisted swipe dismissal, row selection, and Add behavior for both endpoints.</li>
+        <li>Verify month/year navigation leaves the date sheet open; choosing a day or a preset closes it.</li>
+        <li>Verify the value field is empty with the selected currency’s zero placeholder.</li>
+        <li>Verify details expand Add Gift to full height and collapsing returns it to fitted height without keyboard clipping.</li>
+        <li>Change currency in Settings and verify immediate display updates plus persistence after relaunch.</li>
+        <li>Capture and visually inspect snapshots for the filtered person picker, navigated compact calendar, and expanded form.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="risks">
+      <h2 id="risks">Risks</h2>
+      <ul>
+        <li>A referenced legacy self record must remain to avoid cascading gift deletion.</li>
+        <li>Calendar component conversion must consistently use the same locale, calendar, and time zone to avoid a one-day shift.</li>
+        <li>Measured detents must tolerate keyboard changes, long translations, and larger Dynamic Type without clipping.</li>
+        <li>App Store storefront inference is unavailable in the current architecture, so the initial currency is locale-derived as allowed.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

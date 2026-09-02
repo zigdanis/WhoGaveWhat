@@ -27,8 +27,7 @@ final class SwiftDataStore {
 
     init(
         inMemory: Bool = false,
-        seed: Bool = false,
-        bootstrapsSelf: Bool? = nil
+        seed: Bool = false
     ) throws {
         let schema = Schema([StoredPerson.self, StoredGift.self])
         let configuration = ModelConfiguration(
@@ -40,23 +39,23 @@ final class SwiftDataStore {
         context = ModelContext(container)
         context.autosaveEnabled = false
 
-        let shouldBootstrapSelf = bootstrapsSelf ?? !inMemory
         if seed {
             try seedIfNeeded()
-        } else if shouldBootstrapSelf {
-            try ensureSelf()
+        } else {
+            try removeUnreferencedLegacySelf()
         }
     }
 
-    private func ensureSelf() throws {
-        guard try context.fetchCount(FetchDescriptor<StoredPerson>()) == 0 else { return }
-        context.insert(StoredPerson(
-            id: "you",
-            name: String(localized: "You"),
-            colorHex: 0x12161C,
-            roleRawValue: PersonRole.household.rawValue,
-            sortIndex: 0
-        ))
+    func removeUnreferencedLegacySelf() throws {
+        let legacyID = "you"
+        var descriptor = FetchDescriptor<StoredPerson>(predicate: #Predicate { person in
+            person.id == legacyID
+        })
+        descriptor.fetchLimit = 1
+        guard let legacySelf = try context.fetch(descriptor).first,
+              legacySelf.giftsGiven.isEmpty,
+              legacySelf.giftsReceived.isEmpty else { return }
+        context.delete(legacySelf)
         try context.save()
     }
 
@@ -68,7 +67,7 @@ final class SwiftDataStore {
         }
 
         let household: [(String, String, Int64)] = [
-            ("you", "You", 0x12161C),
+            ("anton", "Anton", 0x12161C),
             ("marina", "Marina", 0x12805C),
             ("sofia", "Sofia", 0x5B6573),
             ("alisa", "Alisa", 0x2F6FAE),
@@ -109,17 +108,17 @@ final class SwiftDataStore {
         // id, emoji, name, giver, recipient, paid, occasion, date, value
         let gifts: [(String, String, String, String, String, Bool, String, String, Double)] = [
             ("g1", "💐", "Bouquet of roses", "maria", "marina", false, "Birthday", "2026-05-12", 2000),
-            ("g2", "⌚", "Wristwatch", "pavel", "you", false, "Birthday", "2026-04-03", 9500),
+            ("g2", "⌚", "Wristwatch", "pavel", "anton", false, "Birthday", "2026-04-03", 9500),
             ("g3", "🧸", "Teddy bear", "maria", "alisa", false, "New Year", "2026-01-02", 1500),
-            ("g4", "📚", "Book set", "igor", "you", false, "Graduation", "2026-03-20", 1800),
-            ("g5", "🍷", "Bottle of wine", "dmitri", "you", false, "Housewarming", "2026-02-15", 1900),
+            ("g4", "📚", "Book set", "igor", "anton", false, "Graduation", "2026-03-20", 1800),
+            ("g5", "🍷", "Bottle of wine", "dmitri", "anton", false, "Housewarming", "2026-02-15", 1900),
             ("g6", "🪴", "Potted plant", "olga", "marina", false, "Just because", "2026-05-28", 1200),
             ("g7", "🪆", "Matryoshka doll", "pavel", "sofia", false, "New Year", "2026-01-02", 1400),
             ("g8", "🧱", "Lego set", "sofia", "lena", true, "Birthday", "2026-06-02", 1500),
             ("g9", "💍", "Silver necklace", "marina", "maria", true, "Anniversary", "2026-02-14", 4500),
-            ("g10", "🍫", "Box of chocolates", "you", "olga", true, "Just because", "2026-05-28", 700),
-            ("g11", "🍷", "Bottle of wine", "you", "igor", true, "Birthday", "2026-04-18", 2100),
-            ("g12", "🎟️", "Concert tickets", "you", "dmitri", true, "Birthday", "2026-03-09", 3000),
+            ("g10", "🍫", "Box of chocolates", "anton", "olga", true, "Just because", "2026-05-28", 700),
+            ("g11", "🍷", "Bottle of wine", "anton", "igor", true, "Birthday", "2026-04-18", 2100),
+            ("g12", "🎟️", "Concert tickets", "anton", "dmitri", true, "Birthday", "2026-03-09", 3000),
         ]
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)

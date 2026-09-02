@@ -54,12 +54,12 @@ struct SaveGiftInputTests {
         #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "igor"), householdIDs: householdIDs) == .received)
     }
 
-    @Test func directionUsesYouAsTheSameSideViewpoint() {
+    @Test func directionDoesNotSpecialCaseLegacySelfID() {
         let useCase = makeSaveGiftUseCase().0
 
-        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "marina"), householdIDs: ["you", "marina"]) == .given)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "marina"), householdIDs: ["you", "marina"]) == .received)
         #expect(useCase.direction(for: makeGiftInput(fromID: "marina", toID: "you"), householdIDs: ["you", "marina"]) == .received)
-        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "maria"), householdIDs: []) == .given)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "maria"), householdIDs: []) == .received)
         #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "you"), householdIDs: []) == .received)
     }
 }
@@ -84,7 +84,7 @@ struct GiftDirectionResolverTests {
 struct AddGiftDraftTests {
     @Test func newGiftStartsWithSimpleDefaults() {
         let draft = AddGiftDraft()
-        #expect(draft.fromID == "you")
+        #expect(draft.fromID == nil)
         #expect(draft.toID == nil)
         #expect(draft.occasion == "Just because")
         #expect(draft.date == AppDate.today)
@@ -124,7 +124,7 @@ struct SaveGiftTests {
         #expect(saved?.direction == .given)
         #expect(saved?.giverID == "you")
         #expect(saved?.recipientID == "igor")
-        #expect(saved?.paidByYou == true)
+        #expect(saved?.paidByYou == false)
     }
 
     @Test func touchedValueOverridesSuggestion() {

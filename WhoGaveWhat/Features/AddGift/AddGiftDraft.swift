@@ -5,7 +5,7 @@ struct AddGiftDraft {
     var emoji: String?
     var value: Int?
     var valueTouched = false
-    var fromID: String? = "you"
+    var fromID: String?
     var toID: String?
     var paidByYou = false
     var occasion: String? = "Just because"

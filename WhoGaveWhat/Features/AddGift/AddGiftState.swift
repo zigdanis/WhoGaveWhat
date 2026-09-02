@@ -96,7 +96,6 @@ final class AddGiftState {
 
     func selectFrom(_ id: String) {
         draft.fromID = id
-        draft.paidByYou = id == "you"
         picker = nil
     }
     func selectTo(_ id: String) { draft.toID = id; picker = nil }

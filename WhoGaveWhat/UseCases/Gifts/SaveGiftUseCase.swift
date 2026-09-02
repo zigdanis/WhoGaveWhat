@@ -51,7 +51,7 @@ struct SaveGiftUseCase {
             direction: direction,
             giverID: fromID,
             recipientID: toID,
-            paidByYou: fromID == "you" || input.paidByYou,
+            paidByYou: input.paidByYou,
             occasion: input.occasion ?? "Just because",
             date: input.date,
             value: input.valueTouched ? Double(input.value ?? 0) : (input.aiValue ?? suggestion.value),
