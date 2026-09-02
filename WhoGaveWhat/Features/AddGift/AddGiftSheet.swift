@@ -175,7 +175,6 @@ private struct GiftBasicsSection: View {
     let toName: String?
     let accent: Color
     let tint: Color
-    let currencyCode: String
     let fromAccessibilityIdentifier: String
     let toAccessibilityIdentifier: String
     let onSelectFrom: () -> Void
