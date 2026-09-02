@@ -93,6 +93,46 @@ struct AddGiftDraftTests {
 }
 
 @MainActor
+struct PersonPickerStateTests {
+    private let people = [
+        Person(id: "alex", name: "Alex", colorHex: 0x123456, role: .contact),
+        Person(id: "alice", name: "Alice", colorHex: 0x654321, role: .household),
+        Person(id: "bob", name: "Bob", colorHex: 0xABCDEF, role: .contact),
+    ]
+
+    @Test func filtersAndProvisionallySelectsTheFirstMatch() {
+        let state = PersonPickerState(people: people, selectedID: "bob")
+
+        let selection = state.updateQuery("Al")
+
+        #expect(state.visiblePeople.map(\.id) == ["alex", "alice"])
+        #expect(selection == "alex")
+        #expect(state.selectedID == "alex")
+    }
+
+    @Test func preservesSelectionWhenAQueryHasNoMatches() {
+        let state = PersonPickerState(people: people, selectedID: "bob")
+
+        let selection = state.updateQuery("New person")
+
+        #expect(state.visiblePeople.isEmpty)
+        #expect(selection == nil)
+        #expect(state.selectedID == "bob")
+    }
+
+    @Test func clearingQueryRestoresAllPeopleWithoutChangingSelection() {
+        let state = PersonPickerState(people: people, selectedID: nil)
+        _ = state.updateQuery("Ali")
+
+        let selection = state.updateQuery("")
+
+        #expect(state.visiblePeople.map(\.id) == people.map(\.id))
+        #expect(selection == nil)
+        #expect(state.selectedID == "alice")
+    }
+}
+
+@MainActor
 struct RouterTests {
     @Test func routesScreensTabsAndSheetsIndependently() {
         let router = AppRouter(didCompleteOnboarding: false, launchEnvironment: [:])
