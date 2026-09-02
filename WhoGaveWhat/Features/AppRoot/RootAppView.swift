@@ -30,7 +30,7 @@ struct RootAppView: View {
         .sheet(item: giftSheetBinding) { route in
             AddGiftSheet(route: route, composition: composition)
         }
-        .sheet(isPresented: settingsBinding) { SettingsView(router: composition.router) }
+        .sheet(isPresented: settingsBinding) { SettingsView(composition: composition) }
     }
 
     /// One tab: a navigation stack that pushes `PersonDetailView` for any entity id.

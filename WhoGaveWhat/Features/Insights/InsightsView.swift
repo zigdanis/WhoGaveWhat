@@ -20,7 +20,7 @@ struct InsightsView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Circulated in 2026")
                         .font(Font.app(13, .regular)).foregroundColor(Color.muted)
-                    Text(rub(rv + gv))
+                    Text(formattedCurrency(rv + gv, code: composition.currencyCode))
                         .font(Font.app(32, .bold)).tracking(-0.6).foregroundColor(Color.ink)
                         .padding(.top, 7)
 
@@ -40,8 +40,8 @@ struct InsightsView: View {
                     .padding(.top, 18)
 
                     HStack(spacing: 18) {
-                        legend(color: Color.recv, label: "Received", value: rub(rv))
-                        legend(color: Color.ink, label: "Given", value: rub(gv))
+                        legend(color: Color.recv, label: "Received", value: formattedCurrency(rv, code: composition.currencyCode))
+                        legend(color: Color.ink, label: "Given", value: formattedCurrency(gv, code: composition.currencyCode))
                     }
                     .padding(.top, 12)
                 }
@@ -73,9 +73,9 @@ struct InsightsView: View {
                 // You're a net receiver — celebrate it rather than guilt-trip.
                 Text("On the receiving end")
                     .font(Font.app(13, .semibold)).foregroundColor(.white.opacity(0.7))
-                Text("You've received \(rub(received))")
+                Text("You've received \(formattedCurrency(received, code: composition.currencyCode))")
                     .font(Font.app(24, .bold)).tracking(-0.4).foregroundColor(.white).padding(.top, 10)
-                Text("That's \(rub(received - given)) more than you've given back — you're well loved. Maybe time to return the favour?")
+                Text("That's \(formattedCurrency(received - given, code: composition.currencyCode)) more than you've given back — you're well loved. Maybe time to return the favour?")
                     .font(Font.app(15, .regular)).foregroundColor(.white.opacity(0.8)).padding(.top, 4)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
@@ -83,7 +83,7 @@ struct InsightsView: View {
                     .font(Font.app(13, .semibold)).foregroundColor(.white.opacity(0.7))
                 Text("You covered \(LocalizedCount.gifts(paid.count))")
                     .font(Font.app(24, .bold)).tracking(-0.4).foregroundColor(.white).padding(.top, 10)
-                Text("That's \(rub(paid.totalValue)) from your pocket — the quiet hero of the family.")
+                Text("That's \(formattedCurrency(paid.totalValue, code: composition.currencyCode)) from your pocket — the quiet hero of the family.")
                     .font(Font.app(15, .regular)).foregroundColor(.white.opacity(0.8)).padding(.top, 4)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -100,7 +100,13 @@ struct InsightsView: View {
                 let maxV = rankings.first?.value ?? 1
                 ForEach(Array(rankings.enumerated()), id: \.element.id) { idx, item in
                     NavigationLink(value: item.person.id) {
-                        RankRow(person: item.person, value: item.value, count: item.count, maxValue: maxV)
+                        RankRow(
+                            person: item.person,
+                            value: item.value,
+                            count: item.count,
+                            maxValue: maxV,
+                            currencyCode: composition.currencyCode
+                        )
                     }
                     .buttonStyle(.plain)
                     if idx < rankings.count - 1 { RowDivider().padding(.leading, 14) }
@@ -124,6 +130,7 @@ private struct RankRow: View {
     let value: Double
     let count: Int
     let maxValue: Double
+    let currencyCode: String
 
     var body: some View {
         HStack(spacing: 12) {
@@ -132,7 +139,7 @@ private struct RankRow: View {
                 HStack(alignment: .firstTextBaseline, spacing: 5) {
                     Text(person.name).font(Font.app(15, .semibold)).foregroundColor(Color.ink)
                     Spacer(minLength: 8)
-                    Text(verbatim: "\(LocalizedCount.gifts(count)) · \(rub(value))")
+                    Text(verbatim: "\(LocalizedCount.gifts(count)) · \(formattedCurrency(value, code: currencyCode))")
                         .font(Font.app(13, .regular)).foregroundColor(Color.muted)
                 }
                 BarView(pct: value / maxValue * 100, color: person.color, height: 7)

@@ -46,6 +46,7 @@ struct AddGiftSheet: View {
                             focus: $focus,
                             accent: fm.main,
                             tint: fm.tint,
+                            currencyCode: composition.currencyCode,
                             onSelectDate: { state.open(.date) },
                             onSelectOccasion: { state.open(.occasion) }
                         )
@@ -126,12 +127,12 @@ struct AddGiftSheet: View {
     private var valueBinding: Binding<String> {
         Binding(
             get: {
-                let value = state.draft.valueTouched ? state.draft.value : Int(state.effectiveValue)
-                return value.map(String.init) ?? ""
+                guard state.draft.valueTouched else { return "" }
+                return state.draft.value.map(String.init) ?? ""
             },
             set: { newVal in
                 let digits = newVal.filter(\.isNumber)
-                state.draft.value = digits.isEmpty ? 0 : Int(digits)
+                state.draft.value = digits.isEmpty ? nil : Int(digits)
                 state.draft.valueTouched = true
             }
         )
@@ -154,6 +155,7 @@ private struct GiftBasicsSection: View {
     let toName: String?
     let accent: Color
     let tint: Color
+    let currencyCode: String
     let fromAccessibilityIdentifier: String
     let toAccessibilityIdentifier: String
     let onSelectFrom: () -> Void
@@ -247,6 +249,7 @@ private struct GiftDetailsSection: View {
     @FocusState.Binding var focus: AddGiftField?
     let accent: Color
     let tint: Color
+    let currencyCode: String
     let onSelectDate: () -> Void
     let onSelectOccasion: () -> Void
 
@@ -273,7 +276,13 @@ private struct GiftDetailsSection: View {
                     onTap: onSelectOccasion
                 )
                 RowDivider().padding(.leading, 58)
-                ApproximateValueRow(value: $value, focus: $focus, accent: accent, tint: tint)
+                ApproximateValueRow(
+                    value: $value,
+                    focus: $focus,
+                    accent: accent,
+                    tint: tint,
+                    currencyCode: currencyCode
+                )
             }
         }
     }
@@ -346,10 +355,11 @@ private struct ApproximateValueRow: View {
     @FocusState.Binding var focus: AddGiftField?
     let accent: Color
     let tint: Color
+    let currencyCode: String
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "rublesign.circle")
+            Image(systemName: "banknote.fill")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(accent)
                 .frame(width: 34, height: 34)
@@ -363,7 +373,9 @@ private struct ApproximateValueRow: View {
                 .focused($focus, equals: .value)
                 .multilineTextAlignment(.trailing)
                 .frame(minWidth: 60, maxWidth: 110)
-            Text("₽").font(Font.app(16, .semibold)).foregroundColor(Color.muted2)
+                .accessibilityIdentifier("add-gift.value")
+            Text(currencySymbol(code: currencyCode))
+                .font(Font.app(16, .semibold)).foregroundColor(Color.muted2)
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
         .contentShape(Rectangle())

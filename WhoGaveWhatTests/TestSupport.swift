@@ -3,8 +3,12 @@
 @MainActor
 final class TestPreferencesGateway: PreferencesGateway {
     var didCompleteOnboarding = false
+    var currencyCode = "USD"
     func setDidCompleteOnboarding(_ completed: Bool) {
         didCompleteOnboarding = completed
+    }
+    func setCurrencyCode(_ currencyCode: String) {
+        self.currencyCode = currencyCode
     }
 }
 

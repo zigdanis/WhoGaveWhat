@@ -151,6 +151,34 @@ struct RouterTests {
 }
 
 @MainActor
+struct CurrencyPreferenceTests {
+    @Test func compositionPublishesAndPersistsCurrencyChanges() {
+        let preferences = TestPreferencesGateway()
+        let composition = AppComposition(
+            store: try! SwiftDataStore(inMemory: true),
+            preferences: preferences,
+            intelligence: TestIntelligenceGateway()
+        )
+
+        composition.setCurrencyCode("EUR")
+
+        #expect(composition.currencyCode == "EUR")
+        #expect(preferences.currencyCode == "EUR")
+    }
+
+    @Test func userDefaultsGatewayPersistsSelectedCurrency() {
+        let suiteName = "CurrencyPreferenceTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let gateway = UserDefaultsPreferencesGateway(defaults: defaults)
+
+        gateway.setCurrencyCode("JPY")
+
+        #expect(UserDefaultsPreferencesGateway(defaults: defaults).currencyCode == "JPY")
+    }
+}
+
+@MainActor
 struct SaveGiftTests {
     @Test func savingUsesSuggestedValueAndReloadsData() {
         let (useCase, gateway) = makeSaveGiftUseCase()

@@ -35,4 +35,11 @@ struct FormattingTests {
         formatter.dateFormat = "yyyy-MM-dd"
         #expect(formatter.string(from: AppDate.today) == "2026-06-14")
     }
+
+    @Test func currencyFormattingUsesTheSelectedCodeAndLocale() {
+        let locale = Locale(identifier: "en_US")
+
+        #expect(formattedCurrency(1_234, code: "USD", locale: locale) == "$1,234")
+        #expect(currencySymbol(code: "EUR", locale: locale) == "€")
+    }
 }

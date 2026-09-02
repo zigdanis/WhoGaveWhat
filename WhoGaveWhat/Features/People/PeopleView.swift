@@ -42,7 +42,8 @@ struct PeopleView: View {
                 ForEach(entities, id: \.0) { e in
                     NavigationLink(value: e.0) {
                         PersonRow(entityId: e.0, name: e.1, color: e.2,
-                                  gifts: gifts(for: e.0))
+                                  gifts: gifts(for: e.0),
+                                  currencyCode: composition.currencyCode)
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 12))
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -101,6 +102,7 @@ struct PersonRow: View {
     let name: String
     let color: Color
     let gifts: [Gift]
+    let currencyCode: String
 
     var body: some View {
         let r = gifts.filter {
@@ -126,7 +128,7 @@ struct PersonRow: View {
                     .font(Font.app(13, .regular)).foregroundColor(Color.muted3)
             }
             Spacer(minLength: 8)
-            Text(rub(gifts.totalValue))
+            Text(formattedCurrency(gifts.totalValue, code: currencyCode))
                 .font(Font.app(15, .semibold)).foregroundColor(Color.ink)
             Chevron()
         }

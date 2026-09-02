@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 enum DesignMetrics {
@@ -23,18 +24,22 @@ extension View {
     }
 }
 
-/// Ruble formatting with thin-space grouping and a non-breaking space before ₽,
-/// matching the prototype `fmt()`.
-func rub(_ value: Double) -> String {
-    let n = Int(value.rounded())
-    var digits = String(abs(n))
-    var groups: [String] = []
-    while digits.count > 3 {
-        let idx = digits.index(digits.endIndex, offsetBy: -3)
-        groups.insert(String(digits[idx...]), at: 0)
-        digits = String(digits[..<idx])
-    }
-    groups.insert(digits, at: 0)
-    let grouped = groups.joined(separator: "\u{202F}")
-    return (n < 0 ? "-" : "") + grouped + "\u{00A0}₽"
+func formattedCurrency(
+    _ value: Double,
+    code: String,
+    locale: Locale = .autoupdatingCurrent
+) -> String {
+    value.formatted(
+        .currency(code: code)
+            .precision(.fractionLength(0))
+            .locale(locale)
+    )
+}
+
+func currencySymbol(code: String, locale: Locale = .autoupdatingCurrent) -> String {
+    let formatter = NumberFormatter()
+    formatter.locale = locale
+    formatter.numberStyle = .currency
+    formatter.currencyCode = code
+    return formatter.currencySymbol ?? code
 }
