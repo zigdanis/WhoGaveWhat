@@ -36,10 +36,20 @@ func formattedCurrency(
     )
 }
 
+private enum CurrencySymbolCache {
+    static let values = NSCache<NSString, NSString>()
+}
+
 func currencySymbol(code: String, locale: Locale = .autoupdatingCurrent) -> String {
+    let cacheKey = "\(locale.identifier)|\(code)" as NSString
+    if let cached = CurrencySymbolCache.values.object(forKey: cacheKey) {
+        return cached as String
+    }
     let formatter = NumberFormatter()
     formatter.locale = locale
     formatter.numberStyle = .currency
     formatter.currencyCode = code
-    return formatter.currencySymbol ?? code
+    let symbol = formatter.currencySymbol ?? code
+    CurrencySymbolCache.values.setObject(symbol as NSString, forKey: cacheKey)
+    return symbol
 }
