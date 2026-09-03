@@ -11,7 +11,6 @@ struct InsightsView: View {
         let rv = insights.receivedValue
         let gv = insights.givenValue
         let tot = max(rv + gv, 1)
-        let paid = insights.paidByYou
 
         VStack(alignment: .leading, spacing: 0) {
             // Circulated total — shown openly (per-person amounts below are the
@@ -48,10 +47,7 @@ struct InsightsView: View {
                 .padding(20)
             }
 
-            // Headline insight — solid ink card. When you've received more than
-            // you've given, flip it to a "you're ahead" message instead of the
-            // "who's really paying" one (which only lands when you've paid a lot).
-            spotlightCard(received: rv, given: gv, paid: paid)
+            spotlightCard(received: rv, given: gv)
                 .padding(.top, 14)
 
             // Top givers
@@ -65,25 +61,22 @@ struct InsightsView: View {
         .padding(.horizontal, 16)
     }
 
-    /// The big ink headline card. Two flavours, chosen by the balance of giving.
-    @ViewBuilder
-    private func spotlightCard(received: Double, given: Double, paid: [Gift]) -> some View {
+    private func spotlightCard(received: Double, given: Double) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             if received > given {
-                // You're a net receiver — celebrate it rather than guilt-trip.
-                Text("On the receiving end")
+                Text("Received gifts lead")
                     .font(Font.app(13, .semibold)).foregroundColor(.white.opacity(0.7))
-                Text("You've received \(formattedCurrency(received, code: composition.currencyCode))")
+                Text("Received total \(formattedCurrency(received, code: composition.currencyCode))")
                     .font(Font.app(24, .bold)).tracking(-0.4).foregroundColor(.white).padding(.top, 10)
-                Text("That's \(formattedCurrency(received - given, code: composition.currencyCode)) more than you've given back — you're well loved. Maybe time to return the favour?")
+                Text("\(formattedCurrency(received - given, code: composition.currencyCode)) more is recorded as received than given.")
                     .font(Font.app(15, .regular)).foregroundColor(.white.opacity(0.8)).padding(.top, 4)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
-                Text("Who's really paying")
+                Text("Given gifts lead")
                     .font(Font.app(13, .semibold)).foregroundColor(.white.opacity(0.7))
-                Text("You covered \(LocalizedCount.gifts(paid.count))")
+                Text("Given total \(formattedCurrency(given, code: composition.currencyCode))")
                     .font(Font.app(24, .bold)).tracking(-0.4).foregroundColor(.white).padding(.top, 10)
-                Text("That's \(formattedCurrency(paid.totalValue, code: composition.currencyCode)) from your pocket — the quiet hero of the family.")
+                Text("\(formattedCurrency(given - received, code: composition.currencyCode)) more is recorded as given than received.")
                     .font(Font.app(15, .regular)).foregroundColor(.white.opacity(0.8)).padding(.top, 4)
                     .fixedSize(horizontal: false, vertical: true)
             }
