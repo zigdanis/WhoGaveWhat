@@ -2,6 +2,7 @@ import SwiftUI
 
 struct OnboardingView: View {
     let router: AppRouter
+    let currencyCode: String
     @State private var step = 0
 
     var body: some View {
@@ -20,8 +21,8 @@ struct OnboardingView: View {
             // Swipeable pager — drag back and forth between steps.
             TabView(selection: stepBinding) {
                 page(OnbHero()).tag(0)
-                page(OnbLogged()).tag(1)
-                page(OnbAddsUp()).tag(2)
+                page(OnbLogged(currencyCode: currencyCode)).tag(1)
+                page(OnbAddsUp(currencyCode: currencyCode)).tag(2)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .animation(.easeInOut(duration: 0.25), value: step)
@@ -94,7 +95,7 @@ private struct OnbHero: View {
             Text("Who Gave What")
                 .font(Font.app(36, .bold))
                 .tracking(-0.6)
-            Text("Never forget who gave what — or what you gave back.")
+            Text("Never forget who gave what — or which gifts went where.")
                 .font(Font.app(17, .semibold))
                 .foregroundColor(Color.muted2)
                 .multilineTextAlignment(.center)
@@ -153,6 +154,8 @@ private struct FloatingMark: View {
 // MARK: - Step 1: Logged in seconds
 
 private struct OnbLogged: View {
+    let currencyCode: String
+
     var body: some View {
         VStack(spacing: 0) {
             Card(strongShadow: true) {
@@ -166,8 +169,9 @@ private struct OnbLogged: View {
                     .padding(.top, 11)
                     HStack(spacing: 9) {
                         Text("≈ value").font(Font.app(13, .semibold)).foregroundColor(Color.muted)
-                        Text("1 800 ₽").font(Font.app(16, .bold))
-                        Text("we guessed")
+                        Text(formattedCurrency(1_800, code: currencyCode))
+                            .font(Font.app(16, .bold))
+                        Text("optional")
                             .font(Font.app(11, .semibold))
                             .foregroundColor(Color.recv)
                             .padding(.horizontal, 9).padding(.vertical, 3)
@@ -182,7 +186,7 @@ private struct OnbLogged: View {
             Text("Logged in seconds")
                 .font(Font.app(27, .bold)).tracking(-0.5)
                 .padding(.top, 36)
-            Text("Type what it was — Who Gave What picks the icon and guesses the value. Adjust only if you want to.")
+            Text("Type what it was — Who Gave What picks the icon. Add a value only when it is useful.")
                 .font(Font.app(16, .semibold))
                 .foregroundColor(Color.muted2)
                 .multilineTextAlignment(.center)
@@ -196,10 +200,12 @@ private struct OnbLogged: View {
 // MARK: - Step 2: Adds up per person
 
 private struct OnbAddsUp: View {
-    private let bars: [(String, String, Double, Color)] = [
-        ("Birthday", "6 200 ₽", 0.84, Color.give),
-        ("Anniversary", "4 500 ₽", 0.61, Color.gold),
-        ("New Year", "4 000 ₽", 0.54, Color.recv),
+    let currencyCode: String
+
+    private let bars: [(String, Double, Double, Color)] = [
+        ("Birthday", 6_200, 0.84, Color.give),
+        ("Anniversary", 4_500, 0.61, Color.gold),
+        ("New Year", 4_000, 0.54, Color.recv),
     ]
 
     var body: some View {
@@ -213,13 +219,16 @@ private struct OnbAddsUp: View {
                             Text("6 gifts together").font(Font.app(13, .bold)).foregroundColor(Color.muted3)
                         }
                         Spacer()
-                        Text("14 700 ₽").font(Font.app(18, .bold))
+                        Text(formattedCurrency(14_700, code: currencyCode))
+                            .font(Font.app(18, .bold))
                     }
                     VStack(spacing: 10) {
                         ForEach(bars, id: \.0) { b in
                             VStack(spacing: 5) {
                                 HStack {
-                                    Text(LocalizedStringKey(b.0)); Spacer(); Text(b.1)
+                                    Text(LocalizedStringKey(b.0))
+                                    Spacer()
+                                    Text(formattedCurrency(b.1, code: currencyCode))
                                 }
                                 .font(Font.app(12.5, .bold))
                                 .foregroundColor(Color.muted2)

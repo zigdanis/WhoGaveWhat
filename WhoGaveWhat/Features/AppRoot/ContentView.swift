@@ -8,7 +8,10 @@ struct ContentView: View {
             Color.bg.ignoresSafeArea()
             switch composition.router.screen {
             case .onboarding:
-                OnboardingView(router: composition.router)
+                OnboardingView(
+                    router: composition.router,
+                    currencyCode: composition.currencyCode
+                )
                     .transition(.opacity)
             case .signIn:
                 SignInView(composition: composition)
