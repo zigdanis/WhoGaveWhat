@@ -87,7 +87,8 @@ struct PersonDetailView: View {
                         NavigationLink(value: gift) {
                             GiftRow(gift: gift,
                                     subtitle: composition.data.giftSubtitle(gift),
-                                    dateLabel: gift.date.giftShortLabel())
+                                    dateLabel: gift.date.giftShortLabel(),
+                                    currencyCode: composition.currencyCode)
                         }
                             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
                             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -235,7 +236,8 @@ struct PersonDetailView: View {
                 }
                 .foregroundColor(color)
                 Text("\(count)").font(Font.app(25, .bold)).tracking(-0.4).foregroundColor(Color.ink).padding(.top, 9)
-                Text("gifts · \(rub(value))").font(Font.app(13, .regular)).foregroundColor(Color.muted).padding(.top, 2)
+                Text("gifts · \(formattedCurrency(value, code: composition.currencyCode))")
+                    .font(Font.app(13, .regular)).foregroundColor(Color.muted).padding(.top, 2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(15)

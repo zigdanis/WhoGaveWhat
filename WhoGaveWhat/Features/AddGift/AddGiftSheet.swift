@@ -1,12 +1,13 @@
 import SwiftUI
 
-/// Native sheet for adding a gift. New gifts start with the current user as the
-/// sender, so the first pass only asks for a name and receiver. Less frequent
-/// fields remain behind the Details disclosure.
+/// Native sheet for adding or editing a gift. Both sides of the relationship are
+/// explicit, while less frequent fields remain behind the Details disclosure.
 struct AddGiftSheet: View {
     let composition: AppComposition
     @State private var state: AddGiftState
     @State private var showsDetails: Bool
+    @State private var compactHeight: CGFloat = 420
+    @State private var selectedDetent: PresentationDetent
     @FocusState private var focus: AddGiftField?
 
     init(route: GiftSheetRoute, composition: AppComposition) {
@@ -16,7 +17,9 @@ struct AddGiftSheet: View {
             data: composition.data,
             suggestGift: composition.suggestGift
         ))
-        _showsDetails = State(initialValue: route.editingGiftID != nil)
+        let startsExpanded = route.editingGiftID != nil
+        _showsDetails = State(initialValue: startsExpanded)
+        _selectedDetent = State(initialValue: startsExpanded ? .large : .height(420))
     }
 
     var body: some View {
@@ -26,11 +29,12 @@ struct AddGiftSheet: View {
                     GiftBasicsSection(
                         name: nameBinding,
                         focus: $focus,
-                        fromName: state.draft.fromID.map(composition.data.entityName) ?? String(localized: "You"),
+                        fromName: state.draft.fromID.map(composition.data.entityName),
                         toName: state.draft.toID.map(composition.data.entityName),
-                        isEditing: state.editingGiftID != nil,
                         accent: fm.main,
                         tint: fm.tint,
+                        fromAccessibilityIdentifier: "add-gift.from",
+                        toAccessibilityIdentifier: "add-gift.to",
                         onSelectFrom: { state.open(.from) },
                         onSelectTo: { state.open(.to) }
                     )
@@ -46,6 +50,7 @@ struct AddGiftSheet: View {
                             focus: $focus,
                             accent: fm.main,
                             tint: fm.tint,
+                            currencyCode: composition.currencyCode,
                             onSelectDate: { state.open(.date) },
                             onSelectOccasion: { state.open(.occasion) }
                         )
@@ -54,6 +59,11 @@ struct AddGiftSheet: View {
                     saveButton.padding(.top, 24)
                 }
                 .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 30)
+                .onGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.size.height
+                } action: { contentHeight in
+                    updateCompactHeight(for: contentHeight)
+                }
                 // Taps on any non-interactive part of the form (card padding,
                 // section headers, gaps) drop keyboard focus. Buttons and text
                 // fields consume their own taps first, so this only fires on the
@@ -79,12 +89,15 @@ struct AddGiftSheet: View {
             // Opening a picker must drop keyboard focus so it doesn't bounce back
             // onto the previously-edited text field when the picker sheet closes.
             .onChange(of: state.picker) { _, _ in focus = nil }
+            .onChange(of: showsDetails) { _, isExpanded in
+                selectedDetent = isExpanded ? .large : .height(compactHeight)
+            }
             // Open the keyboard on the gift title the moment the sheet settles.
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focus = .name }
             }
         }
-        .presentationDetents([.large])
+        .presentationDetents([.height(compactHeight), .large], selection: $selectedDetent)
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.bg)
         .sheet(item: pickerBinding) { kind in
@@ -112,6 +125,7 @@ struct AddGiftSheet: View {
         }
         .buttonStyle(.plain)
         .disabled(!can)
+        .accessibilityIdentifier("add-gift.save")
     }
 
     private var saveTitle: LocalizedStringKey { "Save" }
@@ -125,12 +139,12 @@ struct AddGiftSheet: View {
     private var valueBinding: Binding<String> {
         Binding(
             get: {
-                let value = state.draft.valueTouched ? state.draft.value : Int(state.effectiveValue)
-                return value.map(String.init) ?? ""
+                guard state.draft.valueTouched else { return "" }
+                return state.draft.value.map(String.init) ?? ""
             },
             set: { newVal in
                 let digits = newVal.filter(\.isNumber)
-                state.draft.value = digits.isEmpty ? 0 : Int(digits)
+                state.draft.value = digits.isEmpty ? nil : Int(digits)
                 state.draft.valueTouched = true
             }
         )
@@ -138,6 +152,14 @@ struct AddGiftSheet: View {
 
     private var pickerBinding: Binding<AddGiftPicker?> {
         Binding(get: { state.picker }, set: { if $0 == nil { state.closePicker() } })
+    }
+
+    private func updateCompactHeight(for contentHeight: CGFloat) {
+        guard !showsDetails else { return }
+        let measuredHeight = min(max(contentHeight + 56, 360), 560)
+        guard abs(measuredHeight - compactHeight) > 1 else { return }
+        compactHeight = measuredHeight
+        selectedDetent = .height(measuredHeight)
     }
 }
 
@@ -149,11 +171,12 @@ private enum AddGiftField: Hashable {
 private struct GiftBasicsSection: View {
     @Binding var name: String
     @FocusState.Binding var focus: AddGiftField?
-    let fromName: String
+    let fromName: String?
     let toName: String?
-    let isEditing: Bool
     let accent: Color
     let tint: Color
+    let fromAccessibilityIdentifier: String
+    let toAccessibilityIdentifier: String
     let onSelectFrom: () -> Void
     let onSelectTo: () -> Void
 
@@ -170,10 +193,19 @@ private struct GiftBasicsSection: View {
                 .background(fieldSurface)
                 .contentShape(Rectangle())
                 .onTapGesture { focus = .name }
+                .accessibilityIdentifier("add-gift.name")
 
             Card {
                 VStack(spacing: 0) {
-                    senderRow
+                    GiftEntryRow(
+                        icon: .asset("ArrowRightFromLine"),
+                        label: "From",
+                        value: fromName,
+                        accent: accent,
+                        tint: tint,
+                        accessibilityIdentifier: fromAccessibilityIdentifier,
+                        onTap: onSelectFrom
+                    )
                     RowDivider().padding(.leading, 58)
                     GiftEntryRow(
                         icon: .asset("ArrowRightToLine"),
@@ -181,36 +213,12 @@ private struct GiftBasicsSection: View {
                         value: toName,
                         accent: accent,
                         tint: tint,
+                        accessibilityIdentifier: toAccessibilityIdentifier,
                         onTap: onSelectTo
                     )
                 }
             }
         }
-    }
-
-    private var senderRow: some View {
-        Group {
-            if isEditing {
-                Button(action: onSelectFrom) {
-                    senderRowContent
-                }
-                .buttonStyle(.plain)
-            } else {
-                senderRowContent
-            }
-        }
-    }
-
-    private var senderRowContent: some View {
-        HStack(spacing: 12) {
-            GiftEntryIconView(icon: .asset("ArrowRightFromLine"), accent: accent, tint: tint)
-            Text("From").font(Font.app(16, .regular)).foregroundColor(Color.ink)
-            Spacer(minLength: 8)
-            Text(fromName).font(Font.app(16, .semibold)).foregroundColor(accent)
-            if isEditing { Chevron() }
-        }
-        .padding(.horizontal, 14).padding(.vertical, 10)
-        .contentShape(Rectangle())
     }
 
     private var fieldSurface: some View {
@@ -249,6 +257,7 @@ private struct GiftDetailsDisclosure: View {
         }
         .buttonStyle(.plain)
         .accessibilityValue(isExpanded ? "Shown" : "Hidden")
+        .accessibilityIdentifier("add-gift.details")
     }
 }
 
@@ -259,6 +268,7 @@ private struct GiftDetailsSection: View {
     @FocusState.Binding var focus: AddGiftField?
     let accent: Color
     let tint: Color
+    let currencyCode: String
     let onSelectDate: () -> Void
     let onSelectOccasion: () -> Void
 
@@ -271,6 +281,7 @@ private struct GiftDetailsSection: View {
                     value: dateLabel,
                     accent: accent,
                     tint: tint,
+                    accessibilityIdentifier: "add-gift.date",
                     onTap: onSelectDate
                 )
                 RowDivider().padding(.leading, 58)
@@ -280,10 +291,17 @@ private struct GiftDetailsSection: View {
                     value: occasionLabel,
                     accent: accent,
                     tint: tint,
+                    accessibilityIdentifier: "add-gift.occasion",
                     onTap: onSelectOccasion
                 )
                 RowDivider().padding(.leading, 58)
-                ApproximateValueRow(value: $value, focus: $focus, accent: accent, tint: tint)
+                ApproximateValueRow(
+                    value: $value,
+                    focus: $focus,
+                    accent: accent,
+                    tint: tint,
+                    currencyCode: currencyCode
+                )
             }
         }
     }
@@ -295,6 +313,7 @@ private struct GiftEntryRow: View {
     let value: String?
     let accent: Color
     let tint: Color
+    let accessibilityIdentifier: String
     let onTap: () -> Void
 
     var body: some View {
@@ -313,6 +332,7 @@ private struct GiftEntryRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(accessibilityIdentifier)
     }
 }
 
@@ -354,10 +374,11 @@ private struct ApproximateValueRow: View {
     @FocusState.Binding var focus: AddGiftField?
     let accent: Color
     let tint: Color
+    let currencyCode: String
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "rublesign.circle")
+            Image(systemName: "banknote.fill")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(accent)
                 .frame(width: 34, height: 34)
@@ -371,7 +392,9 @@ private struct ApproximateValueRow: View {
                 .focused($focus, equals: .value)
                 .multilineTextAlignment(.trailing)
                 .frame(minWidth: 60, maxWidth: 110)
-            Text("₽").font(Font.app(16, .semibold)).foregroundColor(Color.muted2)
+                .accessibilityIdentifier("add-gift.value")
+            Text(currencySymbol(code: currencyCode))
+                .font(Font.app(16, .semibold)).foregroundColor(Color.muted2)
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
         .contentShape(Rectangle())
@@ -399,7 +422,7 @@ private struct PickerSheet: View {
                 .toolbarBackground(.visible, for: .navigationBar)
         }
         // No Cancel button — these sheets are dismissed with a swipe down.
-        .presentationDetents(kind == .date ? [.large] : [.medium, .large])
+        .modifier(PickerPresentationSizing(kind: kind))
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.bg)
     }
@@ -408,67 +431,29 @@ private struct PickerSheet: View {
     private var content: some View {
         switch kind {
         case .from:
-            entityPicker(title: "From", selected: state.draft.fromID,
-                         select: { state.selectFrom($0) }, add: { addPerson($0, selectFrom: true) })
+            PersonPickerContent(
+                title: "From",
+                people: composition.data.people,
+                selectedID: state.draft.fromID,
+                onProvisionalSelection: state.previewFrom,
+                onSelection: state.selectFrom,
+                onAdd: { addPerson($0, selectFrom: true) }
+            )
         case .to:
-            entityPicker(title: "To", selected: state.draft.toID,
-                         select: { state.selectTo($0) }, add: { addPerson($0, selectFrom: false) })
+            PersonPickerContent(
+                title: "To",
+                people: composition.data.people,
+                selectedID: state.draft.toID,
+                onProvisionalSelection: state.previewTo,
+                onSelection: state.selectTo,
+                onAdd: { addPerson($0, selectFrom: false) }
+            )
         case .occasion:
             occasionPicker
         case .emoji:
             emojiPicker
         case .date:
             datePicker
-        }
-    }
-
-    // MARK: From / To (unified person list)
-
-    /// A single, uncategorised list spanning the household and outside people, so
-    /// either side of From → To can be anyone. "You" is always pinned to the top;
-    /// manual-entry adds a new outside person straight onto the side being edited.
-    private func entityPicker(title: String, selected: String?,
-                              select: @escaping (String) -> Void,
-                              add: @escaping (String) -> Void) -> some View {
-        // You first, then the rest of the household, then everyone else.
-        let you = composition.data.householdMembers.filter { $0.id == "you" }.map { ($0.id, $0.name, $0.color) }
-        let otherMembers = composition.data.householdMembers.filter { $0.id != "you" }.map { ($0.id, $0.name, $0.color) }
-        let outsiders = composition.data.contacts.map { ($0.id, $0.name, $0.color) }
-        let entities = you + otherMembers + outsiders
-        return ScrollView {
-            VStack(spacing: 16) {
-                // Manual-entry first — add a new person from the top of the sheet.
-                addRow(placeholder: "Add person") { add($0) }
-                entityList(entities, selected: selected, select: select)
-            }
-            .padding(16)
-        }
-        .scrollIndicators(.hidden)
-        .navigationTitle(LocalizedStringKey(title))
-    }
-
-    @ViewBuilder
-    private func entityList(_ entities: [(String, String, Color)],
-                            selected: String?, select: @escaping (String) -> Void) -> some View {
-        if !entities.isEmpty {
-            Card {
-                VStack(spacing: 0) {
-                    ForEach(Array(entities.enumerated()), id: \.element.0) { idx, e in
-                        Button { select(e.0) } label: {
-                            HStack(spacing: 12) {
-                                AvatarView(initials: e.1.initials, color: e.2, size: 38)
-                                Text(e.1).font(Font.app(16, .semibold)).foregroundColor(Color.ink)
-                                Spacer(minLength: 8)
-                                if selected == e.0 { checkmark }
-                            }
-                            .padding(.horizontal, 14).padding(.vertical, 11)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        if idx < entities.count - 1 { RowDivider().padding(.leading, 14) }
-                    }
-                }
-            }
         }
     }
 
@@ -574,35 +559,32 @@ private struct PickerSheet: View {
 
     // MARK: Date
 
-    /// Today / Yesterday pills plus a graphical calendar. Tapping a pill or a day
-    /// applies the date immediately and closes the sheet — there's no separate
-    /// confirm button.
+    /// Today / Yesterday pills plus a UIKit calendar. Calendar page navigation is
+    /// independent from day selection, so only an explicit day tap dismisses.
     private var datePicker: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                HStack(spacing: 10) {
-                    quickDate("Today", AppDate.today)
-                    quickDate("Yesterday", AppDate.yesterday)
-                }
-                Card {
-                    DatePicker("", selection: dateApplyBinding, displayedComponents: .date)
-                        .datePickerStyle(.graphical)
-                        .tint(Color.recv)
-                        .padding(.horizontal, 10).padding(.vertical, 6)
-                }
+        VStack(spacing: 16) {
+            HStack(spacing: 10) {
+                quickDate("Today", AppDate.today, accessibilityIdentifier: "date-picker.today")
+                quickDate("Yesterday", AppDate.yesterday, accessibilityIdentifier: "date-picker.yesterday")
             }
-            .padding(16)
+            Card {
+                CalendarDatePicker(
+                    selectedDate: state.draft.date,
+                    onSelectDate: state.selectDate
+                )
+                .padding(.horizontal, 6)
+                .accessibilityIdentifier("date-picker.calendar")
+            }
         }
-        .scrollIndicators(.hidden)
+        .padding(16)
         .navigationTitle("Pick a date")
     }
 
-    /// Picking a day in the calendar applies it (and dismisses) immediately.
-    private var dateApplyBinding: Binding<Date> {
-        Binding(get: { state.draft.date }, set: { state.selectDate($0) })
-    }
-
-    private func quickDate(_ label: String, _ date: Date) -> some View {
+    private func quickDate(
+        _ label: String,
+        _ date: Date,
+        accessibilityIdentifier: String
+    ) -> some View {
         let selected = Calendar.current.isDate(state.draft.date, inSameDayAs: date)
         return Button { state.selectDate(date) } label: {
             Text(LocalizedStringKey(label))
@@ -613,6 +595,7 @@ private struct PickerSheet: View {
                     .fill(selected ? Color.ink : Color.card))
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(accessibilityIdentifier)
     }
 
     // MARK: Shared bits
@@ -654,5 +637,153 @@ private struct PickerSheet: View {
     private func addPerson(_ name: String, selectFrom: Bool) {
         guard let id = composition.createPerson(name: name, isFamily: false) else { return }
         if selectFrom { state.selectFrom(id) } else { state.selectTo(id) }
+    }
+}
+
+private struct PersonPickerContent: View {
+    let title: LocalizedStringKey
+    let onProvisionalSelection: (String?) -> Void
+    let onSelection: (String) -> Void
+    let onAdd: (String) -> Void
+    @State private var pickerState: PersonPickerState
+
+    init(
+        title: LocalizedStringKey,
+        people: [Person],
+        selectedID: String?,
+        onProvisionalSelection: @escaping (String?) -> Void,
+        onSelection: @escaping (String) -> Void,
+        onAdd: @escaping (String) -> Void
+    ) {
+        self.title = title
+        self.onProvisionalSelection = onProvisionalSelection
+        self.onSelection = onSelection
+        self.onAdd = onAdd
+        _pickerState = State(initialValue: PersonPickerState(
+            people: people,
+            selectedID: selectedID
+        ))
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                queryRow
+                if !pickerState.visiblePeople.isEmpty {
+                    Card {
+                        VStack(spacing: 0) {
+                            ForEach(pickerState.visiblePeople) { person in
+                                let isSelected = pickerState.selectedID == person.id
+                                Button {
+                                    pickerState.select(person.id)
+                                    onSelection(person.id)
+                                } label: {
+                                    PersonPickerRow(
+                                        name: person.name,
+                                        color: person.color,
+                                        isSelected: isSelected
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityIdentifier("person-picker.person.\(person.id)")
+                                .accessibilityAddTraits(isSelected ? .isSelected : [])
+                                .accessibilityValue(
+                                    isSelected ? Text("Selected") : Text("Not selected")
+                                )
+
+                                if person.id != pickerState.visiblePeople.last?.id {
+                                    RowDivider().padding(.leading, 14)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(16)
+        }
+        .scrollIndicators(.hidden)
+        .navigationTitle(title)
+        .onAppear {
+            onProvisionalSelection(pickerState.selectedID)
+        }
+    }
+
+    private var queryRow: some View {
+        Card {
+            HStack(spacing: 10) {
+                TextField("Add person", text: queryBinding)
+                    .font(Font.app(16, .regular))
+                    .tint(Color.recv)
+                    .textInputAutocapitalization(.words)
+                    .submitLabel(.done)
+                    .accessibilityIdentifier("person-picker.query")
+                Button {
+                    onAdd(pickerState.query)
+                } label: {
+                    Text("Add")
+                        .font(Font.app(15, .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(isAddDisabled ? Color.muted4 : Color.ink))
+                }
+                .buttonStyle(.plain)
+                .disabled(isAddDisabled)
+                .accessibilityIdentifier("person-picker.add")
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+        }
+    }
+
+    private var queryBinding: Binding<String> {
+        Binding(
+            get: { pickerState.query },
+            set: { query in
+                onProvisionalSelection(pickerState.updateQuery(query))
+            }
+        )
+    }
+
+    private var isAddDisabled: Bool {
+        pickerState.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
+private struct PickerPresentationSizing: ViewModifier {
+    let kind: AddGiftPicker
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if kind == .date {
+            content.presentationSizing(.fitted)
+        } else {
+            content.presentationDetents([.medium, .large])
+        }
+    }
+}
+
+private struct PersonPickerRow: View {
+    let name: String
+    let color: Color
+    let isSelected: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            AvatarView(initials: name.initials, color: color, size: 38)
+            Text(name)
+                .font(Font.app(16, .semibold))
+                .foregroundColor(Color.ink)
+            Spacer(minLength: 8)
+            if isSelected {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(Color.recv)
+                    .accessibilityHidden(true)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+        .contentShape(Rectangle())
     }
 }

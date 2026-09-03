@@ -5,6 +5,8 @@ import Observation
 final class AppComposition {
     let router: AppRouter
     let data = AppData()
+    private(set) var currencyCode: String
+    private let preferences: PreferencesGateway
 
     let loadGiftsUseCase: LoadGiftsUseCase
     let saveGiftUseCase: SaveGiftUseCase
@@ -37,6 +39,8 @@ final class AppComposition {
         let suggestGift = SuggestGiftUseCase(intelligenceGateway: intelligence)
         let createPerson = CreatePersonUseCase(gateway: peopleGateway)
 
+        self.preferences = preferences
+        currencyCode = preferences.currencyCode
         router = AppRouter(didCompleteOnboarding: preferences.didCompleteOnboarding)
         loadGiftsUseCase = LoadGiftsUseCase(gateway: giftGateway)
         saveGiftUseCase = SaveGiftUseCase(giftGateway: giftGateway, suggestGift: suggestGift)
@@ -95,5 +99,11 @@ final class AppComposition {
     func deletePerson(id: String) {
         try? deletePersonUseCase.execute(id: id)
         reloadData()
+    }
+
+    func setCurrencyCode(_ currencyCode: String) {
+        guard self.currencyCode != currencyCode else { return }
+        preferences.setCurrencyCode(currencyCode)
+        self.currencyCode = currencyCode
     }
 }

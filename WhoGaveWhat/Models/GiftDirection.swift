@@ -22,9 +22,7 @@ enum GiftDirectionResolver {
     ) -> GiftDirection {
         if giverRole == .household, recipientRole == .contact { return .given }
         if giverRole == .contact, recipientRole == .household { return .received }
-        // Same-role gifts use "you" as the viewpoint, then deterministically fall back to received.
-        if giverID == "you" { return .given }
-        if recipientID == "you" { return .received }
+        // Same-role gifts have no implicit user viewpoint, so use a stable fallback.
         return .received
     }
 

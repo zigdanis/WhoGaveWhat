@@ -1,9 +1,8 @@
 import SwiftUI
 
-/// Everyone you track, as a native `List` so a person can be swiped away (except
-/// "you", the household anchor). Deleting a person is irreversible and also wipes
-/// every gift they gave or received, so it's gated behind a big, hard-to-miss
-/// warning that rises from the bottom.
+/// Everyone you track, as a native `List` so a person can be swiped away.
+/// Deleting a person is irreversible and also wipes every gift they gave or
+/// received, so it's gated behind a big, hard-to-miss warning.
 struct PeopleView: View {
     let composition: AppComposition
     /// Person id awaiting the irreversible delete warning (set by the swipe).
@@ -43,10 +42,10 @@ struct PeopleView: View {
                 ForEach(entities, id: \.0) { e in
                     NavigationLink(value: e.0) {
                         PersonRow(entityId: e.0, name: e.1, color: e.2,
-                                  gifts: gifts(for: e.0))
+                                  gifts: gifts(for: e.0),
+                                  currencyCode: composition.currencyCode)
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 12))
-                    // "You" is the household anchor — never deletable.
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         if composition.deletePersonUseCase.canDelete(id: e.0) {
                             Button(role: .destructive) { pendingDelete = e.0 } label: {
@@ -103,6 +102,7 @@ struct PersonRow: View {
     let name: String
     let color: Color
     let gifts: [Gift]
+    let currencyCode: String
 
     var body: some View {
         let r = gifts.filter {
@@ -128,7 +128,7 @@ struct PersonRow: View {
                     .font(Font.app(13, .regular)).foregroundColor(Color.muted3)
             }
             Spacer(minLength: 8)
-            Text(rub(gifts.totalValue))
+            Text(formattedCurrency(gifts.totalValue, code: currencyCode))
                 .font(Font.app(15, .semibold)).foregroundColor(Color.ink)
             Chevron()
         }

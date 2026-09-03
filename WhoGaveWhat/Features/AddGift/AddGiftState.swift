@@ -40,7 +40,6 @@ final class AddGiftState {
             emoji: draft.emoji,
             aiEmoji: draft.aiEmoji,
             value: draft.value,
-            aiValue: draft.aiValue,
             valueTouched: draft.valueTouched,
             fromID: draft.fromID,
             toID: draft.toID,
@@ -55,11 +54,6 @@ final class AddGiftState {
         draft.emoji ?? draft.aiEmoji ?? suggestGift.instantSuggestion(for: draft.name).emoji
     }
 
-    var effectiveValue: Double {
-        if draft.valueTouched { return Double(draft.value ?? 0) }
-        return draft.aiValue ?? suggestGift.instantSuggestion(for: draft.name).value
-    }
-
     func direction(householdIDs: Set<String>, saveGift: SaveGiftUseCase) -> GiftDirection {
         saveGift.direction(for: input, householdIDs: householdIDs)
     }
@@ -67,7 +61,6 @@ final class AddGiftState {
     func setName(_ name: String) {
         draft.name = name
         draft.aiEmoji = nil
-        draft.aiValue = nil
         suggestionTask?.cancel()
         aiLoading = false
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -85,7 +78,6 @@ final class AddGiftState {
             }
             if let result {
                 if draft.emoji == nil { draft.aiEmoji = result.emoji }
-                if !draft.valueTouched, result.value > 0 { draft.aiValue = result.value }
             }
             aiLoading = false
         }
@@ -95,11 +87,12 @@ final class AddGiftState {
     func closePicker() { picker = nil }
 
     func selectFrom(_ id: String) {
-        draft.fromID = id
-        draft.paidByYou = id == "you"
+        previewFrom(id)
         picker = nil
     }
-    func selectTo(_ id: String) { draft.toID = id; picker = nil }
+    func selectTo(_ id: String) { previewTo(id); picker = nil }
+    func previewFrom(_ id: String?) { draft.fromID = id }
+    func previewTo(_ id: String?) { draft.toID = id }
     func selectOccasion(_ occasion: String) {
         let occasion = occasion.trimmingCharacters(in: .whitespaces)
         guard !occasion.isEmpty else { return }

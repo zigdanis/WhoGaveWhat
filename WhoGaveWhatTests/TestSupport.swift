@@ -3,8 +3,12 @@
 @MainActor
 final class TestPreferencesGateway: PreferencesGateway {
     var didCompleteOnboarding = false
+    var currencyCode = "USD"
     func setDidCompleteOnboarding(_ completed: Bool) {
         didCompleteOnboarding = completed
+    }
+    func setCurrencyCode(_ currencyCode: String) {
+        self.currencyCode = currencyCode
     }
 }
 
@@ -54,7 +58,7 @@ func makeGiftInput(
 ) -> SaveGiftInput {
     SaveGiftInput(
         editingGiftID: nil, name: name, emoji: nil, aiEmoji: nil,
-        value: value, aiValue: nil, valueTouched: valueTouched,
+        value: value, valueTouched: valueTouched,
         fromID: fromID, toID: toID, paidByYou: paidByYou,
         occasion: nil, date: AppDate.today, createdAt: nil
     )

@@ -145,14 +145,33 @@ struct SwiftDataPersistenceTests {
         #expect(SwiftDataStore.storeName == "WhoGaveWhatSwiftData")
     }
 
-    @Test func productionStyleStoreBootstrapsOnlyTheSelfAnchor() throws {
-        let store = try SwiftDataStore(inMemory: true, bootstrapsSelf: true)
+    @Test func newStoreDoesNotBootstrapASelfPerson() throws {
+        let store = try SwiftDataStore(inMemory: true)
         let people = try SwiftDataPeopleGateway(context: store.context).loadPeople()
 
-        #expect(people.people.count == 1)
-        #expect(people.people.first?.id == "you")
-        #expect(people.people.first?.role == .household)
+        #expect(people.people.isEmpty)
         #expect(try SwiftDataGiftGateway(context: store.context).loadGifts().isEmpty)
+    }
+
+    @Test func retainsRenamedLegacyPersonAfterTheirLastGiftIsRemoved() throws {
+        let store = try SwiftDataStore(inMemory: true)
+        let peopleGateway = SwiftDataPeopleGateway(context: store.context)
+        try createPerson(id: "you", role: .household, using: peopleGateway)
+        try createPerson(id: "friend", role: .contact, using: peopleGateway)
+        let giftGateway = SwiftDataGiftGateway(context: store.context)
+        try giftGateway.save(
+            makeGift(id: "legacy-gift", giverID: "you", recipientID: "friend")
+        )
+        try peopleGateway.renamePerson(id: "you", name: "Alex")
+        try giftGateway.deleteGift(id: "legacy-gift")
+
+        let relaunchedContext = ModelContext(store.container)
+        let relaunchedPeople = try SwiftDataPeopleGateway(context: relaunchedContext).loadPeople()
+
+        #expect(relaunchedPeople.people.contains {
+            $0.id == "you" && $0.name == "Alex" && $0.role == .household
+        })
+        #expect(try SwiftDataGiftGateway(context: relaunchedContext).loadGifts().isEmpty)
     }
 
     @Test func inMemoryStoresAreIsolated() throws {

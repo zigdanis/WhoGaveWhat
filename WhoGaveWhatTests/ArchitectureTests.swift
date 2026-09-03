@@ -41,8 +41,8 @@ struct SaveGiftInputTests {
         let composition = makeTestComposition()
         let ids = composition.data.householdIDs
         let useCase = composition.saveGiftUseCase
-        #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "you"), householdIDs: ids) == .received)
-        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "maria"), householdIDs: ids) == .given)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "anton"), householdIDs: ids) == .received)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "anton", toID: "maria"), householdIDs: ids) == .given)
         #expect(useCase.direction(for: makeGiftInput(fromID: "marina", toID: "igor"), householdIDs: ids) == .given)
     }
 
@@ -54,12 +54,12 @@ struct SaveGiftInputTests {
         #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "igor"), householdIDs: householdIDs) == .received)
     }
 
-    @Test func directionUsesYouAsTheSameSideViewpoint() {
+    @Test func directionDoesNotSpecialCaseLegacySelfID() {
         let useCase = makeSaveGiftUseCase().0
 
-        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "marina"), householdIDs: ["you", "marina"]) == .given)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "marina"), householdIDs: ["you", "marina"]) == .received)
         #expect(useCase.direction(for: makeGiftInput(fromID: "marina", toID: "you"), householdIDs: ["you", "marina"]) == .received)
-        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "maria"), householdIDs: []) == .given)
+        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "maria"), householdIDs: []) == .received)
         #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "you"), householdIDs: []) == .received)
     }
 }
@@ -84,11 +84,65 @@ struct GiftDirectionResolverTests {
 struct AddGiftDraftTests {
     @Test func newGiftStartsWithSimpleDefaults() {
         let draft = AddGiftDraft()
-        #expect(draft.fromID == "you")
+        #expect(draft.fromID == nil)
         #expect(draft.toID == nil)
         #expect(draft.occasion == "Just because")
         #expect(draft.date == AppDate.today)
         #expect(!draft.valueTouched)
+    }
+}
+
+@MainActor
+struct PersonPickerStateTests {
+    private let people = [
+        Person(id: "alex", name: "Alex", colorHex: 0x123456, role: .contact),
+        Person(id: "alice", name: "Alice", colorHex: 0x654321, role: .household),
+        Person(id: "bob", name: "Bob", colorHex: 0xABCDEF, role: .contact),
+    ]
+
+    @Test func initialMissingOrInvalidSelectionDefaultsToFirstPerson() {
+        let missingState = PersonPickerState(people: people, selectedID: nil)
+        let invalidState = PersonPickerState(people: people, selectedID: "missing")
+
+        #expect(missingState.selectedID == "alex")
+        #expect(invalidState.selectedID == "alex")
+    }
+
+    @Test func initialSelectionPreservesAValidPerson() {
+        let state = PersonPickerState(people: people, selectedID: "bob")
+
+        #expect(state.selectedID == "bob")
+    }
+
+    @Test func filtersAndProvisionallySelectsTheFirstMatch() {
+        let state = PersonPickerState(people: people, selectedID: "bob")
+
+        let selection = state.updateQuery("Al")
+
+        #expect(state.visiblePeople.map(\.id) == ["alex", "alice"])
+        #expect(selection == "alex")
+        #expect(state.selectedID == "alex")
+    }
+
+    @Test func clearsSelectionWhenAQueryHasNoMatches() {
+        let state = PersonPickerState(people: people, selectedID: "bob")
+
+        let selection = state.updateQuery("New person")
+
+        #expect(state.visiblePeople.isEmpty)
+        #expect(selection == nil)
+        #expect(state.selectedID == nil)
+    }
+
+    @Test func clearingQueryRestoresAllPeopleAndSelectsTheFirst() {
+        let state = PersonPickerState(people: people, selectedID: nil)
+        _ = state.updateQuery("Ali")
+
+        let selection = state.updateQuery("")
+
+        #expect(state.visiblePeople.map(\.id) == people.map(\.id))
+        #expect(selection == "alex")
+        #expect(state.selectedID == "alex")
     }
 }
 
@@ -111,20 +165,48 @@ struct RouterTests {
 }
 
 @MainActor
+struct CurrencyPreferenceTests {
+    @Test func compositionPublishesAndPersistsCurrencyChanges() {
+        let preferences = TestPreferencesGateway()
+        let composition = AppComposition(
+            store: try! SwiftDataStore(inMemory: true),
+            preferences: preferences,
+            intelligence: TestIntelligenceGateway()
+        )
+
+        composition.setCurrencyCode("EUR")
+
+        #expect(composition.currencyCode == "EUR")
+        #expect(preferences.currencyCode == "EUR")
+    }
+
+    @Test func userDefaultsGatewayPersistsSelectedCurrency() {
+        let suiteName = "CurrencyPreferenceTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let gateway = UserDefaultsPreferencesGateway(defaults: defaults)
+
+        gateway.setCurrencyCode("JPY")
+
+        #expect(UserDefaultsPreferencesGateway(defaults: defaults).currencyCode == "JPY")
+    }
+}
+
+@MainActor
 struct SaveGiftTests {
-    @Test func savingUsesSuggestedValueAndReloadsData() {
+    @Test func savingUsesSuggestedEmojiButLeavesUntouchedValueAtZero() {
         let (useCase, gateway) = makeSaveGiftUseCase()
         _ = try? useCase.execute(
             makeGiftInput(name: "Bottle of wine", fromID: "you", toID: "igor"),
             householdIDs: ["you", "marina"]
         )
         let saved = gateway.gifts.first { $0.name == "Bottle of wine" }
-        #expect(saved?.value == 1_900)
+        #expect(saved?.value == 0)
         #expect(saved?.emoji == "🍷")
         #expect(saved?.direction == .given)
         #expect(saved?.giverID == "you")
         #expect(saved?.recipientID == "igor")
-        #expect(saved?.paidByYou == true)
+        #expect(saved?.paidByYou == false)
     }
 
     @Test func touchedValueOverridesSuggestion() {

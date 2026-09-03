@@ -23,7 +23,8 @@ struct HomeView: View {
                             NavigationLink(value: gift) {
                                 GiftRow(gift: gift,
                                         subtitle: composition.data.giftSubtitle(gift),
-                                        dateLabel: gift.date.giftShortLabel())
+                                        dateLabel: gift.date.giftShortLabel(),
+                                        currencyCode: composition.currencyCode)
                             }
                                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {

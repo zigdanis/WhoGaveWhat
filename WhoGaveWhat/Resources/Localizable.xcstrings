@@ -1492,19 +1492,19 @@
         }
       }
     },
-    "Never forget who gave what — or what you gave back." : {
+    "Never forget who gave what — or which gifts went where." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Never forget who gave what — or what you gave back."
+            "value" : "Never forget who gave what — or which gifts went where."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Никогда не забывайте, кто что подарил — и что вы подарили в ответ."
+            "value" : "Не забывайте, кто что подарил и кому предназначался подарок."
           }
         }
       }
@@ -2448,19 +2448,19 @@
         }
       }
     },
-    "Type what it was — Who Gave What picks the icon and guesses the value. Adjust only if you want to." : {
+    "Type what it was — Who Gave What picks the icon. Add a value only when it is useful." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Type what it was — Who Gave What picks the icon and guesses the value. Adjust only if you want to."
+            "value" : "Type what it was — Who Gave What picks the icon. Add a value only when it is useful."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Просто опишите подарок — приложение подберёт иконку и оценит стоимость. Поправьте, если захотите."
+            "value" : "Опишите подарок — Who Gave What подберёт иконку. Укажите стоимость, только если это нужно."
           }
         }
       }
@@ -2631,6 +2631,159 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вчера"
+          }
+        }
+      }
+    },
+    "%@ more is recorded as given than received." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ more is recorded as given than received."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подарено на %@ больше, чем получено."
+          }
+        }
+      }
+    },
+    "%@ more is recorded as received than given." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ more is recorded as received than given."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Получено на %@ больше, чем подарено."
+          }
+        }
+      }
+    },
+    "Given gifts lead" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Given gifts lead"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подаренных подарков больше"
+          }
+        }
+      }
+    },
+    "Given total %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Given total %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Всего подарено на %@"
+          }
+        }
+      }
+    },
+    "Not selected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not selected"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не выбрано"
+          }
+        }
+      }
+    },
+    "optional" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "optional"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "необязательно"
+          }
+        }
+      }
+    },
+    "Received gifts lead" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Received gifts lead"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Полученных подарков больше"
+          }
+        }
+      }
+    },
+    "Received total %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Received total %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Всего получено на %@"
+          }
+        }
+      }
+    },
+    "Selected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selected"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выбрано"
           }
         }
       }
