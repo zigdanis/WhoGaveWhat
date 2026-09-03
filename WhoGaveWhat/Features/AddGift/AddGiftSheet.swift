@@ -422,7 +422,7 @@ private struct PickerSheet: View {
                 .toolbarBackground(.visible, for: .navigationBar)
         }
         // No Cancel button — these sheets are dismissed with a swipe down.
-        .presentationDetents(kind == .date ? [.height(470)] : [.medium, .large])
+        .modifier(PickerPresentationSizing(kind: kind))
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.bg)
     }
@@ -572,7 +572,6 @@ private struct PickerSheet: View {
                     selectedDate: state.draft.date,
                     onSelectDate: state.selectDate
                 )
-                .frame(height: 320)
                 .padding(.horizontal, 6)
                 .accessibilityIdentifier("date-picker.calendar")
             }
@@ -674,6 +673,7 @@ private struct PersonPickerContent: View {
                     Card {
                         VStack(spacing: 0) {
                             ForEach(pickerState.visiblePeople) { person in
+                                let isSelected = pickerState.selectedID == person.id
                                 Button {
                                     pickerState.select(person.id)
                                     onSelection(person.id)
@@ -681,11 +681,15 @@ private struct PersonPickerContent: View {
                                     PersonPickerRow(
                                         name: person.name,
                                         color: person.color,
-                                        isSelected: pickerState.selectedID == person.id
+                                        isSelected: isSelected
                                     )
                                 }
                                 .buttonStyle(.plain)
                                 .accessibilityIdentifier("person-picker.person.\(person.id)")
+                                .accessibilityAddTraits(isSelected ? .isSelected : [])
+                                .accessibilityValue(
+                                    isSelected ? Text("Selected") : Text("Not selected")
+                                )
 
                                 if person.id != pickerState.visiblePeople.last?.id {
                                     RowDivider().padding(.leading, 14)
@@ -742,6 +746,19 @@ private struct PersonPickerContent: View {
 
     private var isAddDisabled: Bool {
         pickerState.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
+private struct PickerPresentationSizing: ViewModifier {
+    let kind: AddGiftPicker
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if kind == .date {
+            content.presentationSizing(.fitted)
+        } else {
+            content.presentationDetents([.medium, .large])
+        }
     }
 }
 

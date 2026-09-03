@@ -36,6 +36,20 @@ struct CalendarDatePicker: UIViewRepresentable {
         context.coordinator.selectedComponents = components
     }
 
+    func sizeThatFits(
+        _ proposal: ProposedViewSize,
+        uiView: UICalendarView,
+        context: Context
+    ) -> CGSize? {
+        let proposedWidth = proposal.width ?? uiView.intrinsicContentSize.width
+        let fittingSize = uiView.systemLayoutSizeFitting(
+            CGSize(width: proposedWidth, height: UIView.layoutFittingCompressedSize.height),
+            withHorizontalFittingPriority: .required,
+            verticalFittingPriority: .fittingSizeLevel
+        )
+        return CGSize(width: proposedWidth, height: fittingSize.height)
+    }
+
     private func dayComponents(for date: Date) -> DateComponents {
         Calendar.autoupdatingCurrent.dateComponents([.era, .year, .month, .day], from: date)
     }
