@@ -100,6 +100,20 @@ struct PersonPickerStateTests {
         Person(id: "bob", name: "Bob", colorHex: 0xABCDEF, role: .contact),
     ]
 
+    @Test func initialMissingOrInvalidSelectionDefaultsToFirstPerson() {
+        let missingState = PersonPickerState(people: people, selectedID: nil)
+        let invalidState = PersonPickerState(people: people, selectedID: "missing")
+
+        #expect(missingState.selectedID == "alex")
+        #expect(invalidState.selectedID == "alex")
+    }
+
+    @Test func initialSelectionPreservesAValidPerson() {
+        let state = PersonPickerState(people: people, selectedID: "bob")
+
+        #expect(state.selectedID == "bob")
+    }
+
     @Test func filtersAndProvisionallySelectsTheFirstMatch() {
         let state = PersonPickerState(people: people, selectedID: "bob")
 
@@ -110,25 +124,25 @@ struct PersonPickerStateTests {
         #expect(state.selectedID == "alex")
     }
 
-    @Test func preservesSelectionWhenAQueryHasNoMatches() {
+    @Test func clearsSelectionWhenAQueryHasNoMatches() {
         let state = PersonPickerState(people: people, selectedID: "bob")
 
         let selection = state.updateQuery("New person")
 
         #expect(state.visiblePeople.isEmpty)
         #expect(selection == nil)
-        #expect(state.selectedID == "bob")
+        #expect(state.selectedID == nil)
     }
 
-    @Test func clearingQueryRestoresAllPeopleWithoutChangingSelection() {
+    @Test func clearingQueryRestoresAllPeopleAndSelectsTheFirst() {
         let state = PersonPickerState(people: people, selectedID: nil)
         _ = state.updateQuery("Ali")
 
         let selection = state.updateQuery("")
 
         #expect(state.visiblePeople.map(\.id) == people.map(\.id))
-        #expect(selection == nil)
-        #expect(state.selectedID == "alice")
+        #expect(selection == "alex")
+        #expect(state.selectedID == "alex")
     }
 }
 

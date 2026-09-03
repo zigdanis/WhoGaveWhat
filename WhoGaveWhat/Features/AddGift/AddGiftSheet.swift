@@ -642,7 +642,7 @@ private struct PickerSheet: View {
 
 private struct PersonPickerContent: View {
     let title: LocalizedStringKey
-    let onProvisionalSelection: (String) -> Void
+    let onProvisionalSelection: (String?) -> Void
     let onSelection: (String) -> Void
     let onAdd: (String) -> Void
     @State private var pickerState: PersonPickerState
@@ -651,7 +651,7 @@ private struct PersonPickerContent: View {
         title: LocalizedStringKey,
         people: [Person],
         selectedID: String?,
-        onProvisionalSelection: @escaping (String) -> Void,
+        onProvisionalSelection: @escaping (String?) -> Void,
         onSelection: @escaping (String) -> Void,
         onAdd: @escaping (String) -> Void
     ) {
@@ -703,6 +703,9 @@ private struct PersonPickerContent: View {
         }
         .scrollIndicators(.hidden)
         .navigationTitle(title)
+        .onAppear {
+            onProvisionalSelection(pickerState.selectedID)
+        }
     }
 
     private var queryRow: some View {
@@ -737,9 +740,7 @@ private struct PersonPickerContent: View {
         Binding(
             get: { pickerState.query },
             set: { query in
-                if let provisionalID = pickerState.updateQuery(query) {
-                    onProvisionalSelection(provisionalID)
-                }
+                onProvisionalSelection(pickerState.updateQuery(query))
             }
         )
     }

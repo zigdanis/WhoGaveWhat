@@ -91,8 +91,8 @@ final class AddGiftState {
         picker = nil
     }
     func selectTo(_ id: String) { previewTo(id); picker = nil }
-    func previewFrom(_ id: String) { draft.fromID = id }
-    func previewTo(_ id: String) { draft.toID = id }
+    func previewFrom(_ id: String?) { draft.fromID = id }
+    func previewTo(_ id: String?) { draft.toID = id }
     func selectOccasion(_ occasion: String) {
         let occasion = occasion.trimmingCharacters(in: .whitespaces)
         guard !occasion.isEmpty else { return }

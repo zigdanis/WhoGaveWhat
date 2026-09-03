@@ -12,8 +12,10 @@ final class PersonPickerState {
 
     init(people: [Person], selectedID: String?) {
         self.people = people
-        self.selectedID = selectedID
         visiblePeople = people
+        self.selectedID = selectedID.flatMap { selectedID in
+            people.contains { $0.id == selectedID } ? selectedID : nil
+        } ?? people.first?.id
     }
 
     @discardableResult
@@ -24,11 +26,8 @@ final class PersonPickerState {
             ? people
             : people.filter { $0.name.localizedCaseInsensitiveContains(trimmedQuery) }
 
-        guard !trimmedQuery.isEmpty, let firstMatch = visiblePeople.first else {
-            return nil
-        }
-        selectedID = firstMatch.id
-        return firstMatch.id
+        selectedID = visiblePeople.first?.id
+        return selectedID
     }
 
     func select(_ id: String) {
