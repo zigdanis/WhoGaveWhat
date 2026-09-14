@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "path": ".macroscope/correctness/correctness.md",
+      "description": "Authoritative repository-specific code review policy"
+    },
+    {
+      "path": "README.md",
+      "description": "Product behavior, architecture, persistence, and validation commands"
+    },
+    {
+      "path": "AGENTS.md",
+      "description": "Repository workflow, simulator, and GitHub communication rules"
+    }
+  ]
+}
