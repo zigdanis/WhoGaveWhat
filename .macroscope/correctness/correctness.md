@@ -20,7 +20,7 @@ exclude:
 
 # Shared WhoGaveWhat review policy
 
-This file is the authoritative repository-specific review policy shared by Macroscope, CodeRabbit, Greptile, and Codex.
+This file is the authoritative repository-specific review policy shared by Macroscope, CodeRabbit, and Codex.
 
 Review for concrete correctness, persistence, concurrency, localization, target-configuration, and user-visible regressions. Do not report formatting or style preferences. Do not request compatibility layers, migrations, or speculative abstractions: the app has not shipped and deliberately starts with a fresh schema. If a rule is unrelated to the changed code, ignore it. If there is no concrete issue, report no findings.
 
