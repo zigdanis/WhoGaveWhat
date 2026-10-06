@@ -109,6 +109,15 @@ class MCPTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             smoke.select_simulator([phones[1]])
 
+    def test_navigation_requires_heading_and_selected_tab_from_actual_mcp_schema(self):
+        heading = dict(role='other', identifier='People', state={'visible': True})
+        tab = dict(role='tab', label='People', value='1')
+        smoke.assert_tab_screen({'elements': [heading, tab]}, 'People')
+        for elements in [[tab], [heading], [heading, dict(tab, value='0')],
+                         [dict(heading, state={'visible': False}), tab]]:
+            with self.subTest(elements=elements), self.assertRaises(ValueError):
+                smoke.assert_tab_screen({'elements': elements}, 'People')
+
     def test_taps_require_current_unambiguous_actionable_ref(self):
         element = dict(label='People', role='tab', actions=['tap'], ref='e1')
         self.assertEqual(smoke.target({'elements': [element]}, 'People', 'tab'), 'e1')

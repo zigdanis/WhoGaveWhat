@@ -35,6 +35,18 @@ def target(capture, label, role):
     return matches[0]["ref"]
 
 
+def assert_tab_screen(capture, label):
+    """Require the native navigation heading and the selected tab, not its persistent label alone."""
+    elements = capture["elements"]
+    heading = any(e.get("identifier") == label and e.get("role") == "other"
+                  and e.get("state", {}).get("visible") is True for e in elements)
+    selected = any(e.get("label") == label and e.get("role") == "tab"
+                   and (e.get("value") == "1" or e.get("state", {}).get("selected") is True)
+                   for e in elements)
+    if not heading or not selected:
+        raise ValueError(f"The {label} navigation heading and selected tab must both be visible")
+
+
 def run(directory):
     directory = directory.resolve()
     directory.mkdir(parents=True, exist_ok=True)
@@ -101,8 +113,8 @@ def run(directory):
         for label in ["People", "Insights"]:
             capture = mcp("ui-automation", "snapshot-ui", simulatorId=simulator["simulatorId"])["capture"]
             mcp("ui-automation", "tap", simulatorId=simulator["simulatorId"], elementRef=target(capture, label, "tab"))
-            wait(predicate="exists", label=label, role="text")
-            checkpoint(label.lower())
+            wait(predicate="exists", identifier=label, role="other")
+            assert_tab_screen(checkpoint(label.lower()), label)
         capture = mcp("ui-automation", "snapshot-ui", simulatorId=simulator["simulatorId"])["capture"]
         mcp("ui-automation", "tap", simulatorId=simulator["simulatorId"], elementRef=target(capture, "Add a gift", "button"))
         wait(predicate="exists", identifier="add-gift.name")
