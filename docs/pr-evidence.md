@@ -2,7 +2,7 @@
 
 Every PR includes reviewed screenshots **and** a video in its description, including changes to documentation, tooling and CI. A link to a workflow or a downloadable artifact alone does not satisfy this requirement.
 
-The `Tests` workflow has no path filters. It runs helper tests and secret checks on Linux, Swift formatting and SwiftLint on macOS, then unit tests and an app smoke scenario on macOS 26 with Xcode 26.6. XcodeBuildMCP 2.7.0 performs all Xcode and Simulator operations. It reuses a booted iPhone when one exists and otherwise selects iPhone 17 Pro on the newest available runtime.
+The `Tests` workflow has no path filters. It runs Python helpers, Ruby release coordinator/archive/signing tests and secret checks on Linux, Swift formatting and SwiftLint on macOS, then unit tests and an app smoke scenario on macOS 26 with Xcode 26.6. XcodeBuildMCP 2.7.0 performs all Xcode and Simulator operations. It reuses a booted iPhone when one exists and otherwise selects iPhone 17 Pro on the newest available runtime.
 
 ## Local development
 

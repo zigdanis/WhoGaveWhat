@@ -56,7 +56,7 @@ value models rather than SwiftData records.
 | `WhoGaveWhat/Helpers/` | Small cross-feature formatting extensions |
 | `WhoGaveWhat/Resources/` | Assets, fonts and localization catalogs |
 | `WhoGaveWhatTests/` | Swift Testing coverage for use cases, router and gateway-backed integration |
-| `fastlane/` | `tests`, `beta` (TestFlight), and diagnostic lanes |
+| `fastlane/` | Receipt-based TestFlight release, preflight, status and notes lanes |
 | `.github/workflows/tests.yml` | CI — runs the test suite on push to `master` + PRs |
 
 ### Testing entry points
@@ -75,7 +75,6 @@ write-through against isolated in-memory SwiftData stores.
 
 ```bash
 xcodebuildmcp simulator test
-# or: bundle exec fastlane tests
 ```
 
 GitHub Actions (`.github/workflows/tests.yml`) runs the suite on every push to
@@ -83,10 +82,20 @@ GitHub Actions (`.github/workflows/tests.yml`) runs the suite on every push to
 
 ## Shipping
 
-`bundle exec fastlane beta` runs the tests first, then fetches signing via **match**,
-bumps the build number above the latest TestFlight build, builds with **gym**, and
-uploads to **TestFlight** with **pilot**. Requires the App Store Connect API key env
-vars (`ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH`).
+Tell the deployment thread “Deploy WhoGaveWhat to TestFlight”, or use the manual
+CLI after setup:
+
+```sh
+python3 scripts/testflight.py ready
+python3 scripts/testflight.py preflight
+python3 scripts/testflight.py deploy next master /tmp/whogavewhat-notes.json
+```
+
+The master-only workflow requires passing `Tests` for the exact source, prepared
+EN/RU notes and protected signing credentials. Durable receipts preserve the
+version/build through retries. See [TestFlight operations](docs/testflight.md)
+for one-time setup, the bounded native archive/export authorization, monitoring,
+notes updates and recovery.
 
 ## License
 
