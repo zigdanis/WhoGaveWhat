@@ -280,7 +280,7 @@ class TestflightRelease
   def pilot_options
     options = { app_identifier: APP_ID, app_platform: 'ios', apple_id: app['id'], app_version: record.fetch('version'),
                 build_number: record.fetch('build_number'), distribute_only: true, distribute_external: !internal?,
-                groups: internal? && group.dig('attributes', 'hasAccessToAllBuilds') ? nil : [group['id']],
+                groups: internal? && group.dig('attributes', 'hasAccessToAllBuilds') ? nil : [group.fetch('attributes').fetch('name')],
                 submit_beta_review: !internal?, notify_external_testers: !internal?,
                 localized_build_info: record.fetch('notes').transform_values { |text| { whats_new: text } },
                 demo_account_required: false }
@@ -344,11 +344,19 @@ class TestflightRelease
     ready = assigned && state == 'IN_BETA_TESTING'
     notified = internal? || build.dig('beta_detail', 'attributes', 'autoNotifyEnabled')
     failed = %w[BETA_REJECTED EXPIRED PROCESSING_EXCEPTION].include?(state)
-    phase = failed ? 'distribution_failed' : (ready ? 'available' : 'awaiting_apple_review')
+    missing_assignment = !assigned && state == 'IN_BETA_TESTING'
+    phase = if failed
+              'distribution_failed'
+            elsif missing_assignment
+              'awaiting_group_assignment'
+            else
+              ready ? 'available' : 'awaiting_apple_review'
+            end
     record.merge!('phase' => phase, 'distribution_status' => state,
                    'group_assigned' => !!assigned, 'notification_enabled' => !!notified, 'tester_id' => @tester_id)
     save!
     raise "Apple beta distribution failed: #{state}" if failed
+    raise 'The ready build is not assigned to the recorded tester group; resume this release' if missing_assignment
     raise 'External tester notifications are disabled' unless notified
   end
 

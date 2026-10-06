@@ -234,4 +234,33 @@ class TestflightReleaseTest < Minitest::Test
   ensure
     Object.send(:remove_const, :Spaceship) if Object.const_defined?(:Spaceship)
   end
+  def test_group_readback_distinguishes_missing_assignment_from_pending_review
+    reserve
+    @release.instance_variable_set(:@group, { 'id' => 'group', 'attributes' => { 'isInternalGroup' => false } })
+    build = { 'id' => 'apple-build', 'beta_detail' => { 'attributes' => {
+      'externalBuildState' => 'IN_BETA_TESTING', 'autoNotifyEnabled' => true
+    } } }
+    group_builds = []
+    responses = { '/v1/betaGroups/group/builds' => group_builds,
+                  '/v1/betaGroups/group/betaTesters' => [{ 'id' => 'danis' }] }
+    @release.stub(:exact_build, build) do
+      @release.stub(:asc, ->(path, _params = {}) { [responses.fetch(path), []] }) do
+        @release.stub(:save!, nil) do
+          error = assert_raises(RuntimeError) { @release.verify_distribution! }
+          assert_includes error.message, 'not assigned to the recorded tester group'
+          assert_equal 'awaiting_group_assignment', @release.record['phase']
+          assert_equal false, @release.record['group_assigned']
+          build['beta_detail']['attributes']['externalBuildState'] = 'WAITING_FOR_REVIEW'
+          @release.verify_distribution!
+          assert_equal 'awaiting_apple_review', @release.record['phase']
+          build['beta_detail']['attributes']['externalBuildState'] = 'IN_BETA_TESTING'
+          group_builds << { 'id' => 'apple-build' }
+          @release.verify_distribution!
+          assert_equal 'available', @release.record['phase']
+          assert_equal true, @release.record['group_assigned']
+        end
+      end
+    end
+  end
+
 end
