@@ -12,11 +12,12 @@ struct AddGiftSheet: View {
 
     init(route: GiftSheetRoute, composition: AppComposition) {
         self.composition = composition
-        _state = State(initialValue: AddGiftState(
-            route: route,
-            data: composition.data,
-            suggestGift: composition.suggestGift
-        ))
+        _state = State(
+            initialValue: AddGiftState(
+                route: route,
+                data: composition.data,
+                suggestGift: composition.suggestGift
+            ))
         let startsExpanded = route.editingGiftID != nil
         _showsDetails = State(initialValue: startsExpanded)
         _selectedDetent = State(initialValue: startsExpanded ? .large : .height(420))
@@ -108,20 +109,25 @@ struct AddGiftSheet: View {
 
     /// Tint follows the derived direction for the form's controls.
     private var fm: GiftDirectionAppearance {
-        state.direction(householdIDs: composition.data.householdIDs,
-                   saveGift: composition.saveGiftUseCase).appearance
+        state.direction(
+            householdIDs: composition.data.householdIDs,
+            saveGift: composition.saveGiftUseCase
+        ).appearance
     }
     private var can: Bool { state.input.canSave }
 
     // MARK: Save
 
     private var saveButton: some View {
-        Button { state.save(using: composition) } label: {
+        Button {
+            state.save(using: composition)
+        } label: {
             Text(saveTitle)
                 .font(Font.app(17, .semibold)).foregroundColor(.white)
                 .frame(maxWidth: .infinity).padding(.vertical, 16)
-                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-                    .fill(can ? Color.ink : Color(hex: 0xC3CAD3)))
+                .background(
+                    RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
+                        .fill(can ? Color.ink : Color(hex: 0xC3CAD3)))
         }
         .buttonStyle(.plain)
         .disabled(!can)
@@ -470,7 +476,9 @@ private struct PickerSheet: View {
                 Card {
                     VStack(spacing: 0) {
                         ForEach(Array(composition.data.occasions.enumerated()), id: \.element.id) { idx, occasion in
-                            Button { state.selectOccasion(occasion.name) } label: {
+                            Button {
+                                state.selectOccasion(occasion.name)
+                            } label: {
                                 HStack {
                                     Text(composition.data.localizedOccasion(occasion.name)).font(Font.app(16, .regular)).foregroundColor(Color.ink)
                                     Spacer(minLength: 8)
@@ -507,11 +515,14 @@ private struct PickerSheet: View {
                 Card {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 8) {
                         ForEach(emojiChoices, id: \.self) { e in
-                            Button { state.selectEmoji(e) } label: {
+                            Button {
+                                state.selectEmoji(e)
+                            } label: {
                                 Text(e).font(.system(size: 26))
                                     .frame(maxWidth: .infinity).frame(height: 48)
-                                    .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-                                        .fill(state.draft.emoji == e ? Color.recvTint : Color.track))
+                                    .background(
+                                        RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
+                                            .fill(state.draft.emoji == e ? Color.recvTint : Color.track))
                             }
                             .buttonStyle(.plain)
                         }
@@ -586,13 +597,16 @@ private struct PickerSheet: View {
         accessibilityIdentifier: String
     ) -> some View {
         let selected = Calendar.current.isDate(state.draft.date, inSameDayAs: date)
-        return Button { state.selectDate(date) } label: {
+        return Button {
+            state.selectDate(date)
+        } label: {
             Text(LocalizedStringKey(label))
                 .font(Font.app(15, .semibold))
                 .foregroundColor(selected ? .white : Color.ink)
                 .frame(maxWidth: .infinity).padding(.vertical, 13)
-                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-                    .fill(selected ? Color.ink : Color.card))
+                .background(
+                    RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
+                        .fill(selected ? Color.ink : Color.card))
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(accessibilityIdentifier)
@@ -630,8 +644,10 @@ private struct PickerSheet: View {
     }
 
     private var emojiChoices: [String] {
-        ["🎁", "💐", "⌚", "📚", "🧸", "🍫", "🍷", "🌸", "💍", "📱",
-         "🎧", "💸", "🎟️", "🎂", "🪴", "☕", "🪆", "🧱", "🧣", "🕯️"]
+        [
+            "🎁", "💐", "⌚", "📚", "🧸", "🍫", "🍷", "🌸", "💍", "📱",
+            "🎧", "💸", "🎟️", "🎂", "🪴", "☕", "🪆", "🧱", "🧣", "🕯️"
+        ]
     }
 
     private func addPerson(_ name: String, selectFrom: Bool) {
@@ -659,10 +675,11 @@ private struct PersonPickerContent: View {
         self.onProvisionalSelection = onProvisionalSelection
         self.onSelection = onSelection
         self.onAdd = onAdd
-        _pickerState = State(initialValue: PersonPickerState(
-            people: people,
-            selectedID: selectedID
-        ))
+        _pickerState = State(
+            initialValue: PersonPickerState(
+                people: people,
+                selectedID: selectedID
+            ))
     }
 
     var body: some View {

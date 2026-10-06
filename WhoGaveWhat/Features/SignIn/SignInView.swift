@@ -54,8 +54,10 @@ struct SignInView: View {
 
     /// A login option that isn't available yet — styled as a dimmed, inert
     /// placeholder with a "Soon" badge so users don't try to tap it.
-    private func placeholder<Icon: View>(title: LocalizedStringKey,
-                                         @ViewBuilder icon: () -> Icon) -> some View {
+    private func placeholder<Icon: View>(
+        title: LocalizedStringKey,
+        @ViewBuilder icon: () -> Icon
+    ) -> some View {
         HStack(spacing: 9) {
             icon()
             Text(title)
@@ -70,8 +72,10 @@ struct SignInView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16).padding(.horizontal, 16)
         .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(Color.card))
-        .overlay(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-            .stroke(Color.border, lineWidth: 1.5))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
+                .stroke(Color.border, lineWidth: 1.5)
+        )
         .opacity(0.5)
         .allowsHitTesting(false)
     }

@@ -55,7 +55,7 @@ final class SwiftDataStore {
             ("anton", "Anton", 0x12161C),
             ("marina", "Marina", 0x12805C),
             ("sofia", "Sofia", 0x5B6573),
-            ("alisa", "Alisa", 0x2F6FAE),
+            ("alisa", "Alisa", 0x2F6FAE)
         ]
         let contacts: [(String, String, Int64)] = [
             ("maria", "Aunt Maria", 0x12161C),
@@ -63,7 +63,7 @@ final class SwiftDataStore {
             ("igor", "Igor", 0x2F6FAE),
             ("olga", "Olga", 0x5B6573),
             ("lena", "Lena", 0x7A5CCB),
-            ("dmitri", "Dmitri", 0x0E7C8C),
+            ("dmitri", "Dmitri", 0x0E7C8C)
         ]
 
         var peopleByID: [String: StoredPerson] = [:]
@@ -103,7 +103,7 @@ final class SwiftDataStore {
             ("g9", "💍", "Silver necklace", "marina", "maria", true, "Anniversary", "2026-02-14", 4500),
             ("g10", "🍫", "Box of chocolates", "anton", "olga", true, "Just because", "2026-05-28", 700),
             ("g11", "🍷", "Bottle of wine", "anton", "igor", true, "Birthday", "2026-04-18", 2100),
-            ("g12", "🎟️", "Concert tickets", "anton", "dmitri", true, "Birthday", "2026-03-09", 3000),
+            ("g12", "🎟️", "Concert tickets", "anton", "dmitri", true, "Birthday", "2026-03-09", 3000)
         ]
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
@@ -112,20 +112,22 @@ final class SwiftDataStore {
 
         for (index, gift) in gifts.enumerated() {
             guard let giver = peopleByID[gift.3],
-                  let recipient = peopleByID[gift.4],
-                  let date = formatter.date(from: gift.7) else { continue }
-            context.insert(StoredGift(
-                id: gift.0,
-                emoji: gift.1,
-                name: localized(gift.2),
-                giver: giver,
-                recipient: recipient,
-                paidByYou: gift.5,
-                occasion: gift.6,
-                date: date,
-                value: gift.8,
-                createdAt: date.addingTimeInterval(TimeInterval(index))
-            ))
+                let recipient = peopleByID[gift.4],
+                let date = formatter.date(from: gift.7)
+            else { continue }
+            context.insert(
+                StoredGift(
+                    id: gift.0,
+                    emoji: gift.1,
+                    name: localized(gift.2),
+                    giver: giver,
+                    recipient: recipient,
+                    paidByYou: gift.5,
+                    occasion: gift.6,
+                    date: date,
+                    value: gift.8,
+                    createdAt: date.addingTimeInterval(TimeInterval(index))
+                ))
         }
 
         try context.save()

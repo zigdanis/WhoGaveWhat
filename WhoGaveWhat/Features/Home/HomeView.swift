@@ -21,18 +21,21 @@ struct HomeView: View {
                     Section {
                         ForEach(group.gifts) { gift in
                             NavigationLink(value: gift) {
-                                GiftRow(gift: gift,
-                                        subtitle: composition.data.giftSubtitle(gift),
-                                        dateLabel: gift.date.giftShortLabel(),
-                                        currencyCode: composition.currencyCode)
+                                GiftRow(
+                                    gift: gift,
+                                    subtitle: composition.data.giftSubtitle(gift),
+                                    dateLabel: gift.date.giftShortLabel(),
+                                    currencyCode: composition.currencyCode)
                             }
-                                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) { pendingDelete = gift } label: {
-                                        Image(systemName: "trash")
-                                    }
-                                    .accessibilityLabel("Delete")
+                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    pendingDelete = gift
+                                } label: {
+                                    Image(systemName: "trash")
                                 }
+                                .accessibilityLabel("Delete")
+                            }
                         }
                     } header: {
                         Text(group.label)
@@ -56,10 +59,12 @@ struct HomeView: View {
                 .accessibilityLabel("Settings")
             }
         }
-        .confirmationDialog("Delete this gift?",
-                            isPresented: deleteConfirmBinding,
-                            titleVisibility: .visible,
-                            presenting: pendingDelete) { gift in
+        .confirmationDialog(
+            "Delete this gift?",
+            isPresented: deleteConfirmBinding,
+            titleVisibility: .visible,
+            presenting: pendingDelete
+        ) { gift in
             Button("Delete", role: .destructive) {
                 composition.deleteGift(id: gift.id)
                 pendingDelete = nil
@@ -70,8 +75,9 @@ struct HomeView: View {
 
     /// Drives the confirmation dialog off the optional pending gift.
     private var deleteConfirmBinding: Binding<Bool> {
-        Binding(get: { pendingDelete != nil },
-                set: { if !$0 { pendingDelete = nil } })
+        Binding(
+            get: { pendingDelete != nil },
+            set: { if !$0 { pendingDelete = nil } })
     }
 
     /// Quiet placeholder shown before the first gift — a faint icon and a short

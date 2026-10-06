@@ -93,3 +93,7 @@ vars (`ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH`).
 Who Gave What is available under the [MIT License](LICENSE). Bundled third-party
 fonts and icons remain subject to the licenses listed in
 [`WhoGaveWhat/Resources/THIRD_PARTY_NOTICES.md`](WhoGaveWhat/Resources/THIRD_PARTY_NOTICES.md).
+
+## Development checks and PR media
+
+Run `scripts/check-formatting.sh`, `scripts/lint-swift.sh` and the Python helper tests before pushing. Every PR includes current-head screenshots and a video, including tooling and documentation changes. See [the evidence workflow](docs/pr-evidence.md) for local checks, macOS CI, publishing and Raspberry Pi review.

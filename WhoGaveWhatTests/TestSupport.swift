@@ -33,9 +33,9 @@ final class TestGiftGateway: GiftGateway {
 }
 
 @MainActor
-func makeTestComposition() -> AppComposition {
+func makeTestComposition() throws -> AppComposition {
     AppComposition(
-        store: try! SwiftDataStore(inMemory: true, seed: true),
+        store: try SwiftDataStore(inMemory: true, seed: true),
         preferences: TestPreferencesGateway(),
         intelligence: TestIntelligenceGateway()
     )

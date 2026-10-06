@@ -17,7 +17,7 @@ final class AppData {
         Occasion(name: "Anniversary"),
         Occasion(name: "Graduation"),
         Occasion(name: "Housewarming"),
-        Occasion(name: "Just because"),
+        Occasion(name: "Just because")
     ]
 
     func replaceGifts(_ gifts: [Gift]) {

@@ -12,7 +12,7 @@ final class SwiftDataGiftGateway: GiftGateway {
     func loadGifts() throws -> [Gift] {
         let descriptor = FetchDescriptor<StoredGift>(sortBy: [
             SortDescriptor(\StoredGift.date, order: .reverse),
-            SortDescriptor(\StoredGift.createdAt, order: .reverse),
+            SortDescriptor(\StoredGift.createdAt, order: .reverse)
         ])
         return try context.fetch(descriptor).map(Gift.init)
     }
@@ -67,18 +67,20 @@ final class SwiftDataGiftGateway: GiftGateway {
 
     private func fetchGift(id: String) throws -> StoredGift? {
         let requestedID = id
-        var descriptor = FetchDescriptor<StoredGift>(predicate: #Predicate { gift in
-            gift.id == requestedID
-        })
+        var descriptor = FetchDescriptor<StoredGift>(
+            predicate: #Predicate { gift in
+                gift.id == requestedID
+            })
         descriptor.fetchLimit = 1
         return try context.fetch(descriptor).first
     }
 
     private func fetchPerson(id: String) throws -> StoredPerson? {
         let requestedID = id
-        var descriptor = FetchDescriptor<StoredPerson>(predicate: #Predicate { person in
-            person.id == requestedID
-        })
+        var descriptor = FetchDescriptor<StoredPerson>(
+            predicate: #Predicate { person in
+                person.id == requestedID
+            })
         descriptor.fetchLimit = 1
         return try context.fetch(descriptor).first
     }

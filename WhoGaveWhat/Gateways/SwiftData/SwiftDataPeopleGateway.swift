@@ -12,7 +12,7 @@ final class SwiftDataPeopleGateway: PeopleGateway {
     func loadPeople() throws -> PeopleSnapshot {
         let descriptor = FetchDescriptor<StoredPerson>(sortBy: [
             SortDescriptor(\StoredPerson.roleRawValue),
-            SortDescriptor(\StoredPerson.sortIndex),
+            SortDescriptor(\StoredPerson.sortIndex)
         ])
         return PeopleSnapshot(people: try context.fetch(descriptor).map(Person.init))
     }
@@ -51,9 +51,10 @@ final class SwiftDataPeopleGateway: PeopleGateway {
 
     private func fetchPerson(id: String) throws -> StoredPerson? {
         let requestedID = id
-        var descriptor = FetchDescriptor<StoredPerson>(predicate: #Predicate { person in
-            person.id == requestedID
-        })
+        var descriptor = FetchDescriptor<StoredPerson>(
+            predicate: #Predicate { person in
+                person.id == requestedID
+            })
         descriptor.fetchLimit = 1
         return try context.fetch(descriptor).first
     }

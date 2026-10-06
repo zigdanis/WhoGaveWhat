@@ -18,9 +18,10 @@ struct FlowLayout: Layout {
             rows[rows.count - 1].append(size)
             x += size.width + spacing
         }
-        let height = rows.reduce(CGFloat(0)) { acc, row in
-            acc + (row.map { $0.height }.max() ?? 0) + lineSpacing
-        } - (rows.isEmpty ? 0 : lineSpacing)
+        let height =
+            rows.reduce(CGFloat(0)) { acc, row in
+                acc + (row.map { $0.height }.max() ?? 0) + lineSpacing
+            } - (rows.isEmpty ? 0 : lineSpacing)
         return CGSize(width: maxWidth == .infinity ? x : maxWidth, height: max(height, 0))
     }
 

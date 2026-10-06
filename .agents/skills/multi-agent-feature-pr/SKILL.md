@@ -45,7 +45,8 @@ Invoking this skill with a concrete implementation request authorizes fetching t
 2. While waiting, provide concise status updates at meaningful transitions and at least once per minute during a long active wait.
 3. When CI fails, inspect the failing job logs, apply an in-scope fix through the implementation subagent, re-run focused verification, obtain review again when the fix is material, commit, push, and resume monitoring.
 4. When an actionable review comment appears, fix it or respond in English with concrete evidence when no code change is appropriate. Re-check unresolved conversations afterward.
-5. Finish only when all required checks succeed, the PR is mergeable, and no actionable bot or human review feedback remains unresolved.
+5. Read [the PR evidence workflow](../../../docs/pr-evidence.md) for every PR, including documentation and infrastructure changes. After each final push or CI rerun, retrieve the latest current-head artifacts, inspect the selected screenshots and recording, and publish both in the description. UI changes require the changed scenario; app smoke alone covers environment checks. Recheck the validator after publication. Completion requires embedded current-head screenshots AND video, passing checks, a mergeable PR and no actionable review feedback.
+6. Convert the completed draft to ready for review only after these conditions hold. Keep merging with Danis.
 
 Do not merge unless Danis explicitly asks.
 

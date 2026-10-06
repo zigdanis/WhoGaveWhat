@@ -17,7 +17,8 @@ final class AddGiftState {
         editingGiftID = route.editingGiftID
 
         if let giftID = route.editingGiftID,
-           let gift = data.gifts.first(where: { $0.id == giftID }) {
+            let gift = data.gifts.first(where: { $0.id == giftID })
+        {
             draft = AddGiftDraft(
                 name: gift.name,
                 emoji: gift.emoji,
@@ -68,11 +69,13 @@ final class AddGiftState {
         suggestionTask = Task {
             try? await Task.sleep(for: .milliseconds(600))
             guard !Task.isCancelled,
-                  draft.name.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed else { return }
+                draft.name.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed
+            else { return }
             aiLoading = true
             let result = await suggestGift.intelligentSuggestion(for: trimmed)
             guard !Task.isCancelled,
-                  draft.name.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed else {
+                draft.name.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed
+            else {
                 aiLoading = false
                 return
             }

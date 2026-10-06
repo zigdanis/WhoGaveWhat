@@ -10,7 +10,9 @@ struct OnboardingView: View {
             // Skip — pinned to the very top-right corner.
             HStack {
                 Spacer()
-                Button { router.showSignIn() } label: {
+                Button {
+                    router.showSignIn()
+                } label: {
                     Text("Skip").font(Font.app(15, .bold)).foregroundColor(Color.muted)
                         .padding(.horizontal, 6).padding(.vertical, 6)
                         .contentShape(Rectangle())
@@ -205,7 +207,7 @@ private struct OnbAddsUp: View {
     private let bars: [(String, Double, Double, Color)] = [
         ("Birthday", 6_200, 0.84, Color.give),
         ("Anniversary", 4_500, 0.61, Color.gold),
-        ("New Year", 4_000, 0.54, Color.recv),
+        ("New Year", 4_000, 0.54, Color.recv)
     ]
 
     var body: some View {

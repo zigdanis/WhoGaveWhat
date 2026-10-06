@@ -22,3 +22,9 @@
 - When asked to babysit a pull request, use the `babysit-pr` skill when available. Validate each bot finding before changing code, use bounded subagents when useful, run the checks that cover each fix, push only to the pull request branch, and reply with evidence before resolving a review thread.
 - After every push, re-check the latest head commit, required checks, new reviews, and unresolved conversations. Continue until the current head is green, reviewers have reached a terminal state, and no actionable thread remains.
 - Never merge or enable auto-merge. Hand the clean pull request to Danis for final review.
+
+# Quality and PR evidence
+
+- Before handing over any PR, follow [PR evidence](docs/pr-evidence.md): inspect current-head screenshots and video and embed both in the description, including documentation and infrastructure PRs. App smoke verifies the environment; UI changes also require the changed scenario.
+- Run `scripts/check-formatting.sh`, `scripts/lint-swift.sh` and the helper tests before pushing. Use `scripts/format-swift.sh` to fix layout; SwiftLint owns source correctness rules.
+- On Raspberry Pi, use [the CI evidence workflow](docs/pr-evidence.md#raspberry-pi) for native app validation and visual review.

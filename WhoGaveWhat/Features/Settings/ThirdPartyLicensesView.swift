@@ -12,7 +12,7 @@ struct ThirdPartyLicensesView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .textSelection(.enabled)
-                .padding(16)
+            .padding(16)
         }
         .background(Color.bg)
         .navigationTitle("Third-party licenses")
@@ -28,16 +28,22 @@ struct ThirdPartyLicensesView: View {
             (name: "Archivo-OFL", extension: "txt")
         ]
         let documents = resources.compactMap { resource -> String? in
-            guard let url = Bundle.main.url(forResource: resource.name,
-                                            withExtension: resource.extension) else {
+            guard
+                let url = Bundle.main.url(
+                    forResource: resource.name,
+                    withExtension: resource.extension)
+            else {
                 return nil
             }
             return try? String(contentsOf: url, encoding: .utf8)
         }
         guard documents.count == resources.count else {
-            return [LicenseBlock(id: 0,
-                                 kind: .paragraph,
-                                 text: String(localized: "License information is unavailable."))]
+            return [
+                LicenseBlock(
+                    id: 0,
+                    kind: .paragraph,
+                    text: String(localized: "License information is unavailable."))
+            ]
         }
 
         let markdown = documents.joined(separator: "\n\n---\n\n# Archivo license\n\n")
@@ -96,10 +102,7 @@ private struct LicenseBlock: Identifiable {
     }
 
     private static func isPlainTextHeading(_ line: String) -> Bool {
-        line.count < 60 &&
-        line.rangeOfCharacter(from: .letters) != nil &&
-        line == line.uppercased() &&
-        !line.contains("http")
+        line.count < 60 && line.rangeOfCharacter(from: .letters) != nil && line == line.uppercased() && !line.contains("http")
     }
 }
 
