@@ -20,7 +20,7 @@ names alone do not establish valid Apple access or usable signing.
 Required environment secrets:
 
 - `ASC_PRIVATE_KEY`, `ASC_KEY_ID`, `ASC_ISSUER_ID`: an App Store Connect team API key
-  with Admin access for provisioning and certificate renewal.
+  with Admin access for provisioning and certificate management.
 - `MATCH_PASSWORD`: the password for the encrypted WhoGaveWhat signing branch.
 - `MATCH_GIT_PRIVATE_KEY`: a write deploy key limited to the private signing repo.
 
@@ -48,6 +48,11 @@ Keep the shared signing branch, GrowingUp configuration and valid certificates
 intact. Create a dedicated signing-only deploy key if the WhoGaveWhat environment
 has none; pass its private half to `gh secret set` over stdin and remove temporary
 copies. Never revoke certificates or run `match nuke` to make a retry pass.
+Match reuses valid stored certificates and profiles. An expired stored certificate
+stops the pinned Match version with an explicit validity error; inspect it through
+the existing Mac setup and prepare a valid replacement without revoking another
+app's working identity. Certificate renewal is not a supported Match lane option.
+
 Back up the signing password in secure local storage before deleting input copies.
 
 For the four Apple/match credentials, create temporary files outside every git

@@ -57,7 +57,7 @@ platform :ios do
         match(type: 'appstore', readonly: false, api_key: api_key,
               app_identifier: [TestflightRelease::APP_ID],
               team_id: ENV.fetch('APPLE_TEAM_ID'), keychain_name: keychain, keychain_password: keychain_password,
-              generate_apple_certs: true, renew_expired_certs: true,
+              generate_apple_certs: true,
               git_private_key: ENV.fetch('MATCH_GIT_PRIVATE_KEY_PATH'),
               git_full_name: 'WhoGaveWhat Release', git_user_email: 'release@users.noreply.github.com')
         if upload
