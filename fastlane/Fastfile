@@ -1,177 +1,147 @@
 default_platform :ios
-fastlane_require 'dotenv'
+require 'securerandom'
+require 'cfpropertylist'
+require 'pilot'
+require_relative 'testflight_release'
 
 platform :ios do
-
-  # Read-only: confirm the App Store Connect record exists before uploading.
-  lane :check do
-    api_key = app_store_connect_api_key(
-      key_id: ENV['ASC_KEY_ID'],
-      issuer_id: ENV['ASC_ISSUER_ID'],
-      key_filepath: ENV['ASC_KEY_PATH']
-    )
-    build = latest_testflight_build_number(
-      api_key: api_key,
-      app_identifier: "pro.ziganshin.WhoGaveWhat",
-      initial_build_number: 0
-    )
-    UI.message("ASC app record found. Latest TestFlight build: #{build}")
+  desc 'Check Apple account, tester access and app signing without uploading'
+  lane :release_preflight do
+    run_release(upload: false)
   end
 
-  # List builds with their processing state (diagnostic).
-  lane :builds do
-    api_key = app_store_connect_api_key(
-      key_id: ENV['ASC_KEY_ID'],
-      issuer_id: ENV['ASC_ISSUER_ID'],
-      key_filepath: ENV['ASC_KEY_PATH']
-    )
-    require 'spaceship'
-    token = Spaceship::ConnectAPI::Token.create(
-      key_id: ENV['ASC_KEY_ID'],
-      issuer_id: ENV['ASC_ISSUER_ID'],
-      filepath: ENV['ASC_KEY_PATH']
-    )
-    Spaceship::ConnectAPI.token = token
-    app = Spaceship::ConnectAPI::App.find("pro.ziganshin.WhoGaveWhat")
-    UI.message("App: #{app.name} (#{app.id})")
-    builds = app.get_builds(includes: "preReleaseVersion")
-    if builds.empty?
-      UI.important("No builds returned by API.")
-    else
-      builds.each do |b|
-        UI.message("build #{b.version} | state=#{b.processing_state} | expired=#{b.expired} | uploaded=#{b.uploaded_date}")
+  desc 'Archive, upload or resume the exact recorded WhoGaveWhat TestFlight release'
+  lane :app_store do
+    run_release(upload: true)
+  end
+
+  desc 'Read Apple processing/distribution status without archiving or uploading'
+  lane :release_status do
+    run_release(upload: true, status_only: true)
+  end
+
+  desc 'Update and verify EN/RU notes on the exact existing build without uploading'
+  lane :release_notes do
+    run_release(upload: true, notes_only: true)
+  end
+
+  def run_release(upload:, status_only: false, notes_only: false)
+    UI.user_error!('Use the manually dispatched TestFlight workflow') unless ENV['GITHUB_ACTIONS'] == 'true'
+    source = ENV.fetch('RELEASE_SOURCE_DIR')
+    project = File.join(source, 'WhoGaveWhat.xcodeproj')
+    settings = validate_release_source(project)
+    ENV['PROJECT_VERSION'] = settings.fetch('MARKETING_VERSION')
+    ENV['PROJECT_BUILD'] = settings.fetch('CURRENT_PROJECT_VERSION')
+    release = TestflightRelease.new
+    begin
+      api_key = app_store_connect_api_key(key_id: ENV.fetch('ASC_KEY_ID'), issuer_id: ENV.fetch('ASC_ISSUER_ID'),
+                                          key_filepath: ENV.fetch('ASC_KEY_PATH'), duration: 1200)
+    ensure
+      # Clear even when token creation fails, before Fastlane prints lane context.
+      lane_context.delete(SharedValues::APP_STORE_CONNECT_API_KEY)
+    end
+    if upload && !status_only && (notes_only || ENV['RESUME_RUN_ID'].to_s.empty?)
+      validate_release_notes(release.requested_notes)
+    end
+    release.preflight!(configure: !status_only && !notes_only)
+    validate_native_release_build if upload && !status_only && !notes_only
+    release.prepare! if upload
+    return release.status! if status_only
+    return release.update_notes! if notes_only
+    validate_release_notes(release.record.fetch('notes')) if upload
+    if !upload || release.upload_needed?
+      keychain = File.join(ENV.fetch('RELEASE_TEMP'), 'signing.keychain')
+      keychain_password = SecureRandom.hex(32)
+      begin
+        create_keychain(path: keychain, password: keychain_password, default_keychain: false, unlock: true, timeout: 3600)
+        match(type: 'appstore', readonly: false, api_key: api_key,
+              app_identifier: [TestflightRelease::APP_ID],
+              team_id: ENV.fetch('APPLE_TEAM_ID'), keychain_name: keychain, keychain_password: keychain_password,
+              generate_apple_certs: true, renew_expired_certs: true,
+              git_private_key: ENV.fetch('MATCH_GIT_PRIVATE_KEY_PATH'),
+              git_full_name: 'WhoGaveWhat Release', git_user_email: 'release@users.noreply.github.com')
+        if upload
+          configure_release_signing(project, lane_context.fetch(SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING))
+          directory = ENV.fetch('RELEASE_TEMP')
+          archive = File.join(directory, 'WhoGaveWhat.xcarchive')
+          gym(project: project, scheme: 'WhoGaveWhat', configuration: 'Release',
+              export_method: 'app-store', output_directory: directory, output_name: 'WhoGaveWhat.ipa',
+              archive_path: archive, derived_data_path: File.join(directory, 'DerivedData'),
+              buildlog_path: File.join(directory, 'logs'),
+              xcargs: "MARKETING_VERSION=#{release.record.fetch('version')} CURRENT_PROJECT_VERSION=#{release.record.fetch('build_number')}",
+              export_options: { signingStyle: 'manual', teamID: ENV.fetch('APPLE_TEAM_ID'),
+                                provisioningProfiles: lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING] })
+          verify_release_archive(archive, release.record)
+          release.begin_upload!
+          pilot(api_key: api_key, app_identifier: TestflightRelease::APP_ID, apple_id: release.app['id'],
+                ipa: File.join(directory, 'WhoGaveWhat.ipa'), skip_submission: true, skip_waiting_for_build_processing: true)
+          release.uploaded!
+        end
+      ensure
+        actual_keychain = File.exist?("#{keychain}-db") ? "#{keychain}-db" : keychain
+        delete_keychain(keychain_path: actual_keychain) if File.exist?(actual_keychain)
+      end
+    end
+    if upload
+      release.wait_for_processing!
+      pilot(**release.pilot_options, api_key: api_key)
+      release.verify_notes!
+      release.verify_distribution!
+      UI.success("TestFlight #{release.record['version']} (#{release.record['build_number']}): #{release.record['phase']}. Await Danis's device confirmation.")
+    end
+  ensure
+    release&.write_report
+  end
+
+  def validate_release_notes(notes)
+    notes.each do |locale, text|
+      unless Pilot::BuildManager.sanitize_changelog(text) == text
+        UI.user_error!("#{locale} notes must be plain text without emoji or <, at most 4000 UTF-8 bytes; Fastlane would alter them")
       end
     end
   end
 
-  # Run the unit-test suite on a simulator.
-  lane :tests do
-    run_tests(
-      project: "WhoGaveWhat.xcodeproj",
-      scheme: "WhoGaveWhat",
-      devices: ["iPhone 17"]   # iOS 26 simulator
-    )
-  end
-
-  # Build the app and upload it to TestFlight.
-  lane :beta do
-    # Gate the release on a green test run.
-    tests
-
-    api_key = app_store_connect_api_key(
-      key_id: ENV['ASC_KEY_ID'],
-      issuer_id: ENV['ASC_ISSUER_ID'],
-      key_filepath: ENV['ASC_KEY_PATH']
-    )
-
-    # Fetch the App Store distribution certificate + provisioning profile.
-    match(
-      type: "appstore",
-      readonly: false,
-      api_key: api_key,
-      app_identifier: ["pro.ziganshin.WhoGaveWhat"]
-    )
-
-    # Pick the next build number above whatever TestFlight already has.
-    latest = latest_testflight_build_number(
-      api_key: api_key,
-      app_identifier: "pro.ziganshin.WhoGaveWhat",
-      initial_build_number: 0
-    )
-    new_build = latest + 1
-    increment_build_number(build_number: new_build)
-
-    gym(
-      scheme: "WhoGaveWhat",
-      export_method: "app-store"
-    )
-
-    # "What to Test" notes are mandatory for external distribution.
-    # Summarize commits since the last TestFlight publish into EN + RU notes.
-    localized_notes = whats_new_notes(commits_since_last_publish)
-
-    pilot(
-      api_key: api_key,
-      # Per-locale "What to Test": English + Russian fields.
-      localized_build_info: localized_notes,
-      # Wait for processing, then push the build to the public beta group.
-      distribute_external: true,
-      groups: ["External"],
-      notify_external_testers: true,
-      beta_app_feedback_email: "zigdanis@gmail.com"
-    )
-
-    # Tag this commit so the next run diffs the changelog from here.
-    mark_published(new_build)
-  end
-
-  # Raw changelog covering commits since the last TestFlight publish.
-  # Relies on a git tag written after each successful upload; on the first run
-  # (no such tag yet) it falls back to the last `fallback_count` commits.
-  def commits_since_last_publish(fallback_count: 10)
-    opts = { pretty: "- %s", merge_commit_filtering: "exclude_merges" }
-    last_tag = sh(
-      "git describe --tags --abbrev=0 --match 'testflight/*' 2>/dev/null || true",
-      log: false
-    ).strip
-
-    if last_tag.empty?
-      UI.message("No previous TestFlight tag; using last #{fallback_count} commits.")
-      return changelog_from_git_commits(**opts, commits_count: fallback_count)
+  def validate_native_release_build
+    unless ENV['ALLOW_NATIVE_RELEASE_BUILD'] == 'true'
+      UI.user_error!('Release archive/export needs explicit authorization: XcodeBuildMCP 2.7.0 has no IPA export tool. See docs/testflight.md.')
     end
+  end
 
-    UI.message("Building changelog since #{last_tag}.")
-    raw = changelog_from_git_commits(**opts, between: [last_tag, "HEAD"]).to_s.strip
-    if raw.empty?
-      UI.message("No commits since #{last_tag}; using last #{fallback_count} commits.")
-      raw = changelog_from_git_commits(**opts, commits_count: fallback_count)
+  def validate_release_source(project)
+    target = Xcodeproj::Project.open(project).targets.find { |candidate| candidate.name == 'WhoGaveWhat' }
+    UI.user_error!('WhoGaveWhat app target is missing') unless target
+    settings = target.build_configurations.find { |configuration| configuration.name == 'Release' }.build_settings
+    unless settings['GENERATE_INFOPLIST_FILE'] == 'YES' && settings['PRODUCT_BUNDLE_IDENTIFIER'] == TestflightRelease::APP_ID
+      UI.user_error!('Source must generate the WhoGaveWhat app Info.plist')
     end
-    raw
+    unless settings['INFOPLIST_KEY_ITSAppUsesNonExemptEncryption'] == 'NO'
+      UI.user_error!('Encryption declaration needs review before release')
+    end
+    settings.fetch('MARKETING_VERSION')
+    settings.fetch('CURRENT_PROJECT_VERSION')
+    settings
   end
 
-  # Tag the current commit so the next run knows where the last publish ended.
-  def mark_published(build_number)
-    tag = "testflight/#{build_number}"
-    add_git_tag(tag: tag)
-    push_git_tags
-  rescue => e
-    UI.important("Could not create/push tag #{tag} (#{e.message}); continuing.")
+  def configure_release_signing(project, profiles)
+    { 'WhoGaveWhat' => TestflightRelease::APP_ID }.each do |target, identifier|
+      update_code_signing_settings(path: project, use_automatic_signing: false,
+                                  targets: [target], build_configurations: ['Release'],
+                                  profile_name: profiles.fetch(identifier))
+    end
   end
 
-  # Generate localized "What to Test" notes (EN + RU) from a raw changelog
-  # via the local Claude Code CLI. Falls back to the raw text on any error.
-  def whats_new_notes(raw)
-    begin
-      require 'open3'
-      require 'json'
-
-      prompt = <<~PROMPT
-        You are writing TestFlight "What to Test" release notes from raw git commit messages.
-        Summarize the changes into short, user-facing beta tester notes (max 4 bullet points,
-        plain language, no internal jargon, no commit hashes). Then translate that summary to Russian.
-        Respond with ONLY a minified JSON object, no markdown fences, exactly this shape:
-        {"en":"<english>","ru":"<russian>"}
-
-        Git commits:
-        #{raw}
-      PROMPT
-
-      stdout, status = Open3.capture2(
-        "claude", "-p", "--model", "claude-haiku-4-5",
-        stdin_data: prompt
-      )
-      raise "claude CLI exited #{status.exitstatus}" unless status.success?
-
-      text = stdout.strip
-                   .sub(/\A```(?:json)?\s*/m, "")
-                   .sub(/\s*```\z/m, "")
-                   .strip
-      data = JSON.parse(text)
-      UI.success("Generated EN + RU 'What to Test' notes via Claude CLI.")
-      { "en-US" => { whats_new: data.fetch("en") }, "ru" => { whats_new: data.fetch("ru") } }
-    rescue => e
-      UI.important("Claude CLI notes failed (#{e.message}); using raw changelog for both locales.")
-      { "en-US" => { whats_new: raw }, "ru" => { whats_new: raw } }
+  def verify_release_archive(archive, record)
+    app = File.join(archive, 'Products/Applications/WhoGaveWhat.app')
+    paths = [File.join(app, 'Info.plist')] + Dir[File.join(app, 'PlugIns/*.appex/Info.plist')]
+    UI.user_error!('Archive must contain only WhoGaveWhat') unless paths.length == 1 && File.file?(paths.first)
+    expected_ids = [TestflightRelease::APP_ID]
+    paths.each do |path|
+      info = CFPropertyList.native_types(CFPropertyList::List.new(file: path).value)
+      UI.user_error!('Unexpected archived bundle identifier') unless expected_ids.delete(info['CFBundleIdentifier'])
+      UI.user_error!('Archived encryption declaration differs from source') unless info['ITSAppUsesNonExemptEncryption'] == false
+      unless info['CFBundleShortVersionString'] == record.fetch('version') && info['CFBundleVersion'] == record.fetch('build_number')
+        UI.user_error!('Archived app version or build number differs from release receipt')
+      end
     end
   end
 end

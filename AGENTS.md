@@ -14,6 +14,7 @@
 # Xcode and Simulator execution
 
 - Use the `xcodebuildmcp` CLI for all project discovery, build, test, install, launch, Simulator management, logging, debugging, accessibility inspection, UI automation, and screenshots.
+- TestFlight release exception: use Fastlane `gym` for the signed Release archive and IPA export, as authorized by Danis. All other native operations, including tests and Simulator evidence, continue through `xcodebuildmcp`.
 
 # Code review
 
