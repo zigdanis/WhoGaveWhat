@@ -37,6 +37,14 @@ scripts/pr-evidence.sh PR_NUMBER
 
 The helper waits for the latest PR `Tests` run, downloads only its current-attempt `ui-*` artifacts and verifies the PR head SHA, run ID and attempt before and after download. It prints a retained temporary directory. Failed runs remain diagnostic material and cannot be published as acceptance evidence.
 
+When retrying CI, rerun the **whole** `Tests` workflow:
+
+```sh
+gh run rerun RUN_ID
+```
+
+Each new run attempt must regenerate screenshots and video. Rerunning only failed jobs skips a previously successful smoke job, so its old media belongs to the previous attempt and the retrieval and publishing helpers correctly reject it. After the full rerun finishes, retrieve, inspect and publish the new attempt.
+
 Open the artifact's `index.html`, inspect every selected PNG, and watch `journeys.mp4`. On Linux, extract frames throughout the recording to inspect the transitions:
 
 ```sh
