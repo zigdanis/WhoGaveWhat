@@ -7,7 +7,7 @@ struct FormattingTests {
     @Test func initialsTakeFirstTwoWords() {
         #expect("Aunt Maria".initials == "AM")
         #expect("Igor".initials == "I")
-        #expect("".initials == "")
+        #expect("".initials.isEmpty)
     }
 
     @Test func lastWordReturnsLastWord() {

@@ -41,6 +41,8 @@ struct BuildInsightsUseCase {
                 }
                 return RankedPerson(person: person, value: matching.totalValue, count: matching.count)
             }
+            // RankedPerson.count is a numeric summary, not a collection.
+            // swiftlint:disable:next empty_count
             .filter { $0.count > 0 }
             .sorted { $0.value > $1.value }
             .prefix(5)

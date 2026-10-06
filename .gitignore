@@ -47,3 +47,6 @@ fastlane/test_output
 fastlane/.env
 fastlane/.env.*
 *.p8
+
+# Python helper caches
+__pycache__/

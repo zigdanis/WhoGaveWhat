@@ -5,16 +5,16 @@ import Testing
 
 @MainActor
 struct SeededDataTests {
-    @Test func loadsTheSampleDatasetThroughGateways() {
-        let composition = makeTestComposition()
+    @Test func loadsTheSampleDatasetThroughGateways() throws {
+        let composition = try makeTestComposition()
         #expect(composition.data.gifts.count == 12)
         #expect(composition.data.householdMembers.count == 4)
         #expect(composition.data.contacts.count == 6)
         #expect(composition.data.people.count == 10)
     }
 
-    @Test func insightsSplitAndSumGifts() {
-        let composition = makeTestComposition()
+    @Test func insightsSplitAndSumGifts() throws {
+        let composition = try makeTestComposition()
         let insights = composition.buildInsights.execute(
             gifts: composition.data.gifts,
             people: composition.data.contacts
@@ -38,8 +38,8 @@ struct SaveGiftInputTests {
         #expect(!makeGiftInput(name: "   ", fromID: "igor", toID: "you").canSave)
     }
 
-    @Test func directionDerivesFromHouseholdSide() {
-        let composition = makeTestComposition()
+    @Test func directionDerivesFromHouseholdSide() throws {
+        let composition = try makeTestComposition()
         let ids = composition.data.householdIDs
         let useCase = composition.saveGiftUseCase
         #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "anton"), householdIDs: ids) == .received)
@@ -167,10 +167,10 @@ struct RouterTests {
 
 @MainActor
 struct CurrencyPreferenceTests {
-    @Test func compositionPublishesAndPersistsCurrencyChanges() {
+    @Test func compositionPublishesAndPersistsCurrencyChanges() throws {
         let preferences = TestPreferencesGateway()
         let composition = AppComposition(
-            store: try! SwiftDataStore(inMemory: true),
+            store: try SwiftDataStore(inMemory: true),
             preferences: preferences,
             intelligence: TestIntelligenceGateway()
         )
@@ -281,8 +281,8 @@ struct OrderingTests {
 
 @MainActor
 struct SubtitleTests {
-    @Test func subtitleIsAlwaysGiverArrowReceiver() {
-        let composition = makeTestComposition()
+    @Test func subtitleIsAlwaysGiverArrowReceiver() throws {
+        let composition = try makeTestComposition()
         let data = composition.data
         let received = data.gifts.first { $0.id == "g1" }!
         #expect(data.giftSubtitle(received) == "\(data.entityName(received.giverID))  →  \(data.entityName(received.recipientID))")

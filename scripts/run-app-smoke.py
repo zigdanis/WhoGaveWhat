@@ -93,24 +93,28 @@ def run(directory):
         mcp("simulator", "stop", simulatorId=simulator["simulatorId"], bundleId="pro.ziganshin.WhoGaveWhat")
         mcp("simulator", "launch-app", simulatorId=simulator["simulatorId"], bundleId="pro.ziganshin.WhoGaveWhat",
             env={"KS_START": "app", "KS_TAB": "home"}, launchArgs=["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
-        wait(predicate="visible", label="Add a gift", role="button")
+        wait(predicate="exists", label="Add a gift", role="button")
         mcp("simulator", "record-video", simulatorId=simulator["simulatorId"], start=True, fps=15)
         recording = True
         checkpoint("home")
         for label in ["People", "Insights"]:
             capture = mcp("ui-automation", "snapshot-ui", simulatorId=simulator["simulatorId"])["capture"]
             mcp("ui-automation", "tap", simulatorId=simulator["simulatorId"], elementRef=target(capture, label, "tab"))
-            wait(predicate="textContains", text=label)
+            wait(predicate="exists", label=label, role="text")
             checkpoint(label.lower())
         capture = mcp("ui-automation", "snapshot-ui", simulatorId=simulator["simulatorId"])["capture"]
         mcp("ui-automation", "tap", simulatorId=simulator["simulatorId"], elementRef=target(capture, "Add a gift", "button"))
-        wait(predicate="visible", identifier="add-gift.name")
+        wait(predicate="exists", identifier="add-gift.name")
         checkpoint("add-gift")
         metadata["journey_outcome"] = "success"
     finally:
         if recording:
-            mcp("simulator", "record-video", simulatorId=simulator["simulatorId"], stop=True,
-                outputFile=str(directory / "journeys.mp4"))
+            try:
+                mcp("simulator", "record-video", simulatorId=simulator["simulatorId"], stop=True,
+                    outputFile=str(directory / "journeys.mp4"))
+            except (ValueError, OSError, subprocess.SubprocessError) as error:
+                metadata["journey_outcome"] = "failure"
+                metadata["recording_error"] = str(error)
         video = directory / "journeys.mp4"
         if metadata["journey_outcome"] == "success" and video.is_file() and video.stat().st_size:
             metadata["export_outcome"] = "success"
