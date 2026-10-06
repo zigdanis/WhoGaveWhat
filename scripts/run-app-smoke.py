@@ -58,6 +58,7 @@ def run(directory):
         sequence += 1
         invocation = ["xcodebuildmcp", workflow, command, "--json", json.dumps(parameters),
                       "--output", "json", "--verbose"]
+        print(f"[{sequence:02d}] xcodebuildmcp {workflow} {command}", flush=True)
         process = subprocess.run(invocation, text=True, capture_output=True, timeout=1800)
         (directory / f"{sequence:02d}-{command}.json").write_text(process.stdout)
         (directory / f"{sequence:02d}-{command}.log").write_text(process.stderr)
