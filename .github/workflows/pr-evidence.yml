@@ -1,0 +1,34 @@
+name: PR evidence gate
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited, ready_for_review, converted_to_draft]
+  workflow_run:
+    workflows: [Tests]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+  statuses: write
+
+concurrency:
+  group: evidence-${{ github.event.pull_request.number || github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  evidence:
+    name: Validate PR screenshots and video
+    runs-on: ubuntu-latest
+    steps:
+      # Only trusted base/default-branch scripts run with status write permission.
+      # PR source, downloaded artifacts and PR descriptions are never executed.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: Evaluate current PR metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/pr-evidence-gate.py --event-file "$GITHUB_EVENT_PATH" --publish-status
