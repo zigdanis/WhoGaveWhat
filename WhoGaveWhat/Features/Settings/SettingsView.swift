@@ -62,7 +62,8 @@ struct SettingsView: View {
                         }
                     }
 
-                    Button { } label: {
+                    Button {
+                    } label: {
                         Text("Sign out")
                             .font(Font.app(16, .semibold)).foregroundColor(Color(hex: 0xE5484D))
                             .frame(maxWidth: .infinity).padding(.vertical, 15)
@@ -149,7 +150,8 @@ struct SettingsView: View {
 
     private var currencyDisplayName: String {
         let locale = Locale.autoupdatingCurrent
-        let name = locale.localizedString(forCurrencyCode: composition.currencyCode)
+        let name =
+            locale.localizedString(forCurrencyCode: composition.currencyCode)
             ?? composition.currencyCode
         return "\(name) \(currencySymbol(code: composition.currencyCode, locale: locale))"
     }

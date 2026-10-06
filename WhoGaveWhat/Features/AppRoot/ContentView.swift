@@ -12,7 +12,7 @@ struct ContentView: View {
                     router: composition.router,
                     currencyCode: composition.currencyCode
                 )
-                    .transition(.opacity)
+                .transition(.opacity)
             case .signIn:
                 SignInView(composition: composition)
                     .transition(.opacity)

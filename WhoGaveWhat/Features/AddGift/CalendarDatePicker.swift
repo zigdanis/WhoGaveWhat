@@ -29,7 +29,8 @@ struct CalendarDatePicker: UIViewRepresentable {
         context.coordinator.parent = self
         let components = dayComponents(for: selectedDate)
         guard context.coordinator.selectedComponents != components,
-              let selection = calendarView.selectionBehavior as? UICalendarSelectionSingleDate else {
+            let selection = calendarView.selectionBehavior as? UICalendarSelectionSingleDate
+        else {
             return
         }
         selection.setSelected(components, animated: false)
@@ -67,7 +68,8 @@ struct CalendarDatePicker: UIViewRepresentable {
             didSelectDate dateComponents: DateComponents?
         ) {
             guard let dateComponents,
-                  let date = Calendar.autoupdatingCurrent.date(from: dateComponents) else { return }
+                let date = Calendar.autoupdatingCurrent.date(from: dateComponents)
+            else { return }
             selectedComponents = dateComponents
             parent.onSelectDate(date)
         }

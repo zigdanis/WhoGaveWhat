@@ -27,7 +27,9 @@ struct SuggestGiftUseCase {
         GiftSuggestion(keywords: ["chocolate", "candy", "sweets", "шокол", "конфет", "сладост"], emoji: "🍫", value: 700),
         GiftSuggestion(keywords: ["wine", "вино", "вина"], emoji: "🍷", value: 1_900),
         GiftSuggestion(keywords: ["perfume", "духи", "парфюм"], emoji: "🌸", value: 3_500),
-        GiftSuggestion(keywords: ["necklace", "ring", "jewel", "bracelet", "earring", "кольц", "ожерель", "колье", "брасле", "серьг", "серёж", "украшен", "цепочк"], emoji: "💍", value: 6_000),
+        GiftSuggestion(
+            keywords: ["necklace", "ring", "jewel", "bracelet", "earring", "кольц", "ожерель", "колье", "брасле", "серьг", "серёж", "украшен", "цепочк"],
+            emoji: "💍", value: 6_000),
         GiftSuggestion(keywords: ["phone", "iphone", "телефон", "айфон", "смартфон"], emoji: "📱", value: 40_000),
         GiftSuggestion(keywords: ["headphone", "earbud", "airpod", "наушник"], emoji: "🎧", value: 5_000),
         GiftSuggestion(keywords: ["money", "cash", "envelope", "деньг", "купюр", "конверт", "налич"], emoji: "💸", value: 5_000),
@@ -41,6 +43,6 @@ struct SuggestGiftUseCase {
         GiftSuggestion(keywords: ["candle", "свеч"], emoji: "🕯️", value: 1_000),
         GiftSuggestion(keywords: ["game", "console", "игра", "игров", "пристав", "консол"], emoji: "🎮", value: 5_500),
         GiftSuggestion(keywords: ["pizza", "пицц"], emoji: "🍕", value: 900),
-        GiftSuggestion(keywords: ["coffee beans", "tea", "чай"], emoji: "🍵", value: 700),
+        GiftSuggestion(keywords: ["coffee beans", "tea", "чай"], emoji: "🍵", value: 700)
     ]
 }

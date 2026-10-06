@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import Testing
+
 @testable import WhoGaveWhat
 
 @MainActor
@@ -168,9 +169,10 @@ struct SwiftDataPersistenceTests {
         let relaunchedContext = ModelContext(store.container)
         let relaunchedPeople = try SwiftDataPeopleGateway(context: relaunchedContext).loadPeople()
 
-        #expect(relaunchedPeople.people.contains {
-            $0.id == "you" && $0.name == "Alex" && $0.role == .household
-        })
+        #expect(
+            relaunchedPeople.people.contains {
+                $0.id == "you" && $0.name == "Alex" && $0.role == .household
+            })
         #expect(try SwiftDataGiftGateway(context: relaunchedContext).loadGifts().isEmpty)
     }
 

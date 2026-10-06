@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WhoGaveWhat
 
 @MainActor
@@ -97,7 +98,7 @@ struct PersonPickerStateTests {
     private let people = [
         Person(id: "alex", name: "Alex", colorHex: 0x123456, role: .contact),
         Person(id: "alice", name: "Alice", colorHex: 0x654321, role: .household),
-        Person(id: "bob", name: "Bob", colorHex: 0xABCDEF, role: .contact),
+        Person(id: "bob", name: "Bob", colorHex: 0xABCDEF, role: .contact)
     ]
 
     @Test func initialMissingOrInvalidSelectionDefaultsToFirstPerson() {
@@ -211,17 +212,19 @@ struct SaveGiftTests {
 
     @Test func touchedValueOverridesSuggestion() {
         let (useCase, gateway) = makeSaveGiftUseCase()
-        _ = try? useCase.execute(makeGiftInput(
-            name: "Bottle of wine", fromID: "you", toID: "igor", value: 2_500,
-            valueTouched: true), householdIDs: ["you"])
+        _ = try? useCase.execute(
+            makeGiftInput(
+                name: "Bottle of wine", fromID: "you", toID: "igor", value: 2_500,
+                valueTouched: true), householdIDs: ["you"])
         #expect(gateway.gifts.contains { $0.name == "Bottle of wine" && $0.value == 2_500 })
     }
 
     @Test func receivedGiftCanBeMarkedPaidByYou() {
         let (useCase, gateway) = makeSaveGiftUseCase()
-        _ = try? useCase.execute(makeGiftInput(
-            name: "Soft teddy", fromID: "maria", toID: "you", paidByYou: true
-        ), householdIDs: ["you"])
+        _ = try? useCase.execute(
+            makeGiftInput(
+                name: "Soft teddy", fromID: "maria", toID: "you", paidByYou: true
+            ), householdIDs: ["you"])
         let saved = gateway.gifts.first { $0.name == "Soft teddy" }
         #expect(saved?.direction == .received)
         #expect(saved?.paidByYou == true)
@@ -229,9 +232,10 @@ struct SaveGiftTests {
 
     @Test func familyMemberGiftKeepsPaidByYouFalse() {
         let (useCase, gateway) = makeSaveGiftUseCase()
-        _ = try? useCase.execute(makeGiftInput(
-            name: "Marina's wine", fromID: "marina", toID: "igor"
-        ), householdIDs: ["you", "marina"])
+        _ = try? useCase.execute(
+            makeGiftInput(
+                name: "Marina's wine", fromID: "marina", toID: "igor"
+            ), householdIDs: ["you", "marina"])
         let saved = gateway.gifts.first { $0.name == "Marina's wine" }
         #expect(saved?.direction == .given)
         #expect(saved?.giverID == "marina")
@@ -255,9 +259,10 @@ struct SaveGiftTests {
 
 struct OrderingTests {
     private func gift(_ id: String, date: Date, createdAt: Date) -> Gift {
-        Gift(id: id, emoji: "🎁", name: id, direction: .received, giverID: "p",
-             recipientID: "you", paidByYou: false, occasion: "", date: date, value: 0,
-             createdAt: createdAt)
+        Gift(
+            id: id, emoji: "🎁", name: id, direction: .received, giverID: "p",
+            recipientID: "you", paidByYou: false, occasion: "", date: date, value: 0,
+            createdAt: createdAt)
     }
 
     @Test func sameDayOrdersByCreationDescending() {
@@ -280,11 +285,9 @@ struct SubtitleTests {
         let composition = makeTestComposition()
         let data = composition.data
         let received = data.gifts.first { $0.id == "g1" }!
-        #expect(data.giftSubtitle(received) ==
-                "\(data.entityName(received.giverID))  →  \(data.entityName(received.recipientID))")
+        #expect(data.giftSubtitle(received) == "\(data.entityName(received.giverID))  →  \(data.entityName(received.recipientID))")
         let given = data.gifts.first { $0.id == "g8" }!
-        #expect(data.giftSubtitle(given) ==
-                "\(data.entityName(given.giverID))  →  \(data.entityName(given.recipientID))")
+        #expect(data.giftSubtitle(given) == "\(data.entityName(given.giverID))  →  \(data.entityName(given.recipientID))")
         #expect(!data.giftSubtitle(given).contains("·"))
     }
 }

@@ -16,8 +16,9 @@ struct AvatarView: View {
                 if selected {
                     RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
                         .stroke(Color.white, lineWidth: 3).padding(-1.5)
-                        .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius + 2, style: .continuous)
-                            .stroke(color, lineWidth: 2).padding(-3.5))
+                        .background(
+                            RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius + 2, style: .continuous)
+                                .stroke(color, lineWidth: 2).padding(-3.5))
                 }
             }
     }

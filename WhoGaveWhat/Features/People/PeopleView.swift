@@ -10,28 +10,36 @@ struct PeopleView: View {
 
     var body: some View {
         List {
-            section(header: "Your family",
-                    entities: composition.data.householdMembers.map { ($0.id, $0.name, $0.color) })
-            section(header: "Friends & relatives",
-                    entities: composition.data.contacts.map { ($0.id, $0.name, $0.color) })
+            section(
+                header: "Your family",
+                entities: composition.data.householdMembers.map { ($0.id, $0.name, $0.color) })
+            section(
+                header: "Friends & relatives",
+                entities: composition.data.contacts.map { ($0.id, $0.name, $0.color) })
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(Color.bg)
         .floatingAddButton(composition: composition)
-        .confirmationDialog(personDeleteTitle,
-                            isPresented: deleteBinding,
-                            titleVisibility: .visible,
-                            presenting: pendingDelete) { id in
-            Button(deletePersonActionLabel(giftsCount(involving: id)),
-                   role: .destructive) {
+        .confirmationDialog(
+            personDeleteTitle,
+            isPresented: deleteBinding,
+            titleVisibility: .visible,
+            presenting: pendingDelete
+        ) { id in
+            Button(
+                deletePersonActionLabel(giftsCount(involving: id)),
+                role: .destructive
+            ) {
                 composition.deletePerson(id: id)
                 pendingDelete = nil
             }
             Button("Cancel", role: .cancel) { pendingDelete = nil }
         } message: { id in
-            Text(personDeleteMessage(composition.data.entityName(id),
-                                     count: giftsCount(involving: id)))
+            Text(
+                personDeleteMessage(
+                    composition.data.entityName(id),
+                    count: giftsCount(involving: id)))
         }
     }
 
@@ -41,14 +49,17 @@ struct PeopleView: View {
             Section {
                 ForEach(entities, id: \.0) { e in
                     NavigationLink(value: e.0) {
-                        PersonRow(entityId: e.0, name: e.1, color: e.2,
-                                  gifts: gifts(for: e.0),
-                                  currencyCode: composition.currencyCode)
+                        PersonRow(
+                            entityId: e.0, name: e.1, color: e.2,
+                            gifts: gifts(for: e.0),
+                            currencyCode: composition.currencyCode)
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 12))
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         if composition.deletePersonUseCase.canDelete(id: e.0) {
-                            Button(role: .destructive) { pendingDelete = e.0 } label: {
+                            Button(role: .destructive) {
+                                pendingDelete = e.0
+                            } label: {
                                 Image(systemName: "trash")
                             }
                             .accessibilityLabel("Delete")
@@ -64,8 +75,9 @@ struct PeopleView: View {
     }
 
     private var deleteBinding: Binding<Bool> {
-        Binding(get: { pendingDelete != nil },
-                set: { if !$0 { pendingDelete = nil } })
+        Binding(
+            get: { pendingDelete != nil },
+            set: { if !$0 { pendingDelete = nil } })
     }
 
     private var personDeleteTitle: String {

@@ -17,7 +17,8 @@ enum AppDate {
 extension Date {
     func giftMonthLabel(displayYear: Int = 2026, locale: Locale = .current) -> String {
         let year = Calendar.current.component(.year, from: self)
-        let style = year == displayYear
+        let style =
+            year == displayYear
             ? Date.FormatStyle.dateTime.month(.wide)
             : Date.FormatStyle.dateTime.month(.wide).year()
         return formatted(style.locale(locale))
@@ -25,7 +26,8 @@ extension Date {
 
     func giftShortLabel(displayYear: Int = 2026, locale: Locale = .current) -> String {
         let year = Calendar.current.component(.year, from: self)
-        let style = year == displayYear
+        let style =
+            year == displayYear
             ? Date.FormatStyle.dateTime.month(.abbreviated).day()
             : Date.FormatStyle.dateTime.month(.abbreviated).day().year()
         return formatted(style.locale(locale))

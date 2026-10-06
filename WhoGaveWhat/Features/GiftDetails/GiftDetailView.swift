@@ -39,7 +39,9 @@ struct GiftDetailView: View {
         .scrollIndicators(.hidden)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button { composition.router.presentEditGift(id: gift.id) } label: {
+                Button {
+                    composition.router.presentEditGift(id: gift.id)
+                } label: {
                     Image(systemName: "pencil")
                         .font(.system(size: 17, weight: .semibold))
                 }
@@ -95,16 +97,19 @@ struct GiftDetailView: View {
                 RowDivider().padding(.leading, 58)
                 detailRow(fm, icon: .asset("ArrowRightToLine"), label: "To", value: toName)
                 RowDivider().padding(.leading, 58)
-                detailRow(fm, icon: .system("party.popper.fill"), label: "Occasion",
-                          value: composition.data.localizedOccasion(g.occasion))
+                detailRow(
+                    fm, icon: .system("party.popper.fill"), label: "Occasion",
+                    value: composition.data.localizedOccasion(g.occasion))
                 RowDivider().padding(.leading, 58)
                 detailRow(fm, icon: .system("calendar"), label: "Date", value: g.date.giftInputLabel())
             }
         }
     }
 
-    private func detailRow(_ fm: GiftDirectionAppearance, icon: GiftDetailIcon,
-                           label: String, value: String) -> some View {
+    private func detailRow(
+        _ fm: GiftDirectionAppearance, icon: GiftDetailIcon,
+        label: String, value: String
+    ) -> some View {
         HStack(spacing: 12) {
             GiftDetailIconView(icon: icon, accent: fm.main, tint: fm.tint)
             Text(LocalizedStringKey(label)).font(Font.app(16, .regular)).foregroundColor(Color.ink)

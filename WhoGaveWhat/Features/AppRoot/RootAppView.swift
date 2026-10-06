@@ -36,8 +36,10 @@ struct RootAppView: View {
     /// One tab: a navigation stack that pushes `PersonDetailView` for any entity id.
     /// `icon` is a custom (template-rendered) asset name from `Assets.xcassets`.
     @ViewBuilder
-    private func stack<Content: View>(_ value: AppTab, _ title: String, _ icon: String,
-                                      @ViewBuilder _ content: () -> Content) -> some View {
+    private func stack<Content: View>(
+        _ value: AppTab, _ title: String, _ icon: String,
+        @ViewBuilder _ content: () -> Content
+    ) -> some View {
         NavigationStack {
             content()
                 .navigationDestination(for: String.self) { id in
@@ -56,13 +58,15 @@ struct RootAppView: View {
     }
 
     private var giftSheetBinding: Binding<GiftSheetRoute?> {
-        Binding(get: { composition.router.giftSheet },
-                set: { composition.router.giftSheet = $0 })
+        Binding(
+            get: { composition.router.giftSheet },
+            set: { composition.router.giftSheet = $0 })
     }
 
     private var settingsBinding: Binding<Bool> {
-        Binding(get: { composition.router.showsSettings },
-                set: { if !$0 { composition.router.dismissSettings() } })
+        Binding(
+            get: { composition.router.showsSettings },
+            set: { if !$0 { composition.router.dismissSettings() } })
     }
 }
 
@@ -91,7 +95,9 @@ struct AddGiftFAB: View {
     let router: AppRouter
 
     var body: some View {
-        Button { router.presentNewGift() } label: {
+        Button {
+            router.presentNewGift()
+        } label: {
             Label("Add a gift", systemImage: "plus")
                 .font(Font.app(16, .semibold))
                 .foregroundColor(.white)

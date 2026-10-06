@@ -17,9 +17,11 @@ struct PersonDetailView: View {
     @State private var confirmingPersonDelete = false
 
     private var filterOptions: [Segmented.Option] {
-        [.init(key: "all", label: "All", accent: Color.ink),
-         .init(key: "received", label: "Received", accent: Color.recv),
-         .init(key: "given", label: "Given", accent: Color.ink)]
+        [
+            .init(key: "all", label: "All", accent: Color.ink),
+            .init(key: "received", label: "Received", accent: Color.recv),
+            .init(key: "given", label: "Given", accent: Color.ink)
+        ]
     }
 
     var body: some View {
@@ -56,10 +58,12 @@ struct PersonDetailView: View {
                 .padding(.top, 6)
 
                 HStack(spacing: 10) {
-                    statCard(arrow: "↙", label: "Received", color: Color.recv,
-                             count: recv.count, value: recv.totalValue)
-                    statCard(arrow: "↗", label: "Given", color: Color.ink,
-                             count: given.count, value: given.totalValue)
+                    statCard(
+                        arrow: "↙", label: "Received", color: Color.recv,
+                        count: recv.count, value: recv.totalValue)
+                    statCard(
+                        arrow: "↗", label: "Given", color: Color.ink,
+                        count: given.count, value: given.totalValue)
                 }
                 .padding(.top, 18)
 
@@ -85,18 +89,21 @@ struct PersonDetailView: View {
                 Section {
                     ForEach(list) { gift in
                         NavigationLink(value: gift) {
-                            GiftRow(gift: gift,
-                                    subtitle: composition.data.giftSubtitle(gift),
-                                    dateLabel: gift.date.giftShortLabel(),
-                                    currencyCode: composition.currencyCode)
+                            GiftRow(
+                                gift: gift,
+                                subtitle: composition.data.giftSubtitle(gift),
+                                dateLabel: gift.date.giftShortLabel(),
+                                currencyCode: composition.currencyCode)
                         }
-                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) { pendingDelete = gift } label: {
-                                    Image(systemName: "trash")
-                                }
-                                .accessibilityLabel("Delete")
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                pendingDelete = gift
+                            } label: {
+                                Image(systemName: "trash")
                             }
+                            .accessibilityLabel("Delete")
+                        }
                     }
                 }
             }
@@ -122,10 +129,12 @@ struct PersonDetailView: View {
             }
         }
         // Confirm deleting a single gift from the swipe.
-        .confirmationDialog("Delete this gift?",
-                            isPresented: giftDeleteBinding,
-                            titleVisibility: .visible,
-                            presenting: pendingDelete) { gift in
+        .confirmationDialog(
+            "Delete this gift?",
+            isPresented: giftDeleteBinding,
+            titleVisibility: .visible,
+            presenting: pendingDelete
+        ) { gift in
             Button("Delete", role: .destructive) {
                 composition.deleteGift(id: gift.id)
                 pendingDelete = nil
@@ -137,15 +146,19 @@ struct PersonDetailView: View {
             renameSheet(name: name, count: giftsCount)
         }
         // Big, hard-to-miss irreversible warning before deleting the person.
-        .confirmationDialog(personDeleteTitle(name),
-                            isPresented: $confirmingPersonDelete,
-                            titleVisibility: .visible) {
-            Button(deletePersonActionLabel(giftsCount),
-                   role: .destructive) {
+        .confirmationDialog(
+            personDeleteTitle(name),
+            isPresented: $confirmingPersonDelete,
+            titleVisibility: .visible
+        ) {
+            Button(
+                deletePersonActionLabel(giftsCount),
+                role: .destructive
+            ) {
                 composition.deletePerson(id: entityId)
                 dismiss()
             }
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) {}
         } message: {
             Text(personDeleteMessage(name, count: giftsCount))
         }
@@ -153,8 +166,9 @@ struct PersonDetailView: View {
 
     /// Drives the per-gift delete dialog off the optional pending gift.
     private var giftDeleteBinding: Binding<Bool> {
-        Binding(get: { pendingDelete != nil },
-                set: { if !$0 { pendingDelete = nil } })
+        Binding(
+            get: { pendingDelete != nil },
+            set: { if !$0 { pendingDelete = nil } })
     }
 
     // MARK: Rename + delete person
