@@ -5,58 +5,68 @@ on:
     branches: [master]
   pull_request:
 
+permissions:
+  contents: read
+
 concurrency:
   group: tests-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  secrets:
-    name: Secret Patterns
+  scripts:
+    name: Scripts and secret patterns
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: scripts/check-secrets.sh
+      - run: python3 -m unittest discover -s scripts/tests -v
 
-      - name: Check tracked files
-        run: scripts/check-secrets.sh
-
-  test:
-    name: Unit tests
-    runs-on: macos-15
+  quality:
+    name: Swift format and lint
+    runs-on: macos-26
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
+      - name: Install SwiftLint
+        run: brew install swiftlint
+      - run: scripts/check-formatting.sh
+      - run: scripts/lint-swift.sh
 
-      - name: Select Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+  test:
+    name: Unit tests and app smoke
+    runs-on: macos-26
+    timeout-minutes: 40
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      XCODE_VERSION: '26.6'
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      XCODEBUILDMCP_SENTRY_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          xcode-version: latest-stable   # Xcode 26+ — required for the iOS 26 SDK
-
-      - name: Show versions
+          node-version: '22'
+      - name: Install project XcodeBuildMCP
+        run: npm install --global xcodebuildmcp@2.7.0
+      - name: Show tool versions
         run: |
-          xcodebuild -version
           swift --version
-
-      - name: Build & Test
+          xcodebuildmcp --version
+          xcodebuildmcp simulator test --help
+      - name: Test and record app smoke
+        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke"
+      - name: Render evidence report
+        if: always()
         run: |
-          set -o pipefail
-          FORMATTER=cat
-          command -v xcbeautify >/dev/null 2>&1 && FORMATTER=xcbeautify
-          # iPhone 17 is the default device on the Xcode 26 runner image;
-          # OS=latest pins the newest installed runtime so an ambiguous match
-          # (several iOS versions of the same device) can't fail resolution.
-          # Letting xcodebuild resolve name+OS guarantees an *eligible*
-          # destination — unlike a raw UDID from `simctl list ... available`.
-          xcodebuild test \
-            -project WhoGaveWhat.xcodeproj \
-            -scheme WhoGaveWhat \
-            -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
-            -resultBundlePath TestResults.xcresult \
-            CODE_SIGNING_ALLOWED=NO \
-            | "$FORMATTER"
-
-      - name: Upload test results
+          if test -f "$RUNNER_TEMP/ui-app-smoke/metadata.json"; then
+            python3 scripts/ui-evidence-report.py "$RUNNER_TEMP/ui-app-smoke"
+          fi
+      - name: Upload app evidence and diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
-          path: TestResults.xcresult
-          if-no-files-found: ignore
+          name: ui-app-smoke-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ui-app-smoke
+          if-no-files-found: warn
+          retention-days: 14
