@@ -10,7 +10,7 @@ The implementation ports GrowingUp PRs 41, 43, 44, 45 and 47. WhoGaveWhat has on
 app (`pro.ziganshin.WhoGaveWhat`) and generates its Info.plist from build settings;
 there is no widget. Signing uses its own `whogavewhat-ci` branch.
 
-## Setup and native build limitation
+## Setup and native release tooling
 
 Use the repository's protected [testflight environment](https://github.com/zigdanis/WhoGaveWhat/settings/environments).
 Its custom deployment branch policy must allow exactly the `master` branch and no
@@ -35,12 +35,13 @@ Its `device build` supports extra arguments but always injects a build action,
 project/scheme, destination and DerivedData arguments. It has no archive/export
 command that exports an IPA. Consequently the release lane gates Fastlane `gym`
 archive/export on `ALLOW_NATIVE_RELEASE_BUILD=true` in the environment variables.
-Leave that gate unset until Danis explicitly authorizes this bounded exception
-to the all-XcodeBuildMCP rule. The exception covers Release archive and IPA export
-only; native tests, simulator operations and visual evidence continue through
-XcodeBuildMCP. Preflight, status and notes do not archive or upload. A deployment
-without the gate fails before reserving a version/build. This document does not
-claim that credentials or this exception have been approved or validated.
+Danis authorized this bounded exception in the deployment setup: Fastlane performs
+the signed Release archive and IPA export; native tests, simulator operations and
+visual evidence continue through XcodeBuildMCP. The exception is recorded in
+`AGENTS.md` and the environment gate is enabled. Preflight, status and notes do
+not archive or upload. A deployment without the gate fails before reserving a
+version/build. Credential access and signing still require a successful preflight;
+the presence of configuration does not claim they have been validated.
 
 Use existing Mac T3 connections for missing credentials or Apple account setup.
 Keep the shared signing branch, GrowingUp configuration and valid certificates

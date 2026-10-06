@@ -22,7 +22,9 @@ repository instructions and existing helpers; keep unrelated user changes intact
    with the coordinator. If delegation is unavailable, continue the authorized
    work and state that limitation.
 4. Integrate the smallest appropriate change and focused contract tests. Use
-   XcodeBuildMCP for all Xcode/Simulator operations and reuse a launched iPhone.
+   XcodeBuildMCP for native operations and reuse a launched iPhone; the authorized
+   TestFlight Release archive/IPA export exception uses Fastlane `gym` as described
+   in `docs/testflight.md`.
    On Raspberry Pi, use the macOS CI workflow from
    [docs/pr-evidence.md](../../../docs/pr-evidence.md). After a UI iteration, walk
    the changed scenario and inspect its screenshots and recording against every
