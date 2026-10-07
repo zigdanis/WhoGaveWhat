@@ -402,10 +402,6 @@ struct AddGiftPickerPresentation: View {
 
     var body: some View {
         AddGiftPickerSheet(kind: kind, state: state, composition: composition)
-            // From and To use the same picker view type but have independent
-            // selection state. Give SwiftUI a new identity when the endpoint
-            // changes so PersonPickerState is initialized from the new draft.
-            .id(kind)
     }
 }
 
