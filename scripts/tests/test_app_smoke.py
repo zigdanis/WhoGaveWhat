@@ -35,11 +35,6 @@ class AppSmokeReadRetryTests(unittest.TestCase):
         self.assertEqual('ready', result['capture']['screenHash'])
         self.assertEqual(2, run.call_count)
 
-    def test_postcondition_matching_rejects_wrong_state(self):
-        capture = {'elements': [{'identifier': 'home', 'role': 'other'}]}
-        with self.assertRaises(ValueError):
-            smoke.assert_picker_closed(capture, 'add-gift.from', 'CI Giver')
-
     def test_transient_ui_reads_recover_and_preserve_both_diagnostics(self):
         for command in ('wait-for-ui', 'snapshot-ui'):
             with self.subTest(command=command), tempfile.TemporaryDirectory() as directory:
@@ -110,192 +105,75 @@ class AppSmokeReadRetryTests(unittest.TestCase):
 
 
 class AppSmokeJourneyTests(unittest.TestCase):
-    def test_currency_target_changes_from_existing_value(self):
-        self.assertEqual("AUD", smoke.currency_target("USD"))
-        self.assertEqual("AFN", smoke.currency_target("AUD"))
-
-    def test_calendar_week_count_search_is_bounded_and_reaches_a_different_month_shape(self):
-        start = smoke.calendar_week_count("February 2029")
-        months = ["March 2029", "April 2029", "May 2029", "June 2029", "July 2029",
-                  "August 2029", "September 2029", "October 2029", "November 2029",
-                  "December 2029", "January 2030", "February 2030"]
-        self.assertTrue(any(smoke.calendar_week_count(month) != start for month in months))
-
-    def test_native_runner_exports_only_successful_test_media(self):
+    def run_fixture(self, *, calendar_counts=(5, 6), native_failure=False):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
+            invocations = []
+            result = directory / "external-result.xcresult"
+            result.mkdir()
+            (result / "fixture-result").write_text("native result")
+
             def mcp(_directory, _sequence, workflow, command, parameters):
+                invocations.append((command, parameters))
                 if command == 'list':
                     return {'simulators': [{'isAvailable': True, 'name': 'iPhone 17 Pro', 'state': 'Booted',
                                             'runtime': 'iOS 26.5', 'simulatorId': 'fixture'}]}
                 if command == 'test':
-                    result = directory / 'Acceptance.xcresult'
-                    result.mkdir()
+                    if native_failure:
+                        payload = {'didError': True, 'error': 'Native assertion failed',
+                                   'data': {'artifacts': {'xcresultPath': str(result)}}}
+                        smoke.checked_output(subprocess.CompletedProcess([], 1, json.dumps(payload), ''))
                     return {'artifacts': {'xcresultPath': str(result)}}
                 if command == 'record-video' and parameters.get('stop'):
                     Path(parameters['outputFile']).write_bytes(b'video')
                 return {}
+
             def export(command, **kwargs):
                 attachment_dir = directory / 'attachments'
                 attachment_dir.mkdir(parents=True, exist_ok=True)
-                for name in ['home-start', 'people', 'insights', 'gift-compact-keyboard', 'details-value',
-                             'calendar-5-weeks', 'calendar-6-weeks', 'gift-saved', 'gift-after-relaunch',
-                             'settings-currency', 'licenses']:
-                    (attachment_dir / f'{name}.png').write_bytes(b'image')
-                (attachment_dir / 'manifest.json').write_text(json.dumps([{
-                    'attachments': [
-                        {'exportedFileName': f'{name}.png', 'suggestedHumanReadableName': name}
-                        for name in ['home-start', 'people', 'insights', 'gift-compact-keyboard', 'details-value',
-                                     'calendar-5-weeks', 'calendar-6-weeks', 'gift-saved', 'gift-after-relaunch',
-                                     'settings-currency', 'licenses']
-                    ]
-                }]))
+                names = ['home-start', 'people', 'insights', 'gift-compact-keyboard', 'details-value',
+                         'gift-saved', 'gift-after-relaunch', 'settings-currency', 'licenses']
+                names += [f'calendar-{count}-weeks' for count in calendar_counts]
+                attachments = []
+                for index, name in enumerate(names):
+                    filename = f'exported-{index}.png'
+                    (attachment_dir / filename).write_bytes(b'image')
+                    attachments.append({'exportedFileName': filename,
+                                        'suggestedHumanReadableName': f'{name}_1.png'})
+                (attachment_dir / 'manifest.json').write_text(json.dumps([{'attachments': attachments}]))
                 return subprocess.CompletedProcess(command, 0, stdout='', stderr='')
+
             with (patch.object(smoke, 'invoke_mcp', side_effect=mcp),
                   patch.object(smoke.subprocess, 'run', side_effect=export),
                   patch.object(smoke.subprocess, 'check_output', return_value='a' * 40)):
-                smoke.run(directory)
+                if native_failure or len(set(calendar_counts)) < 2:
+                    with self.assertRaises(ValueError):
+                        smoke.run(directory)
+                else:
+                    smoke.run(directory)
             metadata = json.loads((directory / 'metadata.json').read_text())
-            self.assertEqual('success', metadata['journey_outcome'])
-            self.assertEqual('success', metadata['export_outcome'])
-            self.assertEqual('home-start', metadata['checkpoints'][0]['name'])
+            self.assertEqual(1, sum(command == 'test' for command, _ in invocations))
+            self.assertTrue((directory / 'Acceptance.xcresult' / 'fixture-result').is_file())
+            self.assertTrue((directory / 'attachments/home-start.png').is_file())
+            return metadata
 
-    @unittest.skip('Native XCTest acceptance target owns the UI journey')
-    def test_navigation_uses_latest_checkpoint_capture_after_each_mutation(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            directory = Path(temporary)
-            screenshot = directory / 'fixture.jpeg'
-            screenshot.write_bytes(b'screenshot fixture')
-            current = 'Home'
-            calendar_page = 0
-            currency_selected = False
-            taps = []
-            generation = 0
-            latest = None
-            photographed = None
-            timed_out_people_tap = False
-            batch_calls = []
+    def test_named_native_attachments_and_distinct_calendar_counts_pass(self):
+        metadata = self.run_fixture()
+        self.assertEqual('success', metadata['journey_outcome'])
+        self.assertEqual('success', metadata['export_outcome'])
+        self.assertEqual('home-start', metadata['checkpoints'][0]['name'])
 
-            def capture():
-                nonlocal generation
-                generation += 1
-                prefix = f'{current}-{generation}-'
-                elements = [
-                    *[{'ref': prefix + 'tab-' + label, 'label': label, 'role': 'tab', 'actions': ['tap'],
-                       'value': '1' if current == label else '0'} for label in ('Home', 'People', 'Insights')],
-                    {'ref': 'heading', 'identifier': current, 'role': 'other', 'state': {'visible': True}},
-                    {'ref': prefix + 'add-gift', 'label': 'Add a gift', 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'name', 'identifier': 'add-gift.name', 'role': 'text-field'},
-                    {'ref': 'details', 'identifier': 'add-gift.details', 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'value', 'identifier': 'add-gift.value', 'role': 'text-field'},
-                    {'ref': 'scroll', 'identifier': 'add-gift.scroll', 'role': 'scroll-view', 'actions': ['swipe']},
-                    {'ref': 'date', 'identifier': 'add-gift.date', 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'calendar', 'identifier': 'date-picker.calendar', 'role': 'other', 'actions': ['swipe']},
-                    {'ref': 'month', 'label': (['October 2026', 'November 2026', 'December 2026', 'January 2027'][min(calendar_page, 3)]), 'role': 'static-text'},
-                    {'ref': 'today', 'identifier': 'date-picker.today', 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'from', 'identifier': 'add-gift.from', 'value': 'CI Giver', 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'to', 'identifier': 'add-gift.to', 'value': 'CI Receiver', 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'query', 'identifier': 'person-picker.query', 'role': 'text-field'},
-                    {'ref': 'add-person', 'identifier': 'person-picker.add', 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'person-a', 'identifier': 'person-picker.person.a', 'label': 'CI Giver', 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'person-b', 'identifier': 'person-picker.person.b', 'label': 'CI Receiver', 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'save', 'identifier': 'add-gift.save', 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'gift', 'label': 'CI acceptance book', 'role': 'static-text'},
-                    {'ref': 'duplicate-gift', 'label': 'CI duplicate reuse', 'role': 'static-text'},
-                    {'ref': 'settings', 'label': 'Settings', 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'settings-screen', 'identifier': 'settings.screen', 'role': 'other'},
-                    {'ref': 'currency', 'identifier': 'settings.currency', 'value': ('AUD' if currency_selected else 'USD'), 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'currency-list', 'identifier': 'settings.currency.list', 'role': 'scroll-view', 'actions': ['swipe']},
-                    {'ref': 'aud', 'identifier': 'settings.currency.AUD', 'value': 'AUD', 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'licenses-link', 'identifier': 'settings.third-party-licenses', 'role': 'button', 'actions': ['tap']},
-                    {'ref': 'licenses-screen', 'identifier': 'settings.third-party-licenses.screen', 'role': 'other'},
-                    {'ref': 'license-heading', 'label': 'Archivo license', 'role': 'static-text'}]
-                if current != 'Add a gift':
-                    elements = [e for e in elements if e.get('identifier') != 'add-gift.name']
-                return {'elements': elements}
+    def test_missing_distinct_calendar_evidence_rejects_publication(self):
+        metadata = self.run_fixture(calendar_counts=(5,))
+        self.assertEqual('failure', metadata['export_outcome'])
+        self.assertIn('two calendar checkpoints with distinct week counts', metadata['missing_checkpoints'])
 
-            def backend(_directory, _sequence, workflow, command, parameters):
-                nonlocal current, latest, photographed, calendar_page, timed_out_people_tap, currency_selected
-                if command == 'list':
-                    return {'simulators': [{'isAvailable': True, 'name': 'iPhone 17 Pro', 'state': 'Booted',
-                                            'runtime': 'iOS 26.5', 'simulatorId': 'fixture'}]}
-                if command == 'snapshot-ui':
-                    latest = {'elements': [e for e in capture()['elements'] if e['role'] != 'tab']}
-                    return {'capture': latest}
-                if command == 'wait-for-ui':
-                    ready = capture()
-                    if parameters['predicate'] == 'exists':
-                        self.assertTrue(any(all(element.get(key) == parameters[key]
-                                                for key in ('label', 'identifier', 'role') if key in parameters)
-                                            for element in ready['elements']))
-                    latest = ready
-                    if parameters['predicate'] == 'settled':
-                        photographed = ready
-                    return {'capture': ready}
-                if command == 'tap':
-                    self.fail('Smoke navigation must avoid the observed AXe selector tap path')
-                if command == 'batch':
-                    self.assertEqual(1, len(parameters['steps']))
-                    self.assertEqual('tap', parameters['steps'][0]['action'])
-                    ref = parameters['steps'][0]['elementRef']
-                    matches = [element for element in latest['elements'] if element['ref'] == ref]
-                    self.assertEqual(1, len(matches))
-                    self.assertIn('tap', matches[0]['actions'])
-                    batch_calls.append(ref)
-                    if matches[0].get('identifier') == 'settings.currency.AUD':
-                        currency_selected = True
-                    if matches[0].get('identifier') == 'add-gift.save':
-                        current = 'Home'
-                    if matches[0].get('label') == 'People' and not timed_out_people_tap:
-                        timed_out_people_tap = True
-                        current = 'People'
-                        taps.append('People')
-                        raise smoke.MCPInvocationError(
-                            "XcodeBuildMCP failed: Daemon invocation failed: Daemon request timed out after 30000ms",
-                            code="DAEMON_TRANSPORT_FAILED")
-                    if matches[0].get('label') in ('Home', 'People', 'Insights', 'Add a gift'):
-                        self.assertIsNotNone(photographed)
-                        self.assertIn(ref, [element['ref'] for element in photographed['elements']])
-                    if matches[0].get('label') in ('Home', 'People', 'Insights', 'Add a gift'):
-                        current = matches[0]['label']
-                        taps.append(current)
-                    latest = None
-                    photographed = None
-                if command in ('type-text', 'swipe', 'launch-app', 'stop'):
-                    if command == 'swipe':
-                        if parameters.get('direction') == 'left':
-                            calendar_page += 1
-                        else:
-                            calendar_page = max(0, calendar_page - 1)
-                    return {}
-                if command == 'screenshot':
-                    photographed = latest
-                    return {'artifacts': {'screenshotPath': str(screenshot)}}
-                if command == 'record-video' and parameters.get('stop'):
-                    Path(parameters['outputFile']).write_bytes(b'video fixture')
-                return {}
+    def test_failed_native_test_keeps_result_and_exports_diagnostics(self):
+        metadata = self.run_fixture(native_failure=True)
+        self.assertEqual('failure', metadata['journey_outcome'])
+        self.assertEqual('failure', metadata['export_outcome'])
+        self.assertIn('Native assertion failed', metadata['native_test_error'])
 
-            def normalize_image(command, **kwargs):
-                Path(command[-1]).write_bytes(b'normalized image fixture')
-                return subprocess.CompletedProcess(command, 0)
 
-            with (patch.object(smoke, 'invoke_mcp', side_effect=backend),
-                  patch.object(smoke, 'entity_names', return_value={
-                      'gift': 'CI acceptance book', 'giver': 'CI Giver',
-                      'receiver': 'CI Receiver', 'duplicate': 'CI duplicate reuse'}),
-                  patch.object(smoke.subprocess, 'run', side_effect=normalize_image),
-                  patch.object(smoke.subprocess, 'check_output', return_value='a' * 40)):
-                smoke.run(directory)
-            metadata = json.loads((directory / 'metadata.json').read_text())
-            self.assertEqual('success', metadata['journey_outcome'])
-            self.assertEqual('success', metadata['export_outcome'])
-            self.assertEqual(['home', 'people', 'insights', 'home',
-                              'add-gift-compact', 'add-gift-details',
-                              'add-gift-value-scrolled', 'calendar-october-2026',
-                              'calendar-january-2027', 'details-after-calendar',
-                              'add-gift-endpoints', 'saved-gift',
-                              'relaunch-persistence', 'duplicate-person-reuse',
-                              'settings', 'licenses'],
-                             [checkpoint['name'] for checkpoint in metadata['checkpoints']])
-            self.assertEqual(['People', 'Insights', 'Home', 'Add a gift', 'Add a gift'], taps)
-            self.assertEqual(1, sum(ref.endswith('tab-People') for ref in batch_calls))
+if __name__ == "__main__":
+    unittest.main()
