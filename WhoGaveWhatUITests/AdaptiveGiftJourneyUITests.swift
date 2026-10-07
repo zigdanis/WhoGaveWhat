@@ -244,7 +244,32 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 attach("details-value-keyboard")
                 return
             }
-            scroll.swipeUp()
+            let window = app.windows.firstMatch
+            let visibleBottom = keyboard.frame.minY - 16
+            let visibleFrame = scroll.frame.intersection(
+                CGRect(
+                    x: scroll.frame.minX,
+                    y: scroll.frame.minY,
+                    width: scroll.frame.width,
+                    height: max(0, visibleBottom - scroll.frame.minY)
+                ))
+            guard visibleFrame.height > 40 else {
+                XCTFail("No usable scroll area above keyboard: scroll=\(scroll.frame), keyboard=\(keyboard.frame)")
+                return
+            }
+            let startY = visibleFrame.minY + visibleFrame.height * 0.8
+            let endY = visibleFrame.minY + visibleFrame.height * 0.2
+            let start = window.coordinate(
+                withNormalizedOffset: CGVector(
+                    dx: (visibleFrame.midX - window.frame.minX) / window.frame.width,
+                    dy: (startY - window.frame.minY) / window.frame.height
+                ))
+            let end = window.coordinate(
+                withNormalizedOffset: CGVector(
+                    dx: (visibleFrame.midX - window.frame.minX) / window.frame.width,
+                    dy: (endY - window.frame.minY) / window.frame.height
+                ))
+            start.press(forDuration: 0.05, thenDragTo: end)
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
 
