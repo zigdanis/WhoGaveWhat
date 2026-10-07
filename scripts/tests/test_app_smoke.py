@@ -98,6 +98,13 @@ class AppSmokeReadRetryTests(unittest.TestCase):
 
 
 class AppSmokeJourneyTests(unittest.TestCase):
+    def test_calendar_week_count_search_is_bounded_and_reaches_a_different_month_shape(self):
+        start = smoke.calendar_week_count("February 2029")
+        months = ["March 2029", "April 2029", "May 2029", "June 2029", "July 2029",
+                  "August 2029", "September 2029", "October 2029", "November 2029",
+                  "December 2029", "January 2030", "February 2030"]
+        self.assertTrue(any(smoke.calendar_week_count(month) != start for month in months))
+
     def test_navigation_uses_latest_checkpoint_capture_after_each_mutation(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)

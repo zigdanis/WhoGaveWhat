@@ -310,7 +310,7 @@ def run(directory):
         capture = checkpoint(f"calendar-{short_month.lower().replace(' ', '-')}", identifier="date-picker.calendar")
         long_month = None
         long_weeks = None
-        for _ in range(6):
+        for _ in range(12):
             swipe(capture, "left", identifier="date-picker.calendar")
             capture = wait(predicate="exists", identifier="date-picker.calendar")
             candidate = calendar_month(capture)
