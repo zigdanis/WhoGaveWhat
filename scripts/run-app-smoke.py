@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import subprocess
+import uuid
 from pathlib import Path
 
 
@@ -128,6 +129,19 @@ def assert_tab_screen(capture, label):
         raise ValueError(f"The {label} navigation heading and selected tab must both be visible")
 
 
+def entity_names():
+    """Return names unique to this invocation, including local simulator runs."""
+    run_id = re.sub(r"[^A-Za-z0-9-]", "-", os.environ.get("GITHUB_RUN_ID", "local"))
+    attempt = os.environ.get("GITHUB_RUN_ATTEMPT", "1")
+    token = f"{run_id}-{attempt}-{uuid.uuid4().hex[:8]}"
+    return {
+        "gift": f"CI acceptance book {token}",
+        "giver": f"CI Giver {token}",
+        "receiver": f"CI Receiver {token}",
+        "duplicate": f"CI duplicate reuse {token}",
+    }
+
+
 def run(directory):
     directory = directory.resolve()
     directory.mkdir(parents=True, exist_ok=True)
@@ -151,15 +165,12 @@ def run(directory):
             "Settings currency and bundled third-party licenses",
         ],
     }
-    run_token = ""
-    if os.environ.get("GITHUB_RUN_ID"):
-        run_token = re.sub(r"[^A-Za-z0-9-]", "-", 
-                           f"{os.environ['GITHUB_RUN_ID']}-{os.environ.get('GITHUB_RUN_ATTEMPT', '1')}")
-    gift_name = f"CI acceptance book {run_token}".rstrip() if run_token else "CI acceptance book"
-    giver_name = f"CI Giver {run_token}".rstrip() if run_token else "CI Giver"
-    receiver_name = f"CI Receiver {run_token}".rstrip() if run_token else "CI Receiver"
-    duplicate_name = f"CI duplicate reuse {run_token}".rstrip() if run_token else "CI duplicate reuse"
-    metadata["run_entities"] = {"gift": gift_name, "giver": giver_name, "receiver": receiver_name}
+    names = entity_names()
+    gift_name = names["gift"]
+    giver_name = names["giver"]
+    receiver_name = names["receiver"]
+    duplicate_name = names["duplicate"]
+    metadata["run_entities"] = names
     sequence = 0
     simulator = None
     recording = False

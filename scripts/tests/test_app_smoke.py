@@ -186,6 +186,9 @@ class AppSmokeJourneyTests(unittest.TestCase):
                 return subprocess.CompletedProcess(command, 0)
 
             with (patch.object(smoke, 'invoke_mcp', side_effect=backend),
+                  patch.object(smoke, 'entity_names', return_value={
+                      'gift': 'CI acceptance book', 'giver': 'CI Giver',
+                      'receiver': 'CI Receiver', 'duplicate': 'CI duplicate reuse'}),
                   patch.object(smoke.subprocess, 'run', side_effect=normalize_image),
                   patch.object(smoke.subprocess, 'check_output', return_value='a' * 40)):
                 smoke.run(directory)
