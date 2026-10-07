@@ -149,6 +149,9 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             add.tap()
         } else {
             let matchingRows = personRows(named: name)
+            if matchingRows.count != 1 {
+                attachPersonRowDiagnostics("before-duplicate-add-\(endpoint)", name: name, rows: matchingRows)
+            }
             XCTAssertEqual(matchingRows.count, 1)
             let originalID = matchingRows[0].identifier
             personIDs[name] = originalID
@@ -165,6 +168,9 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             app.buttons["add-gift.\(endpoint)"].tap()
             XCTAssertTrue(app.textFields["person-picker.query"].waitForExistence(timeout: timeout))
             let reopenedRows = personRows(named: name)
+            if reopenedRows.count != 1 {
+                attachPersonRowDiagnostics("after-duplicate-add-\(endpoint)", name: name, rows: reopenedRows)
+            }
             XCTAssertEqual(reopenedRows.count, 1)
             XCTAssertEqual(reopenedRows[0].identifier, originalID)
             reopenedRows[0].tap()
@@ -313,6 +319,18 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         let value = selectedValue ?? "<nil>"
         let attachment = XCTAttachment(string: "selectedValue=\(value)\n\n\(app.debugDescription)")
         attachment.name = "\(name)-hierarchy"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    private func attachPersonRowDiagnostics(_ name: String, name personName: String, rows: [XCUIElement]) {
+        let candidates = rows.enumerated().map { index, row in
+            "candidate[\(index)] identifier=\(row.identifier) label=\(row.label) frame=\(row.frame) hittable=\(row.isHittable)"
+        }.joined(separator: "\n")
+        let attachment = XCTAttachment(
+            string: "personName=\(personName)\n\(candidates)\n\nquery=\(app.buttons.debugDescription)\n\n\(app.debugDescription)"
+        )
+        attachment.name = "person-row-\(name)"
         attachment.lifetime = .keepAlways
         add(attachment)
     }
