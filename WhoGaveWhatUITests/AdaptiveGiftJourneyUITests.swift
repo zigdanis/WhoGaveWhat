@@ -33,7 +33,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attach("home-start")
         assertTabs()
 
-        addGift(named: giftName, createPeople: true)
+        try addGift(named: giftName, createPeople: true)
         XCTAssertTrue(app.staticTexts[giftName].waitForExistence(timeout: timeout))
         attach("gift-saved")
 
@@ -42,7 +42,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts[giftName].waitForExistence(timeout: timeout))
         attach("gift-after-relaunch")
 
-        addGift(named: secondGiftName, createPeople: false)
+        try addGift(named: secondGiftName, createPeople: false)
         XCTAssertTrue(app.staticTexts[secondGiftName].waitForExistence(timeout: timeout))
         verifySettings()
         assertTabs()
@@ -66,7 +66,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["Home"].isSelected)
     }
 
-    private func addGift(named name: String, createPeople: Bool) {
+    private func addGift(named name: String, createPeople: Bool) throws {
         app.buttons["Add a gift"].tap()
         let giftNameField = app.textFields["add-gift.name"]
         XCTAssertTrue(giftNameField.waitForExistence(timeout: timeout))
@@ -95,12 +95,11 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         let firstMonth = try monthHeading(in: calendar)
         let firstWeekCount = weekCount(for: firstMonth)
         attach("calendar-\(firstWeekCount)-weeks")
-        var nextMonth = firstMonth
         var nextWeekCount = firstWeekCount
         for _ in 0..<12 where nextWeekCount == firstWeekCount {
             let next = calendar.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'next month' OR label CONTAINS[c] 'next'")).firstMatch
             if next.exists && next.isHittable { next.tap() } else { calendar.swipeLeft() }
-            nextMonth = try monthHeading(in: calendar)
+            let nextMonth = try monthHeading(in: calendar)
             nextWeekCount = weekCount(for: nextMonth)
         }
         XCTAssertNotEqual(nextWeekCount, firstWeekCount)
