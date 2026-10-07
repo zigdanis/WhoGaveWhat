@@ -130,6 +130,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(licenses.waitForExistence(timeout: timeout))
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] 'Archivo'")).firstMatch.waitForExistence(timeout: timeout))
         attach("licenses")
+        XCTAssertTrue(app.navigationBars.buttons["Settings"].waitForExistence(timeout: timeout))
+        app.navigationBars.buttons["Settings"].tap()
         app.buttons["Done"].tap()
         XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
     }
