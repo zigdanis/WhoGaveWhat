@@ -77,6 +77,13 @@ struct AddGiftSheet: View {
             .scrollIndicators(.hidden)
             .accessibilityIdentifier("add-gift.scroll")
             .scrollDismissesKeyboard(.interactively)
+            // A vertical ScrollView otherwise reports the presenter's available
+            // height as its ideal size, which makes the fitted sheet full-height
+            // even while the compact form only contains the basics. Keep the
+            // collapsed form content-sized; once Details is expanded, let the
+            // scroll view take the available height so the longer form remains
+            // usable on smaller screens.
+            .fixedSize(horizontal: false, vertical: !showsDetails)
             // Empty scroll area below the content also dismisses the keyboard.
             .background(Color.bg.contentShape(Rectangle()).onTapGesture { focus = nil })
             // Opening a picker must drop keyboard focus so it doesn't bounce back
