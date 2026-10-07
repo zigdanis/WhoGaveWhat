@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build, test and record an app smoke scenario through XcodeBuildMCP."""
 import argparse
+import calendar
 import json
 import os
 import re
@@ -10,11 +11,22 @@ import uuid
 from pathlib import Path
 
 
+class MCPInvocationError(ValueError):
+    def __init__(self, message, *, code=None, payload=None):
+        super().__init__(message)
+        self.code = code
+        self.payload = payload
+
+
 def checked_output(process):
     payload = json.loads(process.stdout)
     result = payload.get("result", payload)
     if (process.returncode or payload.get("isError") or result.get("didError") is not False):
-        raise ValueError(f"XcodeBuildMCP failed: {result.get('error') or process.stderr or process.stdout}")
+        data = result.get("data", {}) if isinstance(result, dict) else {}
+        code = data.get("code") or data.get("uiError", {}).get("code")
+        raise MCPInvocationError(
+            f"XcodeBuildMCP failed: {result.get('error') or process.stderr or process.stdout}",
+            code=code, payload=payload)
     return result.get("data", result)
 
 
@@ -93,16 +105,33 @@ def calendar_month(capture):
     return matches[0]
 
 
+def calendar_week_count(month_heading):
+    month_name, year_text = month_heading.rsplit(" ", 1)
+    month = list(calendar.month_name).index(month_name)
+    return len(calendar.Calendar(firstweekday=6).monthdayscalendar(int(year_text), month))
+
+
 def assert_endpoint(capture, identifier, expected):
     observed = element(capture, identifier=identifier)
     if observed.get("value") != expected:
         raise ValueError(f"{identifier} did not select {expected!r}: {observed}")
 
 
+def assert_picker_closed(capture, endpoint, expected):
+    if any(e.get("identifier", "").startswith("person-picker.") for e in capture.get("elements", [])):
+        raise ValueError("Person picker remained visible after Add")
+    assert_endpoint(capture, endpoint, expected)
+
+
+def assert_form_absent(capture):
+    if any(e.get("identifier") == "add-gift.name" for e in capture.get("elements", [])):
+        raise ValueError("Gift form remained visible after Save")
+
+
 def assert_currency(capture):
     observed = element(capture, identifier="settings.currency")
     text = " ".join(str(observed.get(key, "")) for key in ("label", "value"))
-    if "USD" not in text and "$" not in text and "United States" not in text:
+    if "USD" not in text:
         raise ValueError(f"Currency selection was not persisted in Settings: {observed}")
     placeholders = {"License information is unavailable.", "Choose", "No value"}
     visible = {str(e.get("label", "")) for e in capture.get("elements", [])}
@@ -209,7 +238,8 @@ def run(directory):
         except ValueError as error:
             text = str(error)
             transport_timeout = (
-                "DAEMON_TRANSPORT_FAILED" in text
+                isinstance(error, MCPInvocationError)
+                and error.code == "DAEMON_TRANSPORT_FAILED"
                 and "Daemon request timed out after 30000ms" in text)
             if not transport_timeout or expected is None:
                 raise
@@ -268,15 +298,23 @@ def run(directory):
         tap(capture, identifier="add-gift.date", expected={"identifier": "date-picker.calendar"})
         capture = wait(predicate="exists", identifier="date-picker.calendar")
         short_month = calendar_month(capture)
-        metadata["calendar_observations"].append(short_month)
+        short_weeks = calendar_week_count(short_month)
+        metadata["calendar_observations"].append({"month": short_month, "week_count": short_weeks})
         capture = checkpoint(f"calendar-{short_month.lower().replace(' ', '-')}", identifier="date-picker.calendar")
-        swipe(capture, "left", identifier="date-picker.calendar")
-        capture = wait(predicate="exists", identifier="date-picker.calendar")
-        long_month = calendar_month(capture)
-        if long_month == short_month:
-            raise ValueError(f"Calendar paging did not change month: {short_month}")
-        metadata["calendar_observations"].append(long_month)
-        metadata["calendar_navigation_scope"] = "adjacent visible month headings"
+        long_month = None
+        long_weeks = None
+        for _ in range(6):
+            swipe(capture, "left", identifier="date-picker.calendar")
+            capture = wait(predicate="exists", identifier="date-picker.calendar")
+            candidate = calendar_month(capture)
+            candidate_weeks = calendar_week_count(candidate)
+            if candidate_weeks != short_weeks:
+                long_month, long_weeks = candidate, candidate_weeks
+                break
+        if long_month is None:
+            raise ValueError(f"Calendar paging did not reach a different week count from {short_month}")
+        metadata["calendar_observations"].append({"month": long_month, "week_count": long_weeks})
+        metadata["calendar_navigation_scope"] = "bounded paging to a different Sunday based week count"
         capture = checkpoint(f"calendar-{long_month.lower().replace(' ', '-')}", identifier="date-picker.calendar")
         swipe(capture, "right", identifier="date-picker.calendar")
         capture = wait(predicate="exists", identifier="date-picker.today")
@@ -288,17 +326,19 @@ def run(directory):
         capture = wait(predicate="exists", identifier="person-picker.query")
         type_text(capture, giver_name, identifier="person-picker.query")
         capture = wait(predicate="exists", identifier="person-picker.add")
-        tap(capture, identifier="person-picker.add", expected={"identifier": "add-gift.to"})
+        tap(capture, identifier="person-picker.add", expected={"identifier": "add-gift.to"},
+            verify=lambda recovered: assert_picker_closed(recovered, "add-gift.from", giver_name))
         capture = wait(predicate="exists", identifier="add-gift.to")
         tap(capture, identifier="add-gift.to", expected={"identifier": "person-picker.query"})
         capture = wait(predicate="exists", identifier="person-picker.query")
         type_text(capture, receiver_name, identifier="person-picker.query")
         capture = wait(predicate="exists", identifier="person-picker.add")
-        tap(capture, identifier="person-picker.add", expected={"identifier": "add-gift.save"})
+        tap(capture, identifier="person-picker.add", expected={"identifier": "add-gift.save"},
+            verify=lambda recovered: assert_picker_closed(recovered, "add-gift.to", receiver_name))
         capture = checkpoint("add-gift-endpoints", identifier="add-gift.save")
         assert_endpoint(capture, "add-gift.from", giver_name)
         assert_endpoint(capture, "add-gift.to", receiver_name)
-        tap(capture, identifier="add-gift.save", expected={"label": gift_name})
+        tap(capture, identifier="add-gift.save", expected={"label": gift_name}, verify=assert_form_absent)
         capture = checkpoint("saved-gift", label=gift_name)
 
         # Relaunch proves SwiftData persistence and gives the recording a complete product journey.
@@ -318,14 +358,16 @@ def run(directory):
         original_giver_id = element(capture, label=giver_name, role="button").get("identifier")
         type_text(capture, giver_name, identifier="person-picker.query")
         capture = wait(predicate="exists", identifier="person-picker.add")
-        tap(capture, identifier="person-picker.add", expected={"identifier": "add-gift.to"})
+        tap(capture, identifier="person-picker.add", expected={"identifier": "add-gift.to"},
+            verify=lambda recovered: assert_picker_closed(recovered, "add-gift.from", giver_name))
         capture = wait(predicate="exists", identifier="add-gift.to")
         tap(capture, identifier="add-gift.to", expected={"identifier": "person-picker.query"})
         capture = wait(predicate="exists", label=receiver_name, role="button")
         original_receiver_id = element(capture, label=receiver_name, role="button").get("identifier")
         type_text(capture, receiver_name, identifier="person-picker.query")
         capture = wait(predicate="exists", identifier="person-picker.add")
-        tap(capture, identifier="person-picker.add", expected={"identifier": "add-gift.save"})
+        tap(capture, identifier="person-picker.add", expected={"identifier": "add-gift.save"},
+            verify=lambda recovered: assert_picker_closed(recovered, "add-gift.to", receiver_name))
         capture = wait(predicate="exists", identifier="add-gift.save")
         if not original_giver_id or not original_receiver_id:
             raise ValueError("Duplicate-person proof could not read original person identifiers")
@@ -345,7 +387,7 @@ def run(directory):
             raise ValueError("Duplicate To person received a new identifier")
         tap(capture, label=receiver_name, role="button", expected={"identifier": "add-gift.save"})
         capture = checkpoint("duplicate-person-reuse", identifier="add-gift.save")
-        tap(capture, identifier="add-gift.save", expected={"label": "Home", "role": "tab"})
+        tap(capture, identifier="add-gift.save", expected={"label": "Home", "role": "tab"}, verify=assert_form_absent)
         capture = wait(predicate="exists", label="Home", role="tab")
 
         # Settings: currency navigation works and the bundled license content is present.
@@ -353,6 +395,8 @@ def run(directory):
         tap(capture, label="Settings", role="button", expected={"identifier": "settings.screen"})
         capture = checkpoint("settings", identifier="settings.screen")
         tap(capture, identifier="settings.currency", expected={"identifier": "settings.currency.USD"})
+        capture = wait(predicate="exists", identifier="settings.currency.list")
+        swipe(capture, "up", identifier="settings.currency.list")
         capture = wait(predicate="exists", identifier="settings.currency.USD")
         tap(capture, identifier="settings.currency.USD", expected={"label": "Settings", "role": "button"})
         # Currency selection persists in place; use the native navigation back button.

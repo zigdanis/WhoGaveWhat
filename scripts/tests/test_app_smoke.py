@@ -23,6 +23,11 @@ def response(error=None, code='ACTION_FAILED'):
 
 
 class AppSmokeReadRetryTests(unittest.TestCase):
+    def test_postcondition_matching_rejects_wrong_state(self):
+        capture = {'elements': [{'identifier': 'home', 'role': 'other'}]}
+        with self.assertRaises(ValueError):
+            smoke.assert_picker_closed(capture, 'add-gift.from', 'CI Giver')
+
     def test_transient_ui_reads_recover_and_preserve_both_diagnostics(self):
         for command in ('wait-for-ui', 'snapshot-ui'):
             with self.subTest(command=command), tempfile.TemporaryDirectory() as directory:
@@ -121,7 +126,7 @@ class AppSmokeJourneyTests(unittest.TestCase):
                     {'ref': 'scroll', 'identifier': 'add-gift.scroll', 'role': 'scroll-view', 'actions': ['swipe']},
                     {'ref': 'date', 'identifier': 'add-gift.date', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'calendar', 'identifier': 'date-picker.calendar', 'role': 'other', 'actions': ['swipe']},
-                    {'ref': 'month', 'label': ('October 2026' if calendar_page == 0 else 'November 2026'), 'role': 'static-text'},
+                    {'ref': 'month', 'label': (['October 2026', 'November 2026', 'December 2026', 'January 2027'][min(calendar_page, 3)]), 'role': 'static-text'},
                     {'ref': 'today', 'identifier': 'date-picker.today', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'from', 'identifier': 'add-gift.from', 'value': 'CI Giver', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'to', 'identifier': 'add-gift.to', 'value': 'CI Receiver', 'role': 'button', 'actions': ['tap']},
@@ -134,6 +139,7 @@ class AppSmokeJourneyTests(unittest.TestCase):
                     {'ref': 'settings', 'label': 'Settings', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'settings-screen', 'identifier': 'settings.screen', 'role': 'other'},
                     {'ref': 'currency', 'identifier': 'settings.currency', 'value': 'US Dollar ($) USD', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'currency-list', 'identifier': 'settings.currency.list', 'role': 'scroll-view', 'actions': ['swipe']},
                     {'ref': 'usd', 'identifier': 'settings.currency.USD', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'licenses-link', 'identifier': 'settings.third-party-licenses', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'licenses-screen', 'identifier': 'settings.third-party-licenses.screen', 'role': 'other'},
@@ -171,9 +177,9 @@ class AppSmokeJourneyTests(unittest.TestCase):
                         timed_out_people_tap = True
                         current = 'People'
                         taps.append('People')
-                        raise ValueError(
-                            "XcodeBuildMCP failed: {'error': 'Daemon request timed out after 30000ms', "
-                            "'code': 'DAEMON_TRANSPORT_FAILED'}")
+                        raise smoke.MCPInvocationError(
+                            "XcodeBuildMCP failed: Daemon invocation failed: Daemon request timed out after 30000ms",
+                            code="DAEMON_TRANSPORT_FAILED")
                     if matches[0].get('label') in ('Home', 'People', 'Insights', 'Add a gift'):
                         self.assertIsNotNone(photographed)
                         self.assertIn(ref, [element['ref'] for element in photographed['elements']])
@@ -184,7 +190,10 @@ class AppSmokeJourneyTests(unittest.TestCase):
                     photographed = None
                 if command in ('type-text', 'swipe', 'launch-app', 'stop'):
                     if command == 'swipe':
-                        calendar_page = 1 if parameters.get('direction') == 'left' else 0
+                        if parameters.get('direction') == 'left':
+                            calendar_page += 1
+                        else:
+                            calendar_page = max(0, calendar_page - 1)
                     return {}
                 if command == 'screenshot':
                     photographed = latest
@@ -210,7 +219,7 @@ class AppSmokeJourneyTests(unittest.TestCase):
             self.assertEqual(['home', 'people', 'insights', 'home',
                               'add-gift-compact', 'add-gift-details',
                               'add-gift-value-scrolled', 'calendar-october-2026',
-                              'calendar-november-2026', 'details-after-calendar',
+                              'calendar-january-2027', 'details-after-calendar',
                               'add-gift-endpoints', 'saved-gift',
                               'relaunch-persistence', 'duplicate-person-reuse',
                               'settings', 'licenses'],

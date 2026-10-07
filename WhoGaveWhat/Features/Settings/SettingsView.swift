@@ -22,6 +22,7 @@ struct SettingsView: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityIdentifier("settings.currency")
+                        .accessibilityValue(composition.currencyCode)
                     }
 
                     SectionHeader(text: "About").padding(.top, 24).padding(.bottom, 7)
@@ -144,6 +145,7 @@ private struct CurrencyPickerView: View {
             .accessibilityIdentifier("settings.currency.\(option.code)")
         }
         .listStyle(.insetGrouped)
+        .accessibilityIdentifier("settings.currency.list")
         .scrollContentBackground(.hidden)
         .background(Color.bg)
         .navigationTitle("Currency")
