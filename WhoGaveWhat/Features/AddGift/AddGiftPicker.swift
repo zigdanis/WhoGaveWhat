@@ -1,4 +1,4 @@
-enum AddGiftPicker: Identifiable {
+enum AddGiftPicker: Identifiable, Hashable {
     case from
     case to
     case occasion
