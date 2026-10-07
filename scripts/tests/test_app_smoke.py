@@ -51,7 +51,7 @@ class AppSmokeReadRetryTests(unittest.TestCase):
             self.assertEqual(4, len(list(Path(directory).iterdir())))
 
     def test_mutating_commands_are_never_replayed(self):
-        for workflow, command in [('ui-automation', 'tap'), ('simulator', 'launch-app'), ('simulator', 'record-video')]:
+        for workflow, command in [('ui-automation', 'tap'), ('ui-automation', 'batch'), ('simulator', 'launch-app'), ('simulator', 'record-video')]:
             with self.subTest(command=command), tempfile.TemporaryDirectory() as directory:
                 with (patch.object(smoke.subprocess, 'run', return_value=response(
                     'Failed to poll runtime UI snapshot.')) as run,
@@ -59,6 +59,22 @@ class AppSmokeReadRetryTests(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         smoke.invoke_mcp(Path(directory), 6, workflow, command, {})
                 self.assertEqual(1, run.call_count)
+
+    def test_batch_transport_timeout_is_not_replayed_and_keeps_diagnostics(self):
+        payload = {'didError': True,
+                   'error': 'Daemon invocation failed: Daemon request timed out after 30000ms',
+                   'data': {'category': 'runtime', 'code': 'DAEMON_TRANSPORT_FAILED'}}
+        failed = subprocess.CompletedProcess([], 1, stdout=json.dumps(payload), stderr='transport diagnostic')
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            with (patch.object(smoke.subprocess, 'run', return_value=failed) as run,
+                  contextlib.redirect_stdout(io.StringIO())):
+                with self.assertRaisesRegex(ValueError, 'Daemon request timed out after 30000ms'):
+                    smoke.invoke_mcp(directory, 11, 'ui-automation', 'batch',
+                                     {'steps': [{'action': 'tap', 'elementRef': 'e52'}]})
+            self.assertEqual(1, run.call_count)
+            self.assertEqual(failed.stdout, (directory / '11-batch.json').read_text())
+            self.assertEqual(failed.stderr, (directory / '11-batch.log').read_text())
 
     def test_predicate_timeout_and_semantic_failures_are_not_retried(self):
         for code, message in [('WAIT_TIMEOUT', "Timed out after 20000ms waiting for UI predicate 'exists'."),
@@ -116,7 +132,11 @@ class AppSmokeJourneyTests(unittest.TestCase):
                     latest = ready
                     return {'capture': ready}
                 if command == 'tap':
-                    ref = parameters['elementRef']
+                    self.fail('Smoke navigation must avoid the observed AXe selector tap path')
+                if command == 'batch':
+                    self.assertEqual(1, len(parameters['steps']))
+                    self.assertEqual('tap', parameters['steps'][0]['action'])
+                    ref = parameters['steps'][0]['elementRef']
                     self.assertIsNotNone(photographed)
                     self.assertIn(ref, [element['ref'] for element in photographed['elements']])
                     matches = [element for element in latest['elements'] if element['ref'] == ref]
