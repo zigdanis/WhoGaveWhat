@@ -207,7 +207,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.buttons["settings.third-party-licenses"].tap()
         let licenses = element(identifier: "settings.third-party-licenses.screen")
         XCTAssertTrue(licenses.waitForExistence(timeout: timeout))
-        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] 'Archivo'")).firstMatch.waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'Archivo'")).firstMatch.waitForExistence(timeout: timeout))
         attach("licenses")
         XCTAssertTrue(app.navigationBars.buttons["Settings"].waitForExistence(timeout: timeout))
         app.navigationBars.buttons["Settings"].tap()
