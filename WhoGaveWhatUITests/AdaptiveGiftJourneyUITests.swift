@@ -197,8 +197,11 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         let target = app.buttons["settings.currency.\(targetCode)"]
         XCTAssertTrue(target.waitForExistence(timeout: timeout))
         target.tap()
-        XCTAssertTrue(app.navigationBars.buttons["Settings"].waitForExistence(timeout: timeout))
-        app.navigationBars.buttons["Settings"].tap()
+        let currencyNavigationBar = app.navigationBars["Currency"]
+        XCTAssertTrue(currencyNavigationBar.waitForExistence(timeout: timeout))
+        let currencyBack = currencyNavigationBar.buttons["BackButton"]
+        XCTAssertTrue(currencyBack.waitForExistence(timeout: timeout))
+        currencyBack.tap()
         XCTAssertEqual(app.buttons["settings.currency"].value as? String, targetCode)
         attach("settings-currency")
 
@@ -207,8 +210,11 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(licenses.waitForExistence(timeout: timeout))
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'Archivo'")).firstMatch.waitForExistence(timeout: timeout))
         attach("licenses")
-        XCTAssertTrue(app.navigationBars.buttons["Settings"].waitForExistence(timeout: timeout))
-        app.navigationBars.buttons["Settings"].tap()
+        let licensesNavigationBar = app.navigationBars["Third-party licenses"]
+        XCTAssertTrue(licensesNavigationBar.waitForExistence(timeout: timeout))
+        let licensesBack = licensesNavigationBar.buttons["BackButton"]
+        XCTAssertTrue(licensesBack.waitForExistence(timeout: timeout))
+        licensesBack.tap()
         app.buttons["Done"].tap()
         XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
     }
