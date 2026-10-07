@@ -133,12 +133,15 @@ def run(directory):
         mcp("simulator", "record-video", simulatorId=simulator["simulatorId"], start=True, fps=15)
         recording = True
         capture = checkpoint("home", label="Home", role="tab")
+        # A singleton MCP batch uses the current ref activation point without an AX label re-query.
         for label in ["People", "Insights"]:
-            mcp("ui-automation", "tap", simulatorId=simulator["simulatorId"], elementRef=target(capture, label, "tab"))
+            mcp("ui-automation", "batch", simulatorId=simulator["simulatorId"],
+                steps=[{"action": "tap", "elementRef": target(capture, label, "tab")}])
             wait(predicate="exists", identifier=label, role="other")
             capture = checkpoint(label.lower(), label=label, role="tab")
             assert_tab_screen(capture, label)
-        mcp("ui-automation", "tap", simulatorId=simulator["simulatorId"], elementRef=target(capture, "Add a gift", "button"))
+        mcp("ui-automation", "batch", simulatorId=simulator["simulatorId"],
+            steps=[{"action": "tap", "elementRef": target(capture, "Add a gift", "button")}])
         wait(predicate="exists", identifier="add-gift.name")
         checkpoint("add-gift", identifier="add-gift.name")
         metadata["journey_outcome"] = "success"
