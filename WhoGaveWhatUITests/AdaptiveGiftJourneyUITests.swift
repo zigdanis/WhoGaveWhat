@@ -83,6 +83,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["To"].waitForExistence(timeout: timeout))
         choosePerson(named: recipientName, create: createPeople, endpoint: "to")
         waitForDisappearance(app.keyboards.firstMatch)
+        assertCompactSheetFrame()
         attach("gift-compact-dismissed")
 
         app.buttons["add-gift.details"].tap()
@@ -100,6 +101,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         let firstMonth = try monthHeading(in: calendar)
         let firstWeekCount = weekCount(for: firstMonth)
         XCTAssertGreaterThan(firstWeekCount, 0)
+        assertCompactSheetFrame()
         attach("calendar-\(firstWeekCount)-weeks")
         var nextWeekCount = firstWeekCount
         var previousMonth = firstMonth
@@ -112,12 +114,14 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         }
         XCTAssertGreaterThan(nextWeekCount, 0)
         XCTAssertNotEqual(nextWeekCount, firstWeekCount)
+        assertCompactSheetFrame()
         attach("calendar-\(nextWeekCount)-weeks")
         let expectedPreviousMonth = adjacentMonth(from: previousMonth, offset: -1)
         let previous = calendar.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'previous month' OR label CONTAINS[c] 'previous'")).firstMatch
         if previous.exists && previous.isHittable { previous.tap() } else { calendar.swipeRight() }
         let reversedMonth = try monthHeading(in: calendar, excluding: previousMonth)
         XCTAssertEqual(reversedMonth, expectedPreviousMonth)
+        assertCompactSheetFrame()
         attach("calendar-reverse")
         app.buttons["date-picker.today"].tap()
 
@@ -205,6 +209,19 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    private func assertCompactSheetFrame() {
+        let grabber = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == 'Sheet Grabber'"))
+            .firstMatch
+        XCTAssertTrue(grabber.waitForExistence(timeout: timeout))
+        let window = app.windows.firstMatch
+        XCTAssertTrue(window.exists)
+        let top = grabber.frame.minY
+        let bottom = window.frame.maxY
+        XCTAssertGreaterThan(top, bottom * 0.25)
+        XCTAssertLessThan(top, bottom * 0.8)
     }
 
     private func personRows(named name: String) -> [XCUIElement] {
