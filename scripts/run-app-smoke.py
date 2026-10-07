@@ -464,6 +464,81 @@ def run(directory):
         raise ValueError("App smoke media export is incomplete")
 
 
+def _export_xcresult_attachments(result_bundle, attachments):
+    attachments.mkdir(parents=True, exist_ok=True)
+    process = subprocess.run(
+        ["xcrun", "xcresulttool", "export", "attachments", "--path", str(result_bundle),
+         "--output-path", str(attachments)],
+        text=True, capture_output=True, timeout=300)
+    if process.returncode:
+        raise ValueError(f"xcresult attachment export failed: {process.stderr or process.stdout}")
+    return process
+
+
+def run(directory):
+    """Run the native XCTest acceptance journey and export its real evidence."""
+    directory = directory.resolve()
+    directory.mkdir(parents=True, exist_ok=True)
+    attachments = directory / "attachments"
+    metadata = {
+        "head_sha": os.environ.get("HEAD_SHA", subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()),
+        "checkout_sha": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+        "run_id": os.environ.get("GITHUB_RUN_ID", "local"),
+        "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "1"),
+        "evidence_kind": "feature-acceptance",
+        "scenario": "Native XCTest PR13 feature acceptance journey",
+        "journey_outcome": "failure", "export_outcome": "failure",
+        "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"), "mcp": "2.7.0",
+        "checkpoints": [], "native_test": "WhoGaveWhatAcceptanceTests",
+    }
+    simulator = None
+    recording = False
+    test_succeeded = False
+    result_bundle = None
+    try:
+        simulator = select_simulator(invoke_mcp(directory, 1, "simulator", "list", {"enabled": True})["simulators"])
+        metadata.update(device=simulator["name"], runtime=simulator["runtime"])
+        invoke_mcp(directory, 2, "simulator", "boot", {"simulatorId": simulator["simulatorId"]})
+        invoke_mcp(directory, 3, "simulator", "record-video", {
+            "simulatorId": simulator["simulatorId"], "start": True, "fps": 15})
+        recording = True
+        test_result = invoke_mcp(directory, 4, "simulator", "test", {
+            "projectPath": "WhoGaveWhat.xcodeproj", "scheme": "WhoGaveWhat",
+            "simulatorId": simulator["simulatorId"],
+            "derivedDataPath": str(directory / "DerivedData"),
+            "extraArgs": ["CODE_SIGNING_ALLOWED=NO", "-parallel-testing-enabled", "NO"]})
+        artifact = test_result.get("artifacts", {}).get("resultBundlePath")
+        if not artifact:
+            raise ValueError(f"XcodeBuildMCP did not return a result bundle path: {test_result}")
+        result_bundle = Path(artifact)
+        test_succeeded = True
+    finally:
+        if recording and simulator:
+            try:
+                invoke_mcp(directory, 5, "simulator", "record-video", {
+                    "simulatorId": simulator["simulatorId"], "stop": True,
+                    "outputFile": str(directory / "journeys.mp4")})
+            except (ValueError, OSError, subprocess.SubprocessError) as error:
+                metadata["recording_error"] = str(error)
+        if test_succeeded and result_bundle and result_bundle.is_dir():
+            try:
+                _export_xcresult_attachments(result_bundle, attachments)
+            except (ValueError, OSError, subprocess.SubprocessError) as error:
+                metadata["export_error"] = str(error)
+        images = sorted(attachments.glob("*.png"))
+        for image in images:
+            metadata["checkpoints"].append({"name": image.stem, "image": f"attachments/{image.name}"})
+        video = directory / "journeys.mp4"
+        if test_succeeded:
+            metadata["journey_outcome"] = "success"
+        if test_succeeded and images and video.is_file() and video.stat().st_size:
+            metadata["export_outcome"] = "success"
+        (directory / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
+        shutil.rmtree(directory / "DerivedData", ignore_errors=True)
+    if metadata["export_outcome"] != "success":
+        raise ValueError("Native acceptance evidence export is incomplete")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path)
