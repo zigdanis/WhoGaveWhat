@@ -87,15 +87,6 @@ struct AddGiftSheet: View {
             .scrollIndicators(.hidden)
             .accessibilityIdentifier("add-gift.scroll")
             .scrollDismissesKeyboard(.interactively)
-            // A sheet can grow to the large presentation boundary while the
-            // keyboard is up. Reserve the keyboard's approximate vertical
-            // footprint inside the scroll view so the form remains scrollable
-            // and Save cannot be trapped underneath the keyboard overlay.
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                Color.clear
-                    .frame(height: focus == nil ? 0 : 300)
-                    .accessibilityHidden(true)
-            }
             // Empty scroll area below the content also dismisses the keyboard.
             .background(Color.bg.contentShape(Rectangle()).onTapGesture { focus = nil })
             // Opening a picker must drop keyboard focus so it doesn't bounce back
