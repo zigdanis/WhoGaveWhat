@@ -82,6 +82,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.buttons["add-gift.to"].tap()
         XCTAssertTrue(app.staticTexts["To"].waitForExistence(timeout: timeout))
         choosePerson(named: recipientName, create: createPeople, endpoint: "to")
+        waitForDisappearance(app.keyboards.firstMatch)
+        attach("gift-compact-dismissed")
 
         app.buttons["add-gift.details"].tap()
         XCTAssertTrue(app.textFields["add-gift.value"].waitForExistence(timeout: timeout))
