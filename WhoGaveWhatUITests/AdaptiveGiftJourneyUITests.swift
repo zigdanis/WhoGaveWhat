@@ -100,10 +100,12 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertGreaterThan(firstWeekCount, 0)
         attach("calendar-\(firstWeekCount)-weeks")
         var nextWeekCount = firstWeekCount
+        var previousMonth = firstMonth
         for _ in 0..<12 where nextWeekCount == firstWeekCount {
             let next = calendar.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'next month' OR label CONTAINS[c] 'next'")).firstMatch
             if next.exists && next.isHittable { next.tap() } else { calendar.swipeLeft() }
-            let nextMonth = try monthHeading(in: calendar, excluding: firstMonth)
+            let nextMonth = try monthHeading(in: calendar, excluding: previousMonth)
+            previousMonth = nextMonth
             nextWeekCount = weekCount(for: nextMonth)
         }
         XCTAssertGreaterThan(nextWeekCount, 0)
@@ -139,7 +141,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             XCTAssertTrue(add.waitForExistence(timeout: timeout))
             XCTAssertTrue(add.isEnabled)
             add.tap()
-            XCTAssertFalse(query.waitForExistence(timeout: 1))
+            waitForDisappearance(query)
 
             app.buttons["add-gift.\(endpoint)"].tap()
             XCTAssertTrue(app.textFields["person-picker.query"].waitForExistence(timeout: timeout))
@@ -149,7 +151,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             reopenedRows.firstMatch.tap()
         }
         XCTAssertEqual(app.buttons["add-gift.\(endpoint)"].value as? String, name)
-        XCTAssertFalse(app.textFields["person-picker.query"].exists)
+        waitForDisappearance(app.textFields["person-picker.query"])
     }
 
     private func verifySettings() {
@@ -187,6 +189,12 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    private func waitForDisappearance(_ element: XCUIElement) {
+        let predicate = NSPredicate(format: "exists == false")
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed)
     }
 
     private func element(identifier: String) -> XCUIElement {
