@@ -112,6 +112,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(app.buttons["add-gift.save"].isEnabled)
         app.buttons["add-gift.save"].tap()
         XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
+        XCTAssertFalse(app.buttons["add-gift.save"].exists)
     }
 
     private func choosePerson(named name: String, create: Bool, endpoint: String) {
