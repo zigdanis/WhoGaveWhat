@@ -139,9 +139,9 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             attachHierarchy("person-picker-before-add-\(endpoint)", selectedValue: query.value as? String)
             add.tap()
         } else {
-            let matchingRows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'person-picker.person.' AND label == %@", name))
+            let matchingRows = personRows(named: name)
             XCTAssertEqual(matchingRows.count, 1)
-            let originalID = matchingRows.firstMatch.identifier
+            let originalID = matchingRows[0].identifier
             personIDs[name] = originalID
             query.tap()
             query.typeText(name)
@@ -155,10 +155,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
             app.buttons["add-gift.\(endpoint)"].tap()
             XCTAssertTrue(app.textFields["person-picker.query"].waitForExistence(timeout: timeout))
-            let reopenedRows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'person-picker.person.' AND label == %@", name))
+            let reopenedRows = personRows(named: name)
             XCTAssertEqual(reopenedRows.count, 1)
-            XCTAssertEqual(reopenedRows.firstMatch.identifier, originalID)
-            reopenedRows.firstMatch.tap()
+            XCTAssertEqual(reopenedRows[0].identifier, originalID)
+            reopenedRows[0].tap()
         }
         waitForDisappearance(app.textFields["person-picker.query"])
         let endpointElement = app.buttons["add-gift.\(endpoint)"]
@@ -203,6 +203,18 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    private func personRows(named name: String) -> [XCUIElement] {
+        app.buttons
+            .matching(NSPredicate(format: "identifier BEGINSWITH 'person-picker.person.'"))
+            .allElementsBoundByIndex
+            .filter { row in
+                row.descendants(matching: .staticText)
+                    .matching(NSPredicate(format: "label == %@", name))
+                    .firstMatch
+                    .exists
+            }
     }
 
     private func waitForDisappearance(_ element: XCUIElement) {
