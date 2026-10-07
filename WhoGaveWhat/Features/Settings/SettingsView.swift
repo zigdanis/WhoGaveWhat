@@ -78,6 +78,7 @@ private struct SettingsValueRow: View {
             Chevron()
         }
         .padding(.horizontal, 14).padding(.vertical, 9)
+        .contentShape(Rectangle())
     }
 }
 
@@ -94,6 +95,7 @@ private struct SettingsActionRow: View {
             Chevron()
         }
         .padding(.horizontal, 14).padding(.vertical, 9)
+        .contentShape(Rectangle())
     }
 }
 
