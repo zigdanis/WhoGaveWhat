@@ -6,6 +6,8 @@ struct AddGiftSheet: View {
     let composition: AppComposition
     @State private var state: AddGiftState
     @State private var showsDetails: Bool
+    @State private var compactHeight: CGFloat = 420
+    @State private var selectedDetent: PresentationDetent
     @FocusState private var focus: AddGiftField?
 
     init(route: GiftSheetRoute, composition: AppComposition) {
@@ -18,6 +20,7 @@ struct AddGiftSheet: View {
             ))
         let startsExpanded = route.editingGiftID != nil
         _showsDetails = State(initialValue: startsExpanded)
+        _selectedDetent = State(initialValue: startsExpanded ? .large : .height(420))
     }
 
     var body: some View {
@@ -67,6 +70,11 @@ struct AddGiftSheet: View {
                     .padding(.top, 24)
                 }
                 .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 30)
+                .onGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.size.height
+                } action: { contentHeight in
+                    updateCompactHeight(for: contentHeight)
+                }
                 // Taps on any non-interactive part of the form (card padding,
                 // section headers, gaps) drop keyboard focus. Buttons and text
                 // fields consume their own taps first, so this only fires on the
@@ -89,18 +97,29 @@ struct AddGiftSheet: View {
             // Opening a picker must drop keyboard focus so it doesn't bounce back
             // onto the previously-edited text field when the picker sheet closes.
             .onChange(of: state.picker) { _, _ in focus = nil }
+            .onChange(of: showsDetails) { _, isExpanded in
+                selectedDetent = isExpanded ? .large : .height(compactHeight)
+            }
             // Open the keyboard on the gift title the moment the sheet settles.
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focus = .name }
             }
         }
-        .presentationSizing(.fitted)
+        .presentationDetents([.height(compactHeight), .large], selection: $selectedDetent)
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.bg)
         .sheet(item: $state.picker) { kind in
             AddGiftPickerPresentation(kind: kind, state: state, composition: composition)
         }
         .onDisappear { state.cancel() }
+    }
+
+    private func updateCompactHeight(for contentHeight: CGFloat) {
+        guard !showsDetails else { return }
+        let measuredHeight = min(max(contentHeight + 56, 360), 560)
+        guard abs(measuredHeight - compactHeight) > 1 else { return }
+        compactHeight = measuredHeight
+        selectedDetent = .height(measuredHeight)
     }
 
     /// Tint follows the derived direction for the form's controls.
@@ -382,14 +401,7 @@ struct AddGiftPickerPresentation: View {
     let composition: AppComposition
 
     var body: some View {
-        switch kind {
-        case .date:
-            AddGiftPickerSheet(kind: kind, state: state, composition: composition)
-                .presentationSizing(.fitted)
-        default:
-            AddGiftPickerSheet(kind: kind, state: state, composition: composition)
-                .presentationDetents([.medium, .large])
-        }
+        AddGiftPickerSheet(kind: kind, state: state, composition: composition)
     }
 }
 
@@ -398,15 +410,48 @@ private struct AddGiftPickerSheet: View {
     let state: AddGiftState
     let composition: AppComposition
     @State private var customText = ""
+    @State private var fittedHeight: CGFloat = 520
+    @State private var selectedDetent: PresentationDetent
+
+    init(kind: AddGiftPicker, state: AddGiftState, composition: AppComposition) {
+        self.kind = kind
+        self.state = state
+        self.composition = composition
+        switch kind {
+        case .date:
+            _selectedDetent = State(initialValue: .height(520))
+        default:
+            _selectedDetent = State(initialValue: .medium)
+        }
+    }
 
     var body: some View {
         IntrinsicModalScaffold(title: title) {
             content
                 .background(Color.bg)
+                .onGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.size.height
+                } action: { contentHeight in
+                    guard isDate else { return }
+                    let height = min(max(contentHeight + 56, 360), 700)
+                    guard abs(height - fittedHeight) > 1 else { return }
+                    fittedHeight = height
+                    selectedDetent = .height(height)
+                }
         }
         // No Cancel button — these sheets are dismissed with a swipe down.
+        .presentationDetents(detents, selection: $selectedDetent)
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.bg)
+    }
+
+    private var detents: Set<PresentationDetent> {
+        isDate ? [.height(fittedHeight), .large] : [.medium, .large]
+    }
+
+    private var isDate: Bool {
+        if case .date = kind { return true }
+        return false
     }
 
     private var title: LocalizedStringResource {
