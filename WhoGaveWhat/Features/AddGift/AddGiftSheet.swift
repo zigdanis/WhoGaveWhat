@@ -294,6 +294,7 @@ private struct GiftEntryRow: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(accessibilityIdentifier)
+        .accessibilityValue(value ?? String(localized: "Choose"))
     }
 }
 

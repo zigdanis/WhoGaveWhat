@@ -137,14 +137,14 @@ def run(directory):
         "checkout_sha": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         "run_id": os.environ.get("GITHUB_RUN_ID", "local"),
         "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "1"),
-        "evidence_kind": "app-smoke", "scenario": "Home → People → Insights → PR13 gift creation and Settings journey",
+        "evidence_kind": "feature-acceptance", "scenario": "Home → People → Insights → PR13 gift creation and Settings journey",
         "journey_outcome": "failure", "export_outcome": "failure",
         "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"),
         "mcp": "2.7.0", "checkpoints": [], "calendar_observations": [],
         "acceptance_claims": [
             "compact gift title entry and keyboard",
             "expanded Details value entry and scrolling",
-            "calendar short and long month paging with dismissal",
+            "calendar month paging with observed adjacent month headings and dismissal",
             "new From and To people with automatic selection",
             "duplicate gift reuses existing people",
             "save and relaunch persistence",
@@ -226,6 +226,7 @@ def run(directory):
 
         # Exercise calendar paging in both directions, then dismiss through a real date choice.
         tap(capture, identifier="add-gift.date")
+        capture = wait(predicate="exists", identifier="date-picker.calendar")
         short_month = calendar_month(capture)
         metadata["calendar_observations"].append(short_month)
         capture = checkpoint(f"calendar-{short_month.lower().replace(' ', '-')}", identifier="date-picker.calendar")
@@ -235,6 +236,7 @@ def run(directory):
         if long_month == short_month:
             raise ValueError(f"Calendar paging did not change month: {short_month}")
         metadata["calendar_observations"].append(long_month)
+        metadata["calendar_navigation_scope"] = "adjacent visible month headings"
         capture = checkpoint(f"calendar-{long_month.lower().replace(' ', '-')}", identifier="date-picker.calendar")
         swipe(capture, "right", identifier="date-picker.calendar")
         capture = wait(predicate="exists", identifier="date-picker.today")
@@ -270,6 +272,7 @@ def run(directory):
         tap(capture, label="Add a gift", role="button")
         capture = wait(predicate="exists", identifier="add-gift.name")
         type_text(capture, "CI duplicate reuse", identifier="add-gift.name")
+        capture = wait(predicate="exists", identifier="add-gift.from")
         tap(capture, identifier="add-gift.from")
         capture = wait(predicate="exists", label="CI Giver", role="button")
         original_giver_id = element(capture, label="CI Giver", role="button").get("identifier")
