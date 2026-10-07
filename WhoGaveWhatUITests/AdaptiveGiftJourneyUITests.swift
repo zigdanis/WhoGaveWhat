@@ -252,7 +252,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                     y: scroll.frame.minY,
                     width: scroll.frame.width,
                     height: max(0, visibleBottom - scroll.frame.minY)
-                ))
+                )
+            )
             guard visibleFrame.height > 40 else {
                 XCTFail("No usable scroll area above keyboard: scroll=\(scroll.frame), keyboard=\(keyboard.frame)")
                 return
@@ -286,14 +287,14 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
     private func personRows(named name: String) -> [XCUIElement] {
         app.buttons
-            .matching(NSPredicate(format: "identifier BEGINSWITH 'person-picker.person.'"))
+            .matching(
+                NSPredicate(
+                    format: "identifier BEGINSWITH 'person-picker.person.' AND (label == %@ OR label ENDSWITH %@)",
+                    name,
+                    ", \(name)"
+                )
+            )
             .allElementsBoundByIndex
-            .filter { row in
-                row.descendants(matching: .staticText)
-                    .matching(NSPredicate(format: "label == %@", name))
-                    .firstMatch
-                    .exists
-            }
     }
 
     private func waitForDisappearance(_ element: XCUIElement) {
