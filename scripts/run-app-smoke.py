@@ -138,8 +138,7 @@ def assert_form_absent(capture):
 
 def assert_currency(capture, expected_code="AUD"):
     observed = element(capture, identifier="settings.currency")
-    text = " ".join(str(observed.get(key, "")) for key in ("label", "value"))
-    if expected_code not in text:
+    if observed.get("value") != expected_code:
         raise ValueError(f"Currency selection {expected_code} was not persisted in Settings: {observed}")
     placeholders = {"License information is unavailable.", "Choose", "No value"}
     visible = {str(e.get("label", "")) for e in capture.get("elements", [])}
@@ -396,12 +395,15 @@ def run(directory):
         tap(capture, label=receiver_name, role="button", expected={"identifier": "add-gift.save"})
         capture = checkpoint("duplicate-person-reuse", identifier="add-gift.save")
         tap(capture, identifier="add-gift.save", expected={"label": duplicate_name}, verify=assert_form_absent)
-        capture = wait(predicate="exists", label="Home", role="tab")
+        capture = wait(predicate="exists", label=duplicate_name)
+        assert_form_absent(capture)
 
         # Settings: currency navigation works and the bundled license content is present.
         capture = wait(predicate="exists", label="Settings", role="button")
         tap(capture, label="Settings", role="button", expected={"identifier": "settings.screen"})
         capture = checkpoint("settings", identifier="settings.screen")
+        if element(capture, identifier="settings.currency").get("value") == "AUD":
+            raise ValueError("Settings already started in AUD; currency mutation is not proven")
         tap(capture, identifier="settings.currency", expected={"identifier": "settings.currency.list"})
         capture = wait(predicate="exists", identifier="settings.currency.list")
         if not has_element(capture, identifier="settings.currency.AUD"):

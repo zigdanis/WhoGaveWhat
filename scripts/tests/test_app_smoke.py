@@ -105,6 +105,7 @@ class AppSmokeJourneyTests(unittest.TestCase):
             screenshot.write_bytes(b'screenshot fixture')
             current = 'Home'
             calendar_page = 0
+            currency_selected = False
             taps = []
             generation = 0
             latest = None
@@ -116,7 +117,7 @@ class AppSmokeJourneyTests(unittest.TestCase):
                 nonlocal generation
                 generation += 1
                 prefix = f'{current}-{generation}-'
-                return {'elements': [
+                elements = [
                     *[{'ref': prefix + 'tab-' + label, 'label': label, 'role': 'tab', 'actions': ['tap'],
                        'value': '1' if current == label else '0'} for label in ('Home', 'People', 'Insights')],
                     {'ref': 'heading', 'identifier': current, 'role': 'other', 'state': {'visible': True}},
@@ -137,17 +138,21 @@ class AppSmokeJourneyTests(unittest.TestCase):
                     {'ref': 'person-b', 'identifier': 'person-picker.person.b', 'label': 'CI Receiver', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'save', 'identifier': 'add-gift.save', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'gift', 'label': 'CI acceptance book', 'role': 'static-text'},
+                    {'ref': 'duplicate-gift', 'label': 'CI duplicate reuse', 'role': 'static-text'},
                     {'ref': 'settings', 'label': 'Settings', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'settings-screen', 'identifier': 'settings.screen', 'role': 'other'},
-                    {'ref': 'currency', 'identifier': 'settings.currency', 'value': 'Australian Dollar (A$) AUD', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'currency', 'identifier': 'settings.currency', 'value': ('AUD' if currency_selected else 'USD'), 'role': 'button', 'actions': ['tap']},
                     {'ref': 'currency-list', 'identifier': 'settings.currency.list', 'role': 'scroll-view', 'actions': ['swipe']},
                     {'ref': 'aud', 'identifier': 'settings.currency.AUD', 'value': 'AUD', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'licenses-link', 'identifier': 'settings.third-party-licenses', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'licenses-screen', 'identifier': 'settings.third-party-licenses.screen', 'role': 'other'},
-                    {'ref': 'license-heading', 'label': 'Archivo license', 'role': 'static-text'}]}
+                    {'ref': 'license-heading', 'label': 'Archivo license', 'role': 'static-text'}]
+                if current != 'Add a gift':
+                    elements = [e for e in elements if e.get('identifier') != 'add-gift.name']
+                return {'elements': elements}
 
             def backend(_directory, _sequence, workflow, command, parameters):
-                nonlocal current, latest, photographed, calendar_page, timed_out_people_tap
+                nonlocal current, latest, photographed, calendar_page, timed_out_people_tap, currency_selected
                 if command == 'list':
                     return {'simulators': [{'isAvailable': True, 'name': 'iPhone 17 Pro', 'state': 'Booted',
                                             'runtime': 'iOS 26.5', 'simulatorId': 'fixture'}]}
@@ -174,6 +179,10 @@ class AppSmokeJourneyTests(unittest.TestCase):
                     self.assertEqual(1, len(matches))
                     self.assertIn('tap', matches[0]['actions'])
                     batch_calls.append(ref)
+                    if matches[0].get('identifier') == 'settings.currency.AUD':
+                        currency_selected = True
+                    if matches[0].get('identifier') == 'add-gift.save':
+                        current = 'Home'
                     if matches[0].get('label') == 'People' and not timed_out_people_tap:
                         timed_out_people_tap = True
                         current = 'People'
