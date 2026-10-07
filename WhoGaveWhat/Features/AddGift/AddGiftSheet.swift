@@ -7,6 +7,8 @@ struct AddGiftSheet: View {
     @State private var state: AddGiftState
     @State private var showsDetails: Bool
     @State private var compactHeight: CGFloat = 420
+    @State private var headerHeight: CGFloat = 56
+    @State private var lastContentHeight: CGFloat = 0
     @State private var selectedDetent: PresentationDetent
     @FocusState private var focus: AddGiftField?
 
@@ -85,13 +87,6 @@ struct AddGiftSheet: View {
             .scrollIndicators(.hidden)
             .accessibilityIdentifier("add-gift.scroll")
             .scrollDismissesKeyboard(.interactively)
-            // A vertical ScrollView otherwise reports the presenter's available
-            // height as its ideal size, which makes the fitted sheet full-height
-            // even while the compact form only contains the basics. Keep the
-            // collapsed form content-sized; once Details is expanded, let the
-            // scroll view take the available height so the longer form remains
-            // usable on smaller screens.
-            .fixedSize(horizontal: false, vertical: !showsDetails)
             // Empty scroll area below the content also dismisses the keyboard.
             .background(Color.bg.contentShape(Rectangle()).onTapGesture { focus = nil })
             // Opening a picker must drop keyboard focus so it doesn't bounce back
@@ -105,6 +100,10 @@ struct AddGiftSheet: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focus = .name }
             }
         }
+        .onPreferenceChange(IntrinsicModalHeaderHeightKey.self) { height in
+            headerHeight = height
+            if !showsDetails { updateCompactHeight(for: lastContentHeight) }
+        }
         .presentationDetents([.height(compactHeight), .large], selection: $selectedDetent)
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.bg)
@@ -115,8 +114,9 @@ struct AddGiftSheet: View {
     }
 
     private func updateCompactHeight(for contentHeight: CGFloat) {
+        lastContentHeight = contentHeight
         guard !showsDetails else { return }
-        let measuredHeight = min(max(contentHeight + 56, 360), 560)
+        let measuredHeight = min(max(contentHeight + headerHeight, 360), 560)
         guard abs(measuredHeight - compactHeight) > 1 else { return }
         compactHeight = measuredHeight
         selectedDetent = .height(measuredHeight)
@@ -411,6 +411,8 @@ private struct AddGiftPickerSheet: View {
     let composition: AppComposition
     @State private var customText = ""
     @State private var fittedHeight: CGFloat = 520
+    @State private var headerHeight: CGFloat = 56
+    @State private var lastContentHeight: CGFloat = 0
     @State private var selectedDetent: PresentationDetent
 
     init(kind: AddGiftPicker, state: AddGiftState, composition: AppComposition) {
@@ -433,7 +435,8 @@ private struct AddGiftPickerSheet: View {
                     geometry.size.height
                 } action: { contentHeight in
                     guard isDate else { return }
-                    let height = min(max(contentHeight + 56, 360), 700)
+                    lastContentHeight = contentHeight
+                    let height = min(max(contentHeight + headerHeight, 360), 700)
                     guard abs(height - fittedHeight) > 1 else { return }
                     fittedHeight = height
                     selectedDetent = .height(height)
@@ -441,6 +444,14 @@ private struct AddGiftPickerSheet: View {
         }
         // No Cancel button — these sheets are dismissed with a swipe down.
         .presentationDetents(detents, selection: $selectedDetent)
+        .onPreferenceChange(IntrinsicModalHeaderHeightKey.self) { height in
+            headerHeight = height
+            guard isDate else { return }
+            let fitted = min(max(lastContentHeight + height, 360), 700)
+            guard abs(fitted - fittedHeight) > 1 else { return }
+            fittedHeight = fitted
+            selectedDetent = .height(fitted)
+        }
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.bg)
     }

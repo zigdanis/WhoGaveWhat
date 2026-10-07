@@ -1,5 +1,13 @@
 import SwiftUI
 
+struct IntrinsicModalHeaderHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 56
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 /// A sheet root whose vertical ideal size comes only from its header and content.
 /// Unlike a navigation container, it does not claim the presenter's full height.
 struct IntrinsicModalScaffold<Content: View>: View {
@@ -55,6 +63,14 @@ private struct IntrinsicModalHeader: View {
         }
         .frame(minHeight: 56)
         .padding(.horizontal, 16)
+        .background {
+            GeometryReader { proxy in
+                Color.clear.preference(
+                    key: IntrinsicModalHeaderHeightKey.self,
+                    value: proxy.size.height
+                )
+            }
+        }
     }
 
     private var titleLabel: some View {
