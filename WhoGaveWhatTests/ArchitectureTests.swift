@@ -170,6 +170,30 @@ struct PersonPickerStateTests {
         #expect(composition.data.entityName(id) == "Dana")
     }
 
+    @Test func repeatedFinalQueryDoesNotClearNewlyCreatedSelection() throws {
+        let composition = try makeTestComposition()
+        let giftState = AddGiftState(
+            route: .create,
+            data: composition.data,
+            suggestGift: composition.suggestGift
+        )
+        let pickerState = PersonPickerState(
+            people: composition.data.people,
+            selectedID: giftState.draft.fromID
+        )
+        _ = pickerState.updateQuery("Dana")
+
+        let id = try #require(
+            pickerState.createAndSelectPerson(
+                named: "Dana",
+                create: { composition.createPerson(name: $0, isFamily: false) },
+                select: giftState.selectFrom
+            ))
+
+        #expect(pickerState.updateQuery("Dana") == id)
+        #expect(giftState.draft.fromID == id)
+    }
+
     @Test func duplicatePersonFlowsThroughToSelection() throws {
         let composition = try makeTestComposition()
         let existingPerson = try #require(composition.data.people.first)
