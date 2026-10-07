@@ -157,10 +157,12 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         let settings = element(identifier: "settings.screen")
         XCTAssertTrue(settings.waitForExistence(timeout: timeout))
         let initialCurrency = app.buttons["settings.currency"].value as? String
+        XCTAssertNotNil(initialCurrency)
         app.buttons["settings.currency"].tap()
         let currencyList = element(identifier: "settings.currency.list")
         XCTAssertTrue(currencyList.waitForExistence(timeout: timeout))
         let targetCode = initialCurrency == "AUD" ? "AFN" : "AUD"
+        XCTAssertNotEqual(targetCode, initialCurrency)
         let target = app.buttons["settings.currency.\(targetCode)"]
         XCTAssertTrue(target.waitForExistence(timeout: timeout))
         target.tap()
