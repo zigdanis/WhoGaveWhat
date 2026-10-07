@@ -15,6 +15,7 @@ struct ThirdPartyLicensesView: View {
             .padding(16)
         }
         .background(Color.bg)
+        .accessibilityIdentifier("settings.third-party-licenses.screen")
         .navigationTitle("Third-party licenses")
         .navigationBarTitleDisplayMode(.inline)
         .task {

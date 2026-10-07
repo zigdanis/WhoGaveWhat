@@ -55,6 +55,23 @@ final class AddGiftState {
         draft.emoji ?? draft.aiEmoji ?? suggestGift.instantSuggestion(for: draft.name).emoji
     }
 
+    var name: String {
+        get { draft.name }
+        set { setName(newValue) }
+    }
+
+    var valueText: String {
+        get {
+            guard draft.valueTouched else { return "" }
+            return draft.value.map(String.init) ?? ""
+        }
+        set {
+            let digits = newValue.filter(\.isNumber)
+            draft.value = digits.isEmpty ? nil : Int(digits)
+            draft.valueTouched = true
+        }
+    }
+
     func direction(householdIDs: Set<String>, saveGift: SaveGiftUseCase) -> GiftDirection {
         saveGift.direction(for: input, householdIDs: householdIDs)
     }

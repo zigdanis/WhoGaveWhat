@@ -22,12 +22,15 @@ account. Device builds require your own signing team and, where needed, your own
 bundle identifier. Do not commit account emails, credentials or personal signing
 configuration.
 
-Publication does not deploy a build or enable automatic distribution. TestFlight
-requires a manual `workflow_dispatch` on the canonical repository's `master` and
-uses the protected `testflight` environment, whose custom deployment policy allows
-only `master` and no tags. Pushes, pull requests and forks do not run that release
-job. Release helpers require an explicit `--repo` and validate the canonical target
-and the environment policy before dispatching or importing credentials.
+Publication does not enable automatic distribution. TestFlight uses a manual
+`workflow_dispatch` on the canonical repository's verified `master` and the
+protected `testflight` environment, whose custom deployment policy allows only
+`master` and no tags. The delivery agent may invoke this protected dispatch after
+each routine feature or fix passes its review, bot, CI, visual-evidence, merge,
+and master-CI gates, unless the user explicitly limits the work to no deployment.
+Pushes, pull requests and forks do not run that release job.
+Release helpers require an explicit `--repo` and validate the canonical target
+and environment policy before dispatching or importing credentials.
 
 Release secrets stay in the protected environment. `MATCH_GIT_URL`, `APPLE_TEAM_ID`
 and optional Appfile settings `FASTLANE_USER` and `APP_STORE_CONNECT_TEAM_ID` come

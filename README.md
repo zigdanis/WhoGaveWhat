@@ -88,10 +88,14 @@ The canonical repository is
 configuration from the environment. Contributors can build and test in Simulator;
 for device builds, select your own signing team and bundle identifier in Xcode.
 
-TestFlight remains a manually commanded operation on this repository's `master`,
-using the protected `testflight` environment and a separate private certificate
-repository. Pushes and pull requests do not trigger releases. Publication itself
-does not deploy a build. See [Publication and contribution boundaries](docs/publication.md)
+TestFlight is a manually dispatched operation on this repository's verified
+`master`, using the protected `testflight` environment and a separate private
+certificate repository. The delivery workflow invokes it after each routine
+feature or fix passes implementation, independent review, bot review,
+current-head CI evidence, merge gates, and master CI. Explicit discussion,
+plan-only, PR-only, and do-not-deploy limits opt out. Pushes and pull requests
+do not trigger releases automatically; manual dispatch remains the protected
+release mechanism. See [Publication and contribution boundaries](docs/publication.md)
 and [TestFlight operations](docs/testflight.md).
 
 ## License

@@ -2,7 +2,7 @@
 
 Every PR includes reviewed screenshots **and** a video in its description, including changes to documentation, tooling and CI. A link to a workflow or a downloadable artifact alone does not satisfy this requirement.
 
-The `Tests` workflow has no path filters. It runs Python helpers, Ruby release coordinator/archive/signing tests and secret checks on Linux, Swift formatting and SwiftLint on macOS, then unit tests and an app smoke scenario on macOS 26 with Xcode 26.6. XcodeBuildMCP 2.7.0 performs all Xcode and Simulator operations. It reuses a booted iPhone when one exists and otherwise selects iPhone 17 Pro on the newest available runtime.
+The `Tests` workflow has no path filters. It runs Python helpers, Ruby release coordinator/archive/signing tests and secret checks on Linux, Swift formatting and SwiftLint on macOS, then unit tests and the native XCUITest acceptance journey on macOS 26 with Xcode 26.6. XcodeBuildMCP 2.7.0 performs all Xcode and Simulator operations. It reuses a booted iPhone when one exists and otherwise selects iPhone 17 Pro on the newest available runtime.
 
 ## Local development
 
@@ -25,7 +25,7 @@ To run the same app validation on a Mac:
 python3 scripts/run-app-smoke.py /tmp/whogavewhat-evidence
 ```
 
-It tests the app, builds and launches it, then records Home → People → Insights → Add a gift. Existing `KS_START` / `KS_TAB` launch settings open the app in English at Home. This scenario visits the real app with its existing store; it does not modify or erase a reused Simulator. The smoke checks navigation and media capture. It does not assert gift creation or acceptance of a UI feature.
+The runner invokes unit tests and `WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testAdaptiveGiftJourney` through XcodeBuildMCP. The native journey checks navigation, compact gift entry and keyboard, Details and value entry, calendar grids with different week counts, creation and automatic selection of people, duplicate-person reuse, save and relaunch persistence, currency selection, and bundled licenses. It creates uniquely named records through the real UI in the existing store; it never erases a reused Simulator. XCTest keeps named screenshots, and the runner exports them from the result bundle while recording video through XcodeBuildMCP. Failed tests retain screenshots, the accessibility hierarchy, and the result bundle for diagnosis.
 
 ## Retrieve and inspect current evidence
 
@@ -51,9 +51,9 @@ Open the artifact's `index.html`, inspect every selected PNG, and watch `journey
 ffmpeg -i /tmp/ARTIFACT/journeys.mp4 -vf fps=1/2 /tmp/ARTIFACT/frame-%04d.png
 ```
 
-PNG checkpoints are normalized from XcodeBuildMCP's optimized JPEG captures (up to 800 pixels). The MP4 records the Simulator through MCP. Review the original video as well as frames where a transition, animation or transient failure matters. The report and metadata identify the source head, checkout merge commit, device, runtime, Xcode and capture outcome.
+PNG checkpoints are native XCTest screenshot attachments exported from the result bundle and mapped by their attachment names. The MP4 records the Simulator through MCP. Review the original video as well as frames where a transition, animation or transient failure matters. The report and metadata identify the source head, checkout merge commit, device, runtime, Xcode and capture outcome.
 
-For a UI change, extend the recorded scenario to exercise that change and its success, error and dismissal paths as relevant. Set the resulting artifact's `evidence_kind` to `feature-acceptance` only when it records that scenario. Review the feature's checkpoints and recording; app smoke alone cannot establish feature acceptance. For infrastructure and documentation changes, use `app-smoke` and describe the basic screens inspected.
+For a UI change, extend the recorded scenario to exercise that change and its success, error and dismissal paths as relevant. Set the resulting artifact's `evidence_kind` to `feature-acceptance` only when it records that scenario. Review the feature's checkpoints and recording; app smoke alone cannot establish feature acceptance. For infrastructure and documentation changes, describe the environment integrity demonstrated by the existing journey; do not claim acceptance of an unrelated feature.
 
 ## Embed screenshots and video
 
@@ -64,10 +64,10 @@ Write a short English review outside the repository, identifying what you inspec
 ```sh
 python3 scripts/pr-visual-evidence.py PR_NUMBER /tmp/ARTIFACT \
   --summary-file /tmp/visual-review.md \
-  --image attachments/home.png \
+  --image attachments/home-start.png \
   --image attachments/people.png \
   --image attachments/insights.png \
-  --image attachments/add-gift.png \
+  --image attachments/gift-compact-keyboard.png \
   --video journeys.mp4
 python3 scripts/pr-evidence-gate.py PR_NUMBER
 ```
@@ -76,8 +76,8 @@ Each selected file must be a real, nonempty PNG or MP4 inside the artifact direc
 
 The separate `PR evidence gate` runs on PR edits, pushes and completed `Tests` runs. It executes trusted base/default-branch scripts with a read-only source checkout, reads PR metadata and posts a `Visual evidence` status on the actual PR head. It checks that both native media links are embedded, labelled, and tied to the latest passing run and attempt. It does not execute PR code or artifacts and is independent of `Tests`, so publication has no circular dependency. Human or agent inspection remains the acceptance step; the gate cannot verify the contents of a reviewer's claims.
 
-This workflow starts automatically after it exists on the base branch. The initial setup PR uses the same validator manually. The evidence workflow posts a status; it does not configure branch protection or required checks. Repository rules determine whether a failing status prevents merging. Hand over only passing, reviewed PRs and leave merging to Danis.
+This workflow starts automatically after it exists on the base branch. The initial setup PR uses the same validator manually. The evidence workflow posts a status; it does not configure branch protection or required checks. Repository rules determine whether a failing status prevents merging. Merge autonomously after the current head passes all required checks, independent and bot review, and inspected evidence, subject to the scope and approval policy in `AGENTS.md`. Verify master CI before TestFlight delivery.
 
 ## Raspberry Pi
 
-Run formatting with the installed Swift 6.3 toolchain and the Python helper tests locally. Native iOS tests, SwiftLint and Simulator capture run in GitHub's macOS CI. Retrieve the current run with `scripts/pr-evidence.sh`, inspect the PNG checkpoints and extracted video frames, write the English review, then publish attachments using the existing authenticated `gh` session. If the changed UI scenario needs deeper inspection, use the established Mac execution environment or extend the CI scenario; report any verification limitation explicitly.
+Run formatting with the installed Swift 6.3 toolchain and the Python helper tests locally. Native iOS tests, SwiftLint and Simulator capture run in GitHub's macOS CI. Retrieve the current run with `scripts/pr-evidence.sh`, inspect the PNG checkpoints and extracted video frames, write the English review, then publish attachments using the existing authenticated `gh` session. If the changed UI scenario needs deeper inspection, extend the native XCUITest journey in CI; a local Mac is optional; report any verification limitation explicitly.
