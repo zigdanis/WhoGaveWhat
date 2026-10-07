@@ -43,6 +43,21 @@ def invoke_mcp(directory, sequence, workflow, command, parameters):
         try:
             return checked_output(process)
         except ValueError:
+            retryable_read_transport = False
+            try:
+                payload = json.loads(process.stdout)
+                result = payload.get("result", payload)
+                data = result.get("data", {})
+                retryable_read_transport = (
+                    workflow == "ui-automation"
+                    and command == "wait-for-ui"
+                    and data.get("code") == "DAEMON_TRANSPORT_FAILED"
+                    and "Daemon request timed out after 30000ms" in str(result.get("error", "")))
+            except (ValueError, AttributeError, TypeError):
+                pass
+            if attempt or retryable_read_transport:
+                if retryable_read_transport and attempt == 0:
+                    continue
             if attempt or workflow != "ui-automation" or command not in {"wait-for-ui", "snapshot-ui"}:
                 raise
             try:
@@ -102,6 +117,11 @@ def has_element(capture, *, identifier=None, label=None, role=None):
         return True
     except ValueError:
         return False
+
+
+def matches_selector(capture, selector):
+    return any(all(element.get(key) == value for key, value in selector.items())
+               for element in capture.get("elements", []))
 
 
 def calendar_month(capture):
@@ -225,8 +245,8 @@ def run(directory):
                    timeoutMs=20000, **predicate)["capture"]
 
     def checkpoint(name, **readiness):
-        wait(predicate="settled", settledDurationMs=800)
-        capture = wait(predicate="exists", **readiness)
+        settled = wait(predicate="settled", settledDurationMs=800)
+        capture = settled if matches_selector(settled, readiness) else wait(predicate="exists", **readiness)
         image = mcp("simulator", "screenshot", simulatorId=simulator["simulatorId"], returnFormat="path")
         source = Path(image["artifacts"]["screenshotPath"])
         destination = directory / "attachments" / f"{name}.png"

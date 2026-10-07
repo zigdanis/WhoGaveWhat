@@ -23,6 +23,18 @@ def response(error=None, code='ACTION_FAILED'):
 
 
 class AppSmokeReadRetryTests(unittest.TestCase):
+    def test_read_transport_timeout_retries_once(self):
+        payload = {'didError': True, 'error': 'Daemon invocation failed: Daemon request timed out after 30000ms',
+                   'data': {'code': 'DAEMON_TRANSPORT_FAILED'}}
+        failed = subprocess.CompletedProcess([], 1, stdout=json.dumps(payload), stderr='transport')
+        succeeded = response()
+        with tempfile.TemporaryDirectory() as directory:
+            with (patch.object(smoke.subprocess, 'run', side_effect=[failed, succeeded]) as run,
+                  contextlib.redirect_stdout(io.StringIO())):
+                result = smoke.invoke_mcp(Path(directory), 4, 'ui-automation', 'wait-for-ui', {})
+        self.assertEqual('ready', result['capture']['screenHash'])
+        self.assertEqual(2, run.call_count)
+
     def test_postcondition_matching_rejects_wrong_state(self):
         capture = {'elements': [{'identifier': 'home', 'role': 'other'}]}
         with self.assertRaises(ValueError):
