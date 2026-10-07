@@ -234,7 +234,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
     private func assertSaveReachableAboveKeyboard(_ save: XCUIElement, keyboard: XCUIElement) {
         let scroll = app.scrollViews["add-gift.scroll"]
-        for _ in 0..<3 {
+        for attempt in 0..<3 {
             if !keyboard.exists {
                 XCTAssertTrue(save.isHittable)
                 attach("details-value-keyboard-dismissed")
@@ -271,13 +271,16 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 ))
             start.press(forDuration: 0.05, thenDragTo: end)
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+            if attempt == 2 { break }
         }
 
-        if keyboard.exists {
-            XCTFail("Save remains covered by keyboard: save=\(save.frame), keyboard=\(keyboard.frame)")
-        } else {
+        if !keyboard.exists {
             XCTAssertTrue(save.isHittable)
             attach("details-value-keyboard-dismissed")
+        } else if save.isHittable && save.frame.maxY <= keyboard.frame.minY {
+            attach("details-value-keyboard")
+        } else {
+            XCTFail("Save remains covered by keyboard: save=\(save.frame), keyboard=\(keyboard.frame)")
         }
     }
 
