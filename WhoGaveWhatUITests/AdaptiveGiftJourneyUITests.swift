@@ -135,6 +135,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             let add = app.buttons["person-picker.add"]
             XCTAssertTrue(add.waitForExistence(timeout: timeout))
             XCTAssertTrue(add.isEnabled)
+            attach("person-picker-before-add-\(endpoint)")
+            attachHierarchy("person-picker-before-add-\(endpoint)", selectedValue: query.value as? String)
             add.tap()
         } else {
             let matchingRows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'person-picker.person.' AND label == %@", name))
@@ -146,6 +148,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             let add = app.buttons["person-picker.add"]
             XCTAssertTrue(add.waitForExistence(timeout: timeout))
             XCTAssertTrue(add.isEnabled)
+            attach("person-picker-before-duplicate-add-\(endpoint)")
+            attachHierarchy("person-picker-before-duplicate-add-\(endpoint)", selectedValue: query.value as? String)
             add.tap()
             waitForDisappearance(query)
 
@@ -156,8 +160,12 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             XCTAssertEqual(reopenedRows.firstMatch.identifier, originalID)
             reopenedRows.firstMatch.tap()
         }
-        XCTAssertEqual(app.buttons["add-gift.\(endpoint)"].value as? String, name)
         waitForDisappearance(app.textFields["person-picker.query"])
+        let endpointElement = app.buttons["add-gift.\(endpoint)"]
+        waitForValue(endpointElement, expected: name)
+        XCTAssertEqual(endpointElement.value as? String, name)
+        attach("form-after-person-add-\(endpoint)")
+        attachHierarchy("form-after-person-add-\(endpoint)", selectedValue: endpointElement.value as? String)
     }
 
     private func verifySettings() {
@@ -201,6 +209,20 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         let predicate = NSPredicate(format: "exists == false")
         let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
         XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed)
+    }
+
+    private func waitForValue(_ element: XCUIElement, expected: String) {
+        let predicate = NSPredicate(format: "value == %@", expected)
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed)
+    }
+
+    private func attachHierarchy(_ name: String, selectedValue: String?) {
+        let value = selectedValue ?? "<nil>"
+        let attachment = XCTAttachment(string: "selectedValue=\(value)\n\n\(app.debugDescription)")
+        attachment.name = "\(name)-hierarchy"
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 
     private func element(identifier: String) -> XCUIElement {
