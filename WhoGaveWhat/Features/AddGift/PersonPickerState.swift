@@ -35,4 +35,16 @@ final class PersonPickerState {
     func select(_ id: String) {
         selectedID = id
     }
+
+    @discardableResult
+    func createAndSelectPerson(
+        named name: String,
+        create: (String) -> String?,
+        select: (String) -> Void
+    ) -> String? {
+        guard let id = create(name) else { return nil }
+        selectedID = id
+        select(id)
+        return id
+    }
 }
