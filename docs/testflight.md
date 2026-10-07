@@ -8,11 +8,12 @@ environment allows only `master` before proceeding. The workflow accepts manual
 dispatches on the canonical repository's `master` only. Public forks and external
 pull requests cannot use this release path. See [Publication boundaries](publication.md).
 
-Tell the deployment thread **“Deploy WhoGaveWhat to TestFlight”**. Releases use a
-manual `workflow_dispatch` on `master`, with no push/merge trigger. Each new
-release advances version and build; retries keep the recorded identity. An
-ordinary feature request, PR approval or green CI does not authorize distribution.
-Honor explicit deployment authorization already given for this scope.
+The delivery workflow uses a manual `workflow_dispatch` on verified `master`,
+with no push/merge trigger. A request to implement and deploy, or an explicit
+full-launch instruction, authorizes this routine beta release path; no second
+deployment confirmation is needed. Each new release advances version and build;
+retries keep the recorded identity. Ordinary PR approval or green CI without a
+deployment request does not authorize distribution.
 
 The implementation ports GrowingUp PRs 41, 43, 44, 45 and 47. WhoGaveWhat has one
 app (`pro.ziganshin.WhoGaveWhat`) and generates its Info.plist from build settings;
@@ -85,7 +86,8 @@ storage. Do not paste keys or passwords into a conversation or commit them.
 
 Review the workflow and its current screenshots/video using
 [PR evidence](pr-evidence.md) before enabling it on master. Follow the repository's
-merge authority; deployment authorization does not grant merge authority.
+the [merge and approval policy](../AGENTS.md#merge-and-approval-policy); routine
+deployment authorization includes the normal merge after all gates pass.
 
 ```sh
 python3 scripts/testflight.py --repo zigdanis/WhoGaveWhat ready

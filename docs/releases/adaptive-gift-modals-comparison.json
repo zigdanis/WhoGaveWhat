@@ -1,0 +1,12 @@
+{
+  "selected_ref": "PR #13",
+  "selected_source": "current PR 13 head after review and CI; resolve the exact SHA from the receipt before dispatch",
+  "previous_verified_source": "8782d1f7fc881f440fcf41ed78fccf2c7c76966",
+  "previous_version": "1.0.2",
+  "previous_build": "11",
+  "previous_release_receipt": "37635151034",
+  "previous_processing_state": "VALID",
+  "previous_beta_state": "WAITING_FOR_BETA_REVIEW",
+  "comparison": "PR #13 changes gift modal sizing, person selection, and Settings presentation. No schema change is included. Existing gifts, people, persistence, and other app areas remain part of the TestFlight regression checks.",
+  "source_note": "This comparison intentionally names PR #13 rather than this documentation commit; the release workflow must record and verify the exact merged master SHA before upload."
+}

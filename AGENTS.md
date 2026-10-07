@@ -6,6 +6,8 @@
 # General notes
 
 - Always start every reply by addressing me by name: "Danis, ..." or "Данис, ...".
+- For feature, fix, improvement, and requested build work, always read and apply [.agents/skills/whogavewhat-delivery/SKILL.md](.agents/skills/whogavewhat-delivery/SKILL.md). It is the default delivery workflow: delegate implementation, obtain a distinct read-only review, fix concrete review and bot findings with re-review, validate native behavior through macOS CI, inspect current screenshots and video, publish both in the PR, merge when all gates pass, then deliver the verified master source to TestFlight when the request authorizes deployment. Read-only discussion and plan-only requests do not trigger delivery.
+- Use [.agents/skills/multi-agent-feature-pr/SKILL.md](.agents/skills/multi-agent-feature-pr/SKILL.md) as the feature-PR routing entry point; it hands routine work to `whogavewhat-delivery` and adds no separate human approval or HTML-plan gate.
 - if iPhone simulator is already launched - use it instead of launching a new one.
 - Prefer using iPhone 17 Pro simulator otherwise.
 - Always use English when filling in PRs and comments on GitHub. Nothing should be in the Russian language when facing GitHub (commit messages, coments, PR titles, descriptions, etc.)
@@ -22,10 +24,15 @@
 - Report only concrete, actionable problems introduced by the change. Do not repeat formatter or linter findings, demand speculative abstractions, or invent findings when no shared rule applies.
 - When asked to babysit a pull request, use the `babysit-pr` skill when available. Validate each bot finding before changing code, use bounded subagents when useful, run the checks that cover each fix, push only to the pull request branch, and reply with evidence before resolving a review thread.
 - After every push, re-check the latest head commit, required checks, new reviews, and unresolved conversations. Continue until the current head is green, reviewers have reached a terminal state, and no actionable thread remains.
-- Never merge or enable auto-merge. Hand the clean pull request to Danis for final review.
+- Merge or enable auto-merge autonomously once the latest PR head has green required checks, completed independent and bot reviews with no actionable findings or unresolved conversations, and current inspected visual evidence where applicable. Recheck the head before merging and verify the resulting master commit and its CI before deployment.
+
+# Merge and approval policy
+
+- Ask for approval only for a concrete one-way-door action: an irreversible or hard-to-reverse change, or one that could cause substantial losses. Complete the independent, reviewable preparation first. Routine reversible changes and TestFlight beta updates do not need another confirmation.
+- TestFlight follows the source, CI, evidence, and receipt gates in [docs/testflight.md](docs/testflight.md). A request to implement and deploy, including an explicit full-launch instruction, authorizes the routine merge and TestFlight beta path; do not ask again at each gate. Genuine Apple, credential, legal, account, or device-availability blockers remain reportable blockers.
 
 # Quality and PR evidence
 
 - Before handing over any PR, follow [PR evidence](docs/pr-evidence.md): inspect current-head screenshots and video and embed both in the description, including documentation and infrastructure PRs. App smoke verifies the environment; UI changes also require the changed scenario.
 - Run `scripts/check-formatting.sh`, `scripts/lint-swift.sh` and the helper tests before pushing. Use `scripts/format-swift.sh` to fix layout; SwiftLint owns source correctness rules.
-- On Raspberry Pi, use [the CI evidence workflow](docs/pr-evidence.md#raspberry-pi) for native app validation and visual review.
+- On Raspberry Pi, use [the CI evidence workflow](docs/pr-evidence.md#raspberry-pi) for native app validation and visual review. A local Mac is optional convenience, not a dependency.
