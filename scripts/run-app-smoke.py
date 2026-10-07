@@ -138,7 +138,7 @@ def run(directory):
         "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"), "mcp": "2.7.0",
         "checkpoints": [], "native_test": "WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testAdaptiveGiftJourney",
         "planned_checkpoint_names": [
-            "home-start", "people", "insights", "gift-compact-keyboard", "details-value",
+            "home-start", "people", "insights", "gift-compact-keyboard", "gift-compact-dismissed", "details-value",
             "gift-saved", "gift-after-relaunch",
             "settings-currency", "licenses", "calendar-reverse",
         ],

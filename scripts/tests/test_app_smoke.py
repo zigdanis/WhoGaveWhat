@@ -160,7 +160,7 @@ class AppSmokeJourneyTests(unittest.TestCase):
             def export(command, **kwargs):
                 attachment_dir = directory / 'attachments'
                 attachment_dir.mkdir(parents=True, exist_ok=True)
-                names = ['home-start', 'people', 'insights', 'gift-compact-keyboard', 'details-value',
+                names = ['home-start', 'people', 'insights', 'gift-compact-keyboard', 'gift-compact-dismissed', 'details-value',
                          'gift-saved', 'gift-after-relaunch', 'settings-currency', 'licenses', 'calendar-reverse']
                 names += [f'calendar-{count}-weeks' for count in calendar_counts]
                 attachments = []
