@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 from pathlib import Path
 
 
@@ -82,6 +83,33 @@ def select_simulator(simulators):
     return max(candidates, key=lambda s: tuple(map(int, re.findall(r"\d+", s["runtime"]))))
 
 
+def ensure_daemon(directory, timeout=90, command_runner=subprocess.run, sleeper=time.sleep):
+    """Start xcodebuildmcp once and wait for the current workspace daemon."""
+    directory = directory.resolve()
+    start = command_runner(
+        ["xcodebuildmcp", "daemon", "start", "--style", "minimal"],
+        cwd=str(directory), text=True, capture_output=True, timeout=30)
+    (directory / "daemon-start.log").write_text(start.stdout + start.stderr)
+    deadline = time.monotonic() + timeout
+    last_output = ""
+    while time.monotonic() < deadline:
+        status = command_runner(
+            ["xcodebuildmcp", "daemon", "list", "--json", "--all"],
+            cwd=str(directory), text=True, capture_output=True, timeout=30)
+        last_output = status.stdout + status.stderr
+        try:
+            daemons = json.loads(status.stdout)
+        except (ValueError, TypeError):
+            daemons = []
+        if any(str(item.get("workspaceRoot", "")) == str(directory)
+               and item.get("status") == "running"
+               for item in daemons if isinstance(item, dict)):
+            return
+        sleeper(1)
+    (directory / "daemon-list-timeout.log").write_text(last_output)
+    raise ValueError(f"xcodebuildmcp daemon did not become ready for {directory}")
+
+
 def _export_xcresult_attachments(result_bundle, attachments):
     attachments.mkdir(parents=True, exist_ok=True)
     process = subprocess.run(
@@ -119,6 +147,7 @@ def run(directory):
     test_succeeded = False
     result_bundle = None
     try:
+        ensure_daemon(directory)
         simulator = select_simulator(invoke_mcp(directory, 1, "simulator", "list", {"enabled": True})["simulators"])
         metadata.update(device=simulator["name"], runtime=simulator["runtime"])
         invoke_mcp(directory, 2, "simulator", "boot", {"simulatorId": simulator["simulatorId"]})

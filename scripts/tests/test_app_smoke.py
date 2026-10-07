@@ -23,6 +23,28 @@ def response(error=None, code='ACTION_FAILED'):
 
 
 class AppSmokeReadRetryTests(unittest.TestCase):
+    def test_daemon_status_requires_running_workspace_match(self):
+        with tempfile.TemporaryDirectory() as directory:
+            calls = []
+            def runner(command, **kwargs):
+                calls.append(command)
+                if command[2] == 'start':
+                    return subprocess.CompletedProcess(command, 0, stdout='', stderr='')
+                return subprocess.CompletedProcess(command, 0, stdout=json.dumps([
+                    {'workspaceRoot': str(Path(directory)), 'status': 'running'}]), stderr='')
+            smoke.ensure_daemon(Path(directory), timeout=1, command_runner=runner, sleeper=lambda _: None)
+            self.assertEqual(2, len(calls))
+
+    def test_daemon_status_zero_exit_not_running_times_out(self):
+        with tempfile.TemporaryDirectory() as directory:
+            def runner(command, **kwargs):
+                if command[2] == 'start':
+                    return subprocess.CompletedProcess(command, 0, stdout='', stderr='')
+                return subprocess.CompletedProcess(command, 0, stdout=json.dumps([
+                    {'workspaceRoot': str(Path(directory)), 'status': 'stale'}]), stderr='')
+            with self.assertRaises(ValueError):
+                smoke.ensure_daemon(Path(directory), timeout=0, command_runner=runner, sleeper=lambda _: None)
+
     def test_read_transport_timeout_retries_once(self):
         payload = {'didError': True, 'error': 'Daemon invocation failed: Daemon request timed out after 30000ms',
                    'data': {'code': 'DAEMON_TRANSPORT_FAILED'}}
@@ -144,6 +166,7 @@ class AppSmokeJourneyTests(unittest.TestCase):
                 return subprocess.CompletedProcess(command, 0, stdout='', stderr='')
 
             with (patch.object(smoke, 'invoke_mcp', side_effect=mcp),
+                  patch.object(smoke, 'ensure_daemon'),
                   patch.object(smoke.subprocess, 'run', side_effect=export),
                   patch.object(smoke.subprocess, 'check_output', return_value='a' * 40)):
                 if native_failure or len(set(calendar_counts)) < 2:
