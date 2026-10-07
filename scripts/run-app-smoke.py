@@ -64,13 +64,13 @@ def target(capture, label, role):
     return matches[0]["ref"]
 
 
-def element(capture, *, identifier=None, label=None, role=None, prefix=False):
+def element(capture, *, identifier=None, label=None, role=None):
     """Return one current AX element, using stable identifiers where possible."""
     matches = []
     for candidate in capture.get("elements", []):
         if identifier is not None:
             value = candidate.get("identifier", "")
-            if (value.startswith(identifier) if prefix else value != identifier):
+            if value != identifier:
                 continue
         if label is not None and candidate.get("label") != label:
             continue
@@ -81,6 +81,39 @@ def element(capture, *, identifier=None, label=None, role=None, prefix=False):
         raise ValueError(
             f"Expected exactly one element identifier={identifier!r} label={label!r} role={role!r}; got {len(matches)}")
     return matches[0]
+
+
+def calendar_month(capture):
+    """Extract the UIKit calendar's visible month heading from the live AX tree."""
+    pattern = re.compile(r"^(?:January|February|March|April|May|June|July|August|September|October|November|December) \d{4}$")
+    matches = sorted({e.get("label", "") for e in capture.get("elements", []) if pattern.fullmatch(e.get("label", ""))})
+    if len(matches) != 1:
+        raise ValueError(f"Expected one visible calendar month heading; got {matches}")
+    return matches[0]
+
+
+def assert_endpoint(capture, identifier, expected):
+    observed = element(capture, identifier=identifier)
+    if observed.get("value") != expected:
+        raise ValueError(f"{identifier} did not select {expected!r}: {observed}")
+
+
+def assert_currency(capture):
+    observed = element(capture, identifier="settings.currency")
+    text = " ".join(str(observed.get(key, "")) for key in ("label", "value"))
+    if "USD" not in text and "$" not in text and "United States" not in text:
+        raise ValueError(f"Currency selection was not persisted in Settings: {observed}")
+    placeholders = {"License information is unavailable.", "Choose", "No value"}
+    visible = {str(e.get("label", "")) for e in capture.get("elements", [])}
+    unexpected = sorted(placeholders.intersection(visible))
+    if unexpected:
+        raise ValueError(f"Settings contains placeholder labels: {unexpected}")
+
+
+def assert_license_content(capture):
+    labels = {str(e.get("label", "")) for e in capture.get("elements", [])}
+    if not any("Archivo" in label or "SIL Open Font License" in label for label in labels):
+        raise ValueError("Bundled third-party license content is not visible")
 
 
 def assert_tab_screen(capture, label):
@@ -104,10 +137,10 @@ def run(directory):
         "checkout_sha": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         "run_id": os.environ.get("GITHUB_RUN_ID", "local"),
         "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "1"),
-        "evidence_kind": "app-smoke", "scenario": "PR13 gift creation, persistence, and Settings journey",
+        "evidence_kind": "app-smoke", "scenario": "Home → People → Insights → PR13 gift creation and Settings journey",
         "journey_outcome": "failure", "export_outcome": "failure",
         "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"),
-        "mcp": "2.7.0", "checkpoints": [],
+        "mcp": "2.7.0", "checkpoints": [], "calendar_observations": [],
         "acceptance_claims": [
             "compact gift title entry and keyboard",
             "expanded Details value entry and scrolling",
@@ -176,6 +209,10 @@ def run(directory):
         mcp("simulator", "record-video", simulatorId=simulator["simulatorId"], start=True, fps=15)
         recording = True
         capture = checkpoint("home", label="Home", role="tab")
+        for label in ["People", "Insights", "Home"]:
+            tap(capture, label=label, role="tab")
+            capture = checkpoint(label.lower(), label=label, role="tab")
+            assert_tab_screen(capture, label)
         tap(capture, label="Add a gift", role="button")
         capture = checkpoint("add-gift-compact", identifier="add-gift.name")
         type_text(capture, "CI acceptance book", identifier="add-gift.name")
@@ -189,9 +226,16 @@ def run(directory):
 
         # Exercise calendar paging in both directions, then dismiss through a real date choice.
         tap(capture, identifier="add-gift.date")
-        capture = checkpoint("calendar-short-month", identifier="date-picker.calendar")
+        short_month = calendar_month(capture)
+        metadata["calendar_observations"].append(short_month)
+        capture = checkpoint(f"calendar-{short_month.lower().replace(' ', '-')}", identifier="date-picker.calendar")
         swipe(capture, "left", identifier="date-picker.calendar")
-        capture = checkpoint("calendar-long-month", identifier="date-picker.calendar")
+        capture = wait(predicate="exists", identifier="date-picker.calendar")
+        long_month = calendar_month(capture)
+        if long_month == short_month:
+            raise ValueError(f"Calendar paging did not change month: {short_month}")
+        metadata["calendar_observations"].append(long_month)
+        capture = checkpoint(f"calendar-{long_month.lower().replace(' ', '-')}", identifier="date-picker.calendar")
         swipe(capture, "right", identifier="date-picker.calendar")
         capture = wait(predicate="exists", identifier="date-picker.today")
         tap(capture, identifier="date-picker.today")
@@ -210,6 +254,8 @@ def run(directory):
         capture = wait(predicate="exists", identifier="person-picker.add")
         tap(capture, identifier="person-picker.add")
         capture = checkpoint("add-gift-endpoints", identifier="add-gift.save")
+        assert_endpoint(capture, "add-gift.from", "CI Giver")
+        assert_endpoint(capture, "add-gift.to", "CI Receiver")
         tap(capture, identifier="add-gift.save")
         capture = checkpoint("saved-gift", label="CI acceptance book")
 
@@ -219,21 +265,42 @@ def run(directory):
             env={"KS_START": "app", "KS_TAB": "home"})
         capture = checkpoint("relaunch-persistence", label="CI acceptance book")
 
-        # Reuse the created people in a second draft rather than creating duplicates.
+        # Call the create callback with the same names. The use case must return
+        # existing IDs rather than inserting duplicate people.
         tap(capture, label="Add a gift", role="button")
         capture = wait(predicate="exists", identifier="add-gift.name")
         type_text(capture, "CI duplicate reuse", identifier="add-gift.name")
         tap(capture, identifier="add-gift.from")
         capture = wait(predicate="exists", label="CI Giver", role="button")
-        first_person = element(capture, label="CI Giver", role="button")
-        mcp("ui-automation", "batch", simulatorId=simulator["simulatorId"],
-            steps=[{"action": "tap", "elementRef": first_person["ref"]}])
+        original_giver_id = element(capture, label="CI Giver", role="button").get("identifier")
+        type_text(capture, "CI Giver", identifier="person-picker.query")
+        capture = wait(predicate="exists", identifier="person-picker.add")
+        tap(capture, identifier="person-picker.add")
         capture = wait(predicate="exists", identifier="add-gift.to")
         tap(capture, identifier="add-gift.to")
         capture = wait(predicate="exists", label="CI Receiver", role="button")
-        second_person = element(capture, label="CI Receiver", role="button")
-        mcp("ui-automation", "batch", simulatorId=simulator["simulatorId"],
-            steps=[{"action": "tap", "elementRef": second_person["ref"]}])
+        original_receiver_id = element(capture, label="CI Receiver", role="button").get("identifier")
+        type_text(capture, "CI Receiver", identifier="person-picker.query")
+        capture = wait(predicate="exists", identifier="person-picker.add")
+        tap(capture, identifier="person-picker.add")
+        capture = wait(predicate="exists", identifier="add-gift.save")
+        if not original_giver_id or not original_receiver_id:
+            raise ValueError("Duplicate-person proof could not read original person identifiers")
+        metadata["duplicate_person_ids"] = {"giver": original_giver_id, "receiver": original_receiver_id}
+        assert_endpoint(capture, "add-gift.from", "CI Giver")
+        assert_endpoint(capture, "add-gift.to", "CI Receiver")
+        # The selected endpoint remains the original ID after the duplicate Add callback.
+        tap(capture, identifier="add-gift.from")
+        capture = wait(predicate="exists", label="CI Giver", role="button")
+        if element(capture, label="CI Giver", role="button").get("identifier") != original_giver_id:
+            raise ValueError("Duplicate From person received a new identifier")
+        tap(capture, label="CI Giver", role="button")
+        capture = wait(predicate="exists", identifier="add-gift.to")
+        tap(capture, identifier="add-gift.to")
+        capture = wait(predicate="exists", label="CI Receiver", role="button")
+        if element(capture, label="CI Receiver", role="button").get("identifier") != original_receiver_id:
+            raise ValueError("Duplicate To person received a new identifier")
+        tap(capture, label="CI Receiver", role="button")
         capture = checkpoint("duplicate-person-reuse", identifier="add-gift.save")
         tap(capture, identifier="add-gift.save")
         capture = wait(predicate="exists", label="Home", role="tab")
@@ -249,8 +316,10 @@ def run(directory):
         capture = wait(predicate="exists", label="Settings", role="button")
         tap(capture, label="Settings", role="button")
         capture = wait(predicate="exists", identifier="settings.screen")
+        assert_currency(capture)
         tap(capture, identifier="settings.third-party-licenses")
-        checkpoint("licenses", identifier="settings.third-party-licenses.screen")
+        licenses_capture = checkpoint("licenses", identifier="settings.third-party-licenses.screen")
+        assert_license_content(licenses_capture)
         metadata["journey_outcome"] = "success"
     finally:
         if recording:

@@ -26,8 +26,9 @@ Publication does not enable automatic distribution. TestFlight uses a manual
 `workflow_dispatch` on the canonical repository's verified `master` and the
 protected `testflight` environment, whose custom deployment policy allows only
 `master` and no tags. The delivery agent may invoke this protected dispatch after
-the requested work passes its review, bot, CI, visual-evidence, merge, and
-master-CI gates. Pushes, pull requests and forks do not run that release job.
+each routine feature or fix passes its review, bot, CI, visual-evidence, merge,
+and master-CI gates, unless the user explicitly limits the work to no deployment.
+Pushes, pull requests and forks do not run that release job.
 Release helpers require an explicit `--repo` and validate the canonical target
 and environment policy before dispatching or importing credentials.
 

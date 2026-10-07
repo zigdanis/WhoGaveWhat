@@ -9,11 +9,11 @@ dispatches on the canonical repository's `master` only. Public forks and externa
 pull requests cannot use this release path. See [Publication boundaries](publication.md).
 
 The delivery workflow uses a manual `workflow_dispatch` on verified `master`,
-with no push/merge trigger. A request to implement and deploy, or an explicit
-full-launch instruction, authorizes this routine beta release path; no second
-deployment confirmation is needed. Each new release advances version and build;
-retries keep the recorded identity. Ordinary PR approval or green CI without a
-deployment request does not authorize distribution.
+with no push/merge trigger. Every routine feature, fix, improvement, and build
+request authorizes this beta release path; explicit discussion, plan-only,
+PR-only, and do-not-deploy limits opt out. No second deployment confirmation is
+needed. Each new release advances version and build; retries keep the recorded
+identity. PR approval or green CI alone does not start a release.
 
 The implementation ports GrowingUp PRs 41, 43, 44, 45 and 47. WhoGaveWhat has one
 app (`pro.ziganshin.WhoGaveWhat`) and generates its Info.plist from build settings;

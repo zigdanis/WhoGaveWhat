@@ -25,6 +25,6 @@ capture, retrieval, and publication commands.
 
 Finish only when current inspected evidence and functional checks demonstrate
 the requested outcome. Report exact gaps when a capture or publication step is
-blocked. For a release, follow [TestFlight operations](../../../docs/testflight.md);
-an authorized implementation-and-deploy request supplies the routine beta
-release authorization described there.
+blocked. Follow [TestFlight operations](../../../docs/testflight.md) for every
+routine feature, fix, improvement, and build request; only explicit discussion,
+plan-only, PR-only, or do-not-deploy limits suppress the beta release path.

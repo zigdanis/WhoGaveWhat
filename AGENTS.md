@@ -6,7 +6,7 @@
 # General notes
 
 - Always start every reply by addressing me by name: "Danis, ..." or "Данис, ...".
-- For feature, fix, improvement, and requested build work, always read and apply [.agents/skills/whogavewhat-delivery/SKILL.md](.agents/skills/whogavewhat-delivery/SKILL.md). It is the default delivery workflow: delegate implementation, obtain a distinct read-only review, fix concrete review and bot findings with re-review, validate native behavior through macOS CI, inspect current screenshots and video, publish both in the PR, merge when all gates pass, then deliver the verified master source to TestFlight when the request authorizes deployment. Read-only discussion and plan-only requests do not trigger delivery.
+- For feature, fix, improvement, and requested build work, always read and apply [.agents/skills/whogavewhat-delivery/SKILL.md](.agents/skills/whogavewhat-delivery/SKILL.md). It is the default delivery workflow: delegate implementation, obtain a distinct read-only review, fix concrete review and bot findings with re-review, validate native behavior through macOS CI, inspect current screenshots and video, publish both in the PR, merge when all gates pass, then deliver the verified master source to TestFlight. Routine feature and fix requests include this full beta path by default; only explicit discussion, plan-only, PR-only, or do-not-deploy limits opt out.
 - Use [.agents/skills/multi-agent-feature-pr/SKILL.md](.agents/skills/multi-agent-feature-pr/SKILL.md) as the feature-PR routing entry point; it hands routine work to `whogavewhat-delivery` and adds no separate human approval or HTML-plan gate.
 - if iPhone simulator is already launched - use it instead of launching a new one.
 - Prefer using iPhone 17 Pro simulator otherwise.
@@ -29,7 +29,7 @@
 # Merge and approval policy
 
 - Ask for approval only for a concrete one-way-door action: an irreversible or hard-to-reverse change, or one that could cause substantial losses. Complete the independent, reviewable preparation first. Routine reversible changes and TestFlight beta updates do not need another confirmation.
-- TestFlight follows the source, CI, evidence, and receipt gates in [docs/testflight.md](docs/testflight.md). A request to implement and deploy, including an explicit full-launch instruction, authorizes the routine merge and TestFlight beta path; do not ask again at each gate. Genuine Apple, credential, legal, account, or device-availability blockers remain reportable blockers.
+- TestFlight follows the source, CI, evidence, and receipt gates in [docs/testflight.md](docs/testflight.md). Routine feature and fix requests authorize the merge and TestFlight beta path unless the user explicitly limits the work to discussion, a plan, a PR, or no deployment; do not ask again at each gate. Genuine Apple, credential, legal, or account blockers remain reportable blockers. Device-only confirmation is a post-release state, and local Mac access is optional because CI is the native verification path.
 
 # Quality and PR evidence
 

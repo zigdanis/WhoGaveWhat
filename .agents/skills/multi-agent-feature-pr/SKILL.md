@@ -14,9 +14,10 @@ add a separate HTML-plan or human-approval gate.
 ## Authorization boundary
 
 Invoking this skill with a concrete implementation request authorizes the
-normal repository delivery workflow, including merge and TestFlight when the
-request asks for deployment. One-way-door changes and genuine account or Apple
-blockers still follow [AGENTS.md](../../../AGENTS.md#merge-and-approval-policy).
+normal repository delivery workflow, including merge and TestFlight by default.
+Explicit discussion, plan-only, PR-only, and do-not-deploy limits opt out.
+One-way-door changes and genuine account or Apple blockers still follow
+[AGENTS.md](../../../AGENTS.md#merge-and-approval-policy).
 
 ## Required workflow
 
