@@ -103,6 +103,8 @@ class AppSmokeJourneyTests(unittest.TestCase):
             generation = 0
             latest = None
             photographed = None
+            timed_out_people_tap = False
+            batch_calls = []
 
             def capture():
                 nonlocal generation
@@ -138,7 +140,7 @@ class AppSmokeJourneyTests(unittest.TestCase):
                     {'ref': 'license-heading', 'label': 'Archivo license', 'role': 'static-text'}]}
 
             def backend(_directory, _sequence, workflow, command, parameters):
-                nonlocal current, latest, photographed, calendar_page
+                nonlocal current, latest, photographed, calendar_page, timed_out_people_tap
                 if command == 'list':
                     return {'simulators': [{'isAvailable': True, 'name': 'iPhone 17 Pro', 'state': 'Booted',
                                             'runtime': 'iOS 26.5', 'simulatorId': 'fixture'}]}
@@ -152,6 +154,8 @@ class AppSmokeJourneyTests(unittest.TestCase):
                                                 for key in ('label', 'identifier', 'role') if key in parameters)
                                             for element in ready['elements']))
                     latest = ready
+                    if parameters['predicate'] == 'settled':
+                        photographed = ready
                     return {'capture': ready}
                 if command == 'tap':
                     self.fail('Smoke navigation must avoid the observed AXe selector tap path')
@@ -162,6 +166,14 @@ class AppSmokeJourneyTests(unittest.TestCase):
                     matches = [element for element in latest['elements'] if element['ref'] == ref]
                     self.assertEqual(1, len(matches))
                     self.assertIn('tap', matches[0]['actions'])
+                    batch_calls.append(ref)
+                    if matches[0].get('label') == 'People' and not timed_out_people_tap:
+                        timed_out_people_tap = True
+                        current = 'People'
+                        taps.append('People')
+                        raise ValueError(
+                            "XcodeBuildMCP failed: {'error': 'Daemon request timed out after 30000ms', "
+                            "'code': 'DAEMON_TRANSPORT_FAILED'}")
                     if matches[0].get('label') in ('Home', 'People', 'Insights', 'Add a gift'):
                         self.assertIsNotNone(photographed)
                         self.assertIn(ref, [element['ref'] for element in photographed['elements']])
@@ -204,3 +216,4 @@ class AppSmokeJourneyTests(unittest.TestCase):
                               'settings', 'licenses'],
                              [checkpoint['name'] for checkpoint in metadata['checkpoints']])
             self.assertEqual(['People', 'Insights', 'Home', 'Add a gift', 'Add a gift'], taps)
+            self.assertEqual(1, sum(ref.endswith('tab-People') for ref in batch_calls))

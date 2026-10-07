@@ -154,7 +154,7 @@ def run(directory):
         "evidence_kind": "feature-acceptance", "scenario": "Home → People → Insights → PR13 gift creation and Settings journey",
         "journey_outcome": "failure", "export_outcome": "failure",
         "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"),
-        "mcp": "2.7.0", "checkpoints": [], "calendar_observations": [],
+        "mcp": "2.7.0", "checkpoints": [], "calendar_observations": [], "transport_recoveries": [],
         "acceptance_claims": [
             "compact gift title entry and keyboard",
             "expanded Details value entry and scrolling",
@@ -198,10 +198,28 @@ def run(directory):
         metadata["checkpoints"].append({"name": name, "image": f"attachments/{name}.png"})
         return capture
 
-    def tap(capture, **selector):
+    def tap(capture, *, expected=None, verify=None, **selector):
+        # Screenshots can outlive the AXe ref cache. Resolve every mutation from
+        # a fresh settled capture immediately before sending it.
+        capture = wait(predicate="settled", settledDurationMs=400)
         ref = element(capture, **selector)["ref"]
-        mcp("ui-automation", "batch", simulatorId=simulator["simulatorId"],
-            steps=[{"action": "tap", "elementRef": ref}])
+        try:
+            mcp("ui-automation", "batch", simulatorId=simulator["simulatorId"],
+                steps=[{"action": "tap", "elementRef": ref}])
+        except ValueError as error:
+            text = str(error)
+            transport_timeout = (
+                "DAEMON_TRANSPORT_FAILED" in text
+                and "Daemon request timed out after 30000ms" in text)
+            if not transport_timeout or expected is None:
+                raise
+            recovered = wait(predicate="exists", **expected)
+            if verify is not None:
+                verify(recovered)
+            metadata["transport_recoveries"].append({
+                "action": "tap", "selector": selector,
+                "postcondition": expected, "error": text,
+            })
 
     def type_text(capture, text, **selector):
         ref = element(capture, **selector)["ref"]
@@ -230,14 +248,16 @@ def run(directory):
         recording = True
         capture = checkpoint("home", label="Home", role="tab")
         for label in ["People", "Insights", "Home"]:
-            tap(capture, label=label, role="tab")
+            tap(capture, label=label, role="tab",
+                expected={"identifier": label, "role": "other"},
+                verify=lambda recovered, label=label: assert_tab_screen(recovered, label))
             capture = checkpoint(label.lower(), label=label, role="tab")
             assert_tab_screen(capture, label)
-        tap(capture, label="Add a gift", role="button")
+        tap(capture, label="Add a gift", role="button", expected={"identifier": "add-gift.name"})
         capture = checkpoint("add-gift-compact", identifier="add-gift.name")
         type_text(capture, gift_name, identifier="add-gift.name")
         capture = wait(predicate="exists", identifier="add-gift.details")
-        tap(capture, identifier="add-gift.details")
+        tap(capture, identifier="add-gift.details", expected={"identifier": "add-gift.value"})
         capture = checkpoint("add-gift-details", identifier="add-gift.value")
         type_text(capture, "42", identifier="add-gift.value")
         capture = wait(predicate="exists", identifier="add-gift.scroll")
@@ -245,7 +265,7 @@ def run(directory):
         capture = checkpoint("add-gift-value-scrolled", identifier="add-gift.save")
 
         # Exercise calendar paging in both directions, then dismiss through a real date choice.
-        tap(capture, identifier="add-gift.date")
+        tap(capture, identifier="add-gift.date", expected={"identifier": "date-picker.calendar"})
         capture = wait(predicate="exists", identifier="date-picker.calendar")
         short_month = calendar_month(capture)
         metadata["calendar_observations"].append(short_month)
@@ -260,25 +280,25 @@ def run(directory):
         capture = checkpoint(f"calendar-{long_month.lower().replace(' ', '-')}", identifier="date-picker.calendar")
         swipe(capture, "right", identifier="date-picker.calendar")
         capture = wait(predicate="exists", identifier="date-picker.today")
-        tap(capture, identifier="date-picker.today")
+        tap(capture, identifier="date-picker.today", expected={"identifier": "add-gift.save"})
         capture = checkpoint("details-after-calendar", identifier="add-gift.save")
 
         # Create both endpoints.  Creating a person immediately selects it and closes its picker.
-        tap(capture, identifier="add-gift.from")
+        tap(capture, identifier="add-gift.from", expected={"identifier": "person-picker.query"})
         capture = wait(predicate="exists", identifier="person-picker.query")
         type_text(capture, giver_name, identifier="person-picker.query")
         capture = wait(predicate="exists", identifier="person-picker.add")
-        tap(capture, identifier="person-picker.add")
+        tap(capture, identifier="person-picker.add", expected={"identifier": "add-gift.to"})
         capture = wait(predicate="exists", identifier="add-gift.to")
-        tap(capture, identifier="add-gift.to")
+        tap(capture, identifier="add-gift.to", expected={"identifier": "person-picker.query"})
         capture = wait(predicate="exists", identifier="person-picker.query")
         type_text(capture, receiver_name, identifier="person-picker.query")
         capture = wait(predicate="exists", identifier="person-picker.add")
-        tap(capture, identifier="person-picker.add")
+        tap(capture, identifier="person-picker.add", expected={"identifier": "add-gift.save"})
         capture = checkpoint("add-gift-endpoints", identifier="add-gift.save")
         assert_endpoint(capture, "add-gift.from", giver_name)
         assert_endpoint(capture, "add-gift.to", receiver_name)
-        tap(capture, identifier="add-gift.save")
+        tap(capture, identifier="add-gift.save", expected={"label": gift_name})
         capture = checkpoint("saved-gift", label=gift_name)
 
         # Relaunch proves SwiftData persistence and gives the recording a complete product journey.
@@ -289,23 +309,23 @@ def run(directory):
 
         # Call the create callback with the same names. The use case must return
         # existing IDs rather than inserting duplicate people.
-        tap(capture, label="Add a gift", role="button")
+        tap(capture, label="Add a gift", role="button", expected={"identifier": "add-gift.name"})
         capture = wait(predicate="exists", identifier="add-gift.name")
         type_text(capture, duplicate_name, identifier="add-gift.name")
         capture = wait(predicate="exists", identifier="add-gift.from")
-        tap(capture, identifier="add-gift.from")
+        tap(capture, identifier="add-gift.from", expected={"identifier": "person-picker.query"})
         capture = wait(predicate="exists", label=giver_name, role="button")
         original_giver_id = element(capture, label=giver_name, role="button").get("identifier")
         type_text(capture, giver_name, identifier="person-picker.query")
         capture = wait(predicate="exists", identifier="person-picker.add")
-        tap(capture, identifier="person-picker.add")
+        tap(capture, identifier="person-picker.add", expected={"identifier": "add-gift.to"})
         capture = wait(predicate="exists", identifier="add-gift.to")
-        tap(capture, identifier="add-gift.to")
+        tap(capture, identifier="add-gift.to", expected={"identifier": "person-picker.query"})
         capture = wait(predicate="exists", label=receiver_name, role="button")
         original_receiver_id = element(capture, label=receiver_name, role="button").get("identifier")
         type_text(capture, receiver_name, identifier="person-picker.query")
         capture = wait(predicate="exists", identifier="person-picker.add")
-        tap(capture, identifier="person-picker.add")
+        tap(capture, identifier="person-picker.add", expected={"identifier": "add-gift.save"})
         capture = wait(predicate="exists", identifier="add-gift.save")
         if not original_giver_id or not original_receiver_id:
             raise ValueError("Duplicate-person proof could not read original person identifiers")
@@ -313,34 +333,34 @@ def run(directory):
         assert_endpoint(capture, "add-gift.from", giver_name)
         assert_endpoint(capture, "add-gift.to", receiver_name)
         # The selected endpoint remains the original ID after the duplicate Add callback.
-        tap(capture, identifier="add-gift.from")
+        tap(capture, identifier="add-gift.from", expected={"identifier": "person-picker.query"})
         capture = wait(predicate="exists", label=giver_name, role="button")
         if element(capture, label=giver_name, role="button").get("identifier") != original_giver_id:
             raise ValueError("Duplicate From person received a new identifier")
-        tap(capture, label=giver_name, role="button")
+        tap(capture, label=giver_name, role="button", expected={"identifier": "add-gift.to"})
         capture = wait(predicate="exists", identifier="add-gift.to")
-        tap(capture, identifier="add-gift.to")
+        tap(capture, identifier="add-gift.to", expected={"identifier": "person-picker.query"})
         capture = wait(predicate="exists", label=receiver_name, role="button")
         if element(capture, label=receiver_name, role="button").get("identifier") != original_receiver_id:
             raise ValueError("Duplicate To person received a new identifier")
-        tap(capture, label=receiver_name, role="button")
+        tap(capture, label=receiver_name, role="button", expected={"identifier": "add-gift.save"})
         capture = checkpoint("duplicate-person-reuse", identifier="add-gift.save")
-        tap(capture, identifier="add-gift.save")
+        tap(capture, identifier="add-gift.save", expected={"label": "Home", "role": "tab"})
         capture = wait(predicate="exists", label="Home", role="tab")
 
         # Settings: currency navigation works and the bundled license content is present.
         capture = wait(predicate="exists", label="Settings", role="button")
-        tap(capture, label="Settings", role="button")
+        tap(capture, label="Settings", role="button", expected={"identifier": "settings.screen"})
         capture = checkpoint("settings", identifier="settings.screen")
-        tap(capture, identifier="settings.currency")
+        tap(capture, identifier="settings.currency", expected={"identifier": "settings.currency.USD"})
         capture = wait(predicate="exists", identifier="settings.currency.USD")
-        tap(capture, identifier="settings.currency.USD")
+        tap(capture, identifier="settings.currency.USD", expected={"label": "Settings", "role": "button"})
         # Currency selection persists in place; use the native navigation back button.
         capture = wait(predicate="exists", label="Settings", role="button")
-        tap(capture, label="Settings", role="button")
+        tap(capture, label="Settings", role="button", expected={"identifier": "settings.third-party-licenses"})
         capture = wait(predicate="exists", identifier="settings.screen")
         assert_currency(capture)
-        tap(capture, identifier="settings.third-party-licenses")
+        tap(capture, identifier="settings.third-party-licenses", expected={"identifier": "settings.third-party-licenses.screen"})
         licenses_capture = checkpoint("licenses", identifier="settings.third-party-licenses.screen")
         assert_license_content(licenses_capture)
         metadata["journey_outcome"] = "success"
