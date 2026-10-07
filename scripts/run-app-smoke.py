@@ -151,6 +151,15 @@ def run(directory):
             "Settings currency and bundled third-party licenses",
         ],
     }
+    run_token = ""
+    if os.environ.get("GITHUB_RUN_ID"):
+        run_token = re.sub(r"[^A-Za-z0-9-]", "-", 
+                           f"{os.environ['GITHUB_RUN_ID']}-{os.environ.get('GITHUB_RUN_ATTEMPT', '1')}")
+    gift_name = f"CI acceptance book {run_token}".rstrip() if run_token else "CI acceptance book"
+    giver_name = f"CI Giver {run_token}".rstrip() if run_token else "CI Giver"
+    receiver_name = f"CI Receiver {run_token}".rstrip() if run_token else "CI Receiver"
+    duplicate_name = f"CI duplicate reuse {run_token}".rstrip() if run_token else "CI duplicate reuse"
+    metadata["run_entities"] = {"gift": gift_name, "giver": giver_name, "receiver": receiver_name}
     sequence = 0
     simulator = None
     recording = False
@@ -215,7 +224,7 @@ def run(directory):
             assert_tab_screen(capture, label)
         tap(capture, label="Add a gift", role="button")
         capture = checkpoint("add-gift-compact", identifier="add-gift.name")
-        type_text(capture, "CI acceptance book", identifier="add-gift.name")
+        type_text(capture, gift_name, identifier="add-gift.name")
         capture = wait(predicate="exists", identifier="add-gift.details")
         tap(capture, identifier="add-gift.details")
         capture = checkpoint("add-gift-details", identifier="add-gift.value")
@@ -246,64 +255,64 @@ def run(directory):
         # Create both endpoints.  Creating a person immediately selects it and closes its picker.
         tap(capture, identifier="add-gift.from")
         capture = wait(predicate="exists", identifier="person-picker.query")
-        type_text(capture, "CI Giver", identifier="person-picker.query")
+        type_text(capture, giver_name, identifier="person-picker.query")
         capture = wait(predicate="exists", identifier="person-picker.add")
         tap(capture, identifier="person-picker.add")
         capture = wait(predicate="exists", identifier="add-gift.to")
         tap(capture, identifier="add-gift.to")
         capture = wait(predicate="exists", identifier="person-picker.query")
-        type_text(capture, "CI Receiver", identifier="person-picker.query")
+        type_text(capture, receiver_name, identifier="person-picker.query")
         capture = wait(predicate="exists", identifier="person-picker.add")
         tap(capture, identifier="person-picker.add")
         capture = checkpoint("add-gift-endpoints", identifier="add-gift.save")
-        assert_endpoint(capture, "add-gift.from", "CI Giver")
-        assert_endpoint(capture, "add-gift.to", "CI Receiver")
+        assert_endpoint(capture, "add-gift.from", giver_name)
+        assert_endpoint(capture, "add-gift.to", receiver_name)
         tap(capture, identifier="add-gift.save")
-        capture = checkpoint("saved-gift", label="CI acceptance book")
+        capture = checkpoint("saved-gift", label=gift_name)
 
         # Relaunch proves SwiftData persistence and gives the recording a complete product journey.
         mcp("simulator", "stop", simulatorId=simulator["simulatorId"], bundleId="pro.ziganshin.WhoGaveWhat")
         mcp("simulator", "launch-app", simulatorId=simulator["simulatorId"], bundleId="pro.ziganshin.WhoGaveWhat",
             env={"KS_START": "app", "KS_TAB": "home"})
-        capture = checkpoint("relaunch-persistence", label="CI acceptance book")
+        capture = checkpoint("relaunch-persistence", label=gift_name)
 
         # Call the create callback with the same names. The use case must return
         # existing IDs rather than inserting duplicate people.
         tap(capture, label="Add a gift", role="button")
         capture = wait(predicate="exists", identifier="add-gift.name")
-        type_text(capture, "CI duplicate reuse", identifier="add-gift.name")
+        type_text(capture, duplicate_name, identifier="add-gift.name")
         capture = wait(predicate="exists", identifier="add-gift.from")
         tap(capture, identifier="add-gift.from")
-        capture = wait(predicate="exists", label="CI Giver", role="button")
-        original_giver_id = element(capture, label="CI Giver", role="button").get("identifier")
-        type_text(capture, "CI Giver", identifier="person-picker.query")
+        capture = wait(predicate="exists", label=giver_name, role="button")
+        original_giver_id = element(capture, label=giver_name, role="button").get("identifier")
+        type_text(capture, giver_name, identifier="person-picker.query")
         capture = wait(predicate="exists", identifier="person-picker.add")
         tap(capture, identifier="person-picker.add")
         capture = wait(predicate="exists", identifier="add-gift.to")
         tap(capture, identifier="add-gift.to")
-        capture = wait(predicate="exists", label="CI Receiver", role="button")
-        original_receiver_id = element(capture, label="CI Receiver", role="button").get("identifier")
-        type_text(capture, "CI Receiver", identifier="person-picker.query")
+        capture = wait(predicate="exists", label=receiver_name, role="button")
+        original_receiver_id = element(capture, label=receiver_name, role="button").get("identifier")
+        type_text(capture, receiver_name, identifier="person-picker.query")
         capture = wait(predicate="exists", identifier="person-picker.add")
         tap(capture, identifier="person-picker.add")
         capture = wait(predicate="exists", identifier="add-gift.save")
         if not original_giver_id or not original_receiver_id:
             raise ValueError("Duplicate-person proof could not read original person identifiers")
         metadata["duplicate_person_ids"] = {"giver": original_giver_id, "receiver": original_receiver_id}
-        assert_endpoint(capture, "add-gift.from", "CI Giver")
-        assert_endpoint(capture, "add-gift.to", "CI Receiver")
+        assert_endpoint(capture, "add-gift.from", giver_name)
+        assert_endpoint(capture, "add-gift.to", receiver_name)
         # The selected endpoint remains the original ID after the duplicate Add callback.
         tap(capture, identifier="add-gift.from")
-        capture = wait(predicate="exists", label="CI Giver", role="button")
-        if element(capture, label="CI Giver", role="button").get("identifier") != original_giver_id:
+        capture = wait(predicate="exists", label=giver_name, role="button")
+        if element(capture, label=giver_name, role="button").get("identifier") != original_giver_id:
             raise ValueError("Duplicate From person received a new identifier")
-        tap(capture, label="CI Giver", role="button")
+        tap(capture, label=giver_name, role="button")
         capture = wait(predicate="exists", identifier="add-gift.to")
         tap(capture, identifier="add-gift.to")
-        capture = wait(predicate="exists", label="CI Receiver", role="button")
-        if element(capture, label="CI Receiver", role="button").get("identifier") != original_receiver_id:
+        capture = wait(predicate="exists", label=receiver_name, role="button")
+        if element(capture, label=receiver_name, role="button").get("identifier") != original_receiver_id:
             raise ValueError("Duplicate To person received a new identifier")
-        tap(capture, label="CI Receiver", role="button")
+        tap(capture, label=receiver_name, role="button")
         capture = checkpoint("duplicate-person-reuse", identifier="add-gift.save")
         tap(capture, identifier="add-gift.save")
         capture = wait(predicate="exists", label="Home", role="tab")
