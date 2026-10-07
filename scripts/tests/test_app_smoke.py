@@ -31,19 +31,25 @@ class AppSmokeReadRetryTests(unittest.TestCase):
                 if command[2] == 'start':
                     return subprocess.CompletedProcess(command, 0, stdout='', stderr='')
                 return subprocess.CompletedProcess(command, 0, stdout=json.dumps([
-                    {'workspaceRoot': str(Path(directory)), 'status': 'running'}]), stderr='')
+                    {'workspaceRoot': str(Path.cwd().resolve()), 'status': 'running'}]), stderr='')
             smoke.ensure_daemon(Path(directory), timeout=1, command_runner=runner, sleeper=lambda _: None)
             self.assertEqual(2, len(calls))
 
-    def test_daemon_status_zero_exit_not_running_times_out(self):
-        with tempfile.TemporaryDirectory() as directory:
-            def runner(command, **kwargs):
-                if command[2] == 'start':
-                    return subprocess.CompletedProcess(command, 0, stdout='', stderr='')
-                return subprocess.CompletedProcess(command, 0, stdout=json.dumps([
-                    {'workspaceRoot': str(Path(directory)), 'status': 'stale'}]), stderr='')
-            with self.assertRaises(ValueError):
-                smoke.ensure_daemon(Path(directory), timeout=0, command_runner=runner, sleeper=lambda _: None)
+    def test_daemon_status_zero_exit_requires_running_current_workspace(self):
+        for status, workspace in [('stale', str(Path.cwd().resolve())), ('running', '/another/workspace')]:
+            with self.subTest(status=status, workspace=workspace), tempfile.TemporaryDirectory() as directory:
+                calls = []
+                def runner(command, **kwargs):
+                    calls.append(command)
+                    if command[2] == 'start':
+                        return subprocess.CompletedProcess(command, 0, stdout='', stderr='')
+                    return subprocess.CompletedProcess(command, 0, stdout=json.dumps([
+                        {'workspaceRoot': workspace, 'status': status}]), stderr='')
+                with patch.object(smoke.time, 'monotonic', side_effect=[0, 0, 2]):
+                    with self.assertRaises(ValueError):
+                        smoke.ensure_daemon(Path(directory), timeout=1, command_runner=runner, sleeper=lambda _: None)
+                self.assertEqual(['start', 'list'], [command[2] for command in calls])
+                self.assertTrue((Path(directory) / 'daemon-list-timeout.log').is_file())
 
     def test_read_transport_timeout_retries_once(self):
         payload = {'didError': True, 'error': 'Daemon invocation failed: Daemon request timed out after 30000ms',
@@ -154,7 +160,7 @@ class AppSmokeJourneyTests(unittest.TestCase):
                 attachment_dir = directory / 'attachments'
                 attachment_dir.mkdir(parents=True, exist_ok=True)
                 names = ['home-start', 'people', 'insights', 'gift-compact-keyboard', 'details-value',
-                         'gift-saved', 'gift-after-relaunch', 'settings-currency', 'licenses']
+                         'gift-saved', 'gift-after-relaunch', 'settings-currency', 'licenses', 'calendar-reverse']
                 names += [f'calendar-{count}-weeks' for count in calendar_counts]
                 attachments = []
                 for index, name in enumerate(names):

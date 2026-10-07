@@ -86,28 +86,29 @@ def select_simulator(simulators):
 def ensure_daemon(directory, timeout=90, command_runner=subprocess.run, sleeper=time.sleep):
     """Start xcodebuildmcp once and wait for the current workspace daemon."""
     directory = directory.resolve()
+    workspace = Path.cwd().resolve()
     start = command_runner(
         ["xcodebuildmcp", "daemon", "start", "--style", "minimal"],
-        cwd=str(directory), text=True, capture_output=True, timeout=30)
+        cwd=str(workspace), text=True, capture_output=True, timeout=30)
     (directory / "daemon-start.log").write_text(start.stdout + start.stderr)
     deadline = time.monotonic() + timeout
     last_output = ""
     while time.monotonic() < deadline:
         status = command_runner(
             ["xcodebuildmcp", "daemon", "list", "--json", "--all"],
-            cwd=str(directory), text=True, capture_output=True, timeout=30)
+            cwd=str(workspace), text=True, capture_output=True, timeout=30)
         last_output = status.stdout + status.stderr
         try:
             daemons = json.loads(status.stdout)
         except (ValueError, TypeError):
             daemons = []
-        if any(str(item.get("workspaceRoot", "")) == str(directory)
+        if any(str(item.get("workspaceRoot", "")) == str(workspace)
                and item.get("status") == "running"
                for item in daemons if isinstance(item, dict)):
             return
         sleeper(1)
     (directory / "daemon-list-timeout.log").write_text(last_output)
-    raise ValueError(f"xcodebuildmcp daemon did not become ready for {directory}")
+    raise ValueError(f"xcodebuildmcp daemon did not become ready for {workspace}")
 
 
 def _export_xcresult_attachments(result_bundle, attachments):
@@ -139,7 +140,7 @@ def run(directory):
         "planned_checkpoint_names": [
             "home-start", "people", "insights", "gift-compact-keyboard", "details-value",
             "gift-saved", "gift-after-relaunch",
-            "settings-currency", "licenses",
+            "settings-currency", "licenses", "calendar-reverse",
         ],
     }
     simulator = None
