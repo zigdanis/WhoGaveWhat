@@ -131,13 +131,17 @@ class AppSmokeJourneyTests(unittest.TestCase):
                 if command == 'test':
                     result = directory / 'Acceptance.xcresult'
                     result.mkdir()
-                    return {'artifacts': {'resultBundlePath': str(result)}}
+                    return {'artifacts': {'xcresultPath': str(result)}}
                 if command == 'record-video' and parameters.get('stop'):
                     Path(parameters['outputFile']).write_bytes(b'video')
                 return {}
             def export(command, **kwargs):
-                Path(directory / 'attachments' / '01-home.png').parent.mkdir(parents=True, exist_ok=True)
-                Path(directory / 'attachments' / '01-home.png').write_bytes(b'image')
+                attachment_dir = directory / 'attachments'
+                attachment_dir.mkdir(parents=True, exist_ok=True)
+                for name in ['home-start', 'people', 'insights', 'gift-compact-keyboard', 'details-value',
+                             'calendar-5-weeks', 'calendar-6-weeks', 'gift-saved', 'gift-after-relaunch',
+                             'settings-aud', 'licenses']:
+                    (attachment_dir / f'{name}.png').write_bytes(b'image')
                 return subprocess.CompletedProcess(command, 0, stdout='', stderr='')
             with (patch.object(smoke, 'invoke_mcp', side_effect=mcp),
                   patch.object(smoke.subprocess, 'run', side_effect=export),
@@ -146,7 +150,7 @@ class AppSmokeJourneyTests(unittest.TestCase):
             metadata = json.loads((directory / 'metadata.json').read_text())
             self.assertEqual('success', metadata['journey_outcome'])
             self.assertEqual('success', metadata['export_outcome'])
-            self.assertEqual('01-home', metadata['checkpoints'][0]['name'])
+            self.assertEqual('home-start', metadata['checkpoints'][0]['name'])
 
     @unittest.skip('Native XCTest acceptance target owns the UI journey')
     def test_navigation_uses_latest_checkpoint_capture_after_each_mutation(self):

@@ -489,7 +489,12 @@ def run(directory):
         "scenario": "Native XCTest PR13 feature acceptance journey",
         "journey_outcome": "failure", "export_outcome": "failure",
         "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"), "mcp": "2.7.0",
-        "checkpoints": [], "native_test": "WhoGaveWhatAcceptanceTests",
+        "checkpoints": [], "native_test": "WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testAdaptiveGiftJourney",
+        "planned_checkpoint_names": [
+            "home-start", "people", "insights", "gift-compact-keyboard", "details-value",
+            "calendar-5-weeks", "calendar-6-weeks", "gift-saved", "gift-after-relaunch",
+            "settings-aud", "licenses",
+        ],
     }
     simulator = None
     recording = False
@@ -502,16 +507,24 @@ def run(directory):
         invoke_mcp(directory, 3, "simulator", "record-video", {
             "simulatorId": simulator["simulatorId"], "start": True, "fps": 15})
         recording = True
-        test_result = invoke_mcp(directory, 4, "simulator", "test", {
+        try:
+            test_result = invoke_mcp(directory, 4, "simulator", "test", {
             "projectPath": "WhoGaveWhat.xcodeproj", "scheme": "WhoGaveWhat",
             "simulatorId": simulator["simulatorId"],
             "derivedDataPath": str(directory / "DerivedData"),
             "extraArgs": ["CODE_SIGNING_ALLOWED=NO", "-parallel-testing-enabled", "NO"]})
-        artifact = test_result.get("artifacts", {}).get("resultBundlePath")
-        if not artifact:
-            raise ValueError(f"XcodeBuildMCP did not return a result bundle path: {test_result}")
-        result_bundle = Path(artifact)
-        test_succeeded = True
+            artifact = test_result.get("artifacts", {}).get("xcresultPath") or test_result.get("artifacts", {}).get("resultBundlePath")
+            if not artifact:
+                raise ValueError(f"XcodeBuildMCP did not return a result bundle path: {test_result}")
+            result_bundle = Path(os.path.expanduser(artifact))
+            test_succeeded = True
+        except MCPInvocationError as error:
+            metadata["native_test_error"] = str(error)
+            artifacts = (error.payload or {}).get("result", {}).get("data", {}).get("artifacts", {})
+            artifact = artifacts.get("xcresultPath") or artifacts.get("resultBundlePath")
+            if artifact:
+                result_bundle = Path(os.path.expanduser(artifact))
+            raise
     finally:
         if recording and simulator:
             try:
@@ -526,12 +539,18 @@ def run(directory):
             except (ValueError, OSError, subprocess.SubprocessError) as error:
                 metadata["export_error"] = str(error)
         images = sorted(attachments.glob("*.png"))
-        for image in images:
-            metadata["checkpoints"].append({"name": image.stem, "image": f"attachments/{image.name}"})
+        for planned in metadata["planned_checkpoint_names"]:
+            matches = [image for image in images if planned.lower() in image.stem.lower()]
+            if matches:
+                metadata["checkpoints"].append({"name": planned, "image": f"attachments/{matches[0].name}"})
+        missing = [name for name in metadata["planned_checkpoint_names"]
+                   if name not in {checkpoint["name"] for checkpoint in metadata["checkpoints"]}]
+        if missing:
+            metadata["missing_checkpoints"] = missing
         video = directory / "journeys.mp4"
         if test_succeeded:
             metadata["journey_outcome"] = "success"
-        if test_succeeded and images and video.is_file() and video.stat().st_size:
+        if test_succeeded and not missing and video.is_file() and video.stat().st_size:
             metadata["export_outcome"] = "success"
         (directory / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
         shutil.rmtree(directory / "DerivedData", ignore_errors=True)
