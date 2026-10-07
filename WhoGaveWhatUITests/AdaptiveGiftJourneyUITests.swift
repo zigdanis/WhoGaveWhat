@@ -93,6 +93,17 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         value.typeText("42")
         XCTAssertEqual(value.value as? String, "42")
         app.scrollViews["add-gift.scroll"].swipeUp()
+        let save = app.buttons["add-gift.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: timeout))
+        let keyboard = app.keyboards.firstMatch
+        if keyboard.exists {
+            XCTAssertTrue(save.isHittable)
+            XCTAssertLessThanOrEqual(save.frame.maxY, keyboard.frame.minY)
+            attach("details-value-keyboard")
+        } else {
+            XCTAssertTrue(save.isHittable)
+            attach("details-value-keyboard-dismissed")
+        }
         attach("details-value")
 
         app.buttons["add-gift.date"].tap()
@@ -212,16 +223,21 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     }
 
     private func assertCompactSheetFrame() {
-        let grabber = app.descendants(matching: .any)
+        let grabbers = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label == 'Sheet Grabber'"))
-            .firstMatch
-        XCTAssertTrue(grabber.waitForExistence(timeout: timeout))
+        let deadline = Date().addingTimeInterval(timeout)
         let window = app.windows.firstMatch
         XCTAssertTrue(window.exists)
-        let top = grabber.frame.minY
         let bottom = window.frame.maxY
-        XCTAssertGreaterThan(top, bottom * 0.25)
-        XCTAssertLessThan(top, bottom * 0.8)
+        while Date() < deadline {
+            let visibleGrabbers = grabbers.allElementsBoundByIndex.filter { $0.exists && $0.isHittable }
+            if let grabber = visibleGrabbers.max(by: { $0.frame.minY < $1.frame.minY }) {
+                let top = grabber.frame.minY
+                if top > bottom * 0.25 && top < bottom * 0.8 { return }
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        XCTFail("No settled frontmost Sheet Grabber in measured compact range: \(grabbers.debugDescription)")
     }
 
     private func personRows(named name: String) -> [XCUIElement] {
