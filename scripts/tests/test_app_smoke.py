@@ -74,9 +74,10 @@ class AppSmokeReadRetryTests(unittest.TestCase):
             directory = Path(temporary)
             with (patch.object(smoke.subprocess, 'run', return_value=failed) as run,
                   contextlib.redirect_stdout(io.StringIO())):
-                with self.assertRaisesRegex(ValueError, 'Daemon request timed out after 30000ms'):
+                with self.assertRaisesRegex(ValueError, 'Daemon request timed out after 30000ms') as raised:
                     smoke.invoke_mcp(directory, 11, 'ui-automation', 'batch',
                                      {'steps': [{'action': 'tap', 'elementRef': 'e52'}]})
+            self.assertEqual('DAEMON_TRANSPORT_FAILED', raised.exception.code)
             self.assertEqual(1, run.call_count)
             self.assertEqual(failed.stdout, (directory / '11-batch.json').read_text())
             self.assertEqual(failed.stderr, (directory / '11-batch.log').read_text())
@@ -138,9 +139,9 @@ class AppSmokeJourneyTests(unittest.TestCase):
                     {'ref': 'gift', 'label': 'CI acceptance book', 'role': 'static-text'},
                     {'ref': 'settings', 'label': 'Settings', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'settings-screen', 'identifier': 'settings.screen', 'role': 'other'},
-                    {'ref': 'currency', 'identifier': 'settings.currency', 'value': 'US Dollar ($) USD', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'currency', 'identifier': 'settings.currency', 'value': 'Australian Dollar (A$) AUD', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'currency-list', 'identifier': 'settings.currency.list', 'role': 'scroll-view', 'actions': ['swipe']},
-                    {'ref': 'usd', 'identifier': 'settings.currency.USD', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'aud', 'identifier': 'settings.currency.AUD', 'value': 'AUD', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'licenses-link', 'identifier': 'settings.third-party-licenses', 'role': 'button', 'actions': ['tap']},
                     {'ref': 'licenses-screen', 'identifier': 'settings.third-party-licenses.screen', 'role': 'other'},
                     {'ref': 'license-heading', 'label': 'Archivo license', 'role': 'static-text'}]}

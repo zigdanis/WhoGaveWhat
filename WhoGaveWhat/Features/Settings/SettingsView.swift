@@ -143,6 +143,7 @@ private struct CurrencyPickerView: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("settings.currency.\(option.code)")
+            .accessibilityValue(option.code)
         }
         .listStyle(.insetGrouped)
         .accessibilityIdentifier("settings.currency.list")

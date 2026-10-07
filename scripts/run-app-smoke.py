@@ -96,6 +96,14 @@ def element(capture, *, identifier=None, label=None, role=None):
     return matches[0]
 
 
+def has_element(capture, *, identifier=None, label=None, role=None):
+    try:
+        element(capture, identifier=identifier, label=label, role=role)
+        return True
+    except ValueError:
+        return False
+
+
 def calendar_month(capture):
     """Extract the UIKit calendar's visible month heading from the live AX tree."""
     pattern = re.compile(r"^(?:January|February|March|April|May|June|July|August|September|October|November|December) \d{4}$")
@@ -128,11 +136,11 @@ def assert_form_absent(capture):
         raise ValueError("Gift form remained visible after Save")
 
 
-def assert_currency(capture):
+def assert_currency(capture, expected_code="AUD"):
     observed = element(capture, identifier="settings.currency")
     text = " ".join(str(observed.get(key, "")) for key in ("label", "value"))
-    if "USD" not in text:
-        raise ValueError(f"Currency selection was not persisted in Settings: {observed}")
+    if expected_code not in text:
+        raise ValueError(f"Currency selection {expected_code} was not persisted in Settings: {observed}")
     placeholders = {"License information is unavailable.", "Choose", "No value"}
     visible = {str(e.get("label", "")) for e in capture.get("elements", [])}
     unexpected = sorted(placeholders.intersection(visible))
@@ -387,23 +395,25 @@ def run(directory):
             raise ValueError("Duplicate To person received a new identifier")
         tap(capture, label=receiver_name, role="button", expected={"identifier": "add-gift.save"})
         capture = checkpoint("duplicate-person-reuse", identifier="add-gift.save")
-        tap(capture, identifier="add-gift.save", expected={"label": "Home", "role": "tab"}, verify=assert_form_absent)
+        tap(capture, identifier="add-gift.save", expected={"label": duplicate_name}, verify=assert_form_absent)
         capture = wait(predicate="exists", label="Home", role="tab")
 
         # Settings: currency navigation works and the bundled license content is present.
         capture = wait(predicate="exists", label="Settings", role="button")
         tap(capture, label="Settings", role="button", expected={"identifier": "settings.screen"})
         capture = checkpoint("settings", identifier="settings.screen")
-        tap(capture, identifier="settings.currency", expected={"identifier": "settings.currency.USD"})
+        tap(capture, identifier="settings.currency", expected={"identifier": "settings.currency.list"})
         capture = wait(predicate="exists", identifier="settings.currency.list")
-        swipe(capture, "up", identifier="settings.currency.list")
-        capture = wait(predicate="exists", identifier="settings.currency.USD")
-        tap(capture, identifier="settings.currency.USD", expected={"label": "Settings", "role": "button"})
+        if not has_element(capture, identifier="settings.currency.AUD"):
+            raise ValueError("AUD currency option is not visible in the currency list")
+        if element(capture, identifier="settings.currency.AUD").get("value") != "AUD":
+            raise ValueError("AUD currency option did not expose its exact code")
+        tap(capture, identifier="settings.currency.AUD", expected={"label": "Settings", "role": "button"})
         # Currency selection persists in place; use the native navigation back button.
         capture = wait(predicate="exists", label="Settings", role="button")
         tap(capture, label="Settings", role="button", expected={"identifier": "settings.third-party-licenses"})
         capture = wait(predicate="exists", identifier="settings.screen")
-        assert_currency(capture)
+        assert_currency(capture, "AUD")
         tap(capture, identifier="settings.third-party-licenses", expected={"identifier": "settings.third-party-licenses.screen"})
         licenses_capture = checkpoint("licenses", identifier="settings.third-party-licenses.screen")
         assert_license_content(licenses_capture)
