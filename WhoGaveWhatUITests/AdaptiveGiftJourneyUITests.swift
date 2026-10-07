@@ -123,6 +123,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             query.typeText(name)
             let add = app.buttons["person-picker.add"]
             XCTAssertTrue(add.waitForExistence(timeout: timeout))
+            XCTAssertTrue(add.isEnabled)
             add.tap()
         } else {
             let matchingRows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'person-picker.person.' AND label == %@", name))
@@ -131,7 +132,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             personIDs[name] = originalID
             query.tap()
             query.typeText(name)
-            app.buttons["person-picker.add"].tap()
+            let add = app.buttons["person-picker.add"]
+            XCTAssertTrue(add.waitForExistence(timeout: timeout))
+            XCTAssertTrue(add.isEnabled)
+            add.tap()
             XCTAssertFalse(query.waitForExistence(timeout: 1))
 
             app.buttons["add-gift.\(endpoint)"].tap()
