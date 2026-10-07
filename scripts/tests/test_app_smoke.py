@@ -98,6 +98,10 @@ class AppSmokeReadRetryTests(unittest.TestCase):
 
 
 class AppSmokeJourneyTests(unittest.TestCase):
+    def test_currency_target_changes_from_existing_value(self):
+        self.assertEqual("AUD", smoke.currency_target("USD"))
+        self.assertEqual("AFN", smoke.currency_target("AUD"))
+
     def test_calendar_week_count_search_is_bounded_and_reaches_a_different_month_shape(self):
         start = smoke.calendar_week_count("February 2029")
         months = ["March 2029", "April 2029", "May 2029", "June 2029", "July 2029",

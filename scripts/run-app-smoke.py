@@ -147,6 +147,10 @@ def assert_currency(capture, expected_code="AUD"):
         raise ValueError(f"Settings contains placeholder labels: {unexpected}")
 
 
+def currency_target(initial_code):
+    return "AFN" if initial_code == "AUD" else "AUD"
+
+
 def assert_license_content(capture):
     labels = {str(e.get("label", "")) for e in capture.get("elements", [])}
     if not any("Archivo" in label or "SIL Open Font License" in label for label in labels):
@@ -402,20 +406,22 @@ def run(directory):
         capture = wait(predicate="exists", label="Settings", role="button")
         tap(capture, label="Settings", role="button", expected={"identifier": "settings.screen"})
         capture = checkpoint("settings", identifier="settings.screen")
-        if element(capture, identifier="settings.currency").get("value") == "AUD":
-            raise ValueError("Settings already started in AUD; currency mutation is not proven")
+        initial_currency = element(capture, identifier="settings.currency").get("value")
+        target_currency = currency_target(initial_currency)
+        metadata["currency_observation"] = {"initial": initial_currency, "selected": target_currency}
         tap(capture, identifier="settings.currency", expected={"identifier": "settings.currency.list"})
         capture = wait(predicate="exists", identifier="settings.currency.list")
-        if not has_element(capture, identifier="settings.currency.AUD"):
-            raise ValueError("AUD currency option is not visible in the currency list")
-        if element(capture, identifier="settings.currency.AUD").get("value") != "AUD":
-            raise ValueError("AUD currency option did not expose its exact code")
-        tap(capture, identifier="settings.currency.AUD", expected={"label": "Settings", "role": "button"})
+        target_identifier = f"settings.currency.{target_currency}"
+        if not has_element(capture, identifier=target_identifier):
+            raise ValueError(f"{target_currency} currency option is not visible in the currency list")
+        if element(capture, identifier=target_identifier).get("value") != target_currency:
+            raise ValueError(f"{target_currency} currency option did not expose its exact code")
+        tap(capture, identifier=target_identifier, expected={"label": "Settings", "role": "button"})
         # Currency selection persists in place; use the native navigation back button.
         capture = wait(predicate="exists", label="Settings", role="button")
         tap(capture, label="Settings", role="button", expected={"identifier": "settings.third-party-licenses"})
         capture = wait(predicate="exists", identifier="settings.screen")
-        assert_currency(capture, "AUD")
+        assert_currency(capture, target_currency)
         tap(capture, identifier="settings.third-party-licenses", expected={"identifier": "settings.third-party-licenses.screen"})
         licenses_capture = checkpoint("licenses", identifier="settings.third-party-licenses.screen")
         assert_license_content(licenses_capture)
