@@ -74,6 +74,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(giftNameField.waitForExistence(timeout: timeout))
         giftNameField.tap()
         giftNameField.typeText(name)
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
         attach("gift-compact-keyboard")
         app.buttons["add-gift.from"].tap()
         XCTAssertTrue(app.staticTexts["From"].waitForExistence(timeout: timeout))
@@ -96,14 +97,16 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(calendar.waitForExistence(timeout: timeout))
         let firstMonth = try monthHeading(in: calendar)
         let firstWeekCount = weekCount(for: firstMonth)
+        XCTAssertGreaterThan(firstWeekCount, 0)
         attach("calendar-\(firstWeekCount)-weeks")
         var nextWeekCount = firstWeekCount
         for _ in 0..<12 where nextWeekCount == firstWeekCount {
             let next = calendar.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'next month' OR label CONTAINS[c] 'next'")).firstMatch
             if next.exists && next.isHittable { next.tap() } else { calendar.swipeLeft() }
-            let nextMonth = try monthHeading(in: calendar)
+            let nextMonth = try monthHeading(in: calendar, excluding: firstMonth)
             nextWeekCount = weekCount(for: nextMonth)
         }
+        XCTAssertGreaterThan(nextWeekCount, 0)
         XCTAssertNotEqual(nextWeekCount, firstWeekCount)
         attach("calendar-\(nextWeekCount)-weeks")
         app.buttons["date-picker.today"].tap()
@@ -145,26 +148,29 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             XCTAssertEqual(reopenedRows.firstMatch.identifier, originalID)
             reopenedRows.firstMatch.tap()
         }
+        XCTAssertEqual(app.buttons["add-gift.\(endpoint)"].value as? String, name)
         XCTAssertFalse(app.textFields["person-picker.query"].exists)
     }
 
     private func verifySettings() {
         app.buttons["Settings"].tap()
-        let settings = app.otherElements["settings.screen"]
+        let settings = element(identifier: "settings.screen")
         XCTAssertTrue(settings.waitForExistence(timeout: timeout))
+        let initialCurrency = app.buttons["settings.currency"].value as? String
         app.buttons["settings.currency"].tap()
-        let currencyList = app.otherElements["settings.currency.list"]
+        let currencyList = element(identifier: "settings.currency.list")
         XCTAssertTrue(currencyList.waitForExistence(timeout: timeout))
-        let target = app.buttons["settings.currency.AUD"]
+        let targetCode = initialCurrency == "AUD" ? "AFN" : "AUD"
+        let target = app.buttons["settings.currency.\(targetCode)"]
         XCTAssertTrue(target.waitForExistence(timeout: timeout))
         target.tap()
         XCTAssertTrue(app.navigationBars.buttons["Settings"].waitForExistence(timeout: timeout))
         app.navigationBars.buttons["Settings"].tap()
-        XCTAssertEqual(app.buttons["settings.currency"].value as? String, "AUD")
-        attach("settings-aud")
+        XCTAssertEqual(app.buttons["settings.currency"].value as? String, targetCode)
+        attach("settings-currency")
 
         app.buttons["settings.third-party-licenses"].tap()
-        let licenses = app.otherElements["settings.third-party-licenses.screen"]
+        let licenses = element(identifier: "settings.third-party-licenses.screen")
         XCTAssertTrue(licenses.waitForExistence(timeout: timeout))
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] 'Archivo'")).firstMatch.waitForExistence(timeout: timeout))
         attach("licenses")
@@ -181,11 +187,20 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         add(attachment)
     }
 
-    private func monthHeading(in calendar: XCUIElement) throws -> String {
+    private func element(identifier: String) -> XCUIElement {
+        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+    }
+
+    private func monthHeading(in calendar: XCUIElement, excluding: String? = nil) throws -> String {
         let predicate = NSPredicate(format: "label MATCHES[c] '^[A-Z][a-z]+ [0-9]{4}$'")
-        let heading = calendar.descendants(matching: .any).matching(predicate).firstMatch
-        XCTAssertTrue(heading.waitForExistence(timeout: timeout), calendar.debugDescription)
-        return heading.label
+        let deadline = Date().addingTimeInterval(timeout)
+        repeat {
+            let headings = calendar.descendants(matching: .any).matching(predicate).allElementsBoundByIndex
+            if let heading = headings.first(where: { $0.label != excluding }) { return heading.label }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        } while Date() < deadline
+        XCTFail(calendar.debugDescription)
+        return ""
     }
 
     private func weekCount(for month: String) -> Int {
