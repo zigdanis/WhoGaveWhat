@@ -7,6 +7,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     private var secondGiftName = "CI second gift \(UUID().uuidString.prefix(8))"
     private var giverName = "CI giver \(UUID().uuidString.prefix(8))"
     private var recipientName = "CI recipient \(UUID().uuidString.prefix(8))"
+    private var personIDs: [String: String] = [:]
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -15,6 +16,17 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.launchEnvironment["KS_START"] = "app"
         app.launch()
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: timeout))
+    }
+
+    override func tearDown() {
+        if testRun?.failureCount ?? 0 > 0 {
+            attach("failure-screen")
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "failure-accessibility-hierarchy"
+            hierarchy.lifetime = .keepAlways
+            add(hierarchy)
+        }
+        super.tearDown()
     }
 
     func testAdaptiveGiftJourney() throws {
@@ -60,31 +72,39 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(giftNameField.waitForExistence(timeout: timeout))
         giftNameField.tap()
         giftNameField.typeText(name)
+        attach("gift-compact-keyboard")
         app.buttons["add-gift.from"].tap()
         XCTAssertTrue(app.staticTexts["From"].waitForExistence(timeout: timeout))
-        choosePerson(named: giverName, create: createPeople)
+        choosePerson(named: giverName, create: createPeople, endpoint: "from")
         app.buttons["add-gift.to"].tap()
         XCTAssertTrue(app.staticTexts["To"].waitForExistence(timeout: timeout))
-        choosePerson(named: recipientName, create: createPeople)
+        choosePerson(named: recipientName, create: createPeople, endpoint: "to")
 
         app.buttons["add-gift.details"].tap()
         XCTAssertTrue(app.textFields["add-gift.value"].waitForExistence(timeout: timeout))
         let value = app.textFields["add-gift.value"]
         value.tap()
         value.typeText("42")
-        app.buttons["add-gift.scroll"].swipeUp()
+        XCTAssertEqual(value.value as? String, "42")
+        app.scrollViews["add-gift.scroll"].swipeUp()
         attach("details-value")
 
         app.buttons["add-gift.date"].tap()
         let calendar = app.otherElements["date-picker.calendar"]
         XCTAssertTrue(calendar.waitForExistence(timeout: timeout))
-        attach("calendar-current")
-        // UICalendarView exposes its month as a native button/static text. A
-        // swipe advances the real page and leaves the bottom attached sheet in
-        // place, which is the layout we want the visual evidence to cover.
-        calendar.swipeLeft()
-        XCTAssertTrue(calendar.waitForExistence(timeout: timeout))
-        attach("calendar-next-month")
+        let firstMonth = try monthHeading(in: calendar)
+        let firstWeekCount = weekCount(for: firstMonth)
+        attach("calendar-\(firstWeekCount)-weeks")
+        var nextMonth = firstMonth
+        var nextWeekCount = firstWeekCount
+        for _ in 0..<12 where nextWeekCount == firstWeekCount {
+            let next = calendar.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'next month' OR label CONTAINS[c] 'next'")).firstMatch
+            if next.exists && next.isHittable { next.tap() } else { calendar.swipeLeft() }
+            nextMonth = try monthHeading(in: calendar)
+            nextWeekCount = weekCount(for: nextMonth)
+        }
+        XCTAssertNotEqual(nextWeekCount, firstWeekCount)
+        attach("calendar-\(nextWeekCount)-weeks")
         app.buttons["date-picker.today"].tap()
 
         XCTAssertTrue(app.buttons["add-gift.save"].waitForExistence(timeout: timeout))
@@ -93,7 +113,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
     }
 
-    private func choosePerson(named name: String, create: Bool) {
+    private func choosePerson(named name: String, create: Bool, endpoint: String) {
         let query = app.textFields["person-picker.query"]
         XCTAssertTrue(query.waitForExistence(timeout: timeout))
         if create {
@@ -103,11 +123,23 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             XCTAssertTrue(add.waitForExistence(timeout: timeout))
             add.tap()
         } else {
-            let row = app.staticTexts[name].firstMatch
-            XCTAssertTrue(row.waitForExistence(timeout: timeout))
-            row.tap()
+            let matchingRows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'person-picker.person.' AND label == %@", name))
+            XCTAssertEqual(matchingRows.count, 1)
+            let originalID = matchingRows.firstMatch.identifier
+            personIDs[name] = originalID
+            query.tap()
+            query.typeText(name)
+            app.buttons["person-picker.add"].tap()
+            XCTAssertFalse(query.waitForExistence(timeout: 1))
+
+            app.buttons["add-gift.\(endpoint)"].tap()
+            XCTAssertTrue(app.textFields["person-picker.query"].waitForExistence(timeout: timeout))
+            let reopenedRows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'person-picker.person.' AND label == %@", name))
+            XCTAssertEqual(reopenedRows.count, 1)
+            XCTAssertEqual(reopenedRows.firstMatch.identifier, originalID)
+            reopenedRows.firstMatch.tap()
         }
-        XCTAssertTrue(app.buttons["add-gift.from"].exists || app.buttons["add-gift.to"].exists)
+        XCTAssertFalse(app.textFields["person-picker.query"].exists)
     }
 
     private func verifySettings() {
@@ -117,13 +149,13 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.buttons["settings.currency"].tap()
         let currencyList = app.otherElements["settings.currency.list"]
         XCTAssertTrue(currencyList.waitForExistence(timeout: timeout))
-        let usd = app.buttons["settings.currency.USD"]
-        for _ in 0..<8 where !usd.exists { currencyList.swipeUp() }
-        XCTAssertTrue(usd.waitForExistence(timeout: timeout))
-        usd.tap()
-        XCTAssertTrue(app.staticTexts["Settings"].waitForExistence(timeout: timeout))
-        XCTAssertEqual(app.buttons["settings.currency"].value as? String, "USD")
-        attach("settings-usd")
+        let target = app.buttons["settings.currency.AUD"]
+        XCTAssertTrue(target.waitForExistence(timeout: timeout))
+        target.tap()
+        XCTAssertTrue(app.navigationBars.buttons["Settings"].waitForExistence(timeout: timeout))
+        app.navigationBars.buttons["Settings"].tap()
+        XCTAssertEqual(app.buttons["settings.currency"].value as? String, "AUD")
+        attach("settings-aud")
 
         app.buttons["settings.third-party-licenses"].tap()
         let licenses = app.otherElements["settings.third-party-licenses.screen"]
@@ -141,5 +173,26 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    private func monthHeading(in calendar: XCUIElement) throws -> String {
+        let predicate = NSPredicate(format: "label MATCHES[c] '^[A-Z][a-z]+ [0-9]{4}$'")
+        let heading = calendar.descendants(matching: .any).matching(predicate).firstMatch
+        XCTAssertTrue(heading.waitForExistence(timeout: timeout), calendar.debugDescription)
+        return heading.label
+    }
+
+    private func weekCount(for month: String) -> Int {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.dateFormat = "MMMM yyyy"
+        guard let date = formatter.date(from: month) else { return 0 }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = Locale(identifier: "en_US_POSIX")
+        calendar.firstWeekday = 1
+        let range = calendar.range(of: .day, in: .month, for: date)!
+        let offset = calendar.component(.weekday, from: date) - calendar.firstWeekday
+        return (offset + range.count + 6) / 7
     }
 }
