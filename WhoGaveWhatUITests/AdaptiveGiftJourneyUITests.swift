@@ -111,6 +111,12 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertGreaterThan(nextWeekCount, 0)
         XCTAssertNotEqual(nextWeekCount, firstWeekCount)
         attach("calendar-\(nextWeekCount)-weeks")
+        let expectedPreviousMonth = adjacentMonth(from: previousMonth, offset: -1)
+        let previous = calendar.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'previous month' OR label CONTAINS[c] 'previous'")).firstMatch
+        if previous.exists && previous.isHittable { previous.tap() } else { calendar.swipeRight() }
+        let reversedMonth = try monthHeading(in: calendar, excluding: previousMonth)
+        XCTAssertEqual(reversedMonth, expectedPreviousMonth)
+        attach("calendar-reverse")
         app.buttons["date-picker.today"].tap()
 
         XCTAssertTrue(app.buttons["add-gift.save"].waitForExistence(timeout: timeout))
@@ -225,5 +231,16 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         let range = calendar.range(of: .day, in: .month, for: date)!
         let offset = calendar.component(.weekday, from: date) - calendar.firstWeekday
         return (offset + range.count + 6) / 7
+    }
+
+    private func adjacentMonth(from month: String, offset: Int) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.dateFormat = "MMMM yyyy"
+        guard let date = formatter.date(from: month),
+            let adjacent = formatter.calendar.date(byAdding: .month, value: offset, to: date)
+        else { return "" }
+        return formatter.string(from: adjacent)
     }
 }
