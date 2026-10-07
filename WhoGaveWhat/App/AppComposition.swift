@@ -1,9 +1,11 @@
+import Foundation
 import Observation
 
 @MainActor
 @Observable
 final class AppComposition {
     let router: AppRouter
+    let appDiscovery = AppDiscoveryIndexer()
     let data = AppData()
     private(set) var currencyCode: String
     private let preferences: PreferencesGateway
@@ -65,6 +67,12 @@ final class AppComposition {
         if let people = try? loadPeopleUseCase.execute() {
             data.replacePeople(people)
         }
+    }
+
+    @discardableResult
+    func continueAppDiscovery(_ activity: NSUserActivity) -> Bool {
+        // Spotlight already opens this scene. Keep onboarding, navigation and any draft intact.
+        AppDiscoveryIndexer.recognizes(activity)
     }
 
     func saveGift(_ input: SaveGiftInput) {

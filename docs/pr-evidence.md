@@ -27,6 +27,10 @@ python3 scripts/run-app-smoke.py /tmp/whogavewhat-evidence
 
 It tests the app, builds and launches it, then records Home → People → Insights → Add a gift. Existing `KS_START` / `KS_TAB` launch settings open the app in English at Home. This scenario visits the real app with its existing store; it does not modify or erase a reused Simulator. The smoke checks navigation and media capture. It does not assert gift creation or acceptance of a UI feature.
 
+CI also passes `--verify-app-names` on its disposable Simulator. This checks the built English/Russian system-name resources and records language selection in iOS Settings, the Home-screen label, and the Russian app interface while the system remains English. Use this option only on a disposable Simulator because it changes language preferences. These checkpoints distinguish app language from the name chosen by iOS. The scenario also searches actual Spotlight results with `кто че` and `who gave`, opens both, checks preservation of an unsaved gift draft, and checks a cold launch into onboarding. Spotlight contains only an app launcher, not gifts or people.
+
+AXe typing supports ASCII only. For the Russian query, the scenario uses the MCP debugger to put the public app name on UIKit's general pasteboard while the app is foreground, detaches, and uses Spotlight's system Paste action. It verifies the exact search-field value before inspecting actual results. This prepares input only; it does not insert search results or modify the index, navigation, or gift data.
+
 ## Retrieve and inspect current evidence
 
 After opening the draft PR and after each push or CI rerun:

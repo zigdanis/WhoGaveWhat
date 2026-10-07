@@ -21,8 +21,18 @@
 		2A0000000000000000001005 /* WhoGaveWhatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WhoGaveWhatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		1A0000000000000000000F01 /* Exceptions for WhoGaveWhat */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				App/Info.plist,
+			);
+			target = 1A0000000000000000000400 /* WhoGaveWhat */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		1A0000000000000000000F00 /* WhoGaveWhat */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = WhoGaveWhat; sourceTree = "<group>"; };
+		1A0000000000000000000F00 /* WhoGaveWhat */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (1A0000000000000000000F01 /* Exceptions for WhoGaveWhat */, ); explicitFileTypes = {}; explicitFolders = (); path = WhoGaveWhat; sourceTree = "<group>"; };
 		2A0000000000000000001007 /* WhoGaveWhatTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = WhoGaveWhatTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -243,6 +253,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WhoGaveWhat/App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Who Gave";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -270,6 +281,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WhoGaveWhat/App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Who Gave";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

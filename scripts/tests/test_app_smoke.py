@@ -137,9 +137,18 @@ class AppSmokeJourneyTests(unittest.TestCase):
                 Path(command[-1]).write_bytes(b'normalized image fixture')
                 return subprocess.CompletedProcess(command, 0)
 
+            def native_output(command, **kwargs):
+                if command[0] == 'git':
+                    return 'a' * 40
+                path = Path(command[-1])
+                if path.name == 'InfoPlist.strings':
+                    name = 'Who Gave' if path.parent.name == 'en.lproj' else 'кто че'
+                    return json.dumps({'CFBundleDisplayName': name, 'CFBundleName': name})
+                return json.dumps({'NSUserActivityTypes': ['com.apple.corespotlightitem']})
+
             with (patch.object(smoke, 'invoke_mcp', side_effect=backend),
                   patch.object(smoke.subprocess, 'run', side_effect=normalize_image),
-                  patch.object(smoke.subprocess, 'check_output', return_value='a' * 40)):
+                  patch.object(smoke.subprocess, 'check_output', side_effect=native_output)):
                 smoke.run(directory)
             metadata = json.loads((directory / 'metadata.json').read_text())
             self.assertEqual('success', metadata['journey_outcome'])

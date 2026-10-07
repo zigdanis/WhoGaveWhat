@@ -91,6 +91,19 @@ class EvidenceTests(unittest.TestCase):
 
 
 class MCPTests(unittest.TestCase):
+    def test_settings_duplicate_native_hierarchy_selects_one_physical_row(self):
+        # Reduced from the actual iOS 26.6 General snapshot: the row and its
+        # inner button are each exposed twice with the same semantic label.
+        outer = dict(ref='e92', role='button', label='Language & Region', actions=['tap'],
+                     frame=dict(x=20, y=744.33, width=362, height=53))
+        inner = dict(outer, ref='e95', frame=dict(x=34, y=757, width=190.33, height=28))
+        capture = {'elements': [outer, inner, dict(outer, ref='e130'), dict(inner, ref='e133')]}
+        self.assertEqual(smoke.setting_control(capture, 'Language & Region'), 'e92')
+        self.assertIsNone(smoke.setting_control(capture, 'Missing row'))
+        capture['elements'].append(dict(outer, ref='e200', frame=dict(x=20, y=100, width=362, height=53)))
+        with self.assertRaisesRegex(ValueError, 'Ambiguous'):
+            smoke.setting_control(capture, 'Language & Region')
+
     def test_process_status_and_structured_errors_all_fail(self):
         for code, payload in [(1, {'didError': False}), (0, {'didError': True}),
                               (0, {'isError': True, 'didError': False}), (0, {'data': {}}),
