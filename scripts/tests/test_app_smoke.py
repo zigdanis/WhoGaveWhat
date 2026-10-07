@@ -133,7 +133,7 @@ class AppSmokeReadRetryTests(unittest.TestCase):
 
 
 class AppSmokeJourneyTests(unittest.TestCase):
-    def run_fixture(self, *, calendar_counts=(5, 6), native_failure=False):
+    def run_fixture(self, *, calendar_counts=(5, 6), native_failure=False, wrapped_failure=True):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             invocations = []
@@ -148,8 +148,9 @@ class AppSmokeJourneyTests(unittest.TestCase):
                                             'runtime': 'iOS 26.5', 'simulatorId': 'fixture'}]}
                 if command == 'test':
                     if native_failure:
-                        payload = {'didError': True, 'error': 'Native assertion failed',
-                                   'data': {'artifacts': {'xcresultPath': str(result)}}}
+                        artifacts = {'artifacts': {'xcresultPath': str(result)}}
+                        payload = {'didError': True, 'error': 'Native assertion failed'}
+                        payload.update({'data': artifacts} if wrapped_failure else artifacts)
                         smoke.checked_output(subprocess.CompletedProcess([], 1, json.dumps(payload), ''))
                     return {'artifacts': {'xcresultPath': str(result)}}
                 if command == 'record-video' and parameters.get('stop'):
@@ -182,6 +183,7 @@ class AppSmokeJourneyTests(unittest.TestCase):
                     smoke.run(directory)
             metadata = json.loads((directory / 'metadata.json').read_text())
             self.assertEqual(1, sum(command == 'test' for command, _ in invocations))
+            self.assertFalse(any(command == 'boot' for command, _ in invocations))
             self.assertTrue((directory / 'Acceptance.xcresult' / 'fixture-result').is_file())
             self.assertTrue((directory / 'attachments/home-start.png').is_file())
             return metadata
@@ -198,10 +200,12 @@ class AppSmokeJourneyTests(unittest.TestCase):
         self.assertIn('two calendar checkpoints with distinct week counts', metadata['missing_checkpoints'])
 
     def test_failed_native_test_keeps_result_and_exports_diagnostics(self):
-        metadata = self.run_fixture(native_failure=True)
-        self.assertEqual('failure', metadata['journey_outcome'])
-        self.assertEqual('failure', metadata['export_outcome'])
-        self.assertIn('Native assertion failed', metadata['native_test_error'])
+        for wrapped in (True, False):
+            with self.subTest(wrapped=wrapped):
+                metadata = self.run_fixture(native_failure=True, wrapped_failure=wrapped)
+                self.assertEqual('failure', metadata['journey_outcome'])
+                self.assertEqual('failure', metadata['export_outcome'])
+                self.assertIn('Native assertion failed', metadata['native_test_error'])
 
 
 if __name__ == "__main__":

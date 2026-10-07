@@ -151,7 +151,8 @@ def run(directory):
         ensure_daemon(directory)
         simulator = select_simulator(invoke_mcp(directory, 1, "simulator", "list", {"enabled": True})["simulators"])
         metadata.update(device=simulator["name"], runtime=simulator["runtime"])
-        invoke_mcp(directory, 2, "simulator", "boot", {"simulatorId": simulator["simulatorId"]})
+        if simulator["state"] != "Booted":
+            invoke_mcp(directory, 2, "simulator", "boot", {"simulatorId": simulator["simulatorId"]})
         invoke_mcp(directory, 3, "simulator", "record-video", {
             "simulatorId": simulator["simulatorId"], "start": True, "fps": 15})
         recording = True
@@ -170,7 +171,7 @@ def run(directory):
             metadata["native_test_error"] = str(error)
             payload = error.payload or {}
             result = payload.get("result", payload)
-            artifacts = result.get("data", {}).get("artifacts", {})
+            artifacts = result.get("data", result).get("artifacts", {})
             artifact = artifacts.get("xcresultPath") or artifacts.get("resultBundlePath")
             if artifact:
                 result_bundle = Path(os.path.expanduser(artifact))
