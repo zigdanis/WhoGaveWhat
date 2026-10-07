@@ -140,8 +140,16 @@ class AppSmokeJourneyTests(unittest.TestCase):
                 attachment_dir.mkdir(parents=True, exist_ok=True)
                 for name in ['home-start', 'people', 'insights', 'gift-compact-keyboard', 'details-value',
                              'calendar-5-weeks', 'calendar-6-weeks', 'gift-saved', 'gift-after-relaunch',
-                             'settings-aud', 'licenses']:
+                             'settings-currency', 'licenses']:
                     (attachment_dir / f'{name}.png').write_bytes(b'image')
+                (attachment_dir / 'manifest.json').write_text(json.dumps([{
+                    'attachments': [
+                        {'exportedFileName': f'{name}.png', 'suggestedHumanReadableName': name}
+                        for name in ['home-start', 'people', 'insights', 'gift-compact-keyboard', 'details-value',
+                                     'calendar-5-weeks', 'calendar-6-weeks', 'gift-saved', 'gift-after-relaunch',
+                                     'settings-currency', 'licenses']
+                    ]
+                }]))
                 return subprocess.CompletedProcess(command, 0, stdout='', stderr='')
             with (patch.object(smoke, 'invoke_mcp', side_effect=mcp),
                   patch.object(smoke.subprocess, 'run', side_effect=export),

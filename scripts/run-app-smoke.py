@@ -492,8 +492,8 @@ def run(directory):
         "checkpoints": [], "native_test": "WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testAdaptiveGiftJourney",
         "planned_checkpoint_names": [
             "home-start", "people", "insights", "gift-compact-keyboard", "details-value",
-            "calendar-5-weeks", "calendar-6-weeks", "gift-saved", "gift-after-relaunch",
-            "settings-aud", "licenses",
+            "gift-saved", "gift-after-relaunch",
+            "settings-currency", "licenses",
         ],
     }
     simulator = None
@@ -520,7 +520,9 @@ def run(directory):
             test_succeeded = True
         except MCPInvocationError as error:
             metadata["native_test_error"] = str(error)
-            artifacts = (error.payload or {}).get("result", {}).get("data", {}).get("artifacts", {})
+            payload = error.payload or {}
+            result = payload.get("result", payload)
+            artifacts = result.get("data", {}).get("artifacts", {})
             artifact = artifacts.get("xcresultPath") or artifacts.get("resultBundlePath")
             if artifact:
                 result_bundle = Path(os.path.expanduser(artifact))
@@ -533,16 +535,49 @@ def run(directory):
                     "outputFile": str(directory / "journeys.mp4")})
             except (ValueError, OSError, subprocess.SubprocessError) as error:
                 metadata["recording_error"] = str(error)
-        if test_succeeded and result_bundle and result_bundle.is_dir():
+        if result_bundle and result_bundle.is_dir():
             try:
+                local_bundle = directory / "Acceptance.xcresult"
+                if result_bundle.resolve() != local_bundle.resolve():
+                    shutil.copytree(result_bundle, local_bundle, dirs_exist_ok=True)
+                    result_bundle = local_bundle
                 _export_xcresult_attachments(result_bundle, attachments)
             except (ValueError, OSError, subprocess.SubprocessError) as error:
                 metadata["export_error"] = str(error)
         images = sorted(attachments.glob("*.png"))
+        manifest_path = attachments / "manifest.json"
+        attachment_names = {}
+        if manifest_path.is_file():
+            manifest = json.loads(manifest_path.read_text())
+            for test in manifest:
+                for attachment in test.get("attachments", []):
+                    filename = attachment.get("exportedFileName", "")
+                    human_name = attachment.get("suggestedHumanReadableName", "")
+                    if filename.lower().endswith(".png") and human_name:
+                        attachment_names[human_name] = filename
+        else:
+            metadata["export_error"] = "xcresult attachment manifest.json is missing"
         for planned in metadata["planned_checkpoint_names"]:
-            matches = [image for image in images if planned.lower() in image.stem.lower()]
-            if matches:
-                metadata["checkpoints"].append({"name": planned, "image": f"attachments/{matches[0].name}"})
+            matches = [filename for human_name, filename in attachment_names.items()
+                       if planned.lower() in human_name.lower()]
+            if matches and (attachments / matches[0]).is_file():
+                stable = f"{planned}.png"
+                if matches[0] != stable:
+                    shutil.copy2(attachments / matches[0], attachments / stable)
+                metadata["checkpoints"].append({"name": planned, "image": f"attachments/{stable}"})
+        calendar_matches = [(human, filename) for human, filename in attachment_names.items()
+                            if re.fullmatch(r"calendar-\d+-weeks", human.lower())]
+        calendar_counts = {re.search(r"calendar-(\d+)-weeks", human.lower()).group(1)
+                           for human, _ in calendar_matches}
+        if len(calendar_matches) < 2 or len(calendar_counts) < 2:
+            missing.append("two calendar checkpoints with distinct week counts")
+            metadata["missing_checkpoints"] = missing
+        for human, filename in calendar_matches:
+            if (attachments / filename).is_file():
+                stable = f"{human}.png"
+                if filename != stable:
+                    shutil.copy2(attachments / filename, attachments / stable)
+                metadata["checkpoints"].append({"name": human, "image": f"attachments/{stable}"})
         missing = [name for name in metadata["planned_checkpoint_names"]
                    if name not in {checkpoint["name"] for checkpoint in metadata["checkpoints"]}]
         if missing:
