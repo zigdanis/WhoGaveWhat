@@ -1,0 +1,82 @@
+name: Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scripts:
+    name: Scripts and secret patterns
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/check-secrets.sh
+      - run: python3 -m unittest discover -s scripts/tests -v
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - name: Release coordinator and archive validation tests
+        run: |
+          for test in fastlane/tests/test_*.rb; do
+            bundle exec ruby "$test"
+          done
+
+  quality:
+    name: Swift format and lint
+    runs-on: macos-26
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SwiftLint
+        run: brew install swiftlint
+      - run: scripts/check-formatting.sh
+      - run: scripts/lint-swift.sh
+
+  test:
+    name: Unit tests and app smoke
+    runs-on: macos-26
+    timeout-minutes: 40
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      XCODE_VERSION: '26.6'
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      XCODEBUILDMCP_SENTRY_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install project XcodeBuildMCP
+        run: npm install --global xcodebuildmcp@2.7.0
+      - name: Show tool versions
+        run: |
+          swift --version
+          xcodebuildmcp --version
+          xcodebuildmcp simulator test --help
+      - name: Test and record app smoke
+        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke"
+      - name: Render evidence report
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/ui-app-smoke/metadata.json"; then
+            python3 scripts/ui-evidence-report.py "$RUNNER_TEMP/ui-app-smoke"
+          fi
+      - name: Upload app evidence and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-app-smoke-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ui-app-smoke
+          if-no-files-found: warn
+          retention-days: 14

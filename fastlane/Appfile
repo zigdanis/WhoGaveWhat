@@ -1,0 +1,6 @@
+app_identifier "pro.ziganshin.WhoGaveWhat"
+
+# API-key release lanes do not need a personal Apple ID or App Store Connect team ID.
+apple_id(ENV["FASTLANE_USER"]) unless ENV["FASTLANE_USER"].to_s.empty?
+team_id(ENV["APPLE_TEAM_ID"]) unless ENV["APPLE_TEAM_ID"].to_s.empty?
+itc_team_id(ENV["APP_STORE_CONNECT_TEAM_ID"]) unless ENV["APP_STORE_CONNECT_TEAM_ID"].to_s.empty?

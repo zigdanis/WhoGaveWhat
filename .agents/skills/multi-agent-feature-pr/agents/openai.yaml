@@ -1,0 +1,4 @@
+interface:
+  display_name: "Multi-Agent Feature PR"
+  short_description: "Plan, implement, review, and green a feature PR"
+  default_prompt: "Use $multi-agent-feature-pr to deliver this repository change through planning, implementation, independent review, and a green pull request."

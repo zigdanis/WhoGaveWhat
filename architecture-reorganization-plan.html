@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>План архитектурной реорганизации WhoGaveWhat</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050505;
+      --panel: #0f0f0f;
+      --text: #f4f4f1;
+      --muted: #a7a7a0;
+      --line: #2a2a27;
+      --accent: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(920px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 56px 0 80px;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 28px;
+      margin-bottom: 36px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(2.1rem, 6vw, 4.6rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      margin: 48px 0 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      font-size: 1.35rem;
+      line-height: 1.2;
+    }
+
+    h3 { margin: 26px 0 10px; font-size: 1rem; }
+    p { margin: 0 0 14px; color: var(--muted); }
+    a { color: var(--text); text-underline-offset: 0.2em; }
+    ul, ol { margin: 0 0 18px; padding-left: 1.25rem; color: var(--muted); }
+    li + li { margin-top: 8px; }
+
+    .lede { max-width: 760px; color: var(--text); font-size: 1.1rem; }
+    .toc, .tldr {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 18px 20px;
+      margin: 28px 0 10px;
+    }
+    .tldr { border-left: 3px solid var(--accent); }
+    .tldr p, .toc ul { margin: 0; }
+    .tldr p { color: var(--text); }
+
+    code {
+      color: var(--text);
+      background: #171717;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 0.1rem 0.28rem;
+    }
+
+    pre {
+      overflow-x: auto;
+      margin: 18px 0;
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    pre code { border: 0; padding: 0; background: transparent; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      color: var(--muted);
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th { color: var(--text); background: var(--panel); }
+
+    @media (max-width: 640px) {
+      main { width: min(100% - 24px, 920px); padding-top: 32px; }
+      h1 { letter-spacing: -0.02em; }
+      table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Clean Architecture для WhoGaveWhat</h1>
+      <p class="lede">Практичный микс Clean Architecture, структуры Mythia и feature-first организации SwiftUI — без TCA, без общего бизнес-комбайна и без лишнего числа targets.</p>
+    </header>
+
+    <aside class="tldr" aria-label="Кратко">
+      <p><strong>Кратко:</strong> отказаться от широкого <code>AppStore</code>. Навигацию оставить в узком <code>AppRouter</code>, UI сгруппировать в <code>Features</code>, бизнес-сценарии назвать и вынести в <code>UseCases</code>, внешние способы хранения и AI — в <code>Gateways</code>, а техническую основу SDK — в <code>Infrastructure</code>. Core Data остаётся только временной реализацией gateway; переход на SwiftData выполняется отдельным PR.</p>
+    </aside>
+
+    <nav class="toc" aria-label="Содержание">
+      <ul>
+        <li><a href="#context">Контекст</a></li>
+        <li><a href="#decisions">Исправленные решения</a></li>
+        <li><a href="#structure">Предлагаемая структура</a></li>
+        <li><a href="#boundaries">Границы слоёв</a></li>
+        <li><a href="#data-flow">Пример потока данных</a></li>
+        <li><a href="#swiftdata">SwiftData</a></li>
+        <li><a href="#work-plan">План работ</a></li>
+        <li><a href="#verification">Проверка</a></li>
+        <li><a href="#risks">Риски</a></li>
+      </ul>
+    </nav>
+
+    <section aria-labelledby="context">
+      <h2 id="context">Контекст</h2>
+      <p>Сейчас 13 SwiftUI-файлов находятся в общей папке <code>Views</code>, а <code>AppStore.swift</code> на 658 строк совмещает навигацию, состояние форм, форматирование, расчёты, Core Data-запросы и бизнес-действия. Название <code>Store</code> обычно означает единый источник состояния в Redux/Elm/TCA-подобном подходе. Здесь нет reducer/action-модели, поэтому название скрывает смешение ответственностей вместо того, чтобы объяснять их.</p>
+      <p>В Mythia верхнеуровневые <code>Screens</code>, <code>UseCases</code>, <code>Gateways</code>, <code>Helpers</code> и <code>Environment</code> делают роли файлов визуально понятными. Для WhoGaveWhat берём эту читаемость, заменяем <code>Screens</code> на более подходящее SwiftUI-имя <code>Features</code>, а <code>Environment</code> — на <code>Infrastructure</code>.</p>
+      <p>Xcode-проект использует file-system-synchronized groups, поэтому физические папки автоматически отобразятся в Xcode.</p>
+    </section>
+
+    <section aria-labelledby="decisions">
+      <h2 id="decisions">Исправленные решения</h2>
+      <ul>
+        <li><strong><code>AppStore</code> исчезает.</strong> Глобальная UI-навигация получает точное имя <code>AppRouter</code>. Состояние формы и экрана остаётся внутри соответствующей feature. Бизнес-действия выполняют use cases.</li>
+        <li><strong><code>Ports</code> исчезает.</strong> Это термин hexagonal architecture для интерфейсов на границе приложения, но без контекста он здесь только мешает. Используем знакомое по Mythia слово <code>Gateways</code>.</li>
+        <li><strong><code>GiftRepository</code> переименовывается в <code>GiftGateway</code>.</strong> Речь была не о Git-репозитории, а об абстракции хранилища подарков. Новое имя меньше провоцирует такую неоднозначность.</li>
+        <li><strong><code>GiftParsing</code> переименовывается в <code>GiftIntelligenceGateway</code>.</strong> Это граница к Apple Foundation Models для получения emoji и оценки цены, а не общий parser.</li>
+        <li><strong><code>GiftRules.swift</code> исчезает.</strong> Валидация черновика относится к модели черновика или save-use-case; сортировка — к <code>Gift</code>; аналитические расчёты — к insights-use-case. Общего файла «правила подарка» не будет.</li>
+        <li><strong>PostHog не относится к gift gateways.</strong> В WhoGaveWhat сейчас нет PostHog. Если аналитика появится, это будет отдельный <code>AnalyticsGateway</code> с реализацией <code>PostHogAnalyticsGateway</code>; заранее пустую абстракцию не создаём.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="structure">
+      <h2 id="structure">Предлагаемая структура</h2>
+      <pre><code>WhoGaveWhat/
+├── App/
+│   ├── WhoGaveWhatApp.swift
+│   ├── AppComposition.swift
+│   └── AppRouter.swift
+├── Features/
+│   ├── AppRoot/
+│   ├── Onboarding/
+│   ├── SignIn/
+│   ├── Home/
+│   ├── AddGift/
+│   │   ├── AddGiftSheet.swift
+│   │   ├── AddGiftDraft.swift
+│   │   └── AddGiftPicker.swift
+│   ├── GiftDetails/
+│   ├── People/
+│   ├── Insights/
+│   ├── Settings/
+│   └── Shared/
+│       └── GiftRow.swift
+├── Models/
+│   ├── Gift.swift
+│   ├── Person.swift
+│   ├── HouseholdMember.swift
+│   ├── Celebration.swift
+│   └── GiftFlow.swift
+├── UseCases/
+│   ├── Gifts/
+│   │   ├── LoadGiftsUseCase.swift
+│   │   ├── SaveGiftUseCase.swift
+│   │   ├── DeleteGiftUseCase.swift
+│   │   └── SuggestGiftUseCase.swift
+│   ├── People/
+│   │   ├── LoadPeopleUseCase.swift
+│   │   ├── LoadPersonGiftsUseCase.swift
+│   │   ├── RenamePersonUseCase.swift
+│   │   └── DeletePersonUseCase.swift
+│   ├── Insights/
+│   │   └── BuildInsightsUseCase.swift
+│   └── Onboarding/
+│       └── CompleteOnboardingUseCase.swift
+├── Gateways/
+│   ├── GiftGateway.swift
+│   ├── PeopleGateway.swift
+│   ├── GiftIntelligenceGateway.swift
+│   ├── PreferencesGateway.swift
+│   ├── CoreData/
+│   │   ├── CoreDataGiftGateway.swift
+│   │   └── CoreDataPeopleGateway.swift
+│   ├── Intelligence/
+│   │   └── FoundationModelsGiftIntelligenceGateway.swift
+│   └── Preferences/
+│       └── UserDefaultsPreferencesGateway.swift
+├── Infrastructure/
+│   └── Persistence/
+│       ├── CoreDataStack.swift
+│       ├── CoreDataModels.swift
+│       └── WhoGaveWhat.xcdatamodeld
+├── DesignSystem/
+│   ├── Colors.swift
+│   ├── Theme.swift
+│   ├── Components/
+│   │   ├── AvatarView.swift
+│   │   ├── Card.swift
+│   │   ├── Segmented.swift
+│   │   └── ...
+│   └── Layouts/
+│       └── FlowLayout.swift
+├── Helpers/
+│   ├── Date+Formatting.swift
+│   └── String+Formatting.swift
+└── Resources/
+    ├── Assets.xcassets
+    ├── Fonts/
+    └── Localizable.xcstrings</code></pre>
+      <p><code>Colors.swift</code> — безопасное имя: имя Swift-файла не создаёт символ или namespace и не конфликтует с типом <code>Color</code>. Внутри можно использовать простые семантические цвета через <code>extension Color</code> либо отдельный <code>AppColors</code>, если понадобится namespace.</p>
+      <p><code>Helpers</code> не должен становиться свалкой: там только маленькие технические extensions и форматирование, используемые несколькими фичами. Бизнес-решения остаются в моделях и use cases.</p>
+    </section>
+
+    <section aria-labelledby="boundaries">
+      <h2 id="boundaries">Границы слоёв</h2>
+      <table>
+        <thead>
+          <tr><th>Слой</th><th>Ответственность</th><th>Чего в нём нет</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>App</code></td><td>Composition root и глобальная навигация. Создаёт gateways и use cases, передаёт их фичам.</td><td>Бизнес-правил, запросов Core Data и экранной разметки.</td></tr>
+          <tr><td><code>Features</code></td><td>SwiftUI views, локальное UI-состояние и feature-specific helpers/subviews.</td><td>Прямых Core Data/Foundation Models вызовов.</td></tr>
+          <tr><td><code>Models</code></td><td>Чистые сущности предметной области. Например, <code>Gift</code> знает свои данные и естественные инварианты.</td><td><code>Color</code>, SwiftUI, Core Data managed objects и навигации.</td></tr>
+          <tr><td><code>UseCases</code></td><td>Законченные пользовательские бизнес-действия: загрузить, сохранить, удалить, рассчитать.</td><td>SwiftUI и деталей конкретной базы/AI SDK.</td></tr>
+          <tr><td><code>Gateways</code></td><td>Контракты к внешнему миру и их адаптеры: persistence, Foundation Models, UserDefaults.</td><td>UI-состояния и решений о показе экранов.</td></tr>
+          <tr><td><code>Infrastructure</code></td><td>Низкоуровневая техническая основа SDK: Core Data stack, managed models и конфигурация.</td><td>Use-case логики.</td></tr>
+          <tr><td><code>DesignSystem</code></td><td>Цвета, тема, переиспользуемые визуальные примитивы и layouts.</td><td>Компонентов, которые сами обращаются к gateway/use case.</td></tr>
+        </tbody>
+      </table>
+      <p>Направление вызовов: <code>Feature → UseCase → Gateway → Infrastructure/SDK</code>. Модели передаются между ними как чистые значения. <code>AppComposition</code> — единственное место, которое знает конкретные реализации.</p>
+      <p>Показ экрана не является бизнес-use-case: это ответственность <code>AppRouter</code>. Use case отвечает на намерение пользователя вроде «сохранить подарок» или «загрузить подарки человека», а router решает, какой SwiftUI view открыть.</p>
+    </section>
+
+    <section aria-labelledby="data-flow">
+      <h2 id="data-flow">Пример потока данных</h2>
+      <p>Сохранение подарка проходит по одной читаемой цепочке:</p>
+      <pre><code>AddGiftSheet
+  → SaveGiftUseCase
+      1. проверяет AddGiftDraft
+      2. определяет GiftFlow
+      3. создаёт или обновляет Gift
+  → GiftGateway.save(gift)
+  → CoreDataGiftGateway
+  → CoreDataStack</code></pre>
+      <p>AI-подсказка отделена от сохранения: <code>SuggestGiftUseCase</code> сначала обращается к <code>GiftIntelligenceGateway</code>, затем применяет локальный fallback. Apple Foundation Models остаётся деталью <code>FoundationModelsGiftIntelligenceGateway</code>.</p>
+    </section>
+
+    <section aria-labelledby="swiftdata">
+      <h2 id="swiftdata">SwiftData — отдельный следующий PR</h2>
+      <p>Этот PR не меняет persistence engine: миграция Core Data → SwiftData одновременно со структурным рефакторингом слишком усложнит проверку и откат. Но новая граница специально готовит замену.</p>
+      <p>В следующем PR <code>CoreDataGiftGateway</code>, <code>CoreDataPeopleGateway</code> и <code>CoreDataStack</code> будут заменены SwiftData-реализациями. <code>Features</code>, <code>UseCases</code> и чистые <code>Models</code> при этом не должны измениться. Отдельно потребуется решить стратегию миграции уже сохранённых данных.</p>
+    </section>
+
+    <section aria-labelledby="work-plan">
+      <h2 id="work-plan">План работ</h2>
+      <ol>
+        <li><strong>Зафиксировать baseline.</strong> Запустить текущие unit tests и simulator build до переноса.</li>
+        <li><strong>Механически разложить UI.</strong> Перенести экраны в <code>Features</code> без изменения поведения. Разделить общие визуальные примитивы и feature-specific views.</li>
+        <li><strong>Собрать Design System.</strong> Разделить текущий <code>Theme.swift</code> на <code>Colors.swift</code> и остальные theme tokens; разнести общие компоненты по понятным файлам.</li>
+        <li><strong>Выделить чистые модели.</strong> Убрать из <code>Gift</code>, <code>Person</code> и household-моделей SwiftUI/Core Data зависимости. Переместить цветовые представления в presentation/design-system слой.</li>
+        <li><strong>Ввести gateways вокруг текущих интеграций.</strong> Сначала обернуть существующие Core Data, Foundation Models и UserDefaults реализации без смены технологий.</li>
+        <li><strong>Извлечь use cases из <code>AppStore</code>.</strong> Переносить по одному сценарию вместе с существующими тестами: load/save/delete gifts, people actions, suggestions, insights и onboarding.</li>
+        <li><strong>Удалить остаток <code>AppStore</code>.</strong> Навигационную часть заменить узким <code>AppRouter</code>, состояния форм вернуть соответствующим features, затем удалить файл целиком.</li>
+        <li><strong>Собрать зависимости.</strong> Создать concrete gateways и use cases в <code>AppComposition</code>; не добавлять DI-фреймворк.</li>
+        <li><strong>Обновить тесты и README.</strong> Сгруппировать тесты по use cases/gateways и описать реальное направление зависимостей.</li>
+        <li><strong>Проверить итог.</strong> Полный test suite, чистая build и smoke test основных маршрутов.</li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="verification">
+      <h2 id="verification">Проверка</h2>
+      <ul>
+        <li><code>xcodebuild test</code> на доступном iOS Simulator с <code>CODE_SIGNING_ALLOWED=NO</code>.</li>
+        <li>Чистая сборка app target после всех перемещений.</li>
+        <li>Проверка, что Xcode видит новую иерархию папок и в target не появились пропавшие или дублирующиеся исходники.</li>
+        <li>Smoke test: onboarding/sign-in, вкладки Home/People/Insights, добавление и редактирование подарка, удаление подарка/человека, Settings.</li>
+        <li>Тесты use cases используют test gateways, а Core Data gateway проверяется отдельно на in-memory stack.</li>
+        <li>Проверка git diff: первый коммит содержит только актуальную версию этого плана.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="risks">
+      <h2 id="risks">Риски и защита от них</h2>
+      <ul>
+        <li><strong>Use-case explosion.</strong> Не создавать класс на каждый getter или кнопку. Отдельный use case нужен для законченного бизнес-сценария, который можно назвать глаголом и проверить отдельно.</li>
+        <li><strong>Gateway как новое имя для свалки.</strong> Gateway существует только для внешней системы или долговременного хранилища. Чистые расчёты туда не попадают.</li>
+        <li><strong>Слишком большой рефакторинг.</strong> Перенос UI, gateways, use cases и удаление store выполняются отдельными логическими коммитами со сборкой между ними.</li>
+        <li><strong>Смешение со SwiftData.</strong> В этом PR сохраняется Core Data и текущая схема данных; SwiftData выносится в отдельный PR с собственной миграционной проверкой.</li>
+        <li><strong>Скрытая MVVM-архитектура.</strong> Не создавать ViewModel на каждый экран автоматически. Feature-specific state появляется только там, где SwiftUI view действительно не может удобно владеть состоянием сама.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

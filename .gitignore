@@ -1,0 +1,52 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+xcuserdata/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.perspectivev3
+!default.perspectivev3
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+Package.resolved
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+
+# Zed / xcode-build-server (machine-specific absolute paths)
+buildServer.json
+
+# Generated Xcode project workspace metadata
+WhoGaveWhat.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+
+# Misc
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+*.xcresult
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Secrets — never commit
+.env
+.env.*
+fastlane/.env
+fastlane/.env.*
+*.p8
+
+# Python helper caches
+__pycache__/

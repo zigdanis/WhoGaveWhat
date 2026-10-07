@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WhoGaveWhat — Single-path XcodeBuildMCP CLI plan</title>
+  <style>
+    :root { color-scheme: dark; --bg:#070707; --panel:#111; --text:#f5f5f1; --muted:#aaa9a2; --line:#2d2d29; --good:#9ee6b0; --bad:#ffb3ac; --accent:#fafafa; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    main { width:min(980px,calc(100vw - 32px)); margin:auto; padding:54px 0 84px; }
+    header { padding-bottom:28px; border-bottom:1px solid var(--line); }
+    h1 { max-width:850px; margin:0 0 16px; font-size:clamp(2.25rem,6vw,4.8rem); line-height:.96; letter-spacing:-.045em; }
+    h2 { margin:48px 0 16px; padding-top:14px; border-top:1px solid var(--line); font-size:1.4rem; }
+    h3 { margin:28px 0 10px; font-size:1.05rem; }
+    p { margin:0 0 14px; color:var(--muted); }
+    a { color:var(--text); text-underline-offset:.2em; }
+    ul,ol { margin:0 0 20px; padding-left:1.3rem; color:var(--muted); }
+    li + li { margin-top:8px; }
+    code { padding:.1rem .3rem; border:1px solid var(--line); border-radius:4px; background:#191919; color:var(--text); }
+    pre { overflow:auto; margin:12px 0 20px; padding:16px; border:1px solid var(--line); background:#0b0b0b; color:var(--text); }
+    pre code { padding:0; border:0; background:none; }
+    table { width:100%; margin:14px 0 24px; border-collapse:collapse; color:var(--muted); }
+    th,td { padding:11px 12px; border:1px solid var(--line); text-align:left; vertical-align:top; }
+    th { background:var(--panel); color:var(--text); }
+    .lede { max-width:800px; color:var(--text); font-size:1.08rem; }
+    .box { margin:28px 0; padding:18px 20px; border:1px solid var(--line); border-left:3px solid var(--accent); background:var(--panel); }
+    .box p:last-child { margin-bottom:0; }
+    .toc ul { margin-bottom:0; columns:2; }
+    .keep { color:var(--good); }
+    .remove { color:var(--bad); }
+    .strong { color:var(--text); }
+    .tree { white-space:pre; }
+    @media (max-width:680px) { main { width:min(100% - 24px,980px); padding-top:34px; } .toc ul { columns:1; } table { font-size:.88rem; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>One Xcode execution path</h1>
+    <p class="lede">Revised implementation plan for agent-driven building, testing, Simulator interaction, accessibility inspection, screenshots, and visual verification in WhoGaveWhat.</p>
+  </header>
+
+  <aside class="box" aria-label="TLDR">
+    <p><strong>TLDR:</strong> use the official XcodeBuildMCP CLI and its official CLI skill as the only execution system. Remove the OpenAI <code>build-ios-apps</code> plugin, its XcodeBuildMCP MCP launcher, and all nine bundled skills. Keep the two existing Apple-authored SwiftUI knowledge skills because they provide API guidance but cannot build, test, or control a Simulator. Add one project config, one operating guide, and unambiguous <code>AGENTS.md</code> rules in a separate PR.</p>
+  </aside>
+
+  <nav class="box toc" aria-label="Table of contents">
+    <ul>
+      <li><a href="#decision">Final architecture</a></li>
+      <li><a href="#skills">Skills decision</a></li>
+      <li><a href="#inventory">Exact inventory</a></li>
+      <li><a href="#locations">Final locations</a></li>
+      <li><a href="#usage">How agents use it</a></li>
+      <li><a href="#agents">AGENTS.md contract</a></li>
+      <li><a href="#implementation">Implementation steps</a></li>
+      <li><a href="#verification">Acceptance checks</a></li>
+      <li><a href="#pr">Separate PR scope</a></li>
+    </ul>
+  </nav>
+
+  <section>
+    <h2 id="decision">Final architecture</h2>
+    <p class="strong"><strong>One execution authority:</strong> the <code>xcodebuildmcp</code> CLI executable.</p>
+    <p>The agent will learn that executable through exactly one project-local skill: <code>.agents/skills/xcodebuildmcp-cli/SKILL.md</code>. There will be no XcodeBuildMCP MCP server, no OpenAI iOS execution plugin, and no second wrapper around <code>xcodebuild</code> or <code>simctl</code>.</p>
+    <table>
+      <thead><tr><th>Layer</th><th>Chosen source</th><th>Responsibility</th></tr></thead>
+      <tbody>
+        <tr><td>Execution</td><td>Official XcodeBuildMCP CLI</td><td>Discover projects, build, test, install, launch, inspect accessibility, interact with Simulator UI, collect logs, and take screenshots.</td></tr>
+        <tr><td>Execution instructions</td><td>Official <code>xcodebuildmcp-cli</code> skill</td><td>Teach the agent the CLI workflow and help-first command discovery. It does not introduce another executable.</td></tr>
+        <tr><td>Project defaults</td><td><code>.xcodebuildmcp/config.yaml</code></td><td>Store WhoGaveWhat project, scheme, and preferred Simulator defaults.</td></tr>
+        <tr><td>SwiftUI knowledge</td><td>Two existing Apple-authored project skills</td><td>Supply current API and correctness guidance only. They perform no build or Simulator actions.</td></tr>
+        <tr><td>Policy</td><td><code>AGENTS.md</code></td><td>Resolve when and how the CLI is used and define proof required before success is reported.</td></tr>
+      </tbody>
+    </table>
+    <aside class="box">
+      <p><strong>No MCP:</strong> XcodeBuildMCP product version 2.x is not the new MCP protocol generation sometimes called “MCP v2.” This plan therefore does not launch XcodeBuildMCP as an MCP server and does not depend on that protocol question.</p>
+    </aside>
+  </section>
+
+  <section>
+    <h2 id="skills">Which skills are valuable, and which are redundant?</h2>
+    <p>The useful distinction is not “OpenAI skill versus XcodeBuildMCP skill.” It is <strong>execution</strong> versus <strong>domain knowledge</strong>.</p>
+    <ul>
+      <li>An <strong>execution skill</strong> tells the agent how to operate a command-line tool. Two execution skills for the same job create ambiguity. WhoGaveWhat should have exactly one: <code>xcodebuildmcp-cli</code>.</li>
+      <li>A <strong>domain knowledge skill</strong> supplies authoritative SwiftUI rules when relevant. It cannot run the app and therefore does not compete with the CLI.</li>
+    </ul>
+
+    <h3>OpenAI Build iOS Apps plugin: remove all nine skills</h3>
+    <table>
+      <thead><tr><th>Bundled skill</th><th>Decision</th><th>Reason</th></tr></thead>
+      <tbody>
+        <tr><td><code>ios-debugger-agent</code></td><td class="remove">Remove</td><td>Uses XcodeBuildMCP through MCP calls; directly conflicts with the CLI-only decision.</td></tr>
+        <tr><td><code>ios-simulator-browser</code></td><td class="remove">Remove</td><td>Adds another Simulator presentation and interaction route. It is unnecessary for the normal app project workflow.</td></tr>
+        <tr><td><code>ios-ettrace-performance</code></td><td class="remove">Remove by default</td><td>Specialized ETTrace profiling. Add only for a real profiling task, after separate approval.</td></tr>
+        <tr><td><code>ios-memgraph-leaks</code></td><td class="remove">Remove by default</td><td>Specialized leak analysis. Add only when investigating memory leaks.</td></tr>
+        <tr><td><code>ios-app-intents</code></td><td class="remove">Remove by default</td><td>Relevant only when implementing App Intents, Shortcuts, Siri, or Spotlight integration.</td></tr>
+        <tr><td><code>swiftui-liquid-glass</code></td><td class="remove">Remove by default</td><td>Useful for an explicit Liquid Glass design task, but unnecessary as permanent overlapping guidance.</td></tr>
+        <tr><td><code>swiftui-performance-audit</code></td><td class="remove">Remove by default</td><td>Useful for a requested performance audit; otherwise overlaps the existing Apple SwiftUI guidance.</td></tr>
+        <tr><td><code>swiftui-ui-patterns</code></td><td class="remove">Remove</td><td>Broad SwiftUI guidance overlaps <code>swiftui-specialist</code>.</td></tr>
+        <tr><td><code>swiftui-view-refactor</code></td><td class="remove">Remove</td><td>Broad refactoring guidance overlaps the existing specialist skill and ordinary agent capabilities.</td></tr>
+      </tbody>
+    </table>
+    <p>OpenAI’s current iOS guidance says a CLI-first loop often needs no skill or MCP server at first, and recommends adding skills only when work becomes specialized. That supports keeping the default set small rather than retaining every plugin skill.</p>
+
+    <h3>Official XcodeBuildMCP skills: install one, reject one</h3>
+    <table>
+      <thead><tr><th>Official upstream skill</th><th>Decision</th><th>Reason</th></tr></thead>
+      <tbody>
+        <tr><td><code>xcodebuildmcp-cli</code></td><td class="keep">Install project-locally</td><td>The selected path. It teaches one executable that covers build, test, run, logging, debugging, UI automation, and discovery.</td></tr>
+        <tr><td><code>xcodebuildmcp</code></td><td class="remove">Do not install</td><td>It teaches MCP-specific tools and session calls, recreating the exact ambiguity this plan removes.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Existing Apple SwiftUI skills: keep both</h3>
+    <table>
+      <thead><tr><th>Project skill</th><th>Decision</th><th>Why it does not compete</th></tr></thead>
+      <tbody>
+        <tr><td><code>swiftui-specialist</code></td><td class="keep">Keep</td><td>Authoritative Apple guidance for Observation, view structure, identity, localization, animation, environment, and current best practices. It has no execution commands.</td></tr>
+        <tr><td><code>swiftui-whats-new-27</code></td><td class="keep">Keep</td><td>Narrow Apple guidance for SDK 27 APIs and migration issues. It triggers only for those APIs and has no execution commands.</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Recommendation:</strong> do not reduce the repository to literally one skill. Reduce it to one <em>execution</em> skill and retain narrowly scoped authoritative knowledge. Removing the Apple skills would lose correctness guidance without making the build route any clearer.</p>
+  </section>
+
+  <section>
+    <h2 id="inventory">Exact keep, remove, and install inventory</h2>
+    <table>
+      <thead><tr><th>Current or proposed item</th><th>Action</th><th>End state</th></tr></thead>
+      <tbody>
+        <tr><td><code>plugins/build-ios-apps/</code></td><td class="remove">Delete</td><td>No OpenAI iOS plugin or bundled skills remain.</td></tr>
+        <tr><td><code>.agents/plugins/marketplace.json</code></td><td class="remove">Delete</td><td>The file currently registers only the removed local plugin.</td></tr>
+        <tr><td><code>.codex/config.toml</code></td><td class="remove">Delete</td><td>It currently contains only the removed marketplace and plugin enablement.</td></tr>
+        <tr><td>Plugin <code>.mcp.json</code></td><td class="remove">Delete with plugin</td><td>No <code>npx ... mcp</code> launcher and no XcodeBuildMCP MCP server.</td></tr>
+        <tr><td><code>.agents/skills/swiftui-specialist/</code></td><td class="keep">Keep unchanged</td><td>Project-local Apple SwiftUI knowledge remains available.</td></tr>
+        <tr><td><code>.agents/skills/swiftui-whats-new-27/</code></td><td class="keep">Keep unchanged</td><td>Project-local SDK 27 knowledge remains available.</td></tr>
+        <tr><td>XcodeBuildMCP CLI executable</td><td class="keep">Install after approval</td><td>Install the exact reviewed npm package globally with <code>npm install --global xcodebuildmcp@&lt;version&gt;</code>. The executable is available as <code>xcodebuildmcp</code> on <code>PATH</code>; no binary is committed.</td></tr>
+        <tr><td><code>.agents/skills/xcodebuildmcp-cli/</code></td><td class="keep">Add after approval</td><td>Official CLI skill from the same reviewed XcodeBuildMCP release.</td></tr>
+        <tr><td><code>.xcodebuildmcp/config.yaml</code></td><td class="keep">Add after approval</td><td>Version-controlled project defaults; no MCP workflow configuration.</td></tr>
+        <tr><td><code>docs/xcodebuildmcp.md</code></td><td class="keep">Add after approval</td><td>Human-readable installation, version, update, and troubleshooting guide.</td></tr>
+        <tr><td><code>AGENTS.md</code></td><td class="keep">Extend after approval</td><td>One mandatory operational contract for agents.</td></tr>
+      </tbody>
+    </table>
+    <p>Any unrelated untracked skill or user-owned file found during implementation must be preserved and excluded from this PR.</p>
+  </section>
+
+  <section>
+    <h2 id="locations">Final project and machine locations</h2>
+    <pre class="tree"><code>WhoGaveWhat/
+├── .agents/
+│   └── skills/
+│       ├── xcodebuildmcp-cli/       # the only Xcode execution skill
+│       │   └── SKILL.md             # official upstream CLI instructions
+│       ├── swiftui-specialist/      # kept: Apple knowledge only
+│       └── swiftui-whats-new-27/    # kept: Apple knowledge only
+├── .xcodebuildmcp/
+│   └── config.yaml                  # project, scheme, Simulator defaults
+├── docs/
+│   └── xcodebuildmcp.md             # setup, pinned version, updates, recovery
+└── AGENTS.md                        # mandatory usage and evidence rules
+
+Machine PATH
+└── xcodebuildmcp                    # installed executable; exact resolved path recorded by setup verification</code></pre>
+    <p>The executable belongs to the developer machine and is not committed. The project skill, config, documentation, and policy are committed so every agent receives the same instructions.</p>
+
+    <h3>Proposed project config</h3>
+    <pre><code>schemaVersion: 1
+sessionDefaults:
+  projectPath: ./WhoGaveWhat.xcodeproj
+  scheme: WhoGaveWhat
+  simulatorName: iPhone 17 Pro
+sentryDisabled: true</code></pre>
+    <p>Do not add <code>enabledWorkflows</code>: that setting controls MCP tool exposure, while the CLI exposes its command groups directly. Avoiding it makes the CLI-only architecture explicit.</p>
+  </section>
+
+  <section>
+    <h2 id="usage">How the agent will use the single tool</h2>
+    <ol>
+      <li>Read the project-local <code>xcodebuildmcp-cli</code> skill when a task requires an Xcode build, test, launch, Simulator, log, debug, accessibility, or screenshot operation.</li>
+      <li>Run <code>xcodebuildmcp --help</code>, then the relevant subgroup’s <code>--help</code> when exact flags are uncertain. Do not guess command syntax.</li>
+      <li>Discover or reuse a booted Simulator. If an iPhone 17 Pro is already booted, bind all operations to it. Otherwise prefer iPhone 17 Pro.</li>
+      <li>Use the CLI’s combined build-and-run command when the intent is to launch the app. Use its test command when the intent is verification.</li>
+      <li>Before interacting, collect an accessibility hierarchy and target stable identifiers or labels. Coordinates are a documented last resort.</li>
+      <li>After UI-affecting work, walk the complete modified scenario, collect a fresh accessibility hierarchy, take a screenshot, open the image, and make an explicit visual judgment.</li>
+      <li>Use structured <code>json</code> or <code>jsonl</code> output where supported so the agent can reliably parse results.</li>
+    </ol>
+
+    <h3>Command families the skill covers</h3>
+    <table>
+      <thead><tr><th>Need</th><th>XcodeBuildMCP CLI area</th></tr></thead>
+      <tbody>
+        <tr><td>Health and capabilities</td><td><code>xcodebuildmcp --version</code>, <code>xcodebuildmcp tools --json</code>, and contextual <code>--help</code></td></tr>
+        <tr><td>Build, test, install, launch</td><td><code>xcodebuildmcp simulator ...</code></td></tr>
+        <tr><td>Accessibility hierarchy and interaction</td><td><code>xcodebuildmcp ui-automation ...</code></td></tr>
+        <tr><td>App and device logs</td><td>CLI logging commands discovered through the relevant help group</td></tr>
+        <tr><td>Debugger operations</td><td>CLI debugging commands discovered through the relevant help group</td></tr>
+        <tr><td>Screenshots</td><td>CLI Simulator screenshot command, with the artifact opened separately for visual inspection</td></tr>
+      </tbody>
+    </table>
+    <p>The plan intentionally specifies command families rather than freezing every option spelling. During implementation, the installed pinned release’s <code>--help</code> output is the authority, and the verified commands are recorded in <code>docs/xcodebuildmcp.md</code>.</p>
+  </section>
+
+  <section>
+    <h2 id="agents">Required AGENTS.md contract</h2>
+    <p>The PR will add concise rules with the following meaning:</p>
+    <ul>
+      <li><strong>Mandatory route:</strong> use the <code>xcodebuildmcp</code> CLI for all build, test, install, launch, Simulator interaction, accessibility inspection, logging, debugging, and screenshot work.</li>
+      <li><strong>No MCP route:</strong> do not configure or call XcodeBuildMCP as an MCP server.</li>
+      <li><strong>No silent fallback:</strong> do not use raw <code>xcodebuild</code>, <code>xcrun</code>, or <code>simctl</code> for those operations. If the CLI itself is broken or lacks a required capability, stop, report the exact limitation, and ask Danis before adopting a second route.</li>
+      <li><strong>Help first:</strong> inspect CLI and subgroup help instead of inventing flags.</li>
+      <li><strong>Simulator reuse:</strong> reuse an already-running compatible iPhone Simulator; prefer iPhone 17 Pro and keep one UDID for the entire task.</li>
+      <li><strong>Proof:</strong> report selected project, scheme, Simulator name/UDID, build result, exact test totals, and fallback status.</li>
+      <li><strong>UI verification:</strong> after UI changes, walk the modified scenario, inspect the accessibility hierarchy, capture a screenshot, open it, and explicitly check state, spacing, clipping, overlap, contrast, and readability.</li>
+      <li><strong>Artifacts:</strong> keep screenshots, logs, DerivedData, and machine-specific output outside tracked source paths unless the task explicitly requests committed artifacts.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2 id="implementation">Implementation steps after explicit approval</h2>
+    <ol>
+      <li><strong>Create isolation:</strong> refresh <code>master</code>, verify the existing worktree, and create a dedicated branch such as <code>codex/xcodebuildmcp-cli-integration</code>. Preserve and exclude unrelated changes.</li>
+      <li><strong>Pin the input:</strong> recheck the latest stable XcodeBuildMCP release on implementation day. Use one exact reviewed version everywhere; never use <code>@latest</code>. Version <code>2.7.0</code> was selected after that check.</li>
+      <li><strong>Install the executable:</strong> run <code>npm install --global xcodebuildmcp@2.7.0</code>. Verify <code>command -v xcodebuildmcp</code>, <code>xcodebuildmcp --version</code>, and <code>xcodebuildmcp tools --json</code>. Record the resolved path and npm global prefix in the setup evidence. Do not commit a binary or <code>node_modules</code>.</li>
+      <li><strong>Capture the official skill safely:</strong> use the installed release’s <code>init --skill cli</code> capability in a temporary directory, inspect its complete output, and add only the official <code>xcodebuildmcp-cli</code> skill under <code>.agents/skills/</code>. Do not install the MCP skill.</li>
+      <li><strong>Remove the competing source:</strong> delete <code>plugins/build-ios-apps/</code>, <code>.agents/plugins/marketplace.json</code>, and the now-empty <code>.codex/config.toml</code>. Confirm no remaining file starts XcodeBuildMCP with <code>mcp</code> or references <code>build-ios-apps</code>.</li>
+      <li><strong>Add project defaults:</strong> add <code>.xcodebuildmcp/config.yaml</code> with the project, scheme, iPhone 17 Pro preference, and telemetry disabled. Validate against the pinned release.</li>
+      <li><strong>Add durable documentation:</strong> create <code>docs/xcodebuildmcp.md</code> containing the exact version, installation method, resolved executable path check, official skill provenance, verified commands, update procedure, and recovery steps.</li>
+      <li><strong>Update agent policy:</strong> extend <code>AGENTS.md</code> with the contract above while preserving all existing project rules.</li>
+      <li><strong>Reload and inspect discovery:</strong> start a fresh agent session. Confirm the CLI skill is discovered, the two Apple knowledge skills remain, and neither the OpenAI plugin nor XcodeBuildMCP MCP tools are present.</li>
+      <li><strong>Run acceptance checks:</strong> execute the matrix below using the already-booted compatible Simulator when available.</li>
+      <li><strong>Review and deliver:</strong> inspect all staged paths and the complete diff, run review before any push, then create a separate ready-for-review PR with English GitHub text. Do not merge without instruction.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2 id="verification">Acceptance and verification matrix</h2>
+    <table>
+      <thead><tr><th>Check</th><th>Required evidence</th></tr></thead>
+      <tbody>
+        <tr><td>Single execution source</td><td>Repository search finds one Xcode execution skill, no <code>build-ios-apps</code>, no plugin marketplace entry, and no XcodeBuildMCP MCP launcher.</td></tr>
+        <tr><td>Installation</td><td><code>command -v</code>, exact version output, and JSON tool inventory succeed and are documented.</td></tr>
+        <tr><td>Skill discovery</td><td>A fresh session discovers <code>xcodebuildmcp-cli</code>, <code>swiftui-specialist</code>, and <code>swiftui-whats-new-27</code>; no MCP-specific XcodeBuildMCP skill appears.</td></tr>
+        <tr><td>Config</td><td>The pinned CLI accepts <code>.xcodebuildmcp/config.yaml</code> and resolves <code>WhoGaveWhat.xcodeproj</code>, scheme <code>WhoGaveWhat</code>, and the intended Simulator.</td></tr>
+        <tr><td>Build</td><td>The app builds through the CLI with no raw-command fallback.</td></tr>
+        <tr><td>Tests</td><td>The full scheme test operation completes; the report includes exact passed, failed, and skipped counts.</td></tr>
+        <tr><td>Launch</td><td>The CLI launches bundle <code>pro.ziganshin.WhoGaveWhat</code> on the reused or preferred iPhone 17 Pro Simulator.</td></tr>
+        <tr><td>Accessibility</td><td>The agent captures the visible hierarchy and identifies representative controls by meaningful label or identifier.</td></tr>
+        <tr><td>Interaction</td><td>The agent performs one deterministic in-app scenario using accessibility targets and confirms the resulting state with a fresh hierarchy.</td></tr>
+        <tr><td>Screenshot and visual verdict</td><td>The CLI writes a screenshot; the agent opens it and records an explicit visual assessment rather than only confirming file creation.</td></tr>
+        <tr><td>Logs</td><td>A bounded logging smoke test captures application output and terminates cleanly.</td></tr>
+        <tr><td>Repository hygiene</td><td>Only approved tooling, skill, config, documentation, and policy files are staged; no app source, generated data, screenshots, absolute paths, or unrelated files enter the PR.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2 id="pr">Separate PR boundary</h2>
+    <p><strong>Included:</strong> removing the OpenAI plugin and its enablement; adding the official CLI skill; adding project configuration and documentation; extending <code>AGENTS.md</code>; and evidence from the acceptance checks.</p>
+    <p><strong>Excluded:</strong> application source changes, Xcode project changes, feature work, UI changes, CI changes, global Codex configuration, committed binaries, committed screenshots, Simulator reset/erase, and installation of optional profiling or domain skills.</p>
+    <p>The PR title, commits, description, review comments, and evidence will be written in English. Installation changes on the developer machine will be documented but cannot themselves be represented by the Git diff.</p>
+    <aside class="box">
+      <p><strong>Approval gate:</strong> this file is the only deliverable now. Do not install the CLI, generate a skill, delete the existing plugin, edit configuration, create a branch, commit, push, or open a PR until Danis explicitly approves this revised plan.</p>
+    </aside>
+  </section>
+
+  <section>
+    <h2>Primary references</h2>
+    <ul>
+      <li><a href="https://learn.chatgpt.com/use-cases/native-ios-apps">OpenAI: Build native iOS apps with Codex</a></li>
+      <li><a href="https://learn.chatgpt.com/use-cases/ios-simulator-bug-debugging">OpenAI: Debug iOS Simulator issues with Codex</a></li>
+      <li><a href="https://learn.chatgpt.com/use-cases/ios-app-intents">OpenAI: Work with iOS App Intents</a></li>
+      <li><a href="https://raw.githubusercontent.com/openai/plugins/main/plugins/build-ios-apps/README.md">OpenAI Build iOS Apps plugin inventory</a></li>
+      <li><a href="https://www.xcodebuildmcp.com/docs/cli">XcodeBuildMCP CLI documentation</a></li>
+      <li><a href="https://www.xcodebuildmcp.com/docs/skills">XcodeBuildMCP skills documentation</a></li>
+      <li><a href="https://www.xcodebuildmcp.com/docs/configuration">XcodeBuildMCP configuration documentation</a></li>
+      <li><a href="https://raw.githubusercontent.com/getsentry/XcodeBuildMCP/main/skills/xcodebuildmcp-cli/SKILL.md">Official XcodeBuildMCP CLI skill</a></li>
+      <li><a href="https://raw.githubusercontent.com/getsentry/XcodeBuildMCP/main/skills/xcodebuildmcp/SKILL.md">Official XcodeBuildMCP MCP skill intentionally excluded</a></li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

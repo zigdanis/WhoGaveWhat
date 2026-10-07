@@ -1,0 +1,25 @@
+# swift-format owns layout. SwiftLint checks actionable source mistakes.
+# An explicit rule set keeps adopting the current source independent of style baselines.
+included:
+  - WhoGaveWhat
+  - WhoGaveWhatTests
+only_rules:
+  - block_based_kvo
+  - class_delegate_protocol
+  - contains_over_first_not_nil
+  - convenience_type
+  - discarded_notification_center_observer
+  - duplicate_imports
+  - empty_count
+  - empty_string
+  - empty_xctest_method
+  - fatal_error_message
+  - force_cast
+  - force_try
+  - identical_operands
+  - legacy_constructor
+  - notification_center_detachment
+  - redundant_nil_coalescing
+  - unused_closure_parameter
+  - unused_optional_binding
+  - weak_delegate
