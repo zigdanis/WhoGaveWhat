@@ -64,6 +64,25 @@ def target(capture, label, role):
     return matches[0]["ref"]
 
 
+def element(capture, *, identifier=None, label=None, role=None, prefix=False):
+    """Return one current AX element, using stable identifiers where possible."""
+    matches = []
+    for candidate in capture.get("elements", []):
+        if identifier is not None:
+            value = candidate.get("identifier", "")
+            if (value.startswith(identifier) if prefix else value != identifier):
+                continue
+        if label is not None and candidate.get("label") != label:
+            continue
+        if role is not None and candidate.get("role") != role:
+            continue
+        matches.append(candidate)
+    if len(matches) != 1:
+        raise ValueError(
+            f"Expected exactly one element identifier={identifier!r} label={label!r} role={role!r}; got {len(matches)}")
+    return matches[0]
+
+
 def assert_tab_screen(capture, label):
     """Require the native navigation heading and the selected tab, not its persistent label alone."""
     elements = capture["elements"]
@@ -85,10 +104,19 @@ def run(directory):
         "checkout_sha": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         "run_id": os.environ.get("GITHUB_RUN_ID", "local"),
         "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "1"),
-        "evidence_kind": "app-smoke", "scenario": "Home → People → Insights → Add a gift",
+        "evidence_kind": "app-smoke", "scenario": "PR13 gift creation, persistence, and Settings journey",
         "journey_outcome": "failure", "export_outcome": "failure",
         "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"),
         "mcp": "2.7.0", "checkpoints": [],
+        "acceptance_claims": [
+            "compact gift title entry and keyboard",
+            "expanded Details value entry and scrolling",
+            "calendar short and long month paging with dismissal",
+            "new From and To people with automatic selection",
+            "duplicate gift reuses existing people",
+            "save and relaunch persistence",
+            "Settings currency and bundled third-party licenses",
+        ],
     }
     sequence = 0
     simulator = None
@@ -117,6 +145,21 @@ def run(directory):
         metadata["checkpoints"].append({"name": name, "image": f"attachments/{name}.png"})
         return capture
 
+    def tap(capture, **selector):
+        ref = element(capture, **selector)["ref"]
+        mcp("ui-automation", "batch", simulatorId=simulator["simulatorId"],
+            steps=[{"action": "tap", "elementRef": ref}])
+
+    def type_text(capture, text, **selector):
+        ref = element(capture, **selector)["ref"]
+        mcp("ui-automation", "type-text", simulatorId=simulator["simulatorId"],
+            elementRef=ref, text=text, replaceExisting=True)
+
+    def swipe(capture, direction, **selector):
+        ref = element(capture, **selector)["ref"]
+        mcp("ui-automation", "swipe", simulatorId=simulator["simulatorId"],
+            withinElementRef=ref, direction=direction, distance=0.7)
+
     try:
         simulator = select_simulator(mcp("simulator", "list", enabled=True)["simulators"])
         metadata.update(device=simulator["name"], runtime=simulator["runtime"])
@@ -129,21 +172,85 @@ def run(directory):
         mcp("simulator", "stop", simulatorId=simulator["simulatorId"], bundleId="pro.ziganshin.WhoGaveWhat")
         mcp("simulator", "launch-app", simulatorId=simulator["simulatorId"], bundleId="pro.ziganshin.WhoGaveWhat",
             env={"KS_START": "app", "KS_TAB": "home"}, launchArgs=["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
-        wait(predicate="exists", label="Add a gift", role="button")
+        capture = wait(predicate="exists", label="Add a gift", role="button")
         mcp("simulator", "record-video", simulatorId=simulator["simulatorId"], start=True, fps=15)
         recording = True
         capture = checkpoint("home", label="Home", role="tab")
-        # A singleton MCP batch uses the current ref activation point without an AX label re-query.
-        for label in ["People", "Insights"]:
-            mcp("ui-automation", "batch", simulatorId=simulator["simulatorId"],
-                steps=[{"action": "tap", "elementRef": target(capture, label, "tab")}])
-            wait(predicate="exists", identifier=label, role="other")
-            capture = checkpoint(label.lower(), label=label, role="tab")
-            assert_tab_screen(capture, label)
+        tap(capture, label="Add a gift", role="button")
+        capture = checkpoint("add-gift-compact", identifier="add-gift.name")
+        type_text(capture, "CI acceptance book", identifier="add-gift.name")
+        capture = wait(predicate="exists", identifier="add-gift.details")
+        tap(capture, identifier="add-gift.details")
+        capture = checkpoint("add-gift-details", identifier="add-gift.value")
+        type_text(capture, "42", identifier="add-gift.value")
+        capture = wait(predicate="exists", identifier="add-gift.scroll")
+        swipe(capture, "up", identifier="add-gift.scroll")
+        capture = checkpoint("add-gift-value-scrolled", identifier="add-gift.save")
+
+        # Exercise calendar paging in both directions, then dismiss through a real date choice.
+        tap(capture, identifier="add-gift.date")
+        capture = checkpoint("calendar-short-month", identifier="date-picker.calendar")
+        swipe(capture, "left", identifier="date-picker.calendar")
+        capture = checkpoint("calendar-long-month", identifier="date-picker.calendar")
+        swipe(capture, "right", identifier="date-picker.calendar")
+        capture = wait(predicate="exists", identifier="date-picker.today")
+        tap(capture, identifier="date-picker.today")
+        capture = checkpoint("details-after-calendar", identifier="add-gift.save")
+
+        # Create both endpoints.  Creating a person immediately selects it and closes its picker.
+        tap(capture, identifier="add-gift.from")
+        capture = wait(predicate="exists", identifier="person-picker.query")
+        type_text(capture, "CI Giver", identifier="person-picker.query")
+        capture = wait(predicate="exists", identifier="person-picker.add")
+        tap(capture, identifier="person-picker.add")
+        capture = wait(predicate="exists", identifier="add-gift.to")
+        tap(capture, identifier="add-gift.to")
+        capture = wait(predicate="exists", identifier="person-picker.query")
+        type_text(capture, "CI Receiver", identifier="person-picker.query")
+        capture = wait(predicate="exists", identifier="person-picker.add")
+        tap(capture, identifier="person-picker.add")
+        capture = checkpoint("add-gift-endpoints", identifier="add-gift.save")
+        tap(capture, identifier="add-gift.save")
+        capture = checkpoint("saved-gift", label="CI acceptance book")
+
+        # Relaunch proves SwiftData persistence and gives the recording a complete product journey.
+        mcp("simulator", "stop", simulatorId=simulator["simulatorId"], bundleId="pro.ziganshin.WhoGaveWhat")
+        mcp("simulator", "launch-app", simulatorId=simulator["simulatorId"], bundleId="pro.ziganshin.WhoGaveWhat",
+            env={"KS_START": "app", "KS_TAB": "home"})
+        capture = checkpoint("relaunch-persistence", label="CI acceptance book")
+
+        # Reuse the created people in a second draft rather than creating duplicates.
+        tap(capture, label="Add a gift", role="button")
+        capture = wait(predicate="exists", identifier="add-gift.name")
+        type_text(capture, "CI duplicate reuse", identifier="add-gift.name")
+        tap(capture, identifier="add-gift.from")
+        capture = wait(predicate="exists", label="CI Giver", role="button")
+        first_person = element(capture, label="CI Giver", role="button")
         mcp("ui-automation", "batch", simulatorId=simulator["simulatorId"],
-            steps=[{"action": "tap", "elementRef": target(capture, "Add a gift", "button")}])
-        wait(predicate="exists", identifier="add-gift.name")
-        checkpoint("add-gift", identifier="add-gift.name")
+            steps=[{"action": "tap", "elementRef": first_person["ref"]}])
+        capture = wait(predicate="exists", identifier="add-gift.to")
+        tap(capture, identifier="add-gift.to")
+        capture = wait(predicate="exists", label="CI Receiver", role="button")
+        second_person = element(capture, label="CI Receiver", role="button")
+        mcp("ui-automation", "batch", simulatorId=simulator["simulatorId"],
+            steps=[{"action": "tap", "elementRef": second_person["ref"]}])
+        capture = checkpoint("duplicate-person-reuse", identifier="add-gift.save")
+        tap(capture, identifier="add-gift.save")
+        capture = wait(predicate="exists", label="Home", role="tab")
+
+        # Settings: currency navigation works and the bundled license content is present.
+        capture = wait(predicate="exists", label="Settings", role="button")
+        tap(capture, label="Settings", role="button")
+        capture = checkpoint("settings", identifier="settings.screen")
+        tap(capture, identifier="settings.currency")
+        capture = wait(predicate="exists", identifier="settings.currency.USD")
+        tap(capture, identifier="settings.currency.USD")
+        # Currency selection persists in place; use the native navigation back button.
+        capture = wait(predicate="exists", label="Settings", role="button")
+        tap(capture, label="Settings", role="button")
+        capture = wait(predicate="exists", identifier="settings.screen")
+        tap(capture, identifier="settings.third-party-licenses")
+        checkpoint("licenses", identifier="settings.third-party-licenses.screen")
         metadata["journey_outcome"] = "success"
     finally:
         if recording:

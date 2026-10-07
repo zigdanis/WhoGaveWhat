@@ -75,6 +75,7 @@ struct AddGiftSheet: View {
                 .onTapGesture { focus = nil }
             }
             .scrollIndicators(.hidden)
+            .accessibilityIdentifier("add-gift.scroll")
             .scrollDismissesKeyboard(.interactively)
             // Empty scroll area below the content also dismisses the keyboard.
             .background(Color.bg.contentShape(Rectangle()).onTapGesture { focus = nil })

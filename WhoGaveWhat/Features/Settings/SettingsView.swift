@@ -43,6 +43,7 @@ struct SettingsView: View {
             }
             .scrollIndicators(.hidden)
             .background(Color.bg)
+            .accessibilityIdentifier("settings.screen")
             .navigationTitle("Settings")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

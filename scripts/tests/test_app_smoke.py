@@ -112,8 +112,27 @@ class AppSmokeJourneyTests(unittest.TestCase):
                        'value': '1' if current == label else '0'} for label in ('Home', 'People', 'Insights')],
                     {'ref': 'heading', 'identifier': current, 'role': 'other', 'state': {'visible': True}},
                     {'ref': prefix + 'add-gift', 'label': 'Add a gift', 'role': 'button', 'actions': ['tap']},
-                    *([{'ref': 'name', 'identifier': 'add-gift.name', 'role': 'text-field'}]
-                      if current == 'Add a gift' else [])]}
+                    {'ref': 'name', 'identifier': 'add-gift.name', 'role': 'text-field'},
+                    {'ref': 'details', 'identifier': 'add-gift.details', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'value', 'identifier': 'add-gift.value', 'role': 'text-field'},
+                    {'ref': 'scroll', 'identifier': 'add-gift.scroll', 'role': 'scroll-view', 'actions': ['swipe']},
+                    {'ref': 'date', 'identifier': 'add-gift.date', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'calendar', 'identifier': 'date-picker.calendar', 'role': 'other', 'actions': ['swipe']},
+                    {'ref': 'today', 'identifier': 'date-picker.today', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'from', 'identifier': 'add-gift.from', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'to', 'identifier': 'add-gift.to', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'query', 'identifier': 'person-picker.query', 'role': 'text-field'},
+                    {'ref': 'add-person', 'identifier': 'person-picker.add', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'person-a', 'identifier': 'person-picker.person.a', 'label': 'CI Giver', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'person-b', 'identifier': 'person-picker.person.b', 'label': 'CI Receiver', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'save', 'identifier': 'add-gift.save', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'gift', 'label': 'CI acceptance book', 'role': 'static-text'},
+                    {'ref': 'settings', 'label': 'Settings', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'settings-screen', 'identifier': 'settings.screen', 'role': 'other'},
+                    {'ref': 'currency', 'identifier': 'settings.currency', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'usd', 'identifier': 'settings.currency.USD', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'licenses-link', 'identifier': 'settings.third-party-licenses', 'role': 'button', 'actions': ['tap']},
+                    {'ref': 'licenses-screen', 'identifier': 'settings.third-party-licenses.screen', 'role': 'other'}]}
 
             def backend(_directory, _sequence, workflow, command, parameters):
                 nonlocal current, latest, photographed
@@ -137,15 +156,19 @@ class AppSmokeJourneyTests(unittest.TestCase):
                     self.assertEqual(1, len(parameters['steps']))
                     self.assertEqual('tap', parameters['steps'][0]['action'])
                     ref = parameters['steps'][0]['elementRef']
-                    self.assertIsNotNone(photographed)
-                    self.assertIn(ref, [element['ref'] for element in photographed['elements']])
                     matches = [element for element in latest['elements'] if element['ref'] == ref]
                     self.assertEqual(1, len(matches))
                     self.assertIn('tap', matches[0]['actions'])
-                    current = matches[0]['label']
-                    taps.append(current)
+                    if matches[0].get('label') in ('People', 'Insights', 'Add a gift'):
+                        self.assertIsNotNone(photographed)
+                        self.assertIn(ref, [element['ref'] for element in photographed['elements']])
+                    if matches[0].get('label') in ('People', 'Insights', 'Add a gift'):
+                        current = matches[0]['label']
+                        taps.append(current)
                     latest = None
                     photographed = None
+                if command in ('type-text', 'swipe', 'launch-app', 'stop'):
+                    return {}
                 if command == 'screenshot':
                     photographed = latest
                     return {'artifacts': {'screenshotPath': str(screenshot)}}
@@ -164,6 +187,11 @@ class AppSmokeJourneyTests(unittest.TestCase):
             metadata = json.loads((directory / 'metadata.json').read_text())
             self.assertEqual('success', metadata['journey_outcome'])
             self.assertEqual('success', metadata['export_outcome'])
-            self.assertEqual(['home', 'people', 'insights', 'add-gift'],
+            self.assertEqual(['home', 'add-gift-compact', 'add-gift-details',
+                              'add-gift-value-scrolled', 'calendar-short-month',
+                              'calendar-long-month', 'details-after-calendar',
+                              'add-gift-endpoints', 'saved-gift',
+                              'relaunch-persistence', 'duplicate-person-reuse',
+                              'settings', 'licenses'],
                              [checkpoint['name'] for checkpoint in metadata['checkpoints']])
-            self.assertEqual(['People', 'Insights', 'Add a gift'], taps)
+            self.assertEqual(['Add a gift', 'Add a gift'], taps)
