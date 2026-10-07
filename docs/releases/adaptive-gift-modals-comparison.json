@@ -1,7 +1,7 @@
 {
   "selected_ref": "PR #13",
-  "selected_source": "current PR 13 head after review and CI; resolve the exact SHA from the receipt before dispatch",
-  "previous_verified_source": "8782d1f7fc881f440fcf41ed78fccf2c7c76966",
+  "selected_source": "the merged master SHA after review and CI; the receipt records this exact source before dispatch",
+  "previous_verified_source": "8782d1f7fc8781f440fcf41ed78fccf2c7c76966",
   "previous_version": "1.0.2",
   "previous_build": "11",
   "previous_release_receipt": "37635151034",

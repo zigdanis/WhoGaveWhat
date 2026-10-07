@@ -1,6 +1,6 @@
 ---
 name: whogavewhat-delivery
-description: Deliver WhoGaveWhat features, fixes, improvements, and build work through implementation delegation, independent review, current-head CI visual evidence, autonomous merge, and receipt-backed TestFlight release. Use automatically for action requests; exclude read-only discussion, plan-only, PR-only, and do-not-deploy requests.
+description: Deliver WhoGaveWhat features, fixes, improvements, and build work through implementation delegation, independent review, current-head CI visual evidence, autonomous merge, and receipt-backed TestFlight release. Use automatically for action requests; exclude read-only discussion and plan-only requests.
 ---
 
 # WhoGaveWhat delivery
@@ -15,8 +15,11 @@ and [TestFlight operations](../../../docs/testflight.md) before those stages.
 
 1. Inspect the request, repository rules, current branch/PR, and relevant code.
    Define observable acceptance criteria and use the applicable SwiftUI or bug
-   diagnosis guidance. Preserve unrelated changes. A plan-only or discussion
-   request ends after the requested plan or answer.
+   diagnosis guidance. Preserve unrelated changes. A read-only discussion or
+   plan-only request ends after the requested answer or plan. A PR-only limit
+   still runs implementation, review, CI, and media, then stops at a clean PR
+   handoff. A do-not-deploy limit still permits an authorized merge and master
+   CI, then stops before TestFlight.
 2. Delegate bounded implementation to one implementation agent with explicit
    ownership, criteria, and validation. Keep branch, PR, merge, and release
    mutations with the coordinator. Register every worked PR with T3
@@ -37,11 +40,12 @@ and [TestFlight operations](../../../docs/testflight.md) before those stages.
    video using the existing evidence helper; the evidence gate must pass.
 6. When the current head is green, independent and bot reviews are terminal,
    no actionable conversation remains, and evidence is current, merge or enable
-   auto-merge according to [AGENTS.md](../../../AGENTS.md#merge-and-approval-policy).
+   auto-merge according to [AGENTS.md](../../../AGENTS.md#merge-and-approval-policy),
+   unless the user explicitly requested PR-only.
    Verify the resulting master commit and its Tests run before release.
 7. For a routine feature, fix, improvement, or build request, dispatch the
    protected TestFlight workflow from verified master unless the user explicitly
-   limits the work to discussion, a plan, a PR, or no deployment. Use the
+   requested PR-only or do-not-deploy. Use the
    canonical explicit `--repo`, prepared EN/RU notes, and the existing receipt
    helper. Resume the exact receipt after interrupted processing or uncertain
    upload; never create a duplicate build. Report version/build, Apple
@@ -51,8 +55,9 @@ and [TestFlight operations](../../../docs/testflight.md) before those stages.
 
 Routine implementation-to-TestFlight authorization is standing in this
 repository for every feature, fix, improvement, and build request. Explicit
-discussion, plan-only, PR-only, and do-not-deploy limits opt out. Do not ask for
-a second confirmation at merge or beta-release gates. Stop and report only a
+discussion and plan-only requests opt out of delivery; PR-only stops after a
+clean reviewed PR, and do-not-deploy stops after an authorized merge and master
+CI. Do not ask for a second confirmation at merge or beta-release gates. Stop and report only a
 genuine credential, Apple, or legal/account blocker, or a concrete one-way-door
 action with substantial loss risk. Preserve the manual `workflow_dispatch`
 release mechanism; never turn every push into a release. Local Mac access is

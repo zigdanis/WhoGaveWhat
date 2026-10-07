@@ -1,6 +1,6 @@
 ---
 name: multi-agent-feature-pr
-description: Route WhoGaveWhat feature requests to the repository's autonomous delivery workflow with an implementation agent, independent review, monitored PR, visual evidence, merge, and authorized TestFlight release.
+description: Route WhoGaveWhat feature requests to the repository's autonomous delivery workflow with an implementation agent, independent review, monitored PR, visual evidence, merge, and TestFlight release. Use for action requests; exclude read-only discussion and plan-only work.
 ---
 
 # Multi-Agent Feature PR
@@ -15,7 +15,9 @@ add a separate HTML-plan or human-approval gate.
 
 Invoking this skill with a concrete implementation request authorizes the
 normal repository delivery workflow, including merge and TestFlight by default.
-Explicit discussion, plan-only, PR-only, and do-not-deploy limits opt out.
+Explicit discussion and plan-only requests opt out. PR-only stops after a clean
+reviewed PR without merge or release; do-not-deploy completes authorized merge
+and master CI while skipping TestFlight.
 One-way-door changes and genuine account or Apple blockers still follow
 [AGENTS.md](../../../AGENTS.md#merge-and-approval-policy).
 
