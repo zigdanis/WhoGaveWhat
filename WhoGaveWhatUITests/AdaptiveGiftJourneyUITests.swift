@@ -178,7 +178,15 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         }
         XCTAssertTrue(photoImages.firstMatch.exists)
         attach("person-photo-picker")
-        photoImages.firstMatch.tap()
+        let firstPhoto = photoImages.firstMatch
+        let windowFrame = app.windows.firstMatch.frame
+        // Photo tiles are visible in CI but reported as non-hittable by XCTest.
+        app.coordinate(
+            withNormalizedOffset: CGVector(
+                dx: firstPhoto.frame.midX / windowFrame.width,
+                dy: firstPhoto.frame.midY / windowFrame.height
+            )
+        ).tap()
         let editorNavigationBar = app.navigationBars["Edit name"]
         XCTAssertTrue(editorNavigationBar.waitForExistence(timeout: timeout))
         let editorReturnDeadline = Date().addingTimeInterval(timeout)
