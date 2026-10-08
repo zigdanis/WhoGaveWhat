@@ -49,6 +49,42 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         assertTabs()
     }
 
+    func testAddGiftSheetSizesCompactAndExpandedContent() throws {
+        app.buttons["Add a gift"].tap()
+
+        let giftNameField = app.textFields["add-gift.name"]
+        XCTAssertTrue(giftNameField.waitForExistence(timeout: timeout))
+        let keyboard = app.keyboards.firstMatch
+        XCTAssertTrue(keyboard.waitForExistence(timeout: timeout))
+        let save = app.buttons["add-gift.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: timeout))
+        assertCompactSaveGap(save, keyboard: keyboard)
+        attach("gift-content-sized-compact-keyboard")
+
+        app.buttons["add-gift.details"].tap()
+        XCTAssertTrue(app.textFields["add-gift.value"].waitForExistence(timeout: timeout))
+        XCTAssertTrue(keyboard.exists, "Expanding Details should preserve name-field autofocus")
+        assertExpandedSheetUsesAvailableHeight()
+
+        app.buttons["add-gift.details"].tap()
+        waitForDisappearance(keyboard)
+        app.buttons["add-gift.details"].tap()
+        XCTAssertTrue(app.textFields["add-gift.value"].waitForExistence(timeout: timeout))
+        assertDetailsContentFits(save)
+        attach("gift-content-sized-details")
+
+        let value = app.textFields["add-gift.value"]
+        value.tap()
+        value.typeText("42")
+        XCTAssertTrue(keyboard.waitForExistence(timeout: timeout))
+        assertExpandedSheetUsesAvailableHeight()
+        assertSaveReachableAboveKeyboard(save, keyboard: keyboard)
+        attach("gift-content-sized-details-keyboard")
+
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
+    }
+
     private func assertTabs() {
         let people = app.tabBars.buttons["People"]
         let insights = app.tabBars.buttons["Insights"]
@@ -76,6 +112,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         giftNameField.tap()
         giftNameField.typeText(name)
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
+        assertCompactSaveGap(app.buttons["add-gift.save"], keyboard: app.keyboards.firstMatch)
         attach("gift-compact-keyboard")
         app.buttons["add-gift.from"].tap()
         XCTAssertTrue(app.staticTexts["From"].waitForExistence(timeout: timeout))
@@ -328,6 +365,100 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.1))
         }
         XCTFail("No settled frontmost Sheet Grabber in measured compact range: \(grabbers.debugDescription)")
+    }
+
+    private func assertCompactSaveGap(_ save: XCUIElement, keyboard: XCUIElement) {
+        let grabber = frontmostSheetGrabber()
+        let window = app.windows.firstMatch
+        XCTAssertTrue(save.waitForExistence(timeout: timeout))
+        XCTAssertTrue(keyboard.waitForExistence(timeout: timeout))
+
+        var previousMeasurement: (gap: CGFloat, sheetHeight: CGFloat)?
+        var stableSamples = 0
+        var gap: CGFloat = 0
+        var sheetHeight: CGFloat = 0
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline && stableSamples < 2 {
+            gap = keyboard.frame.minY - save.frame.maxY
+            sheetHeight = keyboard.frame.minY - grabber.frame.minY
+            if let previousMeasurement,
+                abs(gap - previousMeasurement.gap) <= 2,
+                abs(sheetHeight - previousMeasurement.sheetHeight) <= 2
+            {
+                stableSamples += 1
+            } else {
+                stableSamples = 0
+            }
+            previousMeasurement = (gap, sheetHeight)
+            if stableSamples < 2 { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
+        }
+        XCTAssertGreaterThanOrEqual(stableSamples, 2, "Compact sheet geometry did not settle")
+        XCTAssertGreaterThanOrEqual(gap, 0, "Save must remain above the keyboard: save=\(save.frame), keyboard=\(keyboard.frame)")
+        XCTAssertLessThanOrEqual(gap, 48, "Compact Save-to-keyboard gap should stay within 48 pt: gap=\(gap)")
+
+        XCTAssertLessThanOrEqual(sheetHeight, 520, "The keyboard-open compact sheet should size to its content: height=\(sheetHeight)")
+    }
+
+    private func assertDetailsContentFits(_ save: XCUIElement) {
+        let window = app.windows.firstMatch
+        let deadline = Date().addingTimeInterval(timeout)
+        var previousBottomGap: CGFloat?
+        var bottomGap: CGFloat = 0
+        var stableSamples = 0
+        while Date() < deadline {
+            bottomGap = window.frame.maxY - save.frame.maxY
+            if save.isHittable, let previousBottomGap, abs(bottomGap - previousBottomGap) <= 2 {
+                stableSamples += 1
+            } else {
+                stableSamples = 0
+            }
+            previousBottomGap = bottomGap
+            if stableSamples >= 2 { break }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        XCTAssertGreaterThanOrEqual(stableSamples, 2, "Save did not settle into the expanded Details sheet")
+        XCTAssertLessThanOrEqual(
+            bottomGap,
+            110,
+            "Expanded Details should end near Save when its content fits: gap=\(bottomGap)"
+        )
+    }
+
+    private func assertExpandedSheetUsesAvailableHeight() {
+        let window = app.windows.firstMatch
+        let deadline = Date().addingTimeInterval(timeout)
+        var top = CGFloat.greatestFiniteMagnitude
+        var stableSamples = 0
+        while Date() < deadline && stableSamples < 2 {
+            let grabber = frontmostSheetGrabber()
+            top = grabber.frame.minY
+            if top <= window.frame.minY + 100 {
+                stableSamples += 1
+            } else {
+                stableSamples = 0
+            }
+            if stableSamples < 2 { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
+        }
+        XCTAssertLessThanOrEqual(
+            top,
+            window.frame.minY + 100,
+            "Expanded Details with the keyboard should use the available safe height: grabberTop=\(top), window=\(window.frame)"
+        )
+    }
+
+    private func frontmostSheetGrabber() -> XCUIElement {
+        let grabbers = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == 'Sheet Grabber'"))
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            let visible = grabbers.allElementsBoundByIndex.filter { $0.exists && $0.isHittable }
+            if let grabber = visible.max(by: { $0.frame.minY < $1.frame.minY }) {
+                return grabber
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        XCTFail("No visible sheet grabber: \(grabbers.debugDescription)")
+        return grabbers.firstMatch
     }
 
     private func assertSaveReachableAboveKeyboard(_ save: XCUIElement, keyboard: XCUIElement) {
