@@ -49,7 +49,7 @@ jobs:
 
   test:
     name: Unit tests and app smoke
-    runs-on: macos-26-intel # Avoid the constrained macOS ARM runner pool for native tests.
+    runs-on: macos-26
     timeout-minutes: 55
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer

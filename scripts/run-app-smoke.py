@@ -60,6 +60,28 @@ def _diagnose_processes(directory, label):
         (directory / f"{label}-processes.log").write_text(f"Could not collect process list: {error}\n")
 
 
+def _captured_text(value):
+    if value is None:
+        return ""
+    return value.decode(errors="replace") if isinstance(value, bytes) else value
+
+
+def _signal_process_group(process, sig, cleanup_notes):
+    try:
+        os.killpg(process.pid, sig)
+    except ProcessLookupError:
+        return
+    except OSError as error:
+        cleanup_notes.append(f"process-group signal {sig} failed: {error}")
+        try:
+            if sig == signal.SIGTERM:
+                process.terminate()
+            else:
+                process.kill()
+        except OSError as fallback_error:
+            cleanup_notes.append(f"direct process signal {sig} failed: {fallback_error}")
+
+
 def run_command(directory, label, command, timeout, *, cwd=None):
     """Run a bounded command and always preserve stdout, stderr, and failure context."""
     print(f"[{label}] {' '.join(map(str, command))}", flush=True)
@@ -73,24 +95,64 @@ def run_command(directory, label, command, timeout, *, cwd=None):
     try:
         stdout, stderr = process.communicate(timeout=timeout)
     except subprocess.TimeoutExpired as error:
-        # Kill the whole process group: xcodebuild may leave compiler/test children
-        # running after its own timeout, which can mutate the result bundle.
+        # Bound each cleanup step: child processes can inherit pipes after xcodebuild
+        # exits, and a denied group signal must not hide the original timeout.
+        cleanup_notes = []
+        stdout = _captured_text(error.stdout)
+        stderr = _captured_text(error.stderr)
+        _signal_process_group(process, signal.SIGTERM, cleanup_notes)
         try:
-            os.killpg(process.pid, signal.SIGTERM)
-        except ProcessLookupError:
+            collected_stdout, collected_stderr = process.communicate(timeout=5)
+            stdout = _captured_text(collected_stdout) or stdout
+            stderr = _captured_text(collected_stderr) or stderr
+        except subprocess.TimeoutExpired as cleanup_error:
+            stdout = _captured_text(cleanup_error.stdout) or stdout
+            stderr = _captured_text(cleanup_error.stderr) or stderr
+            _signal_process_group(process, signal.SIGKILL, cleanup_notes)
+            try:
+                process.wait(timeout=5)
+            except (subprocess.TimeoutExpired, OSError) as wait_error:
+                cleanup_notes.append(f"bounded process wait failed: {wait_error}")
+            try:
+                collected_stdout, collected_stderr = process.communicate(timeout=2)
+                stdout = _captured_text(collected_stdout) or stdout
+                stderr = _captured_text(collected_stderr) or stderr
+            except subprocess.TimeoutExpired as pipe_error:
+                stdout = _captured_text(pipe_error.stdout) or stdout
+                stderr = _captured_text(pipe_error.stderr) or stderr
+                cleanup_notes.append("inherited output pipes remained open after process cleanup")
+                for stream_name in ("stdout", "stderr"):
+                    stream = getattr(process, stream_name, None)
+                    if stream:
+                        try:
+                            stream.close()
+                        except OSError as close_error:
+                            cleanup_notes.append(f"closing {stream_name} pipe failed: {close_error}")
+        except OSError as cleanup_error:
+            cleanup_notes.append(f"bounded process communication failed: {cleanup_error}")
+            _signal_process_group(process, signal.SIGKILL, cleanup_notes)
+            try:
+                process.wait(timeout=5)
+            except (subprocess.TimeoutExpired, OSError) as wait_error:
+                cleanup_notes.append(f"bounded process wait failed: {wait_error}")
+            for stream_name in ("stdout", "stderr"):
+                stream = getattr(process, stream_name, None)
+                if stream:
+                    try:
+                        stream.close()
+                    except OSError as close_error:
+                        cleanup_notes.append(f"closing {stream_name} pipe failed: {close_error}")
+        log_text = f"STDOUT\n{stdout}\nSTDERR\n{stderr}\nTIMEOUT\n{timeout}s\n"
+        if cleanup_notes:
+            log_text += "CLEANUP\n" + "\n".join(cleanup_notes) + "\n"
+        try:
+            (directory / f"{label}.log").write_text(log_text)
+        except OSError:
             pass
         try:
-            stdout, stderr = process.communicate(timeout=5)
-        except subprocess.TimeoutExpired:
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            stdout, stderr = process.communicate()
-        stdout = stdout or ""
-        stderr = stderr or ""
-        (directory / f"{label}.log").write_text(f"STDOUT\n{stdout}\nSTDERR\n{stderr}\n")
-        _diagnose_processes(directory, label)
+            _diagnose_processes(directory, label)
+        except OSError as diagnostic_error:
+            cleanup_notes.append(f"process diagnostics failed: {diagnostic_error}")
         raise NativeCommandError(f"{label} timed out after {timeout}s") from error
     (directory / f"{label}.log").write_text(f"STDOUT\n{stdout}\nSTDERR\n{stderr}\n")
     if process.returncode:

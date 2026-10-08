@@ -45,6 +45,41 @@ class NativeCommandTests(unittest.TestCase):
             time.sleep(0.1)
             self.assertEqual(first, heartbeat.read_text())
 
+    @unittest.skipUnless(os.name == 'posix', 'process-group cleanup requires POSIX')
+    def test_denied_group_kill_bounds_inherited_pipes_and_preserves_timeout_logs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            child_pid = directory / 'child.pid'
+            child = "import pathlib,time; pathlib.Path(%r).write_text(str(__import__('os').getpid())); time.sleep(30)" % str(child_pid)
+            parent = "import subprocess,sys,time; print('partial stdout', flush=True); " + \
+                     "print('partial stderr', file=sys.stderr, flush=True); " + \
+                     "subprocess.Popen([sys.executable, '-c', %r]); time.sleep(30)" % child
+            def denied_killpg(_pid, _signal):
+                raise PermissionError('group signal denied')
+
+            def diagnostics(path, label):
+                (path / f'{label}-processes.log').write_text('process list captured')
+
+            started = time.monotonic()
+            try:
+                with patch.object(smoke.os, 'killpg', side_effect=denied_killpg), \
+                        patch.object(smoke, '_diagnose_processes', side_effect=diagnostics):
+                    with self.assertRaisesRegex(smoke.NativeCommandError, 'timed out after 1s'):
+                        smoke.run_command(directory, 'bounded', [sys.executable, '-c', parent], 1)
+                self.assertLess(time.monotonic() - started, 10)
+                log = (directory / 'bounded.log').read_text()
+                self.assertIn('partial stdout', log)
+                self.assertIn('partial stderr', log)
+                self.assertIn('group signal denied', log)
+                self.assertEqual('process list captured', (directory / 'bounded-processes.log').read_text())
+                self.assertTrue(child_pid.is_file())
+            finally:
+                if child_pid.exists():
+                    try:
+                        os.kill(int(child_pid.read_text()), signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+
     def test_nonzero_command_output_is_preserved(self):
         with tempfile.TemporaryDirectory() as temporary:
             with patch.object(smoke.subprocess, 'Popen') as popen, patch.object(smoke, '_diagnose_processes'):
