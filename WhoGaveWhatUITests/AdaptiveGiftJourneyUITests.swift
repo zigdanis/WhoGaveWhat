@@ -100,7 +100,9 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attach("details-value")
 
         app.buttons["add-gift.date"].tap()
-        let calendar = app.otherElements["date-picker.calendar"]
+        let calendar = app.otherElements.matching(
+            NSPredicate(format: "identifier BEGINSWITH 'date-picker.calendar.selected-'")
+        ).firstMatch
         XCTAssertTrue(calendar.waitForExistence(timeout: timeout))
         let firstMonth = try monthHeading(in: calendar)
         let expectedMonth = DateFormatter()
@@ -109,11 +111,14 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         expectedMonth.dateFormat = "MMMM yyyy"
         XCTAssertEqual(firstMonth, expectedMonth.string(from: Date()))
         XCTAssertTrue(app.buttons["date-picker.today"].exists)
-        let dayFormatter = DateFormatter()
-        dayFormatter.calendar = Calendar(identifier: .gregorian)
-        dayFormatter.timeZone = .autoupdatingCurrent
-        dayFormatter.dateFormat = "yyyy-MM-dd"
-        XCTAssertEqual(calendar.identifier, "selected-day:\(dayFormatter.string(from: Date()))")
+        let dayComponents = Calendar.autoupdatingCurrent.dateComponents([.year, .month, .day], from: Date())
+        let expectedDayIdentifier = String(
+            format: "date-picker.calendar.selected-%04d-%02d-%02d",
+            dayComponents.year ?? 0,
+            dayComponents.month ?? 0,
+            dayComponents.day ?? 0
+        )
+        XCTAssertEqual(calendar.identifier, expectedDayIdentifier)
         let firstWeekCount = weekCount(for: firstMonth)
         XCTAssertGreaterThan(firstWeekCount, 0)
         assertCompactSheetFrame()
