@@ -31,7 +31,8 @@ struct AddGiftSheet: View {
         IntrinsicModalScaffold(
             title: state.editingGiftID == nil ? "Add a gift" : "Edit gift",
             leadingActionTitle: "Cancel",
-            onLeadingAction: composition.router.dismissGiftSheet
+            onLeadingAction: composition.router.dismissGiftSheet,
+            titleAccessibilityIdentifier: "add-gift.title"
         ) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {

@@ -52,6 +52,13 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     func testAddGiftSheetSizesCompactAndExpandedContent() throws {
         app.buttons["Add a gift"].tap()
 
+        let giftTitle = app.descendants(matching: .any)["add-gift.title"]
+        XCTAssertTrue(giftTitle.waitForExistence(timeout: timeout))
+        XCTAssertLessThanOrEqual(
+            abs(giftTitle.frame.midX - app.windows.firstMatch.frame.midX),
+            2,
+            "Compact gift sheet title should remain centered"
+        )
         let giftNameField = app.textFields["add-gift.name"]
         XCTAssertTrue(giftNameField.waitForExistence(timeout: timeout))
         let keyboard = app.keyboards.firstMatch
@@ -281,9 +288,37 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertFalse(title.frame.intersects(save.frame), "Localized title must not overlap Save")
 
         let delete = app.buttons["person-editor.delete"]
+        let photo = app.buttons["person-editor.photo"]
+        let name = app.textFields["person-editor.name"]
         let keyboard = app.keyboards.firstMatch
         let scroll = app.scrollViews["person-editor.scroll"]
         XCTAssertTrue(delete.waitForExistence(timeout: timeout))
+        XCTAssertTrue(photo.waitForExistence(timeout: timeout))
+        XCTAssertTrue(name.waitForExistence(timeout: timeout))
+        let grabber = frontmostSheetGrabber()
+        for headerElement in [title, cancel, save] {
+            XCTAssertGreaterThanOrEqual(
+                headerElement.frame.minY,
+                grabber.frame.minY,
+                "Header content must begin below the sheet grabber: \(headerElement)"
+            )
+        }
+        let headerBottom = max(max(title.frame.maxY, cancel.frame.maxY), save.frame.maxY)
+        XCTAssertLessThanOrEqual(
+            headerBottom,
+            name.frame.minY,
+            "The complete editor header must end before the first editor field"
+        )
+        XCTAssertLessThanOrEqual(
+            headerBottom,
+            photo.frame.minY,
+            "The complete editor header must end before the Photo control"
+        )
+        XCTAssertLessThanOrEqual(
+            headerBottom,
+            scroll.frame.minY,
+            "Header and scrollable editor content must not overlap"
+        )
         for _ in 0..<5 {
             if !keyboardIsVisible(keyboard), delete.isHittable { break }
             if keyboardIsVisible(keyboard), delete.isHittable,
@@ -301,6 +336,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 "Delete must scroll above the keyboard in the large-type editor"
             )
         }
+        XCTAssertLessThanOrEqual(headerBottom, scroll.frame.minY, "Header must stay above the scroll viewport")
+        XCTAssertTrue(title.isHittable, "The title must stay fully visible after scrolling")
+        XCTAssertTrue(cancel.isHittable, "Cancel must stay reachable after scrolling")
+        XCTAssertTrue(save.isHittable, "Save must stay reachable after scrolling")
         attach("person-editor-header-accessibility")
         app.buttons["person-editor.cancel"].tap()
     }

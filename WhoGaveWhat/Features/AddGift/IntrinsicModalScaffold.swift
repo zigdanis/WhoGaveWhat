@@ -59,6 +59,7 @@ struct IntrinsicModalScaffold<Content: View>: View {
                 trailingActionAccessibilityIdentifier: trailingActionAccessibilityIdentifier,
                 titleAccessibilityIdentifier: titleAccessibilityIdentifier
             )
+            .layoutPriority(1)
             content
         }
         .background(Color.bg)
@@ -85,7 +86,10 @@ private struct IntrinsicModalHeader: View {
             verticallyStackedHeader
         }
         .padding(.horizontal, 16)
+        .padding(.top, 24)
         .frame(maxWidth: .infinity)
+        .fixedSize(horizontal: false, vertical: true)
+        .layoutPriority(1)
         .background {
             GeometryReader { proxy in
                 Color.clear.preference(
@@ -98,13 +102,11 @@ private struct IntrinsicModalHeader: View {
 
     private var horizontallyCenteredHeader: some View {
         HStack(spacing: 8) {
-            leadingAction
-                .frame(width: actionColumnWidth, alignment: .leading)
+            leadingActionColumn
             titleLabel
                 .fixedSize(horizontal: true, vertical: false)
                 .frame(maxWidth: .infinity)
-            trailingAction
-                .frame(width: actionColumnWidth, alignment: .trailing)
+            trailingActionColumn
         }
         .frame(minHeight: 56)
     }
@@ -134,6 +136,28 @@ private struct IntrinsicModalHeader: View {
 
     private var actionColumnWidth: CGFloat {
         max(leadingActionWidth, trailingActionWidth)
+    }
+
+    @ViewBuilder
+    private var leadingActionColumn: some View {
+        if leadingActionTitle != nil, onLeadingAction != nil {
+            leadingAction.frame(width: actionColumnWidth, alignment: .leading)
+        } else {
+            Color.clear
+                .frame(width: actionColumnWidth, height: 1)
+                .accessibilityHidden(true)
+        }
+    }
+
+    @ViewBuilder
+    private var trailingActionColumn: some View {
+        if trailingActionTitle != nil, onTrailingAction != nil {
+            trailingAction.frame(width: actionColumnWidth, alignment: .trailing)
+        } else {
+            Color.clear
+                .frame(width: actionColumnWidth, height: 1)
+                .accessibilityHidden(true)
+        }
     }
 
     @ViewBuilder
