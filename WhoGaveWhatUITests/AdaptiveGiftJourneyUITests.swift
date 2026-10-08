@@ -217,6 +217,94 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.buttons["person-editor.cancel"].tap()
     }
 
+    func testPersonEditorHeaderAdaptsToAccessibilityDynamicType() throws {
+        let personName = "CI large type person \(UUID().uuidString.prefix(8))"
+        app.terminate()
+        app.launchArguments = ["-AppleLanguages", "(ru)", "-AppleLocale", "ru_RU"]
+        app.launch()
+
+        let people = app.tabBars.buttons["Люди"]
+        XCTAssertTrue(people.waitForExistence(timeout: timeout))
+        people.tap()
+        app.buttons["people.add-person"].tap()
+        let newName = app.textFields["person-editor.name"]
+        XCTAssertTrue(newName.waitForExistence(timeout: timeout))
+        newName.typeText(personName)
+        app.buttons["person-editor.save"].tap()
+
+        let personRow = app.staticTexts[personName]
+        XCTAssertTrue(personRow.waitForExistence(timeout: timeout))
+        personRow.tap()
+        app.buttons["person-detail.edit"].tap()
+
+        let title = app.descendants(matching: .any)["person-editor.title"]
+        let cancel = app.buttons["person-editor.cancel"]
+        let save = app.buttons["person-editor.save"]
+        XCTAssertTrue(title.waitForExistence(timeout: timeout))
+        XCTAssertTrue(cancel.waitForExistence(timeout: timeout))
+        XCTAssertTrue(save.waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
+        let normalTitleHeight = title.frame.height
+        let normalCancelHeight = cancel.frame.height
+        let normalSaveHeight = save.frame.height
+        app.buttons["person-editor.cancel"].tap()
+
+        app.terminate()
+        app.launchArguments = [
+            "-AppleLanguages", "(ru)",
+            "-AppleLocale", "ru_RU",
+            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"
+        ]
+        app.launch()
+
+        XCTAssertTrue(people.waitForExistence(timeout: timeout))
+        people.tap()
+        XCTAssertTrue(personRow.waitForExistence(timeout: timeout))
+        personRow.tap()
+        app.buttons["person-detail.edit"].tap()
+        XCTAssertTrue(title.waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
+
+        let scaleDeadline = Date().addingTimeInterval(timeout)
+        while Date() < scaleDeadline
+            && (title.frame.height <= normalTitleHeight
+                || cancel.frame.height <= normalCancelHeight
+                || save.frame.height <= normalSaveHeight)
+        {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        XCTAssertEqual(title.label, "Редактирование")
+        XCTAssertGreaterThan(title.frame.height, normalTitleHeight)
+        XCTAssertGreaterThan(cancel.frame.height, normalCancelHeight)
+        XCTAssertGreaterThan(save.frame.height, normalSaveHeight)
+        XCTAssertFalse(title.frame.intersects(cancel.frame), "Localized title must not overlap Cancel")
+        XCTAssertFalse(title.frame.intersects(save.frame), "Localized title must not overlap Save")
+
+        let delete = app.buttons["person-editor.delete"]
+        let keyboard = app.keyboards.firstMatch
+        let scroll = app.scrollViews["person-editor.scroll"]
+        XCTAssertTrue(delete.waitForExistence(timeout: timeout))
+        for _ in 0..<5 {
+            if !keyboardIsVisible(keyboard), delete.isHittable { break }
+            if keyboardIsVisible(keyboard), delete.isHittable,
+                delete.frame.maxY <= visibleKeyboardTop(keyboard)
+            {
+                break
+            }
+            guard scrollUpWithinVisibleArea(scroll, aboveKeyboard: keyboard) else { break }
+        }
+        XCTAssertTrue(delete.isHittable, "Delete must remain reachable in the large-type editor")
+        if keyboardIsVisible(keyboard) {
+            XCTAssertLessThanOrEqual(
+                delete.frame.maxY,
+                visibleKeyboardTop(keyboard),
+                "Delete must scroll above the keyboard in the large-type editor"
+            )
+        }
+        attach("person-editor-header-accessibility")
+        app.buttons["person-editor.cancel"].tap()
+    }
+
     private func assertTabs() {
         let people = app.tabBars.buttons["People"]
         let insights = app.tabBars.buttons["Insights"]
@@ -378,7 +466,6 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.1))
         }
         XCTAssertTrue(editorTitle.isHittable)
-        let editorKeyboard = app.keyboards.firstMatch
         if !editorKeyboard.exists { editorName.tap() }
         XCTAssertTrue(editorKeyboard.waitForExistence(timeout: timeout))
         let removePhoto = app.buttons["person-editor.remove-photo"]
@@ -404,7 +491,6 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
         app.buttons["person-detail.edit"].tap()
         XCTAssertTrue(app.buttons["person-editor.remove-photo"].waitForExistence(timeout: timeout))
-        let editorTitle = app.descendants(matching: .any)["person-editor.title"]
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
         XCTAssertEqual(editorTitle.label, "Edit person")
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
@@ -631,34 +717,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 attach("details-value-keyboard")
                 return
             }
-            let window = app.windows.firstMatch
-            let visibleBottom = keyboardTop - 16
-            let visibleFrame = scroll.frame.intersection(
-                CGRect(
-                    x: scroll.frame.minX,
-                    y: scroll.frame.minY,
-                    width: scroll.frame.width,
-                    height: max(0, visibleBottom - scroll.frame.minY)
-                )
-            )
-            guard visibleFrame.height > 40 else {
+            guard scrollUpWithinVisibleArea(scroll, aboveKeyboard: keyboard) else {
                 XCTFail("No usable scroll area above keyboard: scroll=\(scroll.frame), visibleKeyboardTop=\(keyboardTop)")
                 return
             }
-            let startY = visibleFrame.minY + visibleFrame.height * 0.8
-            let endY = visibleFrame.minY + visibleFrame.height * 0.2
-            let start = window.coordinate(
-                withNormalizedOffset: CGVector(
-                    dx: (visibleFrame.midX - window.frame.minX) / window.frame.width,
-                    dy: (startY - window.frame.minY) / window.frame.height
-                ))
-            let end = window.coordinate(
-                withNormalizedOffset: CGVector(
-                    dx: (visibleFrame.midX - window.frame.minX) / window.frame.width,
-                    dy: (endY - window.frame.minY) / window.frame.height
-                ))
-            start.press(forDuration: 0.05, thenDragTo: end)
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
             if attempt == 2 { break }
         }
 
@@ -686,9 +748,46 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         }
     }
 
+    private func scrollUpWithinVisibleArea(_ scroll: XCUIElement, aboveKeyboard keyboard: XCUIElement) -> Bool {
+        let window = app.windows.firstMatch
+        let visibleBottom = min(visibleKeyboardTop(keyboard), window.frame.maxY) - 16
+        let visibleFrame = scroll.frame.intersection(
+            CGRect(
+                x: scroll.frame.minX,
+                y: scroll.frame.minY,
+                width: scroll.frame.width,
+                height: max(0, visibleBottom - scroll.frame.minY)
+            )
+        )
+        guard visibleFrame.height > 40, visibleFrame.width > 40 else { return false }
+
+        let startY = visibleFrame.minY + visibleFrame.height * 0.8
+        let endY = visibleFrame.minY + visibleFrame.height * 0.2
+        let start = window.coordinate(
+            withNormalizedOffset: CGVector(
+                dx: (visibleFrame.midX - window.frame.minX) / window.frame.width,
+                dy: (startY - window.frame.minY) / window.frame.height
+            ))
+        let end = window.coordinate(
+            withNormalizedOffset: CGVector(
+                dx: (visibleFrame.midX - window.frame.minX) / window.frame.width,
+                dy: (endY - window.frame.minY) / window.frame.height
+            ))
+        start.press(forDuration: 0.05, thenDragTo: end)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        return true
+    }
+
+    private func keyboardIsVisible(_ keyboard: XCUIElement) -> Bool {
+        guard keyboard.exists else { return false }
+        let frame = keyboard.frame
+        return frame.width > 0 && frame.height > 0 && frame.intersects(app.windows.firstMatch.frame)
+    }
+
     private func visibleKeyboardTop(_ keyboard: XCUIElement) -> CGFloat {
-        let keyboardFrame = keyboard.frame
         let windowFrame = app.windows.firstMatch.frame
+        guard keyboardIsVisible(keyboard) else { return windowFrame.maxY }
+        let keyboardFrame = keyboard.frame
         let assistantViews = app.descendants(matching: .any)
             .matching(identifier: "SystemInputAssistantView")
             .allElementsBoundByIndex

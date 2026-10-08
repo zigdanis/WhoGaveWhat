@@ -22,9 +22,32 @@ PLANNED_CHECKPOINT_NAMES = (
     "gift-content-sized-details-keyboard", "gift-content-sized-refocused-compact-keyboard",
     "person-add-cancel-draft", "person-add-created", "person-editor-delete-keyboard",
     "person-editor-delete-confirmation", "person-editor-delete-cancelled", "person-add-deleted",
-    "person-editor", "person-editor-keyboard-controls", "person-editor-selected-photo",
+    "person-editor", "person-editor-header-accessibility", "person-editor-keyboard-controls", "person-editor-selected-photo",
     "person-editor-russian",
 )
+GENERATED_LOG_LABELS = (
+    "simulator-list", "simulator-boot", "simulator-bootstatus", "record-video",
+    "record-video-stop", "xcodebuild-test", "export-attachments",
+)
+
+
+def clear_previous_outputs(directory):
+    """Remove only this runner's fixed-name products before reusing its output folder."""
+    for name in ("Acceptance.xcresult", "DerivedData", "attachments"):
+        path = directory / name
+        if path.is_symlink() or (path.exists() and not path.is_dir()):
+            path.unlink()
+        elif path.is_dir():
+            shutil.rmtree(path)
+    for name in ("journeys.mp4", "metadata.json", "index.html"):
+        path = directory / name
+        if path.is_symlink() or path.exists():
+            path.unlink()
+    for label in GENERATED_LOG_LABELS:
+        for suffix in (".log", "-processes.log"):
+            path = directory / f"{label}{suffix}"
+            if path.is_symlink() or path.exists():
+                path.unlink()
 
 
 def _diagnose_processes(directory, label):
@@ -187,11 +210,12 @@ def run(directory):
     """Run the native XCTest journey, preserving diagnostics and real evidence."""
     directory = directory.resolve()
     directory.mkdir(parents=True, exist_ok=True)
+    clear_previous_outputs(directory)
     head_sha = os.environ.get("HEAD_SHA") or subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     metadata = {
         "head_sha": head_sha, "checkout_sha": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         "run_id": os.environ.get("GITHUB_RUN_ID", "local"), "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "1"),
-        "evidence_kind": "feature-acceptance", "scenario": "PR25 adaptive gift and person acceptance journey",
+        "evidence_kind": "app-smoke", "scenario": "Native gift and person regression journey",
         "journey_outcome": "failure", "export_outcome": "failure", "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"),
         "checkpoints": [], "native_test": "WhoGaveWhat scheme complete test suite (unit and UI tests)",
         "planned_checkpoint_names": list(PLANNED_CHECKPOINT_NAMES),

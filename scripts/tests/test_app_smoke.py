@@ -100,6 +100,83 @@ class NativeCommandTests(unittest.TestCase):
 
 
 class EvidenceExportTests(unittest.TestCase):
+    def test_repeated_run_clears_stale_evidence_and_preserves_unrelated_files(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            result = directory / 'Acceptance.xcresult'
+            generations = []
+            test_number = 0
+
+            def native(_directory, label, command, _timeout, **_kwargs):
+                nonlocal test_number
+                if label == 'simulator-list':
+                    return subprocess.CompletedProcess(command, 0, json.dumps({'devices': {
+                        'com.apple.CoreSimulator.SimRuntime.iOS-26-4': [
+                            {'name': 'iPhone 17 Pro', 'udid': 'sim-id', 'state': 'Booted', 'isAvailable': True}]}}), '')
+                if label == 'xcodebuild-test':
+                    test_number += 1
+                    self.assertFalse(result.exists(), 'runner must remove the previous result bundle before xcodebuild')
+                    result.mkdir()
+                    (result / 'generation').write_text(str(test_number))
+                    generations.append(test_number)
+                    if test_number == 2:
+                        raise smoke.NativeCommandError('second native test failed')
+                return subprocess.CompletedProcess(command, 0, '', '')
+
+            def make_recording(_directory, _simulator_id, _video_path):
+                recorder = Mock()
+                recorder.poll.return_value = None
+                recorder.returncode = -signal.SIGINT
+                log = (directory / 'record-video.log').open('w')
+                return recorder, log
+
+            real_stop_recording = smoke.stop_recording
+            def stop_recording(_directory, recording):
+                real_stop_recording(_directory, recording)
+                if test_number == 1:
+                    (directory / 'journeys.mp4').write_bytes(b'first-run-video')
+
+            def export(_result, attachments, _directory):
+                attachments.mkdir(parents=True, exist_ok=True)
+                names = ([*smoke.PLANNED_CHECKPOINT_NAMES, 'calendar-4-weeks', 'calendar-6-weeks']
+                         if test_number == 1 else ['home-start'])
+                exported = []
+                for index, name in enumerate(names):
+                    filename = f'checkpoint-{index}.png'
+                    (attachments / filename).write_bytes(b'new' if test_number == 2 else b'first')
+                    exported.append({'exportedFileName': filename, 'suggestedHumanReadableName': name + '_1.png'})
+                (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
+
+            unrelated = directory / 'notes.txt'
+            unrelated.write_text('keep this file')
+            patches = (
+                patch.object(smoke.subprocess, 'check_output', return_value='a' * 40),
+                patch.object(smoke, 'run_command', side_effect=native),
+                patch.object(smoke, 'start_recording', side_effect=make_recording),
+                patch.object(smoke, 'stop_recording', side_effect=stop_recording),
+                patch.object(smoke, '_export_xcresult_attachments', side_effect=export),
+            )
+            with patches[0], patches[1], patches[2], patches[3], patches[4]:
+                smoke.run(directory)
+                self.assertTrue((directory / 'journeys.mp4').is_file())
+                self.assertTrue((directory / 'attachments/people.png').is_file())
+                (directory / 'index.html').write_text('old successful report')
+                with self.assertRaisesRegex(smoke.NativeCommandError, 'second native test failed'):
+                    smoke.run(directory)
+
+            metadata = json.loads((directory / 'metadata.json').read_text())
+            self.assertEqual([1, 2], generations)
+            self.assertEqual('failure', metadata['journey_outcome'])
+            self.assertNotEqual('success', metadata['export_outcome'])
+            self.assertEqual('app-smoke', metadata['evidence_kind'])
+            self.assertEqual('Native gift and person regression journey', metadata['scenario'])
+            self.assertFalse((directory / 'journeys.mp4').exists())
+            self.assertFalse((directory / 'index.html').exists())
+            self.assertFalse((directory / 'attachments/people.png').exists())
+            self.assertEqual(b'new', (directory / 'attachments/home-start.png').read_bytes())
+            self.assertEqual('2', (result / 'generation').read_text())
+            self.assertEqual('keep this file', unrelated.read_text())
+
     def test_failed_native_journey_stops_video_and_preserves_result_and_metadata(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)

@@ -75,47 +75,100 @@ private struct IntrinsicModalHeader: View {
     let trailingActionIsEnabled: Bool
     let trailingActionAccessibilityIdentifier: String?
     let titleAccessibilityIdentifier: String?
+    @State private var leadingActionWidth: CGFloat = 0
+    @State private var trailingActionWidth: CGFloat = 0
 
     var body: some View {
-        ZStack {
-            HStack {
-                if let leadingActionTitle, let onLeadingAction {
-                    headerAction(
-                        title: leadingActionTitle,
-                        action: onLeadingAction,
-                        accessibilityIdentifier: leadingActionAccessibilityIdentifier
-                    )
-                    Spacer(minLength: 0)
-                    if let trailingActionTitle, let onTrailingAction {
-                        headerAction(
-                            title: trailingActionTitle,
-                            action: onTrailingAction,
-                            accessibilityIdentifier: trailingActionAccessibilityIdentifier
-                        )
-                        .disabled(!trailingActionIsEnabled)
-                    } else {
-                        headerAction(
-                            title: leadingActionTitle,
-                            action: onLeadingAction,
-                            accessibilityIdentifier: nil
-                        )
-                        .hidden()
-                        .accessibilityHidden(true)
-                    }
-                }
-            }
-            titleLabel
-                .padding(.horizontal, 96)
-                .allowsHitTesting(false)
+        ViewThatFits(in: .horizontal) {
+            horizontallyCenteredHeader
+            horizontallyGroupedActionsHeader
+            verticallyStackedHeader
         }
-        .frame(minHeight: 56)
         .padding(.horizontal, 16)
+        .frame(maxWidth: .infinity)
         .background {
             GeometryReader { proxy in
                 Color.clear.preference(
                     key: IntrinsicModalHeaderHeightKey.self,
                     value: proxy.size.height
                 )
+            }
+        }
+    }
+
+    private var horizontallyCenteredHeader: some View {
+        HStack(spacing: 8) {
+            leadingAction
+                .frame(width: actionColumnWidth, alignment: .leading)
+            titleLabel
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(maxWidth: .infinity)
+            trailingAction
+                .frame(width: actionColumnWidth, alignment: .trailing)
+        }
+        .frame(minHeight: 56)
+    }
+
+    private var horizontallyGroupedActionsHeader: some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 8) {
+                leadingAction
+                Spacer(minLength: 0)
+                trailingAction
+            }
+            titleLabel
+                .frame(maxWidth: .infinity)
+        }
+        .frame(minHeight: 56)
+    }
+
+    private var verticallyStackedHeader: some View {
+        VStack(spacing: 6) {
+            leadingAction
+            trailingAction
+            titleLabel
+                .frame(maxWidth: .infinity)
+        }
+        .frame(minHeight: 56)
+    }
+
+    private var actionColumnWidth: CGFloat {
+        max(leadingActionWidth, trailingActionWidth)
+    }
+
+    @ViewBuilder
+    private var leadingAction: some View {
+        if let leadingActionTitle, let onLeadingAction {
+            headerAction(
+                title: leadingActionTitle,
+                action: onLeadingAction,
+                accessibilityIdentifier: leadingActionAccessibilityIdentifier
+            )
+            .fixedSize(horizontal: true, vertical: false)
+            .onGeometryChange(for: CGFloat.self) { geometry in
+                geometry.size.width
+            } action: { width in
+                guard abs(width - leadingActionWidth) > 0.5 else { return }
+                leadingActionWidth = width
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var trailingAction: some View {
+        if let trailingActionTitle, let onTrailingAction {
+            headerAction(
+                title: trailingActionTitle,
+                action: onTrailingAction,
+                accessibilityIdentifier: trailingActionAccessibilityIdentifier
+            )
+            .disabled(!trailingActionIsEnabled)
+            .fixedSize(horizontal: true, vertical: false)
+            .onGeometryChange(for: CGFloat.self) { geometry in
+                geometry.size.width
+            } action: { width in
+                guard abs(width - trailingActionWidth) > 0.5 else { return }
+                trailingActionWidth = width
             }
         }
     }
