@@ -10,7 +10,7 @@ Install the pinned CLI from the project skill and SwiftLint with Homebrew:
 
 ```sh
 npm install --global xcodebuildmcp@2.7.0
-brew install swiftlint
+brew install swiftlint ffmpeg
 scripts/format-swift.sh
 scripts/check-formatting.sh
 scripts/lint-swift.sh
@@ -72,7 +72,11 @@ python3 scripts/pr-visual-evidence.py PR_NUMBER /tmp/ARTIFACT \
 python3 scripts/pr-evidence-gate.py PR_NUMBER
 ```
 
-Each selected file must be a real, nonempty PNG or MP4 inside the artifact directory and at most 10 MiB. For an oversized recording, use ffmpeg to produce a smaller MP4 inside that directory, inspect it and pass its relative filename. Keep the same source metadata. Publication validates the latest successful run and attempt, uploads native attachments and updates only the marked evidence section, preserving other PR text. It rechecks the PR and CI afterward and invalidates stale evidence if a concurrent push or rerun occurs. Upload failures do not partially replace the PR body.
+Each source must be a real, nonempty PNG or MP4 inside the artifact directory; the source may exceed 10 MiB. The publisher requires local `ffmpeg`, derives temporary upload copies, and removes them when it exits. PNGs are scaled without upscaling to fit within 320×640 while preserving aspect ratio. Videos keep their complete duration and timing, and are encoded as H.264/yuv420p MP4 with fast start and even dimensions, scaled to fit the same bounds. Every derived file must be nonempty, have a valid PNG or MP4 signature, and fit within the 10 MiB upload limit. All media is converted and checked before any attachment upload or PR edit. If ffmpeg is missing, install it with `brew install ffmpeg` on macOS or `sudo apt install ffmpeg` on Ubuntu.
+
+Inspect every original checkpoint and the full recording before publication. After publishing, inspect every rendered compact attachment in the PR at a 1280×800 viewport: check screenshot sharpness and grouping, confirm each screenshot stays within the compact bounds, and play the native video to its end. The description places two screenshot embeds in one Markdown paragraph, separated by a space, with a blank line between pairs. Two per row fit typical MacBook PR widths; three 320-pixel images span 960 pixels before page margins. Descriptive filenames become English screenshot alt labels. Each video attachment URL stays on its own line so GitHub renders its native player.
+
+Publication validates the latest successful run and attempt, uploads the compact native attachments and updates only the marked evidence section, preserving other PR text. It rechecks the PR and CI afterward and invalidates stale evidence if a concurrent push or rerun occurs. Upload failures do not partially replace the PR body.
 
 The separate `PR evidence gate` runs on PR edits, pushes and completed `Tests` runs. It executes trusted base/default-branch scripts with a read-only source checkout, reads PR metadata and posts a `Visual evidence` status on the actual PR head. It checks that both native media links are embedded, labelled, and tied to the latest passing run and attempt. It does not execute PR code or artifacts and is independent of `Tests`, so publication has no circular dependency. Human or agent inspection remains the acceptance step; the gate cannot verify the contents of a reviewer's claims.
 
