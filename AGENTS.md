@@ -13,6 +13,14 @@
 - Always use English when filling in PRs and comments on GitHub. Nothing should be in the Russian language when facing GitHub (commit messages, coments, PR titles, descriptions, etc.)
 - After UI changes, agent have to walk down the modified scenario, take a snapshot, and visually verify it.
 
+## Subagent model budget
+
+- Keep every subagent at or below the primary thread's model rank. Default to the primary thread model or a cheaper one.
+- Use any Astra or Sol family model only when Danis explicitly authorizes it, including `gpt-6-astra`, `gpt-6-sol`, `gpt-6.1-sol`, and `gpt-5.6-sol`.
+- If a skill or workflow would select Astra, Sol, or any model above the primary thread, ask Danis early with one concise question. Continue useful work using the primary model or a cheaper one while waiting; if Danis does not reply, do not escalate.
+- Check a subagent role's actual model mapping. A role name such as `reviewer` is not approval to use its mapped model; choose a suitable role at or below the primary thread rank.
+- Explicit authorization is required before using any Astra or Sol family model. Authorization never overrides the primary-thread model ceiling: use only the primary-thread model or a cheaper model.
+
 # Xcode and Simulator execution
 
 - Use the `xcodebuildmcp` CLI for all project discovery, build, test, install, launch, Simulator management, logging, debugging, accessibility inspection, UI automation, and screenshots.

@@ -622,7 +622,7 @@ private struct AddGiftPickerSheet: View {
                     onSelectDate: state.selectDate
                 )
                 .padding(.horizontal, 6)
-                .accessibilityIdentifier("date-picker.calendar")
+                .accessibilityIdentifier("date-picker.calendar.selected-\(datePickerAccessibilityIdentifier(for: state.draft.date))")
             }
         }
         .padding(16)
@@ -647,6 +647,11 @@ private struct AddGiftPickerSheet: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(accessibilityIdentifier)
+    }
+
+    private func datePickerAccessibilityIdentifier(for date: Date) -> String {
+        let components = Calendar.autoupdatingCurrent.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 0, components.day ?? 0)
     }
 
     // MARK: Shared bits
@@ -728,6 +733,7 @@ private struct PersonPickerContent: View {
                                     PersonPickerRow(
                                         name: person.name,
                                         color: person.color,
+                                        imageData: person.imageData,
                                         isSelected: isSelected
                                     )
                                 }
@@ -803,11 +809,12 @@ private struct PersonPickerContent: View {
 private struct PersonPickerRow: View {
     let name: String
     let color: Color
+    let imageData: Data?
     let isSelected: Bool
 
     var body: some View {
         HStack(spacing: 12) {
-            AvatarView(initials: name.initials, color: color, size: 38)
+            AvatarView(initials: name.initials, color: color, size: 38, imageData: imageData)
             Text(name)
                 .font(Font.app(16, .semibold))
                 .foregroundColor(Color.ink)

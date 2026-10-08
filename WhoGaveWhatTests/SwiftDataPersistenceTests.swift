@@ -137,6 +137,22 @@ struct SwiftDataPersistenceTests {
         #expect(remaining.people.isEmpty)
     }
 
+    @Test func peopleGatewayPersistsAndClearsProfileImage() throws {
+        let store = try SwiftDataStore(inMemory: true)
+        let gateway = SwiftDataPeopleGateway(context: store.context)
+        try gateway.createPerson(id: "friend", name: "Friend", colorHex: 0x123456, role: .contact, sortIndex: 0)
+        let imageData = Data([0, 1, 2, 3])
+
+        try gateway.updatePerson(id: "friend", name: "Friend", imageData: imageData)
+        #expect(try gateway.loadPeople().people.first?.imageData == imageData)
+
+        let relaunchedContext = ModelContext(store.container)
+        #expect(try SwiftDataPeopleGateway(context: relaunchedContext).loadPeople().people.first?.imageData == imageData)
+
+        try gateway.updatePerson(id: "friend", name: "Friend", imageData: nil)
+        #expect(try gateway.loadPeople().people.first?.imageData == nil)
+    }
+
     @Test func unseededMemoryStoreStartsEmptyAndUsesNewNamespace() throws {
         let store = try SwiftDataStore(inMemory: true)
         let gifts = try SwiftDataGiftGateway(context: store.context).loadGifts()

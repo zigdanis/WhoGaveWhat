@@ -13,6 +13,16 @@ and [TestFlight operations](../../../docs/testflight.md) before those stages.
 
 ## Workflow
 
+Model authorization never overrides the primary-thread ceiling: Astra or Sol
+family models require Danis's explicit authorization and must still be at or
+below the primary-thread rank.
+
+Before delegating implementation or review, follow the subagent model budget in
+[AGENTS.md](../../../AGENTS.md#subagent-model-budget). Use the primary-thread
+model or a cheaper one. A role's model mapping is not authorization; ask Danis
+early before any Astra, Sol, or higher-ranked model, and continue at the current
+or a lower rank if he does not reply.
+
 1. Inspect the request, repository rules, current branch/PR, and relevant code.
    Define observable acceptance criteria and use the applicable SwiftUI or bug
    diagnosis guidance. Preserve unrelated changes. A read-only discussion or

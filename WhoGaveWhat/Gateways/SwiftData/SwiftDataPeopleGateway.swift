@@ -42,6 +42,22 @@ final class SwiftDataPeopleGateway: PeopleGateway {
         }
     }
 
+    func updatePerson(id: String, name: String, imageData: Data?) throws {
+        guard let person = try fetchPerson(id: id) else { return }
+        let oldName = person.name
+        let oldImageData = person.imageData
+        person.name = name
+        person.imageData = imageData
+        do {
+            try context.save()
+        } catch {
+            person.name = oldName
+            person.imageData = oldImageData
+            context.rollback()
+            throw error
+        }
+    }
+
     func deletePerson(id: String) throws {
         if let person = try fetchPerson(id: id) {
             context.delete(person)
@@ -75,7 +91,8 @@ private extension Person {
             id: storedPerson.id,
             name: storedPerson.name,
             colorHex: UInt(bitPattern: Int(storedPerson.colorHex)),
-            role: PersonRole(rawValue: storedPerson.roleRawValue) ?? .contact
+            role: PersonRole(rawValue: storedPerson.roleRawValue) ?? .contact,
+            imageData: storedPerson.imageData
         )
     }
 }

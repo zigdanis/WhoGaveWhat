@@ -10,6 +10,15 @@ struct Person: Identifiable, Hashable {
     let name: String
     let colorHex: UInt
     let role: PersonRole
+    let imageData: Data?
+
+    init(id: String, name: String, colorHex: UInt, role: PersonRole, imageData: Data? = nil) {
+        self.id = id
+        self.name = name
+        self.colorHex = colorHex
+        self.role = role
+        self.imageData = imageData
+    }
 }
 
 struct PeopleSnapshot: Equatable {
