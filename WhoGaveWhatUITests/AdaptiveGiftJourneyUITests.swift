@@ -631,8 +631,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     }
 
     private func assertCompactSheetFrame() {
-        let grabbers = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label == 'Sheet Grabber'"))
+        let grabbers = sheetGrabbers()
         let deadline = Date().addingTimeInterval(timeout)
         let window = app.windows.firstMatch
         XCTAssertTrue(window.exists)
@@ -729,8 +728,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     }
 
     private func frontmostSheetGrabber() -> XCUIElement {
-        let grabbers = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label == 'Sheet Grabber'"))
+        let grabbers = sheetGrabbers()
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
             let visible = grabbers.allElementsBoundByIndex.filter { $0.exists && $0.isHittable }
@@ -741,6 +739,12 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         }
         XCTFail("No visible sheet grabber: \(grabbers.debugDescription)")
         return grabbers.firstMatch
+    }
+
+    private func sheetGrabbers() -> XCUIElementQuery {
+        app.descendants(matching: .any).matching(
+            NSPredicate(format: "label == %@ OR label == %@", "Sheet Grabber", "Точка захвата листа")
+        )
     }
 
     private func assertSaveReachableAboveKeyboard(_ save: XCUIElement, keyboard: XCUIElement) {
