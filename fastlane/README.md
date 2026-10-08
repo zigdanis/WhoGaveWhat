@@ -13,7 +13,7 @@ no longer supported.
 | `ios release_status` | Read recorded Apple build, distribution and locale state |
 | `ios release_notes` | Update/read back EN/RU notes on the existing processed build |
 
-Native tests and app smoke use XcodeBuildMCP through
+Native tests and app smoke use direct Apple tools through
 `scripts/run-app-smoke.py`, locally on macOS or in the `Tests` workflow.
 Run release helper tests with one Ruby process per file:
 

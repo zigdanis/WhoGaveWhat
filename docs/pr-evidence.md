@@ -2,14 +2,13 @@
 
 Every PR includes reviewed screenshots **and** a video in its description, including changes to documentation, tooling and CI. A link to a workflow or a downloadable artifact alone does not satisfy this requirement.
 
-The `Tests` workflow has no path filters. It runs Python helpers, Ruby release coordinator/archive/signing tests and secret checks on Linux, Swift formatting and SwiftLint on macOS, then unit tests and the native XCUITest acceptance journey on macOS 26 with Xcode 26.6. XcodeBuildMCP 2.7.0 performs all Xcode and Simulator operations. It reuses a booted iPhone when one exists and otherwise selects iPhone 17 Pro on the newest available runtime.
+The `Tests` workflow has no path filters. It runs Python helpers, Ruby release coordinator/archive/signing tests and secret checks on Linux, Swift formatting and SwiftLint on macOS, then unit tests and the native XCUITest acceptance journey on the default macOS 26 ARM runner with Xcode 26.6. The native runner image provides the iOS 26.5 Simulator runtime. The smoke runner uses Apple's `xcodebuild`, `xcrun simctl`, and `xcresulttool` directly. It reuses a booted iPhone when one exists and otherwise selects iPhone 17 Pro on the newest available runtime. A cold first boot can spend several minutes in Apple's data migration, so `simctl bootstatus` has a bounded 10-minute allowance; its progress log and process diagnostics are retained on timeout. Recording is stopped with SIGINT so `simctl` can finalize the MP4; command output and process diagnostics are retained when native operations fail or time out. Timed-out commands terminate their process group with bounded cleanup; if group signaling is denied, the runner signals its own process and preserves captured output even when children retain inherited pipes.
 
 ## Local development
 
-Install the pinned CLI from the project skill and SwiftLint with Homebrew:
+Install SwiftLint with Homebrew. Xcode and its command line tools provide the native build and Simulator commands:
 
 ```sh
-npm install --global xcodebuildmcp@2.7.0
 brew install swiftlint ffmpeg
 scripts/format-swift.sh
 scripts/check-formatting.sh
@@ -25,7 +24,7 @@ To run the same app validation on a Mac:
 python3 scripts/run-app-smoke.py /tmp/whogavewhat-evidence
 ```
 
-The runner invokes unit tests and `WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testAdaptiveGiftJourney` through XcodeBuildMCP. The native journey checks navigation, compact gift entry and keyboard, Details and value entry, calendar grids with different week counts, creation and automatic selection of people, duplicate-person reuse, save and relaunch persistence, currency selection, and bundled licenses. It creates uniquely named records through the real UI in the existing store; it never erases a reused Simulator. XCTest keeps named screenshots, and the runner exports them from the result bundle while recording video through XcodeBuildMCP. Failed tests retain screenshots, the accessibility hierarchy, and the result bundle for diagnosis.
+The runner invokes the complete `WhoGaveWhat` scheme test suite with `xcodebuild test`. The native journey checks navigation, compact gift entry and keyboard, Details and value entry, calendar grids with different week counts, creation and automatic selection of people, duplicate-person reuse, save and relaunch persistence, currency selection, and bundled licenses. It creates uniquely named records through the real UI in the existing store; it never erases a reused Simulator. XCTest keeps named screenshots, which the runner exports from the result bundle, while `simctl io recordVideo` captures the journey. Reusing the same evidence directory removes only the runner's known generated outputs first; unrelated files and Simulator data remain. Failed tests retain their new screenshots, the accessibility hierarchy, command logs, and result bundle for diagnosis.
 
 ## Retrieve and inspect current evidence
 
@@ -51,7 +50,7 @@ Open the artifact's `index.html`, inspect every selected PNG, and watch `journey
 ffmpeg -i /tmp/ARTIFACT/journeys.mp4 -vf fps=1/2 /tmp/ARTIFACT/frame-%04d.png
 ```
 
-PNG checkpoints are native XCTest screenshot attachments exported from the result bundle and mapped by their attachment names. The MP4 records the Simulator through MCP. Review the original video as well as frames where a transition, animation or transient failure matters. The report and metadata identify the source head, checkout merge commit, device, runtime, Xcode and capture outcome.
+PNG checkpoints are native XCTest screenshot attachments exported from the result bundle and mapped by their attachment names. The MP4 records the Simulator through `simctl`. Review the original video as well as frames where a transition, animation or transient failure matters. The report and metadata identify the source head, checkout merge commit, device, runtime, Xcode and capture outcome.
 
 For a UI change, extend the recorded scenario to exercise that change and its success, error and dismissal paths as relevant. Set the resulting artifact's `evidence_kind` to `feature-acceptance` only when it records that scenario. Review the feature's checkpoints and recording; app smoke alone cannot establish feature acceptance. For infrastructure and documentation changes, describe the environment integrity demonstrated by the existing journey; do not claim acceptance of an unrelated feature.
 

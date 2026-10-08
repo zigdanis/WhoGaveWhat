@@ -40,14 +40,10 @@ Required environment variables: `APPLE_TEAM_ID` (your Apple Developer team),
 resolve ambiguity in existing Apple records. Store `BETA_TESTER_EMAIL`,
 `BETA_FEEDBACK_EMAIL` and missing review contact data in secrets, not variables.
 
-XcodeBuildMCP 2.7.0 is pinned for native testing, app smoke and Simulator evidence.
-Its `device build` supports extra arguments but always injects a build action,
-project/scheme, destination and DerivedData arguments. It has no archive/export
-command that exports an IPA. Consequently the release lane gates Fastlane `gym`
-archive/export on `ALLOW_NATIVE_RELEASE_BUILD=true` in the environment variables.
-Danis authorized this bounded exception in the deployment setup: Fastlane performs
-the signed Release archive and IPA export; native tests, simulator operations and
-visual evidence continue through XcodeBuildMCP. The exception is recorded in
+Native testing and Simulator evidence use direct Apple tools under `AGENTS.md`.
+The release lane gates Fastlane `gym` archive/export on
+`ALLOW_NATIVE_RELEASE_BUILD=true` in the environment variables.
+Danis authorized Fastlane for the signed Release archive and IPA export. The release exception is recorded in
 `AGENTS.md` and the environment gate is enabled. Preflight, status and notes do
 not archive or upload. A deployment without the gate fails before reserving a
 version/build. Credential access and signing still require a successful preflight;

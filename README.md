@@ -8,8 +8,9 @@ Claude Design.
 
 ```bash
 open WhoGaveWhat.xcodeproj      # then ⌘R
-# or use the repository-configured CLI:
-xcodebuildmcp simulator build-and-run
+# or build for an installed Simulator:
+xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 ```
 
 - **Minimum iOS:** 26.0 — built against the iOS 26 SDK, native **Liquid Glass** throughout (no back-deployment).
@@ -64,7 +65,8 @@ Launch env vars jump straight to a state (used for verification / previews):
 `KS_START=app|signin`, `KS_TAB=home|people|insights`, `KS_SHEET=1`.
 
 ```bash
-xcodebuildmcp simulator launch-app --bundle-id pro.ziganshin.WhoGaveWhat --json '{"env":{"KS_START":"app","KS_TAB":"insights"}}'
+SIMCTL_CHILD_KS_START=app SIMCTL_CHILD_KS_TAB=insights \
+  xcrun simctl launch booted pro.ziganshin.WhoGaveWhat
 ```
 
 ## Tests & CI
@@ -74,7 +76,7 @@ suggestions, save validation and direction, router behavior, insights, and persi
 write-through against isolated in-memory SwiftData stores.
 
 ```bash
-xcodebuildmcp simulator test
+python3 scripts/run-app-smoke.py /tmp/whogavewhat-evidence
 ```
 
 GitHub Actions (`.github/workflows/tests.yml`) runs the suite on every push to

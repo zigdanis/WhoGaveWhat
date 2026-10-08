@@ -6,7 +6,7 @@ struct AddGiftSheet: View {
     let composition: AppComposition
     @State private var state: AddGiftState
     @State private var showsDetails: Bool
-    @State private var compactHeight: CGFloat = 420
+    @State private var sheetHeight: CGFloat = 420
     @State private var headerHeight: CGFloat = 56
     @State private var lastContentHeight: CGFloat = 0
     @State private var selectedDetent: PresentationDetent
@@ -22,7 +22,7 @@ struct AddGiftSheet: View {
             ))
         let startsExpanded = route.editingGiftID != nil
         _showsDetails = State(initialValue: startsExpanded)
-        _selectedDetent = State(initialValue: startsExpanded ? .large : .height(420))
+        _selectedDetent = State(initialValue: .height(420))
     }
 
     var body: some View {
@@ -31,7 +31,8 @@ struct AddGiftSheet: View {
         IntrinsicModalScaffold(
             title: state.editingGiftID == nil ? "Add a gift" : "Edit gift",
             leadingActionTitle: "Cancel",
-            onLeadingAction: composition.router.dismissGiftSheet
+            onLeadingAction: composition.router.dismissGiftSheet,
+            titleAccessibilityIdentifier: "add-gift.title"
         ) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -71,11 +72,11 @@ struct AddGiftSheet: View {
                     )
                     .padding(.top, 24)
                 }
-                .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 30)
+                .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 16)
                 .onGeometryChange(for: CGFloat.self) { geometry in
                     geometry.size.height
                 } action: { contentHeight in
-                    updateCompactHeight(for: contentHeight)
+                    updateSheetHeight(for: contentHeight)
                 }
                 // Taps on any non-interactive part of the form (card padding,
                 // section headers, gaps) drop keyboard focus. Buttons and text
@@ -92,9 +93,6 @@ struct AddGiftSheet: View {
             // Opening a picker must drop keyboard focus so it doesn't bounce back
             // onto the previously-edited text field when the picker sheet closes.
             .onChange(of: state.picker) { _, _ in focus = nil }
-            .onChange(of: showsDetails) { _, isExpanded in
-                selectedDetent = isExpanded ? .large : .height(compactHeight)
-            }
             // Open the keyboard on the gift title the moment the sheet settles.
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focus = .name }
@@ -102,9 +100,9 @@ struct AddGiftSheet: View {
         }
         .onPreferenceChange(IntrinsicModalHeaderHeightKey.self) { height in
             headerHeight = height
-            if !showsDetails { updateCompactHeight(for: lastContentHeight) }
+            updateSheetHeight(for: lastContentHeight)
         }
-        .presentationDetents([.height(compactHeight), .large], selection: $selectedDetent)
+        .presentationDetents([.height(sheetHeight)], selection: $selectedDetent)
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.bg)
         .sheet(item: $state.picker) { kind in
@@ -113,12 +111,12 @@ struct AddGiftSheet: View {
         .onDisappear { state.cancel() }
     }
 
-    private func updateCompactHeight(for contentHeight: CGFloat) {
+    private func updateSheetHeight(for contentHeight: CGFloat) {
         lastContentHeight = contentHeight
-        guard !showsDetails else { return }
-        let measuredHeight = min(max(contentHeight + headerHeight, 360), 560)
-        guard abs(measuredHeight - compactHeight) > 1 else { return }
-        compactHeight = measuredHeight
+        guard contentHeight > 0 else { return }
+        let measuredHeight = contentHeight + headerHeight
+        guard abs(measuredHeight - sheetHeight) > 1 else { return }
+        sheetHeight = measuredHeight
         selectedDetent = .height(measuredHeight)
     }
 

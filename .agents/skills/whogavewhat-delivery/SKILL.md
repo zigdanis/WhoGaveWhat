@@ -73,6 +73,8 @@ action with substantial loss risk. Preserve the manual `workflow_dispatch`
 release mechanism; never turn every push into a release. Local Mac access is
 optional because CI provides native verification.
 
-Native operations use XcodeBuildMCP. The signed Release archive and IPA export
+Follow the native execution policy in [AGENTS.md](../../../AGENTS.md#xcode-and-simulator-execution):
+local and CI operations use direct Apple tools, with CI driven through the
+evidence runner. XcodeBuildMCP is optional for specific capabilities. The signed Release archive and IPA export
 may use Fastlane `gym` under the documented environment gate. Keep generated
 artifacts outside the checkout and remove downloaded evidence after inspection.
