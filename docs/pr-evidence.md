@@ -2,7 +2,7 @@
 
 Every PR includes reviewed screenshots **and** a video in its description, including changes to documentation, tooling and CI. A link to a workflow or a downloadable artifact alone does not satisfy this requirement.
 
-The `Tests` workflow has no path filters. It runs Python helpers, Ruby release coordinator/archive/signing tests and secret checks on Linux, Swift formatting and SwiftLint on macOS, then unit tests and the native XCUITest acceptance journey on macOS 26 with Xcode 26.6. The smoke runner uses Apple's `xcodebuild`, `xcrun simctl`, and `xcresulttool` directly. It reuses a booted iPhone when one exists and otherwise selects iPhone 17 Pro on the newest available runtime. Recording is stopped with SIGINT so `simctl` can finalize the MP4; command output and process diagnostics are retained when native operations fail or time out.
+The `Tests` workflow has no path filters. It runs Python helpers, Ruby release coordinator/archive/signing tests and secret checks on Linux, Swift formatting and SwiftLint on macOS, then unit tests and the native XCUITest acceptance journey on the macOS 26 Intel runner with Xcode 26.6 to avoid current ARM runner capacity constraints. The native runner image provides the same Xcode path and iOS 26.5 Simulator runtime. The smoke runner uses Apple's `xcodebuild`, `xcrun simctl`, and `xcresulttool` directly. It reuses a booted iPhone when one exists and otherwise selects iPhone 17 Pro on the newest available runtime. Recording is stopped with SIGINT so `simctl` can finalize the MP4; command output and process diagnostics are retained when native operations fail or time out.
 
 ## Local development
 
