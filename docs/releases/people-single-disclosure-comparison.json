@@ -1,0 +1,11 @@
+{
+  "previous_release_run": "37842337925",
+  "previous_version": "1.0.5",
+  "previous_build": "14",
+  "previous_source_sha": "ed2c1b52f904b0a73d5d492050d12137d06bbec9",
+  "baseline_source_sha": "ed2c1b52f904b0a73d5d492050d12137d06bbec9",
+  "source_changes": [
+    "Remove duplicate disclosure arrow from People rows and capture populated list navigation."
+  ],
+  "unknown_source_gap": false
+}

@@ -1,0 +1,4 @@
+{
+  "en": "What's New\nThe People list now shows one navigation arrow per person.\n\nWhat to Test\nOpen People and check the arrow beside each total, including people with no gifts. Tap a person to open their details and return to the list. Check that gift counts and totals remain correct.",
+  "ru": "Что нового\nВ списке людей теперь отображается одна стрелка перехода у каждого человека.\n\nЧто проверить\nОткройте «Люди» и проверьте стрелку рядом с каждой суммой, в том числе у людей без подарков. Нажмите на человека, откройте его карточку и вернитесь к списку. Проверьте количество подарков и итоговые суммы."
+}

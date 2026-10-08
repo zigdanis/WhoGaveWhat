@@ -16,7 +16,7 @@ class NativeCommandError(ValueError):
 
 
 PLANNED_CHECKPOINT_NAMES = (
-    "home-start", "people", "insights", "gift-compact-keyboard", "gift-compact-dismissed",
+    "home-start", "people", "people-populated", "insights", "gift-compact-keyboard", "gift-compact-dismissed",
     "details-value", "gift-saved", "gift-after-relaunch", "settings-currency", "licenses",
     "calendar-reverse", "gift-content-sized-compact-keyboard", "gift-content-sized-details",
     "gift-content-sized-details-keyboard", "gift-content-sized-refocused-compact-keyboard",
@@ -278,7 +278,8 @@ def run(directory):
     metadata = {
         "head_sha": head_sha, "checkout_sha": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         "run_id": os.environ.get("GITHUB_RUN_ID", "local"), "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "1"),
-        "evidence_kind": "app-smoke", "scenario": "Native gift and person regression journey",
+        "evidence_kind": "feature-acceptance",
+        "scenario": "Native gift and person regression journey with populated People disclosure and person detail navigation",
         "journey_outcome": "failure", "export_outcome": "failure", "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"),
         "checkpoints": [], "native_test": "WhoGaveWhat scheme complete test suite (unit and UI tests)",
         "planned_checkpoint_names": list(PLANNED_CHECKPOINT_NAMES),

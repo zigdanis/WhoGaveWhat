@@ -460,6 +460,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         people.tap()
         let personRow = app.staticTexts[giverName]
         XCTAssertTrue(personRow.waitForExistence(timeout: timeout))
+        attach("people-populated")
         personRow.tap()
         let detailNavigationBar = app.navigationBars[giverName]
         XCTAssertTrue(detailNavigationBar.waitForExistence(timeout: timeout))
