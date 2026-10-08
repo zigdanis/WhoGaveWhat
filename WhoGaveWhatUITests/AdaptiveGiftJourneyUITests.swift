@@ -169,13 +169,22 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attach("person-editor")
 
         choosePhoto.tap()
-        let pickerNavigationBar = app.navigationBars["Photos"]
-        XCTAssertTrue(pickerNavigationBar.waitForExistence(timeout: timeout))
+        let editorNavigationBar = app.navigationBars["Edit name"]
+        let pickerDeadline = Date().addingTimeInterval(timeout)
+        while editorNavigationBar.isHittable && Date() < pickerDeadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        XCTAssertFalse(editorNavigationBar.isHittable)
         attach("person-photo-picker")
-        let pickerCancel = pickerNavigationBar.buttons["Cancel"]
-        XCTAssertTrue(pickerCancel.waitForExistence(timeout: timeout))
-        pickerCancel.tap()
-        XCTAssertTrue(app.navigationBars["Edit name"].waitForExistence(timeout: timeout))
+        // The system picker is outside the host app's accessibility tree in CI.
+        // This normalized coordinate targets its visible close X from the CI screenshot.
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.22, dy: 0.295)).tap()
+        XCTAssertTrue(editorNavigationBar.waitForExistence(timeout: timeout))
+        let editorReturnDeadline = Date().addingTimeInterval(timeout)
+        while !editorNavigationBar.isHittable && Date() < editorReturnDeadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        XCTAssertTrue(editorNavigationBar.isHittable)
 
         app.navigationBars["Edit name"].buttons["Cancel"].tap()
         waitForDisappearance(app.navigationBars["Edit name"])
