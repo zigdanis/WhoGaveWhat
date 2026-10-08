@@ -1,0 +1,12 @@
+{
+  "selected_ref": "PR #22",
+  "selected_source": "d80b9a7c48ade85be074a67e939177693ff57a74",
+  "previous_verified_source": "d087e6ac5c9278d569564073aaf992042e0137b4",
+  "previous_version": "1.0.3",
+  "previous_build": "12",
+  "previous_release_receipt": "37700199759",
+  "previous_processing_state": "VALID",
+  "previous_beta_state": "IN_BETA_TESTING",
+  "comparison": "PR #22 makes new gift dates default to the current local date and opens the calendar on the selected date. It adds persisted profile photo selection, replacement, and removal for people, and shows each person's name once in the navigation bar.",
+  "source_note": "The latest verified published source is the 1.0.3 (12) receipt at d087e6ac5c9278d569564073aaf992042e0137b4. The selected d80b9a7c48ade85be074a67e939177693ff57a74 is the next master commit and contains only PR #22; there is no unverified source gap. Apple preflight selected marketing version 1.0.4."
+}
