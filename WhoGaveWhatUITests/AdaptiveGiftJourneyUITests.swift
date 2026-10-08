@@ -113,7 +113,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         dayFormatter.calendar = Calendar(identifier: .gregorian)
         dayFormatter.timeZone = .autoupdatingCurrent
         dayFormatter.dateFormat = "yyyy-MM-dd"
-        XCTAssertEqual(calendar.value as? String, "selected-day:\(dayFormatter.string(from: Date()))")
+        XCTAssertEqual(calendar.identifier, "selected-day:\(dayFormatter.string(from: Date()))")
         let firstWeekCount = weekCount(for: firstMonth)
         XCTAssertGreaterThan(firstWeekCount, 0)
         assertCompactSheetFrame()
