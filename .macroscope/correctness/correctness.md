@@ -50,4 +50,4 @@ Review for concrete correctness, persistence, concurrency, localization, target-
 
 - When resources, files, build settings, signing, or dependencies change, verify target membership and Debug/Release behavior in `WhoGaveWhat.xcodeproj/project.pbxproj`.
 - Require focused tests for changed use-case contracts, direction and validation logic, persistence transactions, routing, aggregation, or date/formatting behavior. Do not demand tests that duplicate compiler or framework behavior.
-- Repository validation uses `xcodebuildmcp simulator test` locally and `.github/workflows/tests.yml` in CI. UI changes also require walking the changed scenario and visually checking a simulator snapshot.
+- Repository validation uses direct Apple tools through `scripts/run-app-smoke.py` locally on macOS and `.github/workflows/tests.yml` in CI. UI changes also require walking the changed scenario and visually checking a simulator snapshot.

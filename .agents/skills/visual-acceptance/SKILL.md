@@ -12,7 +12,8 @@ capture, retrieval, and publication commands.
    and relevant success, error, and dismissal paths in the CI journey. For
    documentation, tooling, and infrastructure changes, app-smoke evidence
    covers environment integrity and must be labelled accordingly.
-2. Use XcodeBuildMCP for native operations. Reuse a booted iPhone or prefer
+2. Follow [the native execution policy](../../../AGENTS.md#xcode-and-simulator-execution).
+   Reuse a booted iPhone or prefer
    iPhone 17 Pro. On Linux/Raspberry Pi, retrieve the PR's macOS CI artifact
    with `scripts/pr-evidence.sh PR_NUMBER`.
 3. Inspect every selected PNG and the original MP4 against the criteria. Use

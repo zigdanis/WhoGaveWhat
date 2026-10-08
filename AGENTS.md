@@ -23,8 +23,10 @@
 
 # Xcode and Simulator execution
 
-- Use the `xcodebuildmcp` CLI for all project discovery, build, test, install, launch, Simulator management, logging, debugging, accessibility inspection, UI automation, and screenshots.
-- TestFlight release exception: use Fastlane `gym` for the signed Release archive and IPA export, as authorized by Danis. All other native operations, including tests and Simulator evidence, continue through `xcodebuildmcp`.
+- Use direct Apple tools by default for local and CI native work: `xcodebuild`, `xcrun simctl`, `xcresulttool`, XCTest/XCUITest, and LLDB as appropriate. Discover supported arguments through the installed tools' help.
+- CI uses direct Apple tools through `scripts/run-app-smoke.py`: `xcodebuild` for native tests, `simctl` for Simulator readiness and recording, and `xcresulttool` for screenshot export. Preserve bounded timeouts, failure diagnostics, and current-head screenshot/video evidence.
+- TestFlight release exception: use Fastlane `gym` for the signed Release archive and IPA export, as authorized by Danis.
+- XcodeBuildMCP is optional when a task needs a specific capability it provides. Ordinary build, test, Simulator, and evidence work requires no MCP installation, configuration, or daemon.
 
 # Code review
 

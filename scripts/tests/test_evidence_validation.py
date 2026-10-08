@@ -1,6 +1,5 @@
 import importlib.util
 import json
-import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -90,24 +89,19 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(status.call_args.args[2], 'failure')
 
 
-class MCPTests(unittest.TestCase):
-    def test_process_status_and_structured_errors_all_fail(self):
-        for code, payload in [(1, {'didError': False}), (0, {'didError': True}),
-                              (0, {'isError': True, 'didError': False}), (0, {'data': {}}),
-                              (0, {'result': {'didError': True}})]:
-            with self.subTest(payload=payload), self.assertRaises(ValueError):
-                smoke.checked_output(subprocess.CompletedProcess([], code, json.dumps(payload), ''))
-        process = subprocess.CompletedProcess([], 0, '{"didError":false,"data":{"capture":"ok"}}', '')
-        self.assertEqual(smoke.checked_output(process), {'capture': 'ok'})
-
+class SimulatorSelectionTests(unittest.TestCase):
     def test_booted_iphone_is_reused_and_latest_preferred_runtime_selected(self):
-        phones = [dict(name='iPhone 17 Pro', isAvailable=True, state='Shutdown', simulatorId='new', runtime='iOS 26.5'),
-                  dict(name='iPhone 16', isAvailable=True, state='Booted', simulatorId='existing', runtime='iOS 26.2')]
-        self.assertEqual(smoke.select_simulator(phones)['simulatorId'], 'existing')
-        phones[1]['state'] = 'Shutdown'
-        self.assertEqual(smoke.select_simulator(phones)['simulatorId'], 'new')
+        devices = {'devices': {
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
+                dict(name='iPhone 17 Pro', isAvailable=True, state='Shutdown', udid='new')],
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-2': [
+                dict(name='iPhone 16', isAvailable=True, state='Booted', udid='existing')],
+        }}
+        self.assertEqual(smoke.select_simulator(devices)['udid'], 'existing')
+        devices['devices']['com.apple.CoreSimulator.SimRuntime.iOS-26-2'][0]['state'] = 'Shutdown'
+        self.assertEqual(smoke.select_simulator(devices)['udid'], 'new')
         with self.assertRaises(ValueError):
-            smoke.select_simulator([phones[1]])
+            smoke.select_simulator({'devices': {'runtime': [dict(name='iPhone 16', isAvailable=True, state='Shutdown')]}})
 
 
 if __name__ == '__main__':

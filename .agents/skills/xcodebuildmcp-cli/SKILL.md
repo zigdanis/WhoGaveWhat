@@ -1,9 +1,13 @@
 ---
 name: xcodebuildmcp-cli
-description: Official skill for the XcodeBuildMCP CLI. Use when doing iOS/macOS/watchOS/tvOS/visionOS work (build, test, run, debug, log, UI automation).
+description: Optional XcodeBuildMCP CLI guidance. Use only when a task needs a specific MCP capability. Default native work uses direct Apple tools under AGENTS.md.
 ---
 
 ## Step 1: Ensure the CLI Exists
+
+Follow [the native execution policy](../../../AGENTS.md#xcode-and-simulator-execution)
+and [the evidence runner](../../../docs/pr-evidence.md) for ordinary local and CI work.
+Continue below only when a task needs a specific MCP capability.
 
 Check availability:
 
