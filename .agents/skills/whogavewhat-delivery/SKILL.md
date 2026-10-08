@@ -13,6 +13,10 @@ and [TestFlight operations](../../../docs/testflight.md) before those stages.
 
 ## Workflow
 
+Model authorization never overrides the primary-thread ceiling: Astra or Sol
+family models require Danis's explicit authorization and must still be at or
+below the primary-thread rank.
+
 Before delegating implementation or review, follow the subagent model budget in
 [AGENTS.md](../../../AGENTS.md#subagent-model-budget). Use the primary-thread
 model or a cheaper one. A role's model mapping is not authorization; ask Danis

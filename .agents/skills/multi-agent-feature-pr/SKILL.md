@@ -23,6 +23,10 @@ One-way-door changes and genuine account or Apple blockers still follow
 
 ### Subagent model budget
 
+Explicit authorization is required for Astra or Sol family models, and
+authorization never overrides the primary-thread model ceiling. Use only the
+primary-thread model or a cheaper model.
+
 Before each spawn, follow the model budget in the repository's `AGENTS.md`. Use the primary thread model or a cheaper one. If a selected role maps to Astra, Sol, or any higher-ranked model, ask Danis early; if he does not reply, choose a suitable role at or below the primary thread rank.
 
 ## Required workflow
