@@ -169,29 +169,38 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attach("person-editor")
 
         choosePhoto.tap()
-        let editorNavigationBar = app.navigationBars["Edit name"]
-        let pickerDeadline = Date().addingTimeInterval(timeout)
-        while editorNavigationBar.isHittable && Date() < pickerDeadline {
-            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        let pickerNavigationBar = app.navigationBars["Photos"]
+        XCTAssertTrue(pickerNavigationBar.waitForExistence(timeout: 60))
+        let photoImages = app.images.matching(NSPredicate(format: "label BEGINSWITH[c] 'Photo,'"))
+        let photoDeadline = Date().addingTimeInterval(60)
+        while photoImages.count == 0 && Date() < photoDeadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
-        XCTAssertFalse(editorNavigationBar.isHittable)
+        XCTAssertGreaterThan(photoImages.count, 0)
         attach("person-photo-picker")
-        // The system picker is outside the host app's accessibility tree in CI.
-        // This normalized coordinate targets its visible close X from the CI screenshot.
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.22, dy: 0.295)).tap()
+        photoImages.firstMatch.tap()
+        let editorNavigationBar = app.navigationBars["Edit name"]
         XCTAssertTrue(editorNavigationBar.waitForExistence(timeout: timeout))
         let editorReturnDeadline = Date().addingTimeInterval(timeout)
         while !editorNavigationBar.isHittable && Date() < editorReturnDeadline {
             RunLoop.current.run(until: Date().addingTimeInterval(0.1))
         }
         XCTAssertTrue(editorNavigationBar.isHittable)
+        XCTAssertTrue(app.buttons["Remove photo"].waitForExistence(timeout: timeout))
+        attach("person-editor-selected-photo")
+        app.buttons["Save"].tap()
+        waitForDisappearance(editorNavigationBar)
+        XCTAssertTrue(detailNavigationBar.waitForExistence(timeout: timeout))
+        let detailReturnDeadline = Date().addingTimeInterval(timeout)
+        while !detailNavigationBar.isHittable && Date() < detailReturnDeadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        XCTAssertTrue(detailNavigationBar.isHittable)
+        XCTAssertTrue(hero.waitForExistence(timeout: timeout))
+        attach("person-detail-selected-photo")
 
-        app.navigationBars["Edit name"].buttons["Cancel"].tap()
-        waitForDisappearance(app.navigationBars["Edit name"])
-        personRow.tap()
-        XCTAssertTrue(app.navigationBars[giverName].waitForExistence(timeout: timeout))
         app.buttons["Edit name"].tap()
-        XCTAssertTrue(app.buttons["Choose photo"].waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.buttons["Remove photo"].waitForExistence(timeout: timeout))
         XCTAssertTrue(app.buttons["Save"].isEnabled)
         app.navigationBars["Edit name"].buttons["Cancel"].tap()
         app.navigationBars[giverName].buttons["BackButton"].tap()
