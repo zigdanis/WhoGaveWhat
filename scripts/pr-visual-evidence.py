@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -58,13 +59,10 @@ def compact_media(directory, images, videos, temporary):
         raise ValueError("ffmpeg is required to create compact PR evidence; install it with `brew install ffmpeg` or `sudo apt install ffmpeg`.")
 
     compacted = []
-    output_names = set()
     for index, source in enumerate(sources):
-        name = source.name
-        if name in output_names:
-            name = f"{index:02d}-{name}"
-        output_names.add(name)
-        output = temporary / name
+        output_directory = temporary / f"{index:02d}"
+        output_directory.mkdir()
+        output = output_directory / source.name
         if source.suffix.lower() == ".png":
             command = [ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error", "-y",
                        "-i", str(source), "-frames:v", "1", "-vf",
@@ -95,7 +93,8 @@ def compact_media(directory, images, videos, temporary):
 
 
 def image_label(path):
-    return " ".join(word.capitalize() for word in path.stem.replace("_", "-").split("-") if word)
+    label = " ".join(word.capitalize() for word in re.findall(r"[A-Za-z0-9]+", path.stem))
+    return label or "Screenshot"
 
 
 def update_body(endpoint, body):

@@ -1,5 +1,7 @@
 import importlib.util
+import hashlib
 import json
+import re
 import subprocess
 import tempfile
 import sys
@@ -74,7 +76,8 @@ class PublicationTests(unittest.TestCase):
         upload_path = Path(args[args.index("--input") + 1])
         self.assertTrue(upload_path.is_file())
         self.upload_paths.append(upload_path)
-        return json.dumps({"url": "https://github.com/user-attachments/assets/" + query["name"][0].replace(".", "-")})
+        asset_name = re.sub(r"[^A-Za-z0-9-]", "-", query["name"][0].replace(".", "-"))
+        return json.dumps({"url": "https://github.com/user-attachments/assets/" + asset_name})
 
     def edit(self, args):
         self.edits.append(args)
@@ -268,6 +271,23 @@ class PublicationTests(unittest.TestCase):
             self.assertLessEqual(info["width"], 320)
             self.assertLessEqual(info["height"], 640)
 
+    def test_derivative_names_cannot_collide_with_other_sources(self):
+        sources = [
+            ("a/02-frame.png", "red"),
+            ("b/frame.png", "blue"),
+            ("c/frame.png", "green"),
+        ]
+        for relative, color in sources:
+            source = self.directory / relative
+            source.parent.mkdir(parents=True, exist_ok=True)
+            self.ffmpeg("-f", "lavfi", "-i", f"color=c={color}:s=320x640", "-frames:v", "1", str(source))
+        with tempfile.TemporaryDirectory(prefix="compact-output-") as temporary:
+            output = MODULE.compact_media(self.directory, [relative for relative, _ in sources], [], Path(temporary))
+            self.assertEqual(len({path.resolve() for path in output}), 3)
+            self.assertEqual([path.name for path in output], ["02-frame.png", "frame.png", "frame.png"])
+            digests = [hashlib.sha256(path.read_bytes()).hexdigest() for path in output]
+            self.assertEqual(len(set(digests)), 3)
+
     def test_missing_ffmpeg_fails_before_upload_and_derivatives_are_cleaned(self):
         (self.directory / "metadata.json").write_text(json.dumps(self.metadata))
         with patch.object(MODULE.shutil, "which", return_value=None), \
@@ -287,14 +307,18 @@ class PublicationTests(unittest.TestCase):
                     str(self.directory / "people-list.png"))
         self.ffmpeg("-f", "lavfi", "-i", "testsrc=size=320x640:rate=1", "-frames:v", "1",
                     str(self.directory / "gift-details.png"))
+        self.ffmpeg("-f", "lavfi", "-i", "testsrc=size=320x640:rate=1", "-frames:v", "1",
+                    str(self.directory / "person [edit]\\ draft.png"))
         (self.directory / "metadata.json").write_text(json.dumps(self.metadata))
         with patch.object(MODULE, "gh", side_effect=self.gh), patch.object(evidence_validation, "gh", side_effect=self.gh):
             MODULE.publish(42, self.directory, "Inspected evidence.",
-                           ["checkpoint.png", "people-list.png", "gift-details.png"], ["demo.mp4"])
+                           ["checkpoint.png", "people-list.png", "gift-details.png", "person [edit]\\ draft.png"],
+                           ["demo.mp4"])
         body = self.pr["body"]
         self.assertRegex(body, r"!\[Checkpoint\]\([^\n]+\) !\[People List\]\([^\n]+\)\n\n"
-                              r"!\[Gift Details\]\([^\n]+\)\n\n")
+                              r"!\[Gift Details\]\([^\n]+\) !\[Person Edit Draft\]\([^\n]+\)\n\n")
         self.assertIn("user-attachments/assets/demo-mp4", body)
+        self.assertEqual(evidence_validation.parse_evidence(body)["head_sha"], self.metadata["head_sha"])
 
     def test_malformed_markers_do_not_destroy_body(self):
         for body in [MODULE.START, MODULE.END, MODULE.END + MODULE.START, MODULE.START * 2 + MODULE.END]:
