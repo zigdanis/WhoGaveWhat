@@ -173,10 +173,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(pickerNavigationBar.waitForExistence(timeout: 60))
         let photoImages = app.images.matching(NSPredicate(format: "label BEGINSWITH[c] 'Photo,'"))
         let photoDeadline = Date().addingTimeInterval(60)
-        while photoImages.count == 0 && Date() < photoDeadline {
+        while !photoImages.firstMatch.exists && Date() < photoDeadline {
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
-        XCTAssertGreaterThan(photoImages.count, 0)
+        XCTAssertTrue(photoImages.firstMatch.exists)
         attach("person-photo-picker")
         photoImages.firstMatch.tap()
         let editorNavigationBar = app.navigationBars["Edit name"]
