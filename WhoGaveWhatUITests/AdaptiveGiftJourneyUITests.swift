@@ -535,8 +535,9 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         var sheetHeight: CGFloat = 0
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline && stableSamples < 2 {
-            gap = keyboard.frame.minY - save.frame.maxY
-            sheetHeight = keyboard.frame.minY - grabber.frame.minY
+            let keyboardTop = visibleKeyboardTop(keyboard)
+            gap = keyboardTop - save.frame.maxY
+            sheetHeight = keyboardTop - grabber.frame.minY
             if let previousMeasurement,
                 abs(gap - previousMeasurement.gap) <= 2,
                 abs(sheetHeight - previousMeasurement.sheetHeight) <= 2
@@ -625,12 +626,13 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 attach("details-value-keyboard-dismissed")
                 return
             }
-            if save.isHittable && save.frame.maxY <= keyboard.frame.minY {
+            let keyboardTop = visibleKeyboardTop(keyboard)
+            if save.isHittable && save.frame.maxY <= keyboardTop {
                 attach("details-value-keyboard")
                 return
             }
             let window = app.windows.firstMatch
-            let visibleBottom = keyboard.frame.minY - 16
+            let visibleBottom = keyboardTop - 16
             let visibleFrame = scroll.frame.intersection(
                 CGRect(
                     x: scroll.frame.minX,
@@ -640,7 +642,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 )
             )
             guard visibleFrame.height > 40 else {
-                XCTFail("No usable scroll area above keyboard: scroll=\(scroll.frame), keyboard=\(keyboard.frame)")
+                XCTFail("No usable scroll area above keyboard: scroll=\(scroll.frame), visibleKeyboardTop=\(keyboardTop)")
                 return
             }
             let startY = visibleFrame.minY + visibleFrame.height * 0.8
@@ -663,10 +665,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         if !keyboard.exists {
             XCTAssertTrue(save.isHittable)
             attach("details-value-keyboard-dismissed")
-        } else if save.isHittable && save.frame.maxY <= keyboard.frame.minY {
+        } else if save.isHittable && save.frame.maxY <= visibleKeyboardTop(keyboard) {
             attach("details-value-keyboard")
         } else {
-            XCTFail("Save remains covered by keyboard: save=\(save.frame), keyboard=\(keyboard.frame)")
+            XCTFail("Save remains covered by keyboard: save=\(save.frame), visibleKeyboardTop=\(visibleKeyboardTop(keyboard))")
         }
     }
 
@@ -675,12 +677,36 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         for control in controls {
             XCTAssertTrue(control.waitForExistence(timeout: timeout))
             XCTAssertTrue(control.isHittable, "Editor control should be visible with the keyboard: \(control)")
+            let keyboardTop = visibleKeyboardTop(keyboard)
             XCTAssertLessThanOrEqual(
                 control.frame.maxY,
-                keyboard.frame.minY,
-                "Editor control should fit above the keyboard: control=\(control.frame), keyboard=\(keyboard.frame)"
+                keyboardTop,
+                "Editor control should fit above the keyboard: control=\(control.frame), visibleKeyboardTop=\(keyboardTop)"
             )
         }
+    }
+
+    private func visibleKeyboardTop(_ keyboard: XCUIElement) -> CGFloat {
+        let keyboardFrame = keyboard.frame
+        let windowFrame = app.windows.firstMatch.frame
+        let assistantViews = app.descendants(matching: .any)
+            .matching(identifier: "SystemInputAssistantView")
+            .allElementsBoundByIndex
+
+        let assistantTop =
+            assistantViews
+            .map(\.frame)
+            .filter { frame in
+                guard frame.width > 0, frame.height > 0, frame.intersects(windowFrame) else { return false }
+                let horizontalOverlap = max(0, min(frame.maxX, keyboardFrame.maxX) - max(frame.minX, keyboardFrame.minX))
+                return horizontalOverlap >= keyboardFrame.width * 0.8
+                    && frame.minY < keyboardFrame.minY
+                    && abs(frame.maxY - keyboardFrame.minY) <= 2
+            }
+            .map(\.minY)
+            .min()
+
+        return min(keyboardFrame.minY, assistantTop ?? keyboardFrame.minY)
     }
 
     private func personRows(named name: String) -> [XCUIElement] {
