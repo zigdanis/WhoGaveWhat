@@ -8,17 +8,19 @@ final class StoredPerson {
     var colorHex: Int64
     var roleRawValue: String
     var sortIndex: Int
+    var imageData: Data?
     @Relationship(deleteRule: .cascade, inverse: \StoredGift.giver)
     var giftsGiven: [StoredGift] = []
     @Relationship(deleteRule: .cascade, inverse: \StoredGift.recipient)
     var giftsReceived: [StoredGift] = []
 
-    init(id: String, name: String, colorHex: Int64, roleRawValue: String, sortIndex: Int) {
+    init(id: String, name: String, colorHex: Int64, roleRawValue: String, sortIndex: Int, imageData: Data? = nil) {
         self.id = id
         self.name = name
         self.colorHex = colorHex
         self.roleRawValue = roleRawValue
         self.sortIndex = sortIndex
+        self.imageData = imageData
     }
 }
 

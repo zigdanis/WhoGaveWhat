@@ -51,6 +51,7 @@ struct PeopleView: View {
                     NavigationLink(value: e.0) {
                         PersonRow(
                             entityId: e.0, name: e.1, color: e.2,
+                            imageData: composition.data.entityImageData(e.0),
                             gifts: gifts(for: e.0),
                             currencyCode: composition.currencyCode)
                     }
@@ -113,6 +114,7 @@ struct PersonRow: View {
     let entityId: String
     let name: String
     let color: Color
+    let imageData: Data?
     let gifts: [Gift]
     let currencyCode: String
 
@@ -133,7 +135,7 @@ struct PersonRow: View {
         }.count
 
         HStack(spacing: 12) {
-            AvatarView(initials: name.initials, color: color, size: 42)
+            AvatarView(initials: name.initials, color: color, size: 42, imageData: imageData)
             VStack(alignment: .leading, spacing: 2) {
                 Text(name).font(Font.app(16, .semibold)).foregroundColor(Color.ink)
                 Text("\(r) received · \(gv) given")

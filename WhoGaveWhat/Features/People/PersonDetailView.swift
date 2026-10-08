@@ -1,4 +1,6 @@
+import PhotosUI
 import SwiftUI
+import UIKit
 
 /// A person's gift history. Built as a native `List` so its rows open / swipe-to-
 /// delete exactly like Home, reusing `GiftRow` + `GiftDetailView`. The header
@@ -15,6 +17,12 @@ struct PersonDetailView: View {
     @State private var draftName = ""
     /// Whether the big "delete this person" warning is showing.
     @State private var confirmingPersonDelete = false
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var draftImageData: Data?
+    @State private var isLoadingPhoto = false
+    @State private var photoLoadTask: Task<Void, Never>?
+    @State private var editorError: String?
+    @State private var photoSessionID = UUID()
 
     private var filterOptions: [Segmented.Option] {
         [
@@ -51,11 +59,11 @@ struct PersonDetailView: View {
             // Header + stats + filter — quiet rows, no separators.
             Section {
                 VStack(spacing: 0) {
-                    AvatarView(initials: name.initials, color: color, size: 76)
-                    Text(name).font(Font.app(24, .bold)).tracking(-0.4).foregroundColor(Color.ink).padding(.top, 13)
+                    AvatarView(initials: "", color: color, size: 76, imageData: composition.data.entityImageData(entityId))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, 6)
+                .accessibilityIdentifier("person-detail.hero")
 
                 HStack(spacing: 10) {
                     statCard(
@@ -117,7 +125,14 @@ struct PersonDetailView: View {
             if composition.deletePersonUseCase.canDelete(id: entityId) {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        photoLoadTask?.cancel()
+                        photoSessionID = UUID()
+                        isLoadingPhoto = false
+                        selectedPhotoItem = nil
+                        editorError = nil
                         draftName = name
+                        draftImageData = composition.data.entityImageData(entityId)
+                        selectedPhotoItem = nil
                         renaming = true
                     } label: {
                         Image(systemName: "pencil")
@@ -180,6 +195,18 @@ struct PersonDetailView: View {
                 Section {
                     TextField("Name", text: $draftName)
                         .font(Font.app(17, .regular))
+                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                        Label(draftImageData == nil ? "Choose photo" : "Change photo", systemImage: "photo")
+                    }
+                    .disabled(isLoadingPhoto)
+                    if draftImageData != nil {
+                        Button("Remove photo", role: .destructive) {
+                            photoLoadTask?.cancel()
+                            isLoadingPhoto = false
+                            selectedPhotoItem = nil
+                            draftImageData = nil
+                        }
+                    }
                 }
                 Section {
                     Button(role: .destructive) {
@@ -202,15 +229,74 @@ struct PersonDetailView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") {
-                        composition.renamePerson(id: entityId, newName: draftName)
-                        renaming = false
+                        do {
+                            try composition.updatePerson(
+                                id: entityId, name: draftName, imageData: draftImageData)
+                            renaming = false
+                        } catch PersonUpdateError.duplicateName {
+                            editorError = NSLocalizedString("A person with this name already exists.", comment: "")
+                        } catch {
+                            editorError = NSLocalizedString("Could not save person changes.", comment: "")
+                        }
                     }
                     .fontWeight(.semibold)
-                    .disabled(draftName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(draftName.trimmingCharacters(in: .whitespaces).isEmpty || isLoadingPhoto)
                 }
             }
         }
+        .onChange(of: selectedPhotoItem) { _, item in
+            photoLoadTask?.cancel()
+            guard let item else { return }
+            let sessionID = photoSessionID
+            isLoadingPhoto = true
+            photoLoadTask = Task {
+                defer {
+                    if photoSessionID == sessionID, selectedPhotoItem == item { isLoadingPhoto = false }
+                }
+                do {
+                    guard let data = try await item.loadTransferable(type: Data.self),
+                        let processed = downsampledImageData(data),
+                        !Task.isCancelled
+                    else { throw CocoaError(.fileReadCorruptFile) }
+                    guard photoSessionID == sessionID, selectedPhotoItem == item else { return }
+                    draftImageData = processed
+                } catch is CancellationError {
+                    return
+                } catch {
+                    guard photoSessionID == sessionID, selectedPhotoItem == item else { return }
+                    editorError = NSLocalizedString("Could not load that photo.", comment: "")
+                    isLoadingPhoto = false
+                    selectedPhotoItem = nil
+                }
+            }
+        }
+        .alert(
+            "Photo and name",
+            isPresented: Binding(
+                get: { editorError != nil }, set: { if !$0 { editorError = nil } })
+        ) {
+            Button("OK", role: .cancel) { editorError = nil }
+        } message: {
+            Text(editorError ?? "")
+        }
+        .onDisappear {
+            photoLoadTask?.cancel()
+            photoLoadTask = nil
+            photoSessionID = UUID()
+            isLoadingPhoto = false
+        }
         .presentationDetents([.height(260)])
+    }
+
+    private func downsampledImageData(_ data: Data) -> Data? {
+        guard let image = UIImage(data: data) else { return nil }
+        let maxDimension: CGFloat = 640
+        let scale = min(1, maxDimension / max(image.size.width, image.size.height))
+        let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.jpegData(withCompressionQuality: 0.75) { _ in
+            image.draw(in: CGRect(origin: .zero, size: size))
+        }
     }
 
     private func personDeleteTitle(_ name: String) -> String {

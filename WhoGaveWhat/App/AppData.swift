@@ -60,6 +60,10 @@ final class AppData {
         people.first { $0.id == id }?.colorHex ?? 0x12161C
     }
 
+    func entityImageData(_ id: String) -> Data? {
+        people.first { $0.id == id }?.imageData
+    }
+
     func giftSubtitle(_ gift: Gift) -> String {
         "\(entityName(gift.giverID))  →  \(entityName(gift.recipientID))"
     }

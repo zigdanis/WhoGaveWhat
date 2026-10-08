@@ -728,6 +728,7 @@ private struct PersonPickerContent: View {
                                     PersonPickerRow(
                                         name: person.name,
                                         color: person.color,
+                                        imageData: person.imageData,
                                         isSelected: isSelected
                                     )
                                 }
@@ -803,11 +804,12 @@ private struct PersonPickerContent: View {
 private struct PersonPickerRow: View {
     let name: String
     let color: Color
+    let imageData: Data?
     let isSelected: Bool
 
     var body: some View {
         HStack(spacing: 12) {
-            AvatarView(initials: name.initials, color: color, size: 38)
+            AvatarView(initials: name.initials, color: color, size: 38, imageData: imageData)
             Text(name)
                 .font(Font.app(16, .semibold))
                 .foregroundColor(Color.ink)

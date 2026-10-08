@@ -1,22 +1,18 @@
 import Foundation
 
 enum AppDate {
-    /// Frozen prototype date retained to preserve the current product behavior.
-    static let today = makeISODate("2026-06-14")
-    static let yesterday = makeISODate("2026-06-13")
+    /// The current day in the user's calendar and time zone, normalized to midnight.
+    static var today: Date { Calendar.autoupdatingCurrent.startOfDay(for: Date()) }
 
-    private static func makeISODate(_ value: String) -> Date {
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.timeZone = TimeZone(identifier: "UTC")
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.date(from: value) ?? Date()
+    static var yesterday: Date {
+        Calendar.autoupdatingCurrent.date(byAdding: .day, value: -1, to: today) ?? today
     }
 }
 
 extension Date {
-    func giftMonthLabel(displayYear: Int = 2026, locale: Locale = .current) -> String {
+    func giftMonthLabel(displayYear: Int? = nil, locale: Locale = .current) -> String {
         let year = Calendar.current.component(.year, from: self)
+        let displayYear = displayYear ?? Calendar.current.component(.year, from: Date())
         let style =
             year == displayYear
             ? Date.FormatStyle.dateTime.month(.wide)
@@ -24,8 +20,9 @@ extension Date {
         return formatted(style.locale(locale))
     }
 
-    func giftShortLabel(displayYear: Int = 2026, locale: Locale = .current) -> String {
+    func giftShortLabel(displayYear: Int? = nil, locale: Locale = .current) -> String {
         let year = Calendar.current.component(.year, from: self)
+        let displayYear = displayYear ?? Calendar.current.component(.year, from: Date())
         let style =
             year == displayYear
             ? Date.FormatStyle.dateTime.month(.abbreviated).day()

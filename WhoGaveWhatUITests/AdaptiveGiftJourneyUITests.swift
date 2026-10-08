@@ -36,6 +36,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         try addGift(named: giftName, createPeople: true)
         XCTAssertTrue(app.staticTexts[giftName].waitForExistence(timeout: timeout))
         attach("gift-saved")
+        verifyPersonProfileJourney()
 
         app.terminate()
         app.launch()
@@ -102,6 +103,17 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         let calendar = app.otherElements["date-picker.calendar"]
         XCTAssertTrue(calendar.waitForExistence(timeout: timeout))
         let firstMonth = try monthHeading(in: calendar)
+        let expectedMonth = DateFormatter()
+        expectedMonth.locale = Locale(identifier: "en_US")
+        expectedMonth.calendar = Calendar(identifier: .gregorian)
+        expectedMonth.dateFormat = "MMMM yyyy"
+        XCTAssertEqual(firstMonth, expectedMonth.string(from: Date()))
+        XCTAssertTrue(app.buttons["date-picker.today"].exists)
+        let dayFormatter = DateFormatter()
+        dayFormatter.calendar = Calendar(identifier: .gregorian)
+        dayFormatter.timeZone = .autoupdatingCurrent
+        dayFormatter.dateFormat = "yyyy-MM-dd"
+        XCTAssertEqual(calendar.value as? String, "selected-day:\(dayFormatter.string(from: Date()))")
         let firstWeekCount = weekCount(for: firstMonth)
         XCTAssertGreaterThan(firstWeekCount, 0)
         assertCompactSheetFrame()
@@ -133,6 +145,48 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.buttons["add-gift.save"].tap()
         XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
         XCTAssertFalse(app.buttons["add-gift.save"].exists)
+    }
+
+    private func verifyPersonProfileJourney() {
+        let people = app.tabBars.buttons["People"]
+        people.tap()
+        let personRow = app.staticTexts[giverName]
+        XCTAssertTrue(personRow.waitForExistence(timeout: timeout))
+        personRow.tap()
+        let detailNavigationBar = app.navigationBars[giverName]
+        XCTAssertTrue(detailNavigationBar.waitForExistence(timeout: timeout))
+        let hero = app.otherElements["person-detail.hero"]
+        XCTAssertTrue(hero.waitForExistence(timeout: timeout))
+        let heroNames = hero.staticTexts.matching(NSPredicate(format: "label == %@", giverName))
+        XCTAssertEqual(heroNames.count, 0)
+        attach("person-detail")
+
+        app.buttons["Edit name"].tap()
+        XCTAssertTrue(app.navigationBars["Edit name"].waitForExistence(timeout: timeout))
+        let choosePhoto = app.buttons["Choose photo"]
+        XCTAssertTrue(choosePhoto.waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.buttons["Save"].isEnabled)
+        attach("person-editor")
+
+        choosePhoto.tap()
+        let pickerNavigationBar = app.navigationBars["Photos"]
+        XCTAssertTrue(pickerNavigationBar.waitForExistence(timeout: timeout))
+        attach("person-photo-picker")
+        let pickerCancel = pickerNavigationBar.buttons["Cancel"]
+        XCTAssertTrue(pickerCancel.waitForExistence(timeout: timeout))
+        pickerCancel.tap()
+        XCTAssertTrue(app.navigationBars["Edit name"].waitForExistence(timeout: timeout))
+
+        app.navigationBars["Edit name"].buttons["Cancel"].tap()
+        waitForDisappearance(app.navigationBars["Edit name"])
+        personRow.tap()
+        XCTAssertTrue(app.navigationBars[giverName].waitForExistence(timeout: timeout))
+        app.buttons["Edit name"].tap()
+        XCTAssertTrue(app.buttons["Choose photo"].waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.buttons["Save"].isEnabled)
+        app.navigationBars["Edit name"].buttons["Cancel"].tap()
+        app.navigationBars[giverName].buttons["BackButton"].tap()
+        app.tabBars.buttons["Home"].tap()
     }
 
     private func choosePerson(named name: String, create: Bool, endpoint: String) {

@@ -7,6 +7,7 @@ final class AppComposition {
     let data = AppData()
     private(set) var currencyCode: String
     private let preferences: PreferencesGateway
+    private let peopleGateway: PeopleGateway
 
     let loadGiftsUseCase: LoadGiftsUseCase
     let saveGiftUseCase: SaveGiftUseCase
@@ -40,6 +41,7 @@ final class AppComposition {
         let createPerson = CreatePersonUseCase(gateway: peopleGateway)
 
         self.preferences = preferences
+        self.peopleGateway = peopleGateway
         currencyCode = preferences.currencyCode
         router = AppRouter(didCompleteOnboarding: preferences.didCompleteOnboarding)
         loadGiftsUseCase = LoadGiftsUseCase(gateway: giftGateway)
@@ -93,6 +95,12 @@ final class AppComposition {
             newName: newName,
             current: data.peopleSnapshot
         )
+        reloadData()
+    }
+
+    func updatePerson(id: String, name: String, imageData: Data?) throws {
+        try renamePersonUseCase.update(
+            id: id, newName: name, imageData: imageData, current: data.peopleSnapshot)
         reloadData()
     }
 
