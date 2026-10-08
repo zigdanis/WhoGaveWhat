@@ -105,13 +105,14 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         ).firstMatch
         XCTAssertTrue(calendar.waitForExistence(timeout: timeout))
         let firstMonth = try monthHeading(in: calendar)
+        let now = Date()
         let expectedMonth = DateFormatter()
         expectedMonth.locale = Locale(identifier: "en_US")
         expectedMonth.calendar = Calendar(identifier: .gregorian)
         expectedMonth.dateFormat = "MMMM yyyy"
-        XCTAssertEqual(firstMonth, expectedMonth.string(from: Date()))
+        XCTAssertEqual(firstMonth, expectedMonth.string(from: now))
         XCTAssertTrue(app.buttons["date-picker.today"].exists)
-        let dayComponents = Calendar.autoupdatingCurrent.dateComponents([.year, .month, .day], from: Date())
+        let dayComponents = Calendar.autoupdatingCurrent.dateComponents([.year, .month, .day], from: now)
         let expectedDayIdentifier = String(
             format: "date-picker.calendar.selected-%04d-%02d-%02d",
             dayComponents.year ?? 0,
