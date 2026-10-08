@@ -21,6 +21,10 @@ and master CI while skipping TestFlight.
 One-way-door changes and genuine account or Apple blockers still follow
 [AGENTS.md](../../../AGENTS.md#merge-and-approval-policy).
 
+### Subagent model budget
+
+Before each spawn, follow the model budget in the repository's `AGENTS.md`. Use the primary thread model or a cheaper one. If a selected role maps to Astra, Sol, or any higher-ranked model, ask Danis early; if he does not reply, choose a suitable role at or below the primary thread rank.
+
 ## Required workflow
 
 ### 1. Isolate the branch
