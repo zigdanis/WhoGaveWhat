@@ -140,13 +140,17 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars[personName].waitForExistence(timeout: timeout))
         app.buttons["person-detail.edit"].tap()
 
-        let editorTitle = app.descendants(matching: .any)["person-editor.title"]
+        let editorTitle = app.staticTexts["person-editor.title"]
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
-        XCTAssertEqual(editorTitle.label, "Edit person")
+        XCTAssertEqual(editorTitle.label, personName)
         let editorName = app.textFields["person-editor.name"]
         XCTAssertTrue(editorName.waitForExistence(timeout: timeout))
         let editorKeyboard = app.keyboards.firstMatch
+        XCTAssertFalse(editorKeyboard.exists, "Editing a person should open without the keyboard")
+        attach("person-editor")
+        editorName.tap()
         XCTAssertTrue(editorKeyboard.waitForExistence(timeout: timeout))
+        attach("person-editor-keyboard")
         let editedName = "\(personName) draft"
         editorName.typeText(" draft")
         attach("person-editor-delete-keyboard")
@@ -176,12 +180,9 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         let persistedName = app.textFields["person-editor.name"]
         XCTAssertTrue(persistedName.waitForExistence(timeout: timeout))
         XCTAssertEqual(persistedName.value as? String, editedName)
+        XCTAssertFalse(editorKeyboard.exists)
         let persistedDelete = app.buttons["person-editor.delete"]
         XCTAssertTrue(persistedDelete.waitForExistence(timeout: timeout))
-        assertPersonEditorControlsFitAboveKeyboard(
-            [persistedName, app.buttons["person-editor.photo"], persistedDelete],
-            keyboard: app.keyboards.firstMatch
-        )
         persistedDelete.tap()
 
         XCTAssertTrue(confirmation.waitForExistence(timeout: timeout))
@@ -210,18 +211,20 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(personRow.waitForExistence(timeout: timeout))
         personRow.tap()
         app.buttons["person-detail.edit"].tap()
-        let editorTitle = app.descendants(matching: .any)["person-editor.title"]
+        let editorTitle = app.staticTexts["person-editor.title"]
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
-        XCTAssertEqual(editorTitle.label, "Редактирование")
+        XCTAssertEqual(editorTitle.label, personName)
         let keyboard = app.keyboards.firstMatch
-        XCTAssertTrue(keyboard.waitForExistence(timeout: timeout))
+        XCTAssertFalse(keyboard.exists)
+        XCTAssertEqual(app.buttons["person-editor.cancel"].label, "Отмена")
+        XCTAssertEqual(app.buttons["person-editor.save"].label, "Сохранить")
         let delete = app.buttons["person-editor.delete"]
         XCTAssertEqual(delete.label, "Удалить")
-        assertPersonEditorControlsFitAboveKeyboard(
-            [app.textFields["person-editor.name"], app.buttons["person-editor.photo"], delete],
-            keyboard: keyboard
-        )
+        XCTAssertEqual(app.buttons["person-editor.photo"].label, "Выбрать фото")
         attach("person-editor-russian")
+        app.textFields["person-editor.name"].tap()
+        XCTAssertTrue(keyboard.waitForExistence(timeout: timeout))
+        attach("person-editor-russian-keyboard")
         app.buttons["person-editor.cancel"].tap()
     }
 
@@ -245,16 +248,15 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         personRow.tap()
         app.buttons["person-detail.edit"].tap()
 
-        let title = app.descendants(matching: .any)["person-editor.title"]
+        let title = app.staticTexts["person-editor.title"]
         let cancel = app.buttons["person-editor.cancel"]
         let save = app.buttons["person-editor.save"]
         XCTAssertTrue(title.waitForExistence(timeout: timeout))
         XCTAssertTrue(cancel.waitForExistence(timeout: timeout))
         XCTAssertTrue(save.waitForExistence(timeout: timeout))
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
+        XCTAssertFalse(app.keyboards.firstMatch.exists)
+        XCTAssertEqual(title.label, personName)
         let normalTitleHeight = title.frame.height
-        let normalCancelHeight = cancel.frame.height
-        let normalSaveHeight = save.frame.height
         app.buttons["person-editor.cancel"].tap()
 
         app.terminate()
@@ -271,27 +273,15 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         personRow.tap()
         app.buttons["person-detail.edit"].tap()
         XCTAssertTrue(title.waitForExistence(timeout: timeout))
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
-
-        let scaleDeadline = Date().addingTimeInterval(timeout)
-        while Date() < scaleDeadline
-            && (title.frame.height <= normalTitleHeight
-                || cancel.frame.height <= normalCancelHeight
-                || save.frame.height <= normalSaveHeight)
-        {
-            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
-        }
-        XCTAssertEqual(title.label, "Редактирование")
+        XCTAssertFalse(app.keyboards.firstMatch.exists)
+        XCTAssertEqual(title.label, personName)
         XCTAssertGreaterThan(title.frame.height, normalTitleHeight)
-        XCTAssertGreaterThan(cancel.frame.height, normalCancelHeight)
-        XCTAssertGreaterThan(save.frame.height, normalSaveHeight)
         XCTAssertFalse(title.frame.intersects(cancel.frame), "Localized title must not overlap Cancel")
         XCTAssertFalse(title.frame.intersects(save.frame), "Localized title must not overlap Save")
 
         let delete = app.buttons["person-editor.delete"]
         let photo = app.buttons["person-editor.photo"]
         let name = app.textFields["person-editor.name"]
-        let keyboard = app.keyboards.firstMatch
         let scroll = app.scrollViews["person-editor.scroll"]
         XCTAssertTrue(delete.waitForExistence(timeout: timeout))
         XCTAssertTrue(photo.waitForExistence(timeout: timeout))
@@ -320,28 +310,20 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             scroll.frame.minY,
             "Header and scrollable editor content must not overlap"
         )
-        for _ in 0..<5 {
-            if !keyboardIsVisible(keyboard), delete.isHittable { break }
-            if keyboardIsVisible(keyboard), delete.isHittable,
-                delete.frame.maxY <= visibleKeyboardTop(keyboard)
-            {
-                break
-            }
-            guard scrollUpWithinVisibleArea(scroll, aboveKeyboard: keyboard) else { break }
-        }
-        XCTAssertTrue(delete.isHittable, "Delete must remain reachable in the large-type editor")
-        if keyboardIsVisible(keyboard) {
-            XCTAssertLessThanOrEqual(
-                delete.frame.maxY,
-                visibleKeyboardTop(keyboard),
-                "Delete must scroll above the keyboard in the large-type editor"
-            )
-        }
         XCTAssertLessThanOrEqual(headerBottom, scroll.frame.minY, "Header must stay above the scroll viewport")
         XCTAssertTrue(title.isHittable, "The title must stay fully visible after scrolling")
         XCTAssertTrue(cancel.isHittable, "Cancel must stay reachable after scrolling")
         XCTAssertTrue(save.isHittable, "Save must stay reachable after scrolling")
         attach("person-editor-header-accessibility")
+        name.tap()
+        let keyboard = app.keyboards.firstMatch
+        XCTAssertTrue(keyboard.waitForExistence(timeout: timeout))
+        for _ in 0..<5 where !delete.isHittable {
+            guard scrollUpWithinVisibleArea(scroll, aboveKeyboard: keyboard) else { break }
+        }
+        XCTAssertTrue(delete.isHittable, "Delete must remain reachable in the large-type editor")
+        XCTAssertLessThanOrEqual(delete.frame.maxY, visibleKeyboardTop(keyboard))
+        attach("person-editor-header-accessibility-keyboard")
         app.buttons["person-editor.cancel"].tap()
     }
 
@@ -471,22 +453,30 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attach("person-detail")
 
         app.buttons["person-detail.edit"].tap()
-        let editorTitle = app.descendants(matching: .any)["person-editor.title"]
+        let editorTitle = app.staticTexts["person-editor.title"]
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
-        XCTAssertEqual(editorTitle.label, "Edit person")
+        XCTAssertEqual(editorTitle.label, giverName)
         let editorName = app.textFields["person-editor.name"]
         XCTAssertTrue(editorName.waitForExistence(timeout: timeout))
         let editorKeyboard = app.keyboards.firstMatch
-        XCTAssertTrue(editorKeyboard.waitForExistence(timeout: timeout))
-        let choosePhoto = app.buttons["person-editor.photo"]
-        XCTAssertTrue(choosePhoto.waitForExistence(timeout: timeout))
+        XCTAssertFalse(editorKeyboard.exists, "Editing a person should open without the keyboard")
+        let photoControl = app.buttons["person-editor.photo"]
+        XCTAssertTrue(photoControl.waitForExistence(timeout: timeout))
         XCTAssertTrue(app.buttons["person-editor.save"].isEnabled)
         attach("person-editor")
         let editorDelete = app.buttons["person-editor.delete"]
         XCTAssertTrue(editorDelete.waitForExistence(timeout: timeout))
-        assertPersonEditorControlsFitAboveKeyboard([editorName, choosePhoto, editorDelete], keyboard: editorKeyboard)
-        attach("person-editor-keyboard-controls")
+        editorName.tap()
+        XCTAssertTrue(editorKeyboard.waitForExistence(timeout: timeout))
+        assertPersonEditorControlsFitAboveKeyboard([editorName, photoControl, editorDelete], keyboard: editorKeyboard)
+        attach("person-editor-keyboard")
+        editorName.typeText("\n")
+        waitForDisappearance(editorKeyboard)
+        XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
 
+        photoControl.tap()
+        let choosePhoto = app.buttons["person-editor.choose-photo"]
+        XCTAssertTrue(choosePhoto.waitForExistence(timeout: timeout))
         choosePhoto.tap()
         let pickerNavigationBar = app.navigationBars["Photos"]
         XCTAssertTrue(pickerNavigationBar.waitForExistence(timeout: 60))
@@ -506,23 +496,44 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 dy: firstPhoto.frame.midY / windowFrame.height
             )
         ).tap()
+        let cropConfirm = app.buttons["crop.use"]
+        XCTAssertTrue(cropConfirm.waitForExistence(timeout: timeout))
+        attach("person-photo-crop")
+        app.buttons["crop.cancel"].tap()
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
-        let editorReturnDeadline = Date().addingTimeInterval(timeout)
-        while !editorTitle.isHittable && Date() < editorReturnDeadline {
-            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
-        }
-        XCTAssertTrue(editorTitle.isHittable)
-        if !editorKeyboard.exists { editorName.tap() }
-        XCTAssertTrue(editorKeyboard.waitForExistence(timeout: timeout))
+        XCTAssertFalse(app.buttons["person-editor.remove-photo"].exists)
+        attach("person-editor-crop-cancelled")
+
+        photoControl.tap()
+        XCTAssertTrue(choosePhoto.waitForExistence(timeout: timeout))
+        choosePhoto.tap()
+        XCTAssertTrue(pickerNavigationBar.waitForExistence(timeout: 60))
+        XCTAssertTrue(photoImages.firstMatch.waitForExistence(timeout: 60))
+        let secondPhoto = photoImages.firstMatch
+        let secondWindowFrame = app.windows.firstMatch.frame
+        app.coordinate(
+            withNormalizedOffset: CGVector(
+                dx: secondPhoto.frame.midX / secondWindowFrame.width,
+                dy: secondPhoto.frame.midY / secondWindowFrame.height
+            )
+        ).tap()
+        XCTAssertTrue(cropConfirm.waitForExistence(timeout: timeout))
+        let cropWindow = app.windows.firstMatch
+        cropWindow.pinch(withScale: 1.35, velocity: 1)
+        let cropStart = cropWindow.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55))
+        let cropEnd = cropWindow.coordinate(withNormalizedOffset: CGVector(dx: 0.56, dy: 0.5))
+        cropStart.press(forDuration: 0.1, thenDragTo: cropEnd)
+        attach("person-photo-crop-adjusted")
+        cropConfirm.tap()
+        XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
+        attach("person-editor-photo")
         let removePhoto = app.buttons["person-editor.remove-photo"]
+        photoControl.tap()
         XCTAssertTrue(removePhoto.waitForExistence(timeout: timeout))
-        let photoEditorDelete = app.buttons["person-editor.delete"]
-        let changePhoto = app.buttons["person-editor.photo"]
-        let photoSave = app.buttons["person-editor.save"]
-        assertPersonEditorControlsFitAboveKeyboard(
-            [editorName, changePhoto, removePhoto, photoEditorDelete, photoSave],
-            keyboard: editorKeyboard
-        )
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
+        editorName.tap()
+        XCTAssertTrue(editorKeyboard.waitForExistence(timeout: timeout))
+        attach("person-editor-photo-keyboard")
         attach("person-editor-selected-photo")
         app.buttons["person-editor.save"].tap()
         waitForDisappearance(editorTitle)
@@ -536,11 +547,42 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attach("person-detail-selected-photo")
 
         app.buttons["person-detail.edit"].tap()
-        XCTAssertTrue(app.buttons["person-editor.remove-photo"].waitForExistence(timeout: timeout))
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
-        XCTAssertEqual(editorTitle.label, "Edit person")
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
+        XCTAssertEqual(editorTitle.label, giverName)
+        XCTAssertFalse(app.keyboards.firstMatch.exists)
+        photoControl.tap()
+        XCTAssertTrue(removePhoto.waitForExistence(timeout: timeout))
+        attach("person-editor-photo-persisted")
+        let changePhoto = app.buttons["person-editor.choose-photo"]
+        XCTAssertTrue(changePhoto.waitForExistence(timeout: timeout))
+        changePhoto.tap()
+        XCTAssertTrue(pickerNavigationBar.waitForExistence(timeout: 60))
+        XCTAssertTrue(photoImages.firstMatch.waitForExistence(timeout: 60))
+        let replacementPhoto = photoImages.firstMatch
+        let replacementWindow = app.windows.firstMatch.frame
+        app.coordinate(
+            withNormalizedOffset: CGVector(
+                dx: replacementPhoto.frame.midX / replacementWindow.width,
+                dy: replacementPhoto.frame.midY / replacementWindow.height
+            )
+        ).tap()
+        XCTAssertTrue(cropConfirm.waitForExistence(timeout: timeout))
+        attach("person-photo-replacement-crop")
+        app.buttons["crop.cancel"].tap()
+        XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
+        photoControl.tap()
+        XCTAssertTrue(removePhoto.waitForExistence(timeout: timeout))
+        attach("person-editor-existing-photo-crop-cancelled")
+        removePhoto.tap()
+        attach("person-editor-photo-removed")
         XCTAssertTrue(app.buttons["person-editor.save"].isEnabled)
+        app.buttons["person-editor.save"].tap()
+        XCTAssertTrue(detailNavigationBar.waitForExistence(timeout: timeout))
+        app.buttons["person-detail.edit"].tap()
+        photoControl.tap()
+        XCTAssertFalse(removePhoto.exists, "Removing and saving should persist the missing photo")
+        attach("person-editor-photo-removal-persisted")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
         app.buttons["person-editor.cancel"].tap()
         app.navigationBars[giverName].buttons["BackButton"].tap()
         app.tabBars.buttons["Home"].tap()

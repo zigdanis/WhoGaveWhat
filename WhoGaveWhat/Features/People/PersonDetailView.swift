@@ -159,6 +159,7 @@ struct PersonDetailView: View {
             initialName: name,
             initialImageData: composition.data.entityImageData(entityId),
             deleteConfirmationMessage: personDeleteMessage(name, count: count),
+            focusesNameOnAppear: false,
             onCancel: { renaming = false },
             onSave: { newName, imageData in
                 try composition.updatePerson(id: entityId, name: newName, imageData: imageData)
