@@ -155,10 +155,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         personRow.tap()
         let detailNavigationBar = app.navigationBars[giverName]
         XCTAssertTrue(detailNavigationBar.waitForExistence(timeout: timeout))
-        let hero = app.otherElements["person-detail.hero"]
+        let hero = app.images["person-detail.hero"]
         XCTAssertTrue(hero.waitForExistence(timeout: timeout))
-        let heroNames = hero.staticTexts.matching(NSPredicate(format: "label == %@", giverName))
-        XCTAssertEqual(heroNames.count, 0)
+        let displayedNames = app.staticTexts.matching(NSPredicate(format: "label == %@", giverName))
+        XCTAssertEqual(displayedNames.count, 1)
         attach("person-detail")
 
         app.buttons["Edit name"].tap()
