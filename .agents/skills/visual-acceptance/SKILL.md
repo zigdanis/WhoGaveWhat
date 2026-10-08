@@ -19,7 +19,9 @@ capture, retrieval, and publication commands.
    extracted frames for transitions and inspect the recording itself when
    timing or animation matters. Write a short English review outside the
    checkout, publish screenshots and video with
-   `scripts/pr-visual-evidence.py`, then run `scripts/pr-evidence-gate.py`.
+   `scripts/pr-visual-evidence.py`, then inspect every rendered compact
+   attachment in the PR at 1280×800 and run `scripts/pr-evidence-gate.py`.
+   Follow `docs/pr-evidence.md` for attachment layout.
 4. After every push or full CI rerun, retrieve and inspect the latest attempt
    and republish evidence. Old media cannot establish current-head acceptance.
 
