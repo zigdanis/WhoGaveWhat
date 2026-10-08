@@ -82,8 +82,9 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
         let value = app.textFields["add-gift.value"]
         value.tap()
-        value.typeText("42")
+        waitForKeyboardFocus(value)
         XCTAssertTrue(keyboard.waitForExistence(timeout: timeout))
+        value.typeText("42")
         assertExpandedSheetUsesAvailableHeight()
         assertSaveReachableAboveKeyboard(save, keyboard: keyboard)
         attach("gift-content-sized-details-keyboard")
@@ -383,14 +384,19 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         assertCompactSheetFrame()
         attach("gift-compact-dismissed")
 
-        app.buttons["add-gift.details"].tap()
+        let details = app.buttons["add-gift.details"]
+        details.tap()
         XCTAssertTrue(app.textFields["add-gift.value"].waitForExistence(timeout: timeout))
+        XCTAssertEqual(details.value as? String, "Shown")
         let value = app.textFields["add-gift.value"]
-        value.tap()
-        value.typeText("42")
-        XCTAssertEqual(value.value as? String, "42")
         let save = app.buttons["add-gift.save"]
         XCTAssertTrue(save.waitForExistence(timeout: timeout))
+        assertDetailsContentFits(save)
+        value.tap()
+        waitForKeyboardFocus(value)
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
+        value.typeText("42")
+        XCTAssertEqual(value.value as? String, "42")
         let keyboard = app.keyboards.firstMatch
         assertSaveReachableAboveKeyboard(save, keyboard: keyboard)
         attach("details-value")
@@ -867,6 +873,17 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         let predicate = NSPredicate(format: "exists == false")
         let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
         XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed)
+    }
+
+    private func waitForKeyboardFocus(_ element: XCUIElement) {
+        let focusedElement = app.descendants(matching: .any)
+            .matching(identifier: element.identifier)
+            .matching(NSPredicate(format: "hasKeyboardFocus == true"))
+            .firstMatch
+        XCTAssertTrue(
+            focusedElement.waitForExistence(timeout: timeout),
+            "Text field did not acquire keyboard focus: \(element)"
+        )
     }
 
     private func waitForValue(_ element: XCUIElement, expected: String) {
