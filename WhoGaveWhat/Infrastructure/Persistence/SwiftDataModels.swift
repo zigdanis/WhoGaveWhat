@@ -8,7 +8,7 @@ final class StoredPerson {
     var colorHex: Int64
     var roleRawValue: String
     var sortIndex: Int
-    var imageData: Data?
+    @Attribute(.externalStorage) var imageData: Data?
     @Relationship(deleteRule: .cascade, inverse: \StoredGift.giver)
     var giftsGiven: [StoredGift] = []
     @Relationship(deleteRule: .cascade, inverse: \StoredGift.recipient)

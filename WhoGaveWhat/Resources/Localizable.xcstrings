@@ -1003,6 +1003,13 @@
         "ru" : { "stringUnit" : { "state" : "translated", "value" : "Фото и имя" } }
       }
     },
+    "OK" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "OK" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "ОК" } }
+      }
+    },
     "Remove photo" : {
       "extractionState" : "manual",
       "localizations" : {

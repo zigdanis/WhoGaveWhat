@@ -7,11 +7,12 @@ struct AvatarView: View {
     var size: CGFloat = 44
     var selected = false
     var imageData: Data?
+    @State private var decodedImage: UIImage?
 
     var body: some View {
         Group {
-            if let imageData, let image = UIImage(data: imageData) {
-                Image(uiImage: image).resizable().scaledToFill()
+            if let decodedImage {
+                Image(uiImage: decodedImage).resizable().scaledToFill()
             } else if initials.isEmpty {
                 Image(systemName: "person.fill")
                     .font(.system(size: size * 0.38, weight: .medium))
@@ -25,6 +26,8 @@ struct AvatarView: View {
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous))
         .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(color))
+        .onAppear { updateImageCache() }
+        .onChange(of: imageData) { _, _ in updateImageCache() }
         .overlay {
             if selected {
                 RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
@@ -34,5 +37,9 @@ struct AvatarView: View {
                             .stroke(color, lineWidth: 2).padding(-3.5))
             }
         }
+    }
+
+    private func updateImageCache() {
+        decodedImage = imageData.flatMap { UIImage(data: $0) }
     }
 }
