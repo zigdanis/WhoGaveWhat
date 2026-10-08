@@ -203,9 +203,9 @@ private struct PersonEditorHeader: View {
         HStack(spacing: 12) {
             Button(action: onCancel) {
                 Image(systemName: "xmark")
-                    .font(.title3.weight(.semibold))
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(Color.ink)
-                    .frame(width: 42, height: 42)
+                    .frame(width: 44, height: 44)
                     .background(Color.card, in: Circle())
             }
             .accessibilityLabel(Text("Cancel"))
@@ -225,9 +225,9 @@ private struct PersonEditorHeader: View {
 
             Button(action: onSave) {
                 Image(systemName: "checkmark")
-                    .font(.title3.weight(.semibold))
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(Color.white)
-                    .frame(width: 42, height: 42)
+                    .frame(width: 44, height: 44)
                     .background(canSave ? Color.ink : Color.muted3, in: Circle())
             }
             .disabled(!canSave)
@@ -301,7 +301,7 @@ private struct PersonEditorPhotoMenu: View {
                         .clipShape(Circle())
                         .overlay(Circle().stroke(Color.sep, lineWidth: 1))
                     Image(systemName: isLoading ? "hourglass" : "plus")
-                        .font(.caption.weight(.bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(Color.white)
                         .frame(width: 28, height: 28)
                         .background(Color.ink, in: Circle())

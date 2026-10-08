@@ -228,7 +228,7 @@ struct PersonPhotoCropView: View {
     ) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.title3.weight(.semibold))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(Color.white)
                 .frame(width: 48, height: 48)
                 .background(prominent ? Color.accentColor : Color.white.opacity(0.12), in: Circle())

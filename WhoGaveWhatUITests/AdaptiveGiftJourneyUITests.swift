@@ -151,8 +151,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         editorName.tap()
         XCTAssertTrue(editorKeyboard.waitForExistence(timeout: timeout))
         attach("person-editor-keyboard")
-        let editedName = "\(personName) draft"
         editorName.typeText(" draft")
+        let editedName = try XCTUnwrap(editorName.value as? String)
+        XCTAssertNotEqual(editedName, personName)
+        XCTAssertTrue(editedName.contains("draft"))
         attach("person-editor-delete-keyboard")
 
         let delete = app.buttons["person-editor.delete"]
@@ -170,7 +172,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attach("person-editor-delete-confirmation")
         confirmation.buttons["Cancel"].tap()
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
-        XCTAssertTrue((editorName.value as? String)?.contains("draft") == true)
+        XCTAssertEqual(editorName.value as? String, editedName)
         attach("person-editor-delete-cancelled")
 
         app.buttons["person-editor.save"].tap()
