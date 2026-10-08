@@ -203,8 +203,11 @@ class EvidenceExportTests(unittest.TestCase):
             self.assertEqual([1, 2], generations)
             self.assertEqual('failure', metadata['journey_outcome'])
             self.assertNotEqual('success', metadata['export_outcome'])
-            self.assertEqual('app-smoke', metadata['evidence_kind'])
-            self.assertEqual('Native gift and person regression journey', metadata['scenario'])
+            self.assertEqual('feature-acceptance', metadata['evidence_kind'])
+            self.assertEqual(
+                'Native People disclosure and detail navigation plus grouped person editing, photo crop cancel and confirm, and photo persistence and removal',
+                metadata['scenario'],
+            )
             self.assertFalse((directory / 'journeys.mp4').exists())
             self.assertFalse((directory / 'index.html').exists())
             self.assertFalse((directory / 'attachments/people.png').exists())

@@ -186,7 +186,6 @@ struct PersonRow: View {
             Spacer(minLength: 8)
             Text(formattedCurrency(gifts.totalValue, code: currencyCode))
                 .font(Font.app(15, .semibold)).foregroundColor(Color.ink)
-            Chevron()
         }
         .padding(.horizontal, 0).padding(.vertical, 13)
         .contentShape(Rectangle())

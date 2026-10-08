@@ -992,6 +992,20 @@
         "ru" : { "stringUnit" : { "state" : "translated", "value" : "Изменить фото" } }
       }
     },
+    "Photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Photo" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Фото" } }
+      }
+    },
+    "Use photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use photo" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Использовать фото" } }
+      }
+    },
     "A person with this name already exists." : {
       "extractionState" : "manual",
       "localizations" : {

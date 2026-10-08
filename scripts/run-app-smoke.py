@@ -16,14 +16,20 @@ class NativeCommandError(ValueError):
 
 
 PLANNED_CHECKPOINT_NAMES = (
-    "home-start", "people", "insights", "gift-compact-keyboard", "gift-compact-dismissed",
+    "home-start", "people", "people-populated", "insights", "gift-compact-keyboard", "gift-compact-dismissed",
     "details-value", "gift-saved", "gift-after-relaunch", "settings-currency", "licenses",
     "calendar-reverse", "gift-content-sized-compact-keyboard", "gift-content-sized-details",
     "gift-content-sized-details-keyboard", "gift-content-sized-refocused-compact-keyboard",
     "person-add-cancel-draft", "person-add-created", "person-editor-delete-keyboard",
     "person-editor-delete-confirmation", "person-editor-delete-cancelled", "person-add-deleted",
-    "person-editor", "person-editor-header-accessibility", "person-editor-keyboard-controls", "person-editor-selected-photo",
-    "person-editor-russian",
+    "person-editor", "person-editor-photo", "person-detail", "person-editor-keyboard",
+    "person-editor-header-accessibility", "person-editor-header-accessibility-keyboard",
+    "person-editor-russian", "person-editor-russian-keyboard", "person-photo-picker",
+    "person-photo-crop", "person-editor-crop-cancelled", "person-photo-crop-adjusted",
+    "person-editor-photo-keyboard", "person-editor-selected-photo", "person-detail-selected-photo",
+    "person-editor-photo-persisted", "person-photo-replacement-crop",
+    "person-editor-existing-photo-crop-cancelled", "person-editor-photo-removed",
+    "person-editor-photo-removal-persisted",
 )
 GENERATED_LOG_LABELS = (
     "simulator-list", "simulator-boot", "simulator-bootstatus", "record-video",
@@ -278,7 +284,8 @@ def run(directory):
     metadata = {
         "head_sha": head_sha, "checkout_sha": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         "run_id": os.environ.get("GITHUB_RUN_ID", "local"), "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "1"),
-        "evidence_kind": "app-smoke", "scenario": "Native gift and person regression journey",
+        "evidence_kind": "feature-acceptance",
+        "scenario": "Native People disclosure and detail navigation plus grouped person editing, photo crop cancel and confirm, and photo persistence and removal",
         "journey_outcome": "failure", "export_outcome": "failure", "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"),
         "checkpoints": [], "native_test": "WhoGaveWhat scheme complete test suite (unit and UI tests)",
         "planned_checkpoint_names": list(PLANNED_CHECKPOINT_NAMES),
