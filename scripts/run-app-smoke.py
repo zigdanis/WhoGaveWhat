@@ -15,6 +15,18 @@ class NativeCommandError(ValueError):
     """An Apple tool failed or exceeded its bounded timeout."""
 
 
+PLANNED_CHECKPOINT_NAMES = (
+    "home-start", "people", "insights", "gift-compact-keyboard", "gift-compact-dismissed",
+    "details-value", "gift-saved", "gift-after-relaunch", "settings-currency", "licenses",
+    "calendar-reverse", "gift-content-sized-compact-keyboard", "gift-content-sized-details",
+    "gift-content-sized-details-keyboard", "gift-content-sized-refocused-compact-keyboard",
+    "person-add-cancel-draft", "person-add-created", "person-editor-delete-keyboard",
+    "person-editor-delete-confirmation", "person-editor-delete-cancelled", "person-add-deleted",
+    "person-editor", "person-editor-keyboard-controls", "person-editor-selected-photo",
+    "person-editor-russian",
+)
+
+
 def _diagnose_processes(directory, label):
     try:
         process = subprocess.run(["ps", "-Ao", "pid,ppid,stat,etime,command"],
@@ -179,11 +191,10 @@ def run(directory):
     metadata = {
         "head_sha": head_sha, "checkout_sha": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         "run_id": os.environ.get("GITHUB_RUN_ID", "local"), "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "1"),
-        "evidence_kind": "feature-acceptance", "scenario": "Native XCTest PR13 feature acceptance journey",
+        "evidence_kind": "feature-acceptance", "scenario": "PR25 adaptive gift and person acceptance journey",
         "journey_outcome": "failure", "export_outcome": "failure", "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"),
-        "checkpoints": [], "native_test": "WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testAdaptiveGiftJourney",
-        "planned_checkpoint_names": ["home-start", "people", "insights", "gift-compact-keyboard", "gift-compact-dismissed",
-                                      "details-value", "gift-saved", "gift-after-relaunch", "settings-currency", "licenses", "calendar-reverse"],
+        "checkpoints": [], "native_test": "WhoGaveWhat scheme complete test suite (unit and UI tests)",
+        "planned_checkpoint_names": list(PLANNED_CHECKPOINT_NAMES),
     }
     simulator = None
     recording = None

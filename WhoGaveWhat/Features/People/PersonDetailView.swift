@@ -1,6 +1,4 @@
-import PhotosUI
 import SwiftUI
-import UIKit
 
 /// A person's gift history. Built as a native `List` so its rows open / swipe-to-
 /// delete exactly like Home, reusing `GiftRow` + `GiftDetailView`. The header
@@ -14,15 +12,6 @@ struct PersonDetailView: View {
     @State private var pendingDelete: Gift?
     /// Rename sheet state.
     @State private var renaming = false
-    @State private var draftName = ""
-    /// Whether the big "delete this person" warning is showing.
-    @State private var confirmingPersonDelete = false
-    @State private var selectedPhotoItem: PhotosPickerItem?
-    @State private var draftImageData: Data?
-    @State private var isLoadingPhoto = false
-    @State private var photoLoadTask: Task<Void, Never>?
-    @State private var editorError: String?
-    @State private var photoSessionID = UUID()
 
     private var filterOptions: [Segmented.Option] {
         [
@@ -125,21 +114,14 @@ struct PersonDetailView: View {
             if composition.deletePersonUseCase.canDelete(id: entityId) {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        photoLoadTask?.cancel()
-                        photoSessionID = UUID()
-                        isLoadingPhoto = false
-                        selectedPhotoItem = nil
-                        editorError = nil
-                        draftName = name
-                        draftImageData = composition.data.entityImageData(entityId)
-                        selectedPhotoItem = nil
                         renaming = true
                     } label: {
                         Image(systemName: "pencil")
                             .font(.system(size: 17, weight: .semibold))
                     }
                     .tint(Color.recv)
-                    .accessibilityLabel("Edit name")
+                    .accessibilityLabel("Edit person")
+                    .accessibilityIdentifier("person-detail.edit")
                 }
             }
         }
@@ -160,23 +142,6 @@ struct PersonDetailView: View {
         .sheet(isPresented: $renaming) {
             renameSheet(name: name, count: giftsCount)
         }
-        // Big, hard-to-miss irreversible warning before deleting the person.
-        .confirmationDialog(
-            personDeleteTitle(name),
-            isPresented: $confirmingPersonDelete,
-            titleVisibility: .visible
-        ) {
-            Button(
-                deletePersonActionLabel(giftsCount),
-                role: .destructive
-            ) {
-                composition.deletePerson(id: entityId)
-                dismiss()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text(personDeleteMessage(name, count: giftsCount))
-        }
     }
 
     /// Drives the per-gift delete dialog off the optional pending gift.
@@ -188,121 +153,22 @@ struct PersonDetailView: View {
 
     // MARK: Rename + delete person
 
-    @ViewBuilder
     private func renameSheet(name: String, count: Int) -> some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Name", text: $draftName)
-                        .font(Font.app(17, .regular))
-                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                        Label(draftImageData == nil ? "Choose photo" : "Change photo", systemImage: "photo")
-                    }
-                    .disabled(isLoadingPhoto)
-                    if draftImageData != nil {
-                        Button("Remove photo", role: .destructive) {
-                            photoLoadTask?.cancel()
-                            isLoadingPhoto = false
-                            selectedPhotoItem = nil
-                            draftImageData = nil
-                        }
-                    }
-                }
-                Section {
-                    Button(role: .destructive) {
-                        renaming = false
-                        // Let the sheet finish dismissing before the dialog rises.
-                        confirmingPersonDelete = true
-                    } label: {
-                        HStack {
-                            Image(systemName: "trash")
-                            Text("Delete person")
-                        }
-                    }
-                }
+        PersonEditorSheet(
+            title: "Edit person",
+            initialName: name,
+            initialImageData: composition.data.entityImageData(entityId),
+            deleteConfirmationMessage: personDeleteMessage(name, count: count),
+            onCancel: { renaming = false },
+            onSave: { newName, imageData in
+                try composition.updatePerson(id: entityId, name: newName, imageData: imageData)
+                renaming = false
+            },
+            onDelete: {
+                composition.deletePerson(id: entityId)
+                dismiss()
             }
-            .navigationTitle("Edit name")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { renaming = false }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        do {
-                            try composition.updatePerson(
-                                id: entityId, name: draftName, imageData: draftImageData)
-                            renaming = false
-                        } catch PersonUpdateError.duplicateName {
-                            editorError = NSLocalizedString("A person with this name already exists.", comment: "")
-                        } catch {
-                            editorError = NSLocalizedString("Could not save person changes.", comment: "")
-                        }
-                    }
-                    .fontWeight(.semibold)
-                    .disabled(draftName.trimmingCharacters(in: .whitespaces).isEmpty || isLoadingPhoto)
-                }
-            }
-        }
-        .onChange(of: selectedPhotoItem) { _, item in
-            photoLoadTask?.cancel()
-            guard let item else { return }
-            let sessionID = photoSessionID
-            isLoadingPhoto = true
-            photoLoadTask = Task {
-                defer {
-                    if photoSessionID == sessionID, selectedPhotoItem == item { isLoadingPhoto = false }
-                }
-                do {
-                    guard let data = try await item.loadTransferable(type: Data.self),
-                        let processed = downsampledImageData(data),
-                        !Task.isCancelled
-                    else { throw CocoaError(.fileReadCorruptFile) }
-                    guard photoSessionID == sessionID, selectedPhotoItem == item else { return }
-                    draftImageData = processed
-                } catch is CancellationError {
-                    return
-                } catch {
-                    guard photoSessionID == sessionID, selectedPhotoItem == item else { return }
-                    editorError = NSLocalizedString("Could not load that photo.", comment: "")
-                    isLoadingPhoto = false
-                    selectedPhotoItem = nil
-                }
-            }
-        }
-        .alert(
-            "Photo and name",
-            isPresented: Binding(
-                get: { editorError != nil }, set: { if !$0 { editorError = nil } })
-        ) {
-            Button("OK", role: .cancel) { editorError = nil }
-        } message: {
-            Text(editorError ?? "")
-        }
-        .onDisappear {
-            photoLoadTask?.cancel()
-            photoLoadTask = nil
-            photoSessionID = UUID()
-            isLoadingPhoto = false
-        }
-        .presentationDetents([.height(260)])
-    }
-
-    private func downsampledImageData(_ data: Data) -> Data? {
-        guard let image = UIImage(data: data) else { return nil }
-        let maxDimension: CGFloat = 640
-        let scale = min(1, maxDimension / max(image.size.width, image.size.height))
-        let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        let renderer = UIGraphicsImageRenderer(size: size, format: format)
-        return renderer.jpegData(withCompressionQuality: 0.75) { _ in
-            image.draw(in: CGRect(origin: .zero, size: size))
-        }
-    }
-
-    private func personDeleteTitle(_ name: String) -> String {
-        String(format: NSLocalizedString("Delete %@?", comment: ""), name)
+        )
     }
 
     private func personDeleteMessage(_ name: String, count: Int) -> String {
@@ -310,11 +176,6 @@ struct PersonDetailView: View {
             "This permanently deletes %1$@ and all %2$lld of their gifts. This cannot be undone.",
             comment: "")
         return String(format: fmt, name, count)
-    }
-
-    private func deletePersonActionLabel(_ count: Int) -> String {
-        let fmt = NSLocalizedString("Delete person and %lld gifts", comment: "")
-        return String(format: fmt, count)
     }
 
     private var emptyText: String {

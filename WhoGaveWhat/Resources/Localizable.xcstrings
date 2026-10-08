@@ -961,6 +961,23 @@
         }
       }
     },
+    "Edit person" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit person"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Редактирование"
+          }
+        }
+      }
+    },
     "Choose photo" : {
       "extractionState" : "manual",
       "localizations" : {

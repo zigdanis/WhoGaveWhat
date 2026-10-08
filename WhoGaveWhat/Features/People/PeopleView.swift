@@ -7,6 +7,7 @@ struct PeopleView: View {
     let composition: AppComposition
     /// Person id awaiting the irreversible delete warning (set by the swipe).
     @State private var pendingDelete: String?
+    @State private var isAddingPerson = false
 
     var body: some View {
         List {
@@ -20,7 +21,25 @@ struct PeopleView: View {
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(Color.bg)
-        .floatingAddButton(composition: composition)
+        .safeAreaInset(edge: .bottom) {
+            AddPersonFloatingAction {
+                isAddingPerson = true
+            }
+        }
+        .sheet(isPresented: $isAddingPerson) {
+            PersonEditorSheet(
+                title: "Add person",
+                initialName: "",
+                showsPhoto: false,
+                onCancel: { isAddingPerson = false },
+                onSave: { name, _ in
+                    guard composition.createPerson(name: name, isFamily: false) != nil else {
+                        throw CocoaError(.validationMissingMandatoryProperty)
+                    }
+                    isAddingPerson = false
+                }
+            )
+        }
         .confirmationDialog(
             personDeleteTitle,
             isPresented: deleteBinding,
@@ -107,6 +126,29 @@ struct PeopleView: View {
 
     private func giftsCount(involving id: String) -> Int {
         composition.data.gifts.filter { $0.giverID == id || $0.recipientID == id }.count
+    }
+}
+
+private struct AddPersonFloatingAction: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label("Add person", systemImage: "plus")
+                .font(Font.app(16, .semibold))
+                .foregroundColor(.white)
+                .padding(.horizontal, 22)
+                .padding(.vertical, 13)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
+                        .fill(Color.ink)
+                )
+                .ksCardShadow(strong: true)
+        }
+        .buttonStyle(.plain)
+        .padding(.bottom, 6)
+        .accessibilityLabel("Add person")
+        .accessibilityIdentifier("people.add-person")
     }
 }
 

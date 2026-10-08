@@ -112,9 +112,7 @@ class EvidenceExportTests(unittest.TestCase):
             recorder.returncode = -signal.SIGINT
             recording = (recorder, log.open('w'))
             stop_recording = smoke.stop_recording
-            named = ['home-start', 'people', 'insights', 'gift-compact-keyboard', 'gift-compact-dismissed',
-                     'details-value', 'gift-saved', 'gift-after-relaunch', 'settings-currency', 'licenses',
-                     'calendar-reverse', 'calendar-4-weeks', 'calendar-6-weeks']
+            named = [*smoke.PLANNED_CHECKPOINT_NAMES, 'calendar-4-weeks', 'calendar-6-weeks']
 
             def native(directory, label, command, timeout, **kwargs):
                 if label == 'simulator-list':
@@ -162,9 +160,7 @@ class EvidenceExportTests(unittest.TestCase):
             attachments = directory / 'attachments'
             def export(command, **kwargs):
                 attachments.mkdir(exist_ok=True)
-                names = ['home-start', 'people', 'insights', 'gift-compact-keyboard', 'gift-compact-dismissed',
-                         'details-value', 'gift-saved', 'gift-after-relaunch', 'settings-currency', 'licenses',
-                         'calendar-reverse', 'calendar-4-weeks', 'calendar-6-weeks']
+                names = [*smoke.PLANNED_CHECKPOINT_NAMES, 'calendar-4-weeks', 'calendar-6-weeks']
                 exported = []
                 for index, name in enumerate(names):
                     filename = f'checkpoint-{index}.png'
@@ -172,9 +168,7 @@ class EvidenceExportTests(unittest.TestCase):
                     exported.append({'exportedFileName': filename, 'suggestedHumanReadableName': f'{name}_1.png'})
                 (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
                 return subprocess.CompletedProcess(command, 0, '', '')
-            metadata = {'planned_checkpoint_names': ['home-start', 'people', 'insights', 'gift-compact-keyboard',
-                'gift-compact-dismissed', 'details-value', 'gift-saved', 'gift-after-relaunch', 'settings-currency',
-                'licenses', 'calendar-reverse'], 'checkpoints': []}
+            metadata = {'planned_checkpoint_names': list(smoke.PLANNED_CHECKPOINT_NAMES), 'checkpoints': []}
             process = Mock()
             process.returncode = 0
             process.communicate.side_effect = lambda timeout: (export([], timeout=timeout) and ('', ''))
