@@ -29,6 +29,7 @@ GENERATED_LOG_LABELS = (
     "simulator-list", "simulator-boot", "simulator-bootstatus", "record-video",
     "record-video-stop", "xcodebuild-test", "export-attachments",
 )
+COLD_BOOT_TIMEOUT_SECONDS = 600
 
 
 def clear_previous_outputs(directory):
@@ -231,7 +232,8 @@ def run(directory):
         metadata.update(device=simulator["name"], simulator_id=simulator_id, runtime=simulator["runtime"])
         if simulator.get("state") != "Booted":
             run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
-        run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"], 180)
+        run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
+                    COLD_BOOT_TIMEOUT_SECONDS)
         recording = start_recording(directory, simulator_id, directory / "journeys.mp4")
         command = ["xcodebuild", "test", "-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
                    "-destination", f"platform=iOS Simulator,id={simulator_id}", "-derivedDataPath", str(directory / "DerivedData"),
