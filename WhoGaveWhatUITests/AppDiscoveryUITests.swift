@@ -253,10 +253,7 @@ final class AppDiscoveryUITests: XCTestCase {
         guard search.waitForExistence(timeout: timeout), search.isHittable else {
             throw DiscoveryFailure.missingSpotlightSearchField(query)
         }
-        search.tap()
-        if let existing = search.value as? String, !existing.isEmpty {
-            search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existing.count))
-        }
+        try clearSpotlightQuery(search)
         search.typeText(query)
         attachSpotlightHierarchy("\(checkpoint)-typed-query", typedValue: search.value as? String)
         XCTAssertEqual(search.value as? String, query)
@@ -287,16 +284,45 @@ final class AppDiscoveryUITests: XCTestCase {
             // Probe the localized title to distinguish missing indexing from missing English aliases.
             // This diagnostic never taps a result or satisfies the failed English acceptance check.
             spotlightQuery = "кто че"
-            search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: query.count))
-            search.typeText("кто че")
-            let diagnosticDeadline = Date().addingTimeInterval(30)
-            while !results.allElementsBoundByIndex.contains(where: { $0.isHittable }), Date() < diagnosticDeadline {
-                RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+            do {
+                try clearSpotlightQuery(search)
+                search.typeText("кто че")
+                let diagnosticDeadline = Date().addingTimeInterval(30)
+                while !results.allElementsBoundByIndex.contains(where: { $0.isHittable }), Date() < diagnosticDeadline {
+                    RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+                }
+            } catch {
+                let failure = XCTAttachment(string: "\(error)")
+                failure.name = "\(checkpoint)-diagnostic-query-failure"
+                failure.lifetime = .keepAlways
+                add(failure)
             }
             attach("\(checkpoint)-diagnostic-russian-title")
             attachSpotlightHierarchy("\(checkpoint)-diagnostic-russian-title", typedValue: search.value as? String)
         }
         throw DiscoveryFailure.missingSpotlightResult(query, failedHierarchy)
+    }
+
+    private func clearSpotlightQuery(_ search: XCUIElement) throws {
+        search.tap()
+        let placeholder = search.placeholderValue
+        if let existing = search.value as? String, !existing.isEmpty, existing != placeholder {
+            // Spotlight restores the previous query with an arbitrary cursor position.
+            // Its observed native clear button removes the complete query in one action.
+            let clear = search.buttons["Clear text"].firstMatch
+            guard clear.waitForExistence(timeout: timeout), clear.isHittable else {
+                throw DiscoveryFailure.missingSpotlightClearControl
+            }
+            clear.tap()
+        }
+        let empty = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == nil OR value == '' OR value == %@", placeholder ?? ""),
+            object: search
+        )
+        guard XCTWaiter.wait(for: [empty], timeout: timeout) == .completed else {
+            throw DiscoveryFailure.spotlightQueryNotCleared(String(describing: search.value))
+        }
+        search.tap()
     }
 
     private func attachSpotlightHierarchy(_ name: String, typedValue: String? = nil) {
@@ -325,6 +351,8 @@ final class AppDiscoveryUITests: XCTestCase {
         case missingHomeIcon(String)
         case spotlightNotForeground
         case missingSpotlightSearchField(String)
+        case missingSpotlightClearControl
+        case spotlightQueryNotCleared(String)
         case missingSpotlightResult(String, String)
     }
 }
