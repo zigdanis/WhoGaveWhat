@@ -127,7 +127,7 @@ private struct RankRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AvatarView(initials: person.name.initials, color: person.color, size: 38)
+            AvatarView(initials: person.name.initials, color: person.color, size: 38, imageData: person.imageData)
             VStack(alignment: .leading, spacing: 9) {
                 HStack(alignment: .firstTextBaseline, spacing: 5) {
                     Text(person.name).font(Font.app(15, .semibold)).foregroundColor(Color.ink)

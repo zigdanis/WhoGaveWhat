@@ -1,19 +1,15 @@
 {
   "target_pull_request": "https://github.com/zigdanis/WhoGaveWhat/pull/20",
   "target_source": "Verified master merge of PR #20; the exact SHA is recorded by the release receipt.",
-  "last_tagged_build": {
-    "tag": "testflight/9",
-    "source_sha": "1cd4e75663c7fbfcc7c634a9c2831bd78a25a051"
-  },
   "latest_uploaded_build": {
-    "version": "1.0.1",
-    "build": "10",
-    "source_sha": "c3e66fb3ed4761b00293ee9e710427dfbed5d1f1",
-    "receipt": "testflight/receipts/37490460342",
+    "version": "1.0.6",
+    "build": "15",
+    "source_sha": "89983b4f3f2ff426bfd51039f48cf3e01c61ad76",
+    "receipt": "testflight/receipts/37857676408",
     "processing": "VALID",
-    "distribution_at_comparison": "WAITING_FOR_BETA_REVIEW"
+    "distribution_at_comparison": "IN_BETA_TESTING"
   },
-  "comparison": "Compared with both recorded sources, this adds one Core Spotlight app-launch item with English and Russian aliases. It refreshes on foreground activation, retries after index failures, and handles opening without changing onboarding, navigation or gift drafts. It does not index gifts or people. Both CFBundleDisplayName and CFBundleName are localized; Russian is lowercase 'кто че' and English remains 'Who Gave'. Other changes cover validation and release documentation. No gift persistence changes.",
-  "unknown_source_gaps": "No gap between the documented build 9 source and build 10 receipt; build 10 was still awaiting external beta review when inspected.",
-  "apple_preflight": "https://github.com/zigdanis/WhoGaveWhat/actions/runs/37532293468"
+  "comparison": "Compared with the latest available build 15 source, this adds one Core Spotlight app-launch item with English and Russian aliases. It refreshes on foreground activation, retries after index failures, and handles opening without changing onboarding, navigation or gift drafts. It does not index gifts or people. Both CFBundleDisplayName and CFBundleName are localized; Russian is lowercase 'кто че' and English remains 'Who Gave'. Existing person editing, profile photo cropping and adaptive gift entry are preserved. Other changes cover native Spotlight acceptance and release documentation. No gift persistence changes.",
+  "unknown_source_gaps": "None: the latest durable receipt records the current master source, valid Apple processing, verified EN/RU notes and tester availability.",
+  "receipt_workflow": "https://github.com/zigdanis/WhoGaveWhat/actions/runs/37857676408"
 }

@@ -961,6 +961,93 @@
         }
       }
     },
+    "Edit person" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit person"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Редактирование"
+          }
+        }
+      }
+    },
+    "Choose photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose photo" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Выбрать фото" } }
+      }
+    },
+    "Change photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Change photo" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Изменить фото" } }
+      }
+    },
+    "Photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Photo" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Фото" } }
+      }
+    },
+    "Use photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use photo" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Использовать фото" } }
+      }
+    },
+    "A person with this name already exists." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "A person with this name already exists." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Человек с таким именем уже существует." } }
+      }
+    },
+    "Could not save person changes." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not save person changes." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Не удалось сохранить изменения." } }
+      }
+    },
+    "Could not load that photo." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not load that photo." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Не удалось загрузить это фото." } }
+      }
+    },
+    "Photo and name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Photo and name" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Фото и имя" } }
+      }
+    },
+    "OK" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "OK" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "ОК" } }
+      }
+    },
+    "Remove photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove photo" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Удалить фото" } }
+      }
+    },
     "estimated" : {
       "extractionState" : "manual",
       "localizations" : {

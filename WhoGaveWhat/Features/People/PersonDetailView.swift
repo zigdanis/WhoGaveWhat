@@ -12,9 +12,6 @@ struct PersonDetailView: View {
     @State private var pendingDelete: Gift?
     /// Rename sheet state.
     @State private var renaming = false
-    @State private var draftName = ""
-    /// Whether the big "delete this person" warning is showing.
-    @State private var confirmingPersonDelete = false
 
     private var filterOptions: [Segmented.Option] {
         [
@@ -51,11 +48,11 @@ struct PersonDetailView: View {
             // Header + stats + filter — quiet rows, no separators.
             Section {
                 VStack(spacing: 0) {
-                    AvatarView(initials: name.initials, color: color, size: 76)
-                    Text(name).font(Font.app(24, .bold)).tracking(-0.4).foregroundColor(Color.ink).padding(.top, 13)
+                    AvatarView(initials: "", color: color, size: 76, imageData: composition.data.entityImageData(entityId))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, 6)
+                .accessibilityIdentifier("person-detail.hero")
 
                 HStack(spacing: 10) {
                     statCard(
@@ -117,14 +114,14 @@ struct PersonDetailView: View {
             if composition.deletePersonUseCase.canDelete(id: entityId) {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        draftName = name
                         renaming = true
                     } label: {
                         Image(systemName: "pencil")
                             .font(.system(size: 17, weight: .semibold))
                     }
                     .tint(Color.recv)
-                    .accessibilityLabel("Edit name")
+                    .accessibilityLabel("Edit person")
+                    .accessibilityIdentifier("person-detail.edit")
                 }
             }
         }
@@ -145,23 +142,6 @@ struct PersonDetailView: View {
         .sheet(isPresented: $renaming) {
             renameSheet(name: name, count: giftsCount)
         }
-        // Big, hard-to-miss irreversible warning before deleting the person.
-        .confirmationDialog(
-            personDeleteTitle(name),
-            isPresented: $confirmingPersonDelete,
-            titleVisibility: .visible
-        ) {
-            Button(
-                deletePersonActionLabel(giftsCount),
-                role: .destructive
-            ) {
-                composition.deletePerson(id: entityId)
-                dismiss()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text(personDeleteMessage(name, count: giftsCount))
-        }
     }
 
     /// Drives the per-gift delete dialog off the optional pending gift.
@@ -173,48 +153,23 @@ struct PersonDetailView: View {
 
     // MARK: Rename + delete person
 
-    @ViewBuilder
     private func renameSheet(name: String, count: Int) -> some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Name", text: $draftName)
-                        .font(Font.app(17, .regular))
-                }
-                Section {
-                    Button(role: .destructive) {
-                        renaming = false
-                        // Let the sheet finish dismissing before the dialog rises.
-                        confirmingPersonDelete = true
-                    } label: {
-                        HStack {
-                            Image(systemName: "trash")
-                            Text("Delete person")
-                        }
-                    }
-                }
+        PersonEditorSheet(
+            title: "Edit person",
+            initialName: name,
+            initialImageData: composition.data.entityImageData(entityId),
+            deleteConfirmationMessage: personDeleteMessage(name, count: count),
+            focusesNameOnAppear: false,
+            onCancel: { renaming = false },
+            onSave: { newName, imageData in
+                try composition.updatePerson(id: entityId, name: newName, imageData: imageData)
+                renaming = false
+            },
+            onDelete: {
+                composition.deletePerson(id: entityId)
+                dismiss()
             }
-            .navigationTitle("Edit name")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { renaming = false }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        composition.renamePerson(id: entityId, newName: draftName)
-                        renaming = false
-                    }
-                    .fontWeight(.semibold)
-                    .disabled(draftName.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-            }
-        }
-        .presentationDetents([.height(260)])
-    }
-
-    private func personDeleteTitle(_ name: String) -> String {
-        String(format: NSLocalizedString("Delete %@?", comment: ""), name)
+        )
     }
 
     private func personDeleteMessage(_ name: String, count: Int) -> String {
@@ -222,11 +177,6 @@ struct PersonDetailView: View {
             "This permanently deletes %1$@ and all %2$lld of their gifts. This cannot be undone.",
             comment: "")
         return String(format: fmt, name, count)
-    }
-
-    private func deletePersonActionLabel(_ count: Int) -> String {
-        let fmt = NSLocalizedString("Delete person and %lld gifts", comment: "")
-        return String(format: fmt, count)
     }
 
     private var emptyText: String {

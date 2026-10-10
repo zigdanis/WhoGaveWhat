@@ -7,6 +7,7 @@ struct PeopleView: View {
     let composition: AppComposition
     /// Person id awaiting the irreversible delete warning (set by the swipe).
     @State private var pendingDelete: String?
+    @State private var isAddingPerson = false
 
     var body: some View {
         List {
@@ -20,7 +21,25 @@ struct PeopleView: View {
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(Color.bg)
-        .floatingAddButton(composition: composition)
+        .safeAreaInset(edge: .bottom) {
+            AddPersonFloatingAction {
+                isAddingPerson = true
+            }
+        }
+        .sheet(isPresented: $isAddingPerson) {
+            PersonEditorSheet(
+                title: "Add person",
+                initialName: "",
+                showsPhoto: false,
+                onCancel: { isAddingPerson = false },
+                onSave: { name, _ in
+                    guard composition.createPerson(name: name, isFamily: false) != nil else {
+                        throw CocoaError(.validationMissingMandatoryProperty)
+                    }
+                    isAddingPerson = false
+                }
+            )
+        }
         .confirmationDialog(
             personDeleteTitle,
             isPresented: deleteBinding,
@@ -51,6 +70,7 @@ struct PeopleView: View {
                     NavigationLink(value: e.0) {
                         PersonRow(
                             entityId: e.0, name: e.1, color: e.2,
+                            imageData: composition.data.entityImageData(e.0),
                             gifts: gifts(for: e.0),
                             currencyCode: composition.currencyCode)
                     }
@@ -109,10 +129,34 @@ struct PeopleView: View {
     }
 }
 
+private struct AddPersonFloatingAction: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label("Add person", systemImage: "plus")
+                .font(Font.app(16, .semibold))
+                .foregroundColor(.white)
+                .padding(.horizontal, 22)
+                .padding(.vertical, 13)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
+                        .fill(Color.ink)
+                )
+                .ksCardShadow(strong: true)
+        }
+        .buttonStyle(.plain)
+        .padding(.bottom, 6)
+        .accessibilityLabel("Add person")
+        .accessibilityIdentifier("people.add-person")
+    }
+}
+
 struct PersonRow: View {
     let entityId: String
     let name: String
     let color: Color
+    let imageData: Data?
     let gifts: [Gift]
     let currencyCode: String
 
@@ -133,7 +177,7 @@ struct PersonRow: View {
         }.count
 
         HStack(spacing: 12) {
-            AvatarView(initials: name.initials, color: color, size: 42)
+            AvatarView(initials: name.initials, color: color, size: 42, imageData: imageData)
             VStack(alignment: .leading, spacing: 2) {
                 Text(name).font(Font.app(16, .semibold)).foregroundColor(Color.ink)
                 Text("\(r) received · \(gv) given")
@@ -142,7 +186,6 @@ struct PersonRow: View {
             Spacer(minLength: 8)
             Text(formattedCurrency(gifts.totalValue, code: currencyCode))
                 .font(Font.app(15, .semibold)).foregroundColor(Color.ink)
-            Chevron()
         }
         .padding(.horizontal, 0).padding(.vertical, 13)
         .contentShape(Rectangle())

@@ -8,8 +8,9 @@ Claude Design.
 
 ```bash
 open WhoGaveWhat.xcodeproj      # then ⌘R
-# or use the repository-configured CLI:
-xcodebuildmcp simulator build-and-run
+# or build for an installed Simulator:
+xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 ```
 
 - **Minimum iOS:** 26.0 — built against the iOS 26 SDK, native **Liquid Glass** throughout (no back-deployment).
@@ -64,7 +65,8 @@ Launch env vars jump straight to a state (used for verification / previews):
 `KS_START=app|signin`, `KS_TAB=home|people|insights`, `KS_SHEET=1`.
 
 ```bash
-xcodebuildmcp simulator launch-app --bundle-id pro.ziganshin.WhoGaveWhat --json '{"env":{"KS_START":"app","KS_TAB":"insights"}}'
+SIMCTL_CHILD_KS_START=app SIMCTL_CHILD_KS_TAB=insights \
+  xcrun simctl launch booted pro.ziganshin.WhoGaveWhat
 ```
 
 ## Tests & CI
@@ -74,7 +76,7 @@ suggestions, save validation and direction, router behavior, insights, and persi
 write-through against isolated in-memory SwiftData stores.
 
 ```bash
-xcodebuildmcp simulator test
+python3 scripts/run-app-smoke.py /tmp/whogavewhat-evidence
 ```
 
 GitHub Actions (`.github/workflows/tests.yml`) runs the suite on every push to
@@ -88,10 +90,14 @@ The canonical repository is
 configuration from the environment. Contributors can build and test in Simulator;
 for device builds, select your own signing team and bundle identifier in Xcode.
 
-TestFlight remains a manually commanded operation on this repository's `master`,
-using the protected `testflight` environment and a separate private certificate
-repository. Pushes and pull requests do not trigger releases. Publication itself
-does not deploy a build. See [Publication and contribution boundaries](docs/publication.md)
+TestFlight is a manually dispatched operation on this repository's verified
+`master`, using the protected `testflight` environment and a separate private
+certificate repository. The delivery workflow invokes it after each routine
+feature or fix passes implementation, independent review, bot review,
+current-head CI evidence, merge gates, and master CI. Explicit discussion,
+plan-only, PR-only, and do-not-deploy limits opt out. Pushes and pull requests
+do not trigger releases automatically; manual dispatch remains the protected
+release mechanism. See [Publication and contribution boundaries](docs/publication.md)
 and [TestFlight operations](docs/testflight.md).
 
 ## License

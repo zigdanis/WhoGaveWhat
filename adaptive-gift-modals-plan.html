@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Adaptive Gift Modals Plan</title>
+  <style>
+    :root { color-scheme: dark; --bg:#050505; --panel:#0f0f0f; --text:#f4f4f1; --muted:#a7a7a0; --line:#2a2a27; --accent:#fff; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height:1.55; }
+    main { width:min(920px,calc(100vw - 32px)); margin:0 auto; padding:56px 0 80px; }
+    header { border-bottom:1px solid var(--line); padding-bottom:28px; margin-bottom:36px; }
+    h1 { margin:0 0 14px; font-size:clamp(2.1rem,6vw,4.6rem); line-height:.95; letter-spacing:-.03em; }
+    h2 { margin:48px 0 14px; padding-top:12px; border-top:1px solid var(--line); font-size:1.35rem; line-height:1.2; }
+    h3 { margin:26px 0 10px; font-size:1rem; }
+    p { margin:0 0 14px; color:var(--muted); }
+    a { color:var(--text); text-underline-offset:.2em; }
+    ul,ol { margin:0 0 18px; padding-left:1.25rem; color:var(--muted); }
+    li+li { margin-top:8px; }
+    .lede { max-width:760px; color:var(--text); font-size:1.1rem; }
+    .toc,.tldr { border:1px solid var(--line); background:var(--panel); padding:18px 20px; margin:28px 0 10px; }
+    .tldr { border-left:3px solid var(--accent); }
+    .tldr p,.toc ul { margin:0; }
+    .tldr p { color:var(--text); }
+    code { color:var(--text); background:#171717; border:1px solid var(--line); border-radius:4px; padding:.1rem .28rem; }
+    @media (max-width:640px) { main { width:min(100% - 24px,920px); padding-top:32px; } h1 { letter-spacing:-.02em; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Adaptive Gift Modals</h1>
+      <p class="lede">Implementation plan for intrinsically sized Add Gift and calendar sheets, deterministic selection of newly created people, and removal of nonfunctional Settings placeholders.</p>
+    </header>
+    <aside class="tldr" aria-label="TLDR">
+      <p><strong>TLDR:</strong> Replace greedy navigation-container sheet roots and measured detents with a reusable intrinsic modal scaffold plus <code>.presentationSizing(.fitted)</code>. Route both existing-person taps and newly created people through the same endpoint-specific selection callback, and leave Settings with only Currency and Third-party licenses.</p>
+    </aside>
+    <nav class="toc" aria-label="Table of contents">
+      <ul>
+        <li><a href="#context">Context</a></li>
+        <li><a href="#goal">Goal</a></li>
+        <li><a href="#constraints">Constraints</a></li>
+        <li><a href="#options">Options considered</a></li>
+        <li><a href="#approach">Proposed approach</a></li>
+        <li><a href="#work-plan">Work plan</a></li>
+        <li><a href="#risks">Risks</a></li>
+        <li><a href="#verification">Verification</a></li>
+      </ul>
+    </nav>
+
+    <section aria-labelledby="context">
+      <h2 id="context">Context</h2>
+      <p>The current <code>AddGiftSheet</code> combines a <code>NavigationStack</code>, a geometry-measured compact detent, and a large detent. Keyboard presentation can promote it to the large detent. Picker sheets also use a navigation container; despite the calendar’s own intrinsic measurement and fitted sizing, the container accepts excess height and leaves the calendar visually centered inside empty space.</p>
+      <p>Person creation already tries to select the result, but endpoint dispatch is duplicated behind a boolean and lacks acceptance coverage. Settings mixes two functional destinations with local-only toggles, empty actions, static rows, and a hardcoded version that does not match the project setting.</p>
+    </section>
+
+    <section aria-labelledby="goal">
+      <h2 id="goal">Goal</h2>
+      <ul>
+        <li>Select a newly added person automatically for the exact From or To field that launched creation.</li>
+        <li>Make the calendar sheet bottom-attached and only as tall as its intrinsic content.</li>
+        <li>Let Add Gift resize around its content and keyboard without expanding to full-screen height.</li>
+        <li>Remove every nonfunctional Settings option.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="constraints">
+      <h2 id="constraints">Constraints</h2>
+      <ul>
+        <li>The feature branch starts from fetched <code>origin/master</code>.</li>
+        <li>The iOS 26 deployment target supports fitted presentation sizing.</li>
+        <li>Long content, edit mode, Dynamic Type, and keyboard-visible states must remain scrollable.</li>
+        <li>UI verification must use XcodeBuildMCP, reuse an already-running simulator, and prefer iPhone 17 Pro otherwise.</li>
+        <li>All GitHub-facing text must be English.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="options">
+      <h2 id="options">Options Considered</h2>
+      <h3>Intrinsic scaffold plus fitted sheet — selected</h3>
+      <p>A non-greedy <code>VStack</code>-based modal scaffold reports its ideal size while an internal scroll view handles genuine overflow. This follows content, Details expansion, and the keyboard without keyboard notifications or fixed-height calculations.</p>
+      <h3>Geometry-measured custom detents — rejected</h3>
+      <p>The current approach is self-referential: container and keyboard changes influence the measured height and the system can still promote the presentation to its large detent.</p>
+      <h3>Forced popover or inline overlay — rejected</h3>
+      <p>Compact-width popover adaptation changes anchoring and dismissal semantics, while a custom overlay would recreate presentation, keyboard, and accessibility behavior already handled by native sheets.</p>
+      <p>A UIKit custom presentation controller with <code>preferredContentSize</code> remains a fallback only if runtime testing shows fitted sizing is defective.</p>
+    </section>
+
+    <section aria-labelledby="approach">
+      <h2 id="approach">Proposed Approach</h2>
+      <ol>
+        <li>Add a small reusable modal header/scaffold with intrinsic vertical layout, optional leading action, and narrowly scoped inputs.</li>
+        <li>Restructure <code>AddGiftSheet.swift</code> around that scaffold. Remove custom detent state and geometry measurement, retain overflow scrolling and focus dismissal, and apply <code>.presentationSizing(.fitted)</code>.</li>
+        <li>Move picker presentation into a dedicated <code>AddGiftPickerSheet.swift</code>. Use the same scaffold for the calendar and avoid any spacer or max-height root. Keep existing detents for genuinely long list pickers unless runtime behavior supports fitting them too.</li>
+        <li>Change person creation to return an ID and pass that ID through the same <code>onSelection</code> callback used by existing rows. The parent supplies <code>selectFrom</code> or <code>selectTo</code>, eliminating boolean endpoint dispatch.</li>
+        <li>Simplify <code>SettingsView.swift</code> to Currency and Third-party licenses only. Remove profile, Notifications, Default view, iCloud sync, Export, Rate, Privacy Policy, Version, Sign out, and all now-unused state/helpers.</li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="work-plan">
+      <h2 id="work-plan">Work Plan</h2>
+      <ol>
+        <li>Add focused state/callback tests for new-person selection in both From and To flows, including duplicate-name reuse.</li>
+        <li>Implement the reusable modal scaffold and migrate Add Gift without changing its save/focus semantics.</li>
+        <li>Migrate picker composition, preserve list picker behavior, and make the calendar’s intrinsic size determine its sheet height.</li>
+        <li>Remove Settings placeholders and dead supporting code.</li>
+        <li>Build and run tests, then walk all modified UI scenarios and capture screenshots.</li>
+        <li>Submit a draft PR, obtain independent review, correct every blocker in focused commits, then monitor CI and review feedback until green.</li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="risks">
+      <h2 id="risks">Risks</h2>
+      <ul>
+        <li>A six-row calendar month may change <code>UICalendarView</code> height; navigation between short and long months must invalidate fitted sizing correctly.</li>
+        <li>Expanded Details, larger Dynamic Type, or edit mode may exceed available height; the scaffold must compress the scroll region, not clip content.</li>
+        <li>Removing Version follows the strict placeholder interpretation because it is hardcoded, mismatched, and presented with an action chevron.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="verification">
+      <h2 id="verification">Verification</h2>
+      <ul>
+        <li>Run the complete test suite and build through XcodeBuildMCP.</li>
+        <li>Verify Add Gift with the name keyboard, expanded Details, value keyboard, and dismissed keyboard.</li>
+        <li>Add a new From person and a separate new To person; confirm each underlying field updates automatically.</li>
+        <li>Open Date, confirm no large blank region, and navigate across four-, five-, and six-row months.</li>
+        <li>Open Settings, confirm placeholders are absent, and verify Currency and licenses still navigate.</li>
+        <li>Capture and visually inspect snapshots for the modified scenarios.</li>
+      </ul>
+      <p><strong>Verification needed:</strong> the current host does not provide <code>xcrun</code>, so simulator/runtime checks may require the configured Mac/Xcode runner. This will be re-checked through XcodeBuildMCP during implementation.</p>
+    </section>
+  </main>
+</body>
+</html>

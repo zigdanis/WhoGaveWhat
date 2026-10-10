@@ -1,74 +1,73 @@
 ---
 name: whogavewhat-delivery
-description: Deliver WhoGaveWhat fixes, features, improvements, and TestFlight build requests with bounded implementation, independent review, visual verification, and a monitored PR. Use for action requests in this repository; exclude read-only questions and general discussion.
+description: Deliver WhoGaveWhat features, fixes, improvements, and build work through implementation delegation, independent review, current-head CI visual evidence, autonomous merge, and receipt-backed TestFlight release. Use automatically for action requests; exclude read-only discussion and plan-only requests.
 ---
 
 # WhoGaveWhat delivery
 
-Own the requested outcome until it is demonstrated on the current head. Follow
-repository instructions and existing helpers; keep unrelated user changes intact.
+Own an authorized implementation-to-TestFlight outcome until it is demonstrated
+on the current head and the resulting master build is recorded. Keep the Mac
+optional: on Linux or Raspberry Pi, use the PR's macOS CI for native tests,
+Simulator capture, screenshots, and video. Read [visual acceptance](../visual-acceptance/SKILL.md)
+and [TestFlight operations](../../../docs/testflight.md) before those stages.
 
-## Establish and implement
+## Workflow
 
-1. Inspect the request and relevant code, including actual screenshots when supplied.
-   Define observable acceptance criteria and checks for each. For bugs, use
-   `diagnosing-bugs` when available. Apply the relevant SwiftUI skills to native UI
-   work. Read [visual-acceptance](../visual-acceptance/SKILL.md) before validation.
-2. Inspect the working tree, branch, existing PR and current checks. Continue an
-   existing task PR where appropriate. Register every PR worked on using T3
-   `link_pull_request` when available; verify the thread's PR list before handoff.
-3. Delegate bounded implementation with acceptance criteria, relevant files,
-   exclusive ownership and validation requirements. Keep branch/push/PR mutations
-   with the coordinator. If delegation is unavailable, continue the authorized
-   work and state that limitation.
-4. Integrate the smallest appropriate change and focused contract tests. Use
-   XcodeBuildMCP for native operations and reuse a launched iPhone; the authorized
-   TestFlight Release archive/IPA export exception uses Fastlane `gym` as described
-   in `docs/testflight.md`.
-   On Raspberry Pi, use the macOS CI workflow from
-   [docs/pr-evidence.md](../../../docs/pr-evidence.md). After a UI iteration, walk
-   the changed scenario and inspect its screenshots and recording against every
-   criterion; correct failures on the same PR before declaring acceptance.
+Before delegating implementation or review, follow
+[agent model selection](../../../AGENTS.md#agent-model-selection).
 
-Finish implementation when relevant checks and current visual evidence demonstrate
-all acceptance criteria. Distinguish observed behavior from code-based hypotheses.
+1. Inspect the request, repository rules, current branch/PR, and relevant code.
+   Define observable acceptance criteria and use the applicable SwiftUI or bug
+   diagnosis guidance. Preserve unrelated changes. A read-only discussion or
+   plan-only request ends after the requested answer or plan. A PR-only limit
+   still runs implementation, review, CI, and media, then stops at a clean PR
+   handoff. A do-not-deploy limit still permits an authorized merge and master
+   CI, then stops before TestFlight.
+2. Delegate bounded implementation to one implementation agent with explicit
+   ownership, criteria, and validation. Keep branch, PR, merge, and release
+   mutations with the coordinator. Register every worked PR with T3
+   `link_pull_request` when available.
+3. Obtain a distinct read-only review agent after implementation. The reviewer
+   checks concrete correctness, requested behavior, and current visual evidence
+   where relevant. Fix every actionable finding through the implementation
+   agent, rerun covering checks, and send the result back for re-review.
+4. Run repository checks and the full Tests workflow. On Linux/Raspberry Pi,
+   retrieve the current-head artifact with `scripts/pr-evidence.sh PR_NUMBER`.
+   Inspect selected screenshots and the original video against each criterion;
+   extend the CI journey when app smoke does not exercise the changed feature.
+   Fix concrete evidence failures on the same PR and refresh evidence after
+   every push or rerun.
+5. Wait for terminal bot reviews and required checks. Validate each finding,
+   fix concrete issues, rerun the covering checks, and re-review. Publish an
+   English PR description containing inspected current-head screenshots and
+   video using the existing evidence helper; the evidence gate must pass.
+6. When the current head is green, independent and bot reviews are terminal,
+   no actionable conversation remains, and evidence is current, merge or enable
+   auto-merge according to [AGENTS.md](../../../AGENTS.md#merge-and-approval-policy),
+   unless the user explicitly requested PR-only.
+   Verify the resulting master commit and its Tests run before release.
+7. For a routine feature, fix, improvement, or build request, dispatch the
+   protected TestFlight workflow from verified master unless the user explicitly
+   requested PR-only or do-not-deploy. Use the
+   canonical explicit `--repo`, prepared EN/RU notes, and the existing receipt
+   helper. Resume the exact receipt after interrupted processing or uncertain
+   upload; never create a duplicate build. Report version/build, Apple
+   processing, beta review, and tester availability separately.
 
-## Review and convergence
+## Boundaries
 
-1. Open a draft task PR while acceptance is being established. Run formatting,
-   SwiftLint and helper tests as repository instructions require. Native tests
-   and app smoke run through the existing Tests workflow.
-2. Have an independent agent review concrete correctness against
-   [.macroscope/correctness/correctness.md](../../../.macroscope/correctness/correctness.md)
-   and request coverage. For visible changes, an independent reviewer also checks
-   actual feature screenshots and the relevant video. No findings is valid.
-3. Write an English PR description around the resulting behavior and validation.
-   Every PR, including documentation and infrastructure, embeds inspected current
-   screenshots and video using `visual-acceptance`; app smoke covers changes with
-   no visible effect. Run the evidence gate and verify the published description.
-4. Once implementation, checks, independent review and evidence pass, mark the
-   draft ready and await bot reviews. Use `babysit-pr` when available. Validate
-   each finding, fix concrete problems, run the covering checks, and reply with
-   evidence before resolving its conversation.
-5. After every push, recheck the latest head, required checks, new reviews and
-   unresolved conversations. Refresh evidence invalidated by a push or CI rerun.
-   Repeat for new changes, failed checks or actionable findings.
+Routine implementation-to-TestFlight authorization is standing in this
+repository for every feature, fix, improvement, and build request. Explicit
+discussion and plan-only requests opt out of delivery; PR-only stops after a
+clean reviewed PR, and do-not-deploy stops after an authorized merge and master
+CI. Do not ask for a second confirmation at merge or beta-release gates. Stop and report only a
+genuine credential, Apple, or legal/account blocker, or a concrete one-way-door
+action with substantial loss risk. Preserve the manual `workflow_dispatch`
+release mechanism; never turn every push into a release. Local Mac access is
+optional because CI provides native verification.
 
-Hand off when the current head is green, reviewers have reached a terminal state,
-no actionable conversation remains and the PR contains current inspected media.
-Follow repository merge instructions; do not infer merge authority from deployment
-or feature authorization. Report the PR, verified outcome and exact remaining gaps.
-
-## TestFlight
-
-For deployment-only work, inspect the selected existing source and evidence instead
-of manufacturing app changes. Follow
-[docs/testflight.md](../../../docs/testflight.md) for source/CI checks, prepared EN/RU
-notes, manual dispatch, receipts and recovery. Ordinary fixes, green CI and PR
-approval do not authorize TestFlight; honor explicit release authorization already
-present in the session without asking again for the same scope.
-
-Deploy only verified master source. Resume the recorded release after interrupted
-processing or upload; never create another build to compensate for an uncertain
-result. Report actual version/build, Apple processing, locale read-back and tester
-availability separately. Device delivery requires Danis's confirmation.
+Follow the native execution policy in [AGENTS.md](../../../AGENTS.md#xcode-and-simulator-execution):
+local and CI operations use direct Apple tools, with CI driven through the
+evidence runner. XcodeBuildMCP is optional for specific capabilities. The signed Release archive and IPA export
+may use Fastlane `gym` under the documented environment gate. Keep generated
+artifacts outside the checkout and remove downloaded evidence after inspection.

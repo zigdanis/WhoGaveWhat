@@ -1,6 +1,5 @@
 import importlib.util
 import json
-import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -90,53 +89,19 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(status.call_args.args[2], 'failure')
 
 
-class MCPTests(unittest.TestCase):
-    def test_settings_duplicate_native_hierarchy_selects_one_physical_row(self):
-        # Reduced from the actual iOS 26.6 General snapshot: the row and its
-        # inner button are each exposed twice with the same semantic label.
-        outer = dict(ref='e92', role='button', label='Language & Region', actions=['tap'],
-                     frame=dict(x=20, y=744.33, width=362, height=53))
-        inner = dict(outer, ref='e95', frame=dict(x=34, y=757, width=190.33, height=28))
-        capture = {'elements': [outer, inner, dict(outer, ref='e130'), dict(inner, ref='e133')]}
-        self.assertEqual(smoke.setting_control(capture, 'Language & Region'), 'e92')
-        self.assertIsNone(smoke.setting_control(capture, 'Missing row'))
-        capture['elements'].append(dict(outer, ref='e200', frame=dict(x=20, y=100, width=362, height=53)))
-        with self.assertRaisesRegex(ValueError, 'Ambiguous'):
-            smoke.setting_control(capture, 'Language & Region')
-
-    def test_process_status_and_structured_errors_all_fail(self):
-        for code, payload in [(1, {'didError': False}), (0, {'didError': True}),
-                              (0, {'isError': True, 'didError': False}), (0, {'data': {}}),
-                              (0, {'result': {'didError': True}})]:
-            with self.subTest(payload=payload), self.assertRaises(ValueError):
-                smoke.checked_output(subprocess.CompletedProcess([], code, json.dumps(payload), ''))
-        process = subprocess.CompletedProcess([], 0, '{"didError":false,"data":{"capture":"ok"}}', '')
-        self.assertEqual(smoke.checked_output(process), {'capture': 'ok'})
-
+class SimulatorSelectionTests(unittest.TestCase):
     def test_booted_iphone_is_reused_and_latest_preferred_runtime_selected(self):
-        phones = [dict(name='iPhone 17 Pro', isAvailable=True, state='Shutdown', simulatorId='new', runtime='iOS 26.5'),
-                  dict(name='iPhone 16', isAvailable=True, state='Booted', simulatorId='existing', runtime='iOS 26.2')]
-        self.assertEqual(smoke.select_simulator(phones)['simulatorId'], 'existing')
-        phones[1]['state'] = 'Shutdown'
-        self.assertEqual(smoke.select_simulator(phones)['simulatorId'], 'new')
+        devices = {'devices': {
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
+                dict(name='iPhone 17 Pro', isAvailable=True, state='Shutdown', udid='new')],
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-2': [
+                dict(name='iPhone 16', isAvailable=True, state='Booted', udid='existing')],
+        }}
+        self.assertEqual(smoke.select_simulator(devices)['udid'], 'existing')
+        devices['devices']['com.apple.CoreSimulator.SimRuntime.iOS-26-2'][0]['state'] = 'Shutdown'
+        self.assertEqual(smoke.select_simulator(devices)['udid'], 'new')
         with self.assertRaises(ValueError):
-            smoke.select_simulator([phones[1]])
-
-    def test_navigation_requires_heading_and_selected_tab_from_actual_mcp_schema(self):
-        heading = dict(role='other', identifier='People', state={'visible': True})
-        tab = dict(role='tab', label='People', value='1')
-        smoke.assert_tab_screen({'elements': [heading, tab]}, 'People')
-        for elements in [[tab], [heading], [heading, dict(tab, value='0')],
-                         [dict(heading, state={'visible': False}), tab]]:
-            with self.subTest(elements=elements), self.assertRaises(ValueError):
-                smoke.assert_tab_screen({'elements': elements}, 'People')
-
-    def test_taps_require_current_unambiguous_actionable_ref(self):
-        element = dict(label='People', role='tab', actions=['tap'], ref='e1')
-        self.assertEqual(smoke.target({'elements': [element]}, 'People', 'tab'), 'e1')
-        for elements in [[], [element, dict(element)], [dict(element, actions=[])]]:
-            with self.assertRaises(ValueError):
-                smoke.target({'elements': elements}, 'People', 'tab')
+            smoke.select_simulator({'devices': {'runtime': [dict(name='iPhone 16', isAvailable=True, state='Shutdown')]}})
 
 
 if __name__ == '__main__':

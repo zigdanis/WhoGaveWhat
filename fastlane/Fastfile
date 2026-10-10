@@ -103,7 +103,7 @@ platform :ios do
 
   def validate_native_release_build
     unless ENV['ALLOW_NATIVE_RELEASE_BUILD'] == 'true'
-      UI.user_error!('Release archive/export needs explicit authorization: XcodeBuildMCP 2.7.0 has no IPA export tool. See docs/testflight.md.')
+      UI.user_error!('Release archive/export needs explicit authorization: set ALLOW_NATIVE_RELEASE_BUILD=true. See docs/testflight.md.')
     end
   end
 

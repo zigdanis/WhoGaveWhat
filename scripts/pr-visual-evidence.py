@@ -3,6 +3,8 @@
 
 import argparse
 import json
+import re
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -14,6 +16,8 @@ from evidence_validation import metadata_comment, checked_run
 START = "<!-- visual-evidence:start -->"
 END = "<!-- visual-evidence:end -->"
 MAX_BYTES = 10 * 1024 * 1024
+MAX_WIDTH = 320
+MAX_HEIGHT = 640
 
 
 def gh(*arguments):
@@ -36,14 +40,61 @@ def media_file(directory, relative, suffix):
     path = (directory / relative).resolve()
     if not path.is_relative_to(directory) or path.suffix.lower() != suffix:
         raise ValueError(f"Expected a {suffix} file inside the evidence directory: {relative}")
-    if not path.is_file() or not 0 < path.stat().st_size <= MAX_BYTES:
-        raise ValueError(f"Media must be nonempty and at most 10 MiB: {relative}")
-    header = path.read_bytes()[:12]
+    if not path.is_file() or path.stat().st_size == 0:
+        raise ValueError(f"Media must be a nonempty file: {relative}")
+    with path.open("rb") as stream:
+        header = stream.read(12)
     if suffix == ".png" and not header.startswith(b"\x89PNG\r\n\x1a\n"):
         raise ValueError("Screenshot is not a PNG file")
     if suffix == ".mp4" and header[4:8] != b"ftyp":
         raise ValueError("Video is not an MP4 file")
     return path
+
+
+def compact_media(directory, images, videos, temporary):
+    sources = ([media_file(directory, name, ".png") for name in images]
+               + [media_file(directory, name, ".mp4") for name in videos])
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        raise ValueError("ffmpeg is required to create compact PR evidence; install it with `brew install ffmpeg` or `sudo apt install ffmpeg`.")
+
+    compacted = []
+    for index, source in enumerate(sources):
+        output_directory = temporary / f"{index:02d}"
+        output_directory.mkdir()
+        output = output_directory / source.name
+        if source.suffix.lower() == ".png":
+            command = [ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error", "-y",
+                       "-i", str(source), "-frames:v", "1", "-vf",
+                       f"scale=w='min({MAX_WIDTH},iw)':h='min({MAX_HEIGHT},ih)':force_original_aspect_ratio=decrease",
+                       "-compression_level", "9", str(output)]
+        else:
+            command = [ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error", "-y",
+                       "-i", str(source), "-map", "0:v:0", "-map", "0:a?", "-vf",
+                       f"scale=w='min({MAX_WIDTH},iw)':h='min({MAX_HEIGHT},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2",
+                       "-c:v", "libx264", "-preset", "veryfast", "-crf", "28", "-pix_fmt", "yuv420p",
+                       "-c:a", "aac", "-b:a", "96k",
+                       "-fps_mode", "passthrough", "-movflags", "+faststart", str(output)]
+        try:
+            subprocess.run(command, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as error:
+            detail = error.stderr.strip() or "unknown conversion error"
+            raise ValueError(f"Could not create compact evidence for {source.name}: {detail}") from error
+        with output.open("rb") as stream:
+            header = stream.read(12)
+        if output.suffix == ".png" and not header.startswith(b"\x89PNG\r\n\x1a\n"):
+            raise ValueError(f"ffmpeg did not create a valid PNG derivative for {source.name}")
+        if output.suffix == ".mp4" and header[4:8] != b"ftyp":
+            raise ValueError(f"ffmpeg did not create a valid MP4 derivative for {source.name}")
+        if not 0 < output.stat().st_size <= MAX_BYTES:
+            raise ValueError(f"Compact media must be nonempty and at most 10 MiB: {source.name}")
+        compacted.append(output)
+    return compacted
+
+
+def image_label(path):
+    label = " ".join(word.capitalize() for word in re.findall(r"[A-Za-z0-9]+", path.stem))
+    return label or "Screenshot"
 
 
 def update_body(endpoint, body):
@@ -76,9 +127,9 @@ def publish(number, directory, summary, images, videos):
         raise ValueError("Summary must not contain visual evidence markers.")
     if not images or not videos:
         raise ValueError("Every PR needs at least one PNG screenshot AND one MP4 video.")
-    media = [media_file(directory, name, ".png") for name in images]
-    media += [media_file(directory, name, ".mp4") for name in videos]
-    if not 1 <= len(media) <= 50 or len(set(media)) != len(media):
+    sources = [media_file(directory, name, ".png") for name in images]
+    sources += [media_file(directory, name, ".mp4") for name in videos]
+    if not 1 <= len(sources) <= 50 or len(set(sources)) != len(sources):
         raise ValueError("Select 1–50 distinct screenshots or short videos.")
     repository = json.loads(gh("api", "repos/{owner}/{repo}"))
     repo = repository["full_name"]
@@ -90,19 +141,23 @@ def publish(number, directory, summary, images, videos):
     checked_run(repo, sha, metadata)
     section(pr["body"] or "", "")  # Reject malformed existing markers before uploading.
 
-    # Same native attachment endpoint used by gh --attach, without editing the PR during uploads.
-    attachments = []
-    for path in media:
-        content_type = "video/mp4" if path.suffix.lower() == ".mp4" else "image/png"
-        query = urlencode({"repository_id": repository["id"], "name": path.name, "content_type": content_type})
-        asset = json.loads(gh(
-            "api", f"https://uploads.github.com/user-attachments/assets?{query}",
-            "--method", "POST", "--header", "Content-Type: application/octet-stream", "--input", str(path),
-        ))
-        url = asset.get("url", "")
-        if not url.startswith("https://github.com/user-attachments/assets/"):
-            raise ValueError("GitHub did not return a native attachment URL.")
-        attachments.append((path, url))
+    # Derive and size-check every attachment before the first upload. Temporary media is removed on exit.
+    with tempfile.TemporaryDirectory(prefix="whogavewhat-compact-evidence-") as temporary_directory:
+        media = compact_media(directory, images, videos, Path(temporary_directory))
+
+        # Same native attachment endpoint used by gh --attach, without editing the PR during uploads.
+        attachments = []
+        for path in media:
+            content_type = "video/mp4" if path.suffix.lower() == ".mp4" else "image/png"
+            query = urlencode({"repository_id": repository["id"], "name": path.name, "content_type": content_type})
+            asset = json.loads(gh(
+                "api", f"https://uploads.github.com/user-attachments/assets?{query}",
+                "--method", "POST", "--header", "Content-Type: application/octet-stream", "--input", str(path),
+            ))
+            url = asset.get("url", "")
+            if not url.startswith("https://github.com/user-attachments/assets/"):
+                raise ValueError("GitHub did not return a native attachment URL.")
+            attachments.append((path, url))
 
     run = checked_run(repo, sha, metadata)
 
@@ -118,8 +173,13 @@ def publish(number, directory, summary, images, videos):
         f"{metadata['device']} / iOS {metadata['runtime']} / Xcode {metadata['xcode']}\n\n"
         f"{summary.strip()}\n\n"
     )
+    image_attachments = [(path, url) for path, url in attachments if path.suffix.lower() == ".png"]
+    for index in range(0, len(image_attachments), 2):
+        row = image_attachments[index:index + 2]
+        evidence += " ".join(f"![{image_label(path)}]({url})" for path, url in row) + "\n\n"
     for path, url in attachments:
-        evidence += url + "\n\n" if path.suffix.lower() == ".mp4" else f"![Simulator checkpoint]({url})\n\n"
+        if path.suffix.lower() == ".mp4":
+            evidence += url + "\n\n"
     evidence += END
     # GitHub does not support conditional PR writes. Re-read after the slow uploads, immediately before PATCH.
     current = json.loads(gh("api", endpoint))

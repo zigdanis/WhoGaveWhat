@@ -10,7 +10,7 @@ if ! scripts/run-swift-format.sh lint \
   --strict \
   --recursive \
   --parallel \
-  WhoGaveWhat WhoGaveWhatTests; then
+  WhoGaveWhat WhoGaveWhatTests WhoGaveWhatUITests; then
   echo "error: Swift formatting check failed; run scripts/format-swift.sh" >&2
   exit 1
 fi

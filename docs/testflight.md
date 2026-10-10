@@ -8,11 +8,13 @@ environment allows only `master` before proceeding. The workflow accepts manual
 dispatches on the canonical repository's `master` only. Public forks and external
 pull requests cannot use this release path. See [Publication boundaries](publication.md).
 
-Tell the deployment thread **“Deploy WhoGaveWhat to TestFlight”**. Releases use a
-manual `workflow_dispatch` on `master`, with no push/merge trigger. Each new
-release advances version and build; retries keep the recorded identity. An
-ordinary feature request, PR approval or green CI does not authorize distribution.
-Honor explicit deployment authorization already given for this scope.
+The delivery workflow uses a manual `workflow_dispatch` on verified `master`,
+with no push/merge trigger. Every routine feature, fix, improvement, and build
+request authorizes this beta release path; explicit PR-only and do-not-deploy
+limits stop before release. Discussion and plan-only requests do not enter the
+delivery workflow. No second deployment confirmation is needed. Each new release
+advances version and build; retries keep the recorded identity. PR approval or
+green CI alone does not start a release.
 
 The implementation ports GrowingUp PRs 41, 43, 44, 45 and 47. WhoGaveWhat has one
 app (`pro.ziganshin.WhoGaveWhat`) and generates its Info.plist from build settings;
@@ -38,14 +40,10 @@ Required environment variables: `APPLE_TEAM_ID` (your Apple Developer team),
 resolve ambiguity in existing Apple records. Store `BETA_TESTER_EMAIL`,
 `BETA_FEEDBACK_EMAIL` and missing review contact data in secrets, not variables.
 
-XcodeBuildMCP 2.7.0 is pinned for native testing, app smoke and Simulator evidence.
-Its `device build` supports extra arguments but always injects a build action,
-project/scheme, destination and DerivedData arguments. It has no archive/export
-command that exports an IPA. Consequently the release lane gates Fastlane `gym`
-archive/export on `ALLOW_NATIVE_RELEASE_BUILD=true` in the environment variables.
-Danis authorized this bounded exception in the deployment setup: Fastlane performs
-the signed Release archive and IPA export; native tests, simulator operations and
-visual evidence continue through XcodeBuildMCP. The exception is recorded in
+Native testing and Simulator evidence use direct Apple tools under `AGENTS.md`.
+The release lane gates Fastlane `gym` archive/export on
+`ALLOW_NATIVE_RELEASE_BUILD=true` in the environment variables.
+Danis authorized Fastlane for the signed Release archive and IPA export. The release exception is recorded in
 `AGENTS.md` and the environment gate is enabled. Preflight, status and notes do
 not archive or upload. A deployment without the gate fails before reserving a
 version/build. Credential access and signing still require a successful preflight;
@@ -85,7 +83,8 @@ storage. Do not paste keys or passwords into a conversation or commit them.
 
 Review the workflow and its current screenshots/video using
 [PR evidence](pr-evidence.md) before enabling it on master. Follow the repository's
-merge authority; deployment authorization does not grant merge authority.
+the [merge and approval policy](../AGENTS.md#merge-and-approval-policy); routine
+deployment authorization includes the normal merge after all gates pass.
 
 ```sh
 python3 scripts/testflight.py --repo zigdanis/WhoGaveWhat ready

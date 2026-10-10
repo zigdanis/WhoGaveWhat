@@ -2,15 +2,14 @@
 
 Every PR includes reviewed screenshots **and** a video in its description, including changes to documentation, tooling and CI. A link to a workflow or a downloadable artifact alone does not satisfy this requirement.
 
-The `Tests` workflow has no path filters. It runs Python helpers, Ruby release coordinator/archive/signing tests and secret checks on Linux, Swift formatting and SwiftLint on macOS, then unit tests and an app smoke scenario on macOS 26 with Xcode 26.6. XcodeBuildMCP 2.7.0 performs all Xcode and Simulator operations. It reuses a booted iPhone when one exists and otherwise selects iPhone 17 Pro on the newest available runtime.
+The `Tests` workflow has no path filters. It runs Python helpers, Ruby release coordinator/archive/signing tests and secret checks on Linux, Swift formatting and SwiftLint on macOS, then unit tests and the native XCUITest acceptance journey on the default macOS 26 ARM runner with Xcode 26.6. The native runner image provides the iOS 26.5 Simulator runtime. The smoke runner uses Apple's `xcodebuild`, `xcrun simctl`, and `xcresulttool` directly. It reuses a booted iPhone when one exists and otherwise selects iPhone 17 Pro on the newest available runtime. A cold first boot can spend several minutes in Apple's data migration, so `simctl bootstatus` has a bounded 10-minute allowance; its progress log and process diagnostics are retained on timeout. Recording is stopped with SIGINT so `simctl` can finalize the MP4; command output and process diagnostics are retained when native operations fail or time out. Timed-out commands terminate their process group with bounded cleanup; if group signaling is denied, the runner signals its own process and preserves captured output even when children retain inherited pipes.
 
 ## Local development
 
-Install the pinned CLI from the project skill and SwiftLint with Homebrew:
+Install SwiftLint with Homebrew. Xcode and its command line tools provide the native build and Simulator commands:
 
 ```sh
-npm install --global xcodebuildmcp@2.7.0
-brew install swiftlint
+brew install swiftlint ffmpeg
 scripts/format-swift.sh
 scripts/check-formatting.sh
 scripts/lint-swift.sh
@@ -25,11 +24,11 @@ To run the same app validation on a Mac:
 python3 scripts/run-app-smoke.py /tmp/whogavewhat-evidence
 ```
 
-It tests the app, builds and launches it, then records Home → People → Insights → Add a gift. Existing `KS_START` / `KS_TAB` launch settings open the app in English at Home. This scenario visits the real app with its existing store; it does not modify or erase a reused Simulator. The smoke checks navigation and media capture. It does not assert gift creation or acceptance of a UI feature.
+The runner invokes the complete `WhoGaveWhat` scheme test suite with `xcodebuild test`. The native journey checks navigation, compact gift entry and keyboard, Details and value entry, calendar grids with different week counts, creation and automatic selection of people, duplicate-person reuse, save and relaunch persistence, currency selection, and bundled licenses. It creates uniquely named records through the real UI in the existing store; it never erases a reused Simulator. XCTest keeps named screenshots, which the runner exports from the result bundle, while `simctl io recordVideo` captures the journey. Reusing the same evidence directory removes only the runner's known generated outputs first; unrelated files and Simulator data remain. Failed tests retain their new screenshots, the accessibility hierarchy, command logs, and result bundle for diagnosis.
 
-CI also passes `--verify-app-names` on its disposable Simulator. This checks the built English/Russian system-name resources and records language selection in iOS Settings, the Home-screen label, and the Russian app interface while the system remains English. Use this option only on a disposable Simulator because it changes language preferences. These checkpoints distinguish app language from the name chosen by iOS. The scenario also searches actual Spotlight results with `кто че` and `who gave`, opens both, checks preservation of an unsaved gift draft, and checks a cold launch into onboarding. Spotlight contains only an app launcher, not gifts or people.
+CI also passes `--verify-app-names` on its disposable Simulator. This checks the built English/Russian system-name resources and records language selection in iOS Settings, the Home-screen label, and the Russian app interface while the system remains English. Use this option only on a disposable Simulator because it changes language preferences. These checkpoints distinguish app language from the name chosen by iOS. The scenario also searches actual Spotlight results with `кто че` and `Who Gave`, opens both, checks preservation of an unsaved gift draft, and checks a cold launch into onboarding. Spotlight contains only an app launcher, not gifts or people.
 
-AXe typing supports ASCII only. For the Russian query, the scenario uses the MCP debugger to put the public app name on UIKit's general pasteboard while the app is foreground, detaches, and uses Spotlight's system Paste action. It verifies the exact search-field value before inspecting actual results. This prepares input only; it does not insert search results or modify the index, navigation, or gift data.
+The disposable-Simulator language and Spotlight journey is implemented in `AppDiscoveryUITests`. XCUITest types both the English and Cyrillic queries directly into SpringBoard's real search field, verifies the entered value, waits for an actual launcher result cell, and taps that result. It captures the real system UI and asserts the app's foreground state, draft value, selected tab, and cold-launch onboarding. There is no debugger or injected search state. The runner requires every language/Spotlight checkpoint and verifies the compiled localized `CFBundleName`, `CFBundleDisplayName`, and Spotlight activity declaration before accepting the artifact. Plain local smoke skips this Settings journey; pass `--verify-app-names` only on a disposable Simulator.
 
 ## Retrieve and inspect current evidence
 
@@ -55,9 +54,9 @@ Open the artifact's `index.html`, inspect every selected PNG, and watch `journey
 ffmpeg -i /tmp/ARTIFACT/journeys.mp4 -vf fps=1/2 /tmp/ARTIFACT/frame-%04d.png
 ```
 
-PNG checkpoints are normalized from XcodeBuildMCP's optimized JPEG captures (up to 800 pixels). The MP4 records the Simulator through MCP. Review the original video as well as frames where a transition, animation or transient failure matters. The report and metadata identify the source head, checkout merge commit, device, runtime, Xcode and capture outcome.
+PNG checkpoints are native XCTest screenshot attachments exported from the result bundle and mapped by their attachment names. The MP4 records the Simulator through `simctl`. Review the original video as well as frames where a transition, animation or transient failure matters. The report and metadata identify the source head, checkout merge commit, device, runtime, Xcode and capture outcome.
 
-For a UI change, extend the recorded scenario to exercise that change and its success, error and dismissal paths as relevant. Set the resulting artifact's `evidence_kind` to `feature-acceptance` only when it records that scenario. Review the feature's checkpoints and recording; app smoke alone cannot establish feature acceptance. For infrastructure and documentation changes, use `app-smoke` and describe the basic screens inspected.
+For a UI change, extend the recorded scenario to exercise that change and its success, error and dismissal paths as relevant. Set the resulting artifact's `evidence_kind` to `feature-acceptance` only when it records that scenario. Review the feature's checkpoints and recording; app smoke alone cannot establish feature acceptance. For infrastructure and documentation changes, describe the environment integrity demonstrated by the existing journey; do not claim acceptance of an unrelated feature.
 
 ## Embed screenshots and video
 
@@ -68,20 +67,24 @@ Write a short English review outside the repository, identifying what you inspec
 ```sh
 python3 scripts/pr-visual-evidence.py PR_NUMBER /tmp/ARTIFACT \
   --summary-file /tmp/visual-review.md \
-  --image attachments/home.png \
+  --image attachments/home-start.png \
   --image attachments/people.png \
   --image attachments/insights.png \
-  --image attachments/add-gift.png \
+  --image attachments/gift-compact-keyboard.png \
   --video journeys.mp4
 python3 scripts/pr-evidence-gate.py PR_NUMBER
 ```
 
-Each selected file must be a real, nonempty PNG or MP4 inside the artifact directory and at most 10 MiB. For an oversized recording, use ffmpeg to produce a smaller MP4 inside that directory, inspect it and pass its relative filename. Keep the same source metadata. Publication validates the latest successful run and attempt, uploads native attachments and updates only the marked evidence section, preserving other PR text. It rechecks the PR and CI afterward and invalidates stale evidence if a concurrent push or rerun occurs. Upload failures do not partially replace the PR body.
+Each source must be a real, nonempty PNG or MP4 inside the artifact directory; the source may exceed 10 MiB. The publisher requires local `ffmpeg`, derives temporary upload copies, and removes them when it exits. PNGs are scaled without upscaling to fit within 320×640 while preserving aspect ratio. Videos keep their complete duration and timing, and are encoded as H.264/yuv420p MP4 with fast start and even dimensions, scaled to fit the same bounds. Every derived file must be nonempty, have a valid PNG or MP4 signature, and fit within the 10 MiB upload limit. All media is converted and checked before any attachment upload or PR edit. If ffmpeg is missing, install it with `brew install ffmpeg` on macOS or `sudo apt install ffmpeg` on Ubuntu.
+
+Inspect every original checkpoint and the full recording before publication. After publishing, inspect every rendered compact attachment in the PR at a 1280×800 viewport: check screenshot sharpness and grouping, confirm each screenshot stays within the compact bounds, and play the native video to its end. The description places two screenshot embeds in one Markdown paragraph, separated by a space, with a blank line between pairs. Two per row fit typical MacBook PR widths; three 320-pixel images span 960 pixels before page margins. Descriptive filenames become English screenshot alt labels. Each video attachment URL stays on its own line so GitHub renders its native player.
+
+Publication validates the latest successful run and attempt, uploads the compact native attachments and updates only the marked evidence section, preserving other PR text. It rechecks the PR and CI afterward and invalidates stale evidence if a concurrent push or rerun occurs. Upload failures do not partially replace the PR body.
 
 The separate `PR evidence gate` runs on PR edits, pushes and completed `Tests` runs. It executes trusted base/default-branch scripts with a read-only source checkout, reads PR metadata and posts a `Visual evidence` status on the actual PR head. It checks that both native media links are embedded, labelled, and tied to the latest passing run and attempt. It does not execute PR code or artifacts and is independent of `Tests`, so publication has no circular dependency. Human or agent inspection remains the acceptance step; the gate cannot verify the contents of a reviewer's claims.
 
-This workflow starts automatically after it exists on the base branch. The initial setup PR uses the same validator manually. The evidence workflow posts a status; it does not configure branch protection or required checks. Repository rules determine whether a failing status prevents merging. Hand over only passing, reviewed PRs and leave merging to Danis.
+This workflow starts automatically after it exists on the base branch. The initial setup PR uses the same validator manually. The evidence workflow posts a status; it does not configure branch protection or required checks. Repository rules determine whether a failing status prevents merging. Merge autonomously after the current head passes all required checks, independent and bot review, and inspected evidence, subject to the scope and approval policy in `AGENTS.md`. Verify master CI before TestFlight delivery.
 
 ## Raspberry Pi
 
-Run formatting with the installed Swift 6.3 toolchain and the Python helper tests locally. Native iOS tests, SwiftLint and Simulator capture run in GitHub's macOS CI. Retrieve the current run with `scripts/pr-evidence.sh`, inspect the PNG checkpoints and extracted video frames, write the English review, then publish attachments using the existing authenticated `gh` session. If the changed UI scenario needs deeper inspection, use the established Mac execution environment or extend the CI scenario; report any verification limitation explicitly.
+Run formatting with the installed Swift 6.3 toolchain and the Python helper tests locally. Native iOS tests, SwiftLint and Simulator capture run in GitHub's macOS CI. Retrieve the current run with `scripts/pr-evidence.sh`, inspect the PNG checkpoints and extracted video frames, write the English review, then publish attachments using the existing authenticated `gh` session. If the changed UI scenario needs deeper inspection, extend the native XCUITest journey in CI; a local Mac is optional; report any verification limitation explicitly.

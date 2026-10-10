@@ -1,158 +1,391 @@
-import contextlib
 import importlib.util
-import io
 import json
+import os
+import plistlib
 from pathlib import Path
+import signal
 import subprocess
+import sys
 import tempfile
+import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 spec = importlib.util.spec_from_file_location('app_smoke', Path(__file__).parents[1] / 'run-app-smoke.py')
 smoke = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(smoke)
 
 
-def response(error=None, code='ACTION_FAILED'):
-    if error:
-        payload = {'didError': True, 'error': error,
-                   'data': {'uiError': {'code': code, 'message': error}}}
-    else:
-        payload = {'didError': False, 'error': None, 'data': {'capture': {'screenHash': 'ready'}}}
-    return subprocess.CompletedProcess([], 0, stdout=json.dumps(payload), stderr='diagnostic stderr')
-
-
-class AppSmokeReadRetryTests(unittest.TestCase):
-    def test_transient_ui_reads_recover_and_preserve_both_diagnostics(self):
-        for command in ('wait-for-ui', 'snapshot-ui'):
-            with self.subTest(command=command), tempfile.TemporaryDirectory() as directory:
-                directory = Path(directory)
-                failed = response('Failed to poll runtime UI snapshot.')
-                succeeded = response()
-                with (patch.object(smoke.subprocess, 'run', side_effect=[failed, succeeded]) as run,
-                      contextlib.redirect_stdout(io.StringIO())):
-                    result = smoke.invoke_mcp(directory, 6, 'ui-automation', command, {'simulatorId': 'fixture'})
-                self.assertEqual('ready', result['capture']['screenHash'])
-                self.assertEqual(2, run.call_count)
-                self.assertEqual(run.call_args_list[0], run.call_args_list[1])
-                self.assertEqual(failed.stdout, (directory / f'06-{command}.json').read_text())
-                self.assertEqual(failed.stderr, (directory / f'06-{command}.log').read_text())
-                self.assertEqual(succeeded.stdout, (directory / f'06-{command}-retry-1.json').read_text())
-                self.assertEqual(succeeded.stderr, (directory / f'06-{command}-retry-1.log').read_text())
-
-    def test_persistent_poll_failure_remains_failed_after_one_retry(self):
-        failed = response('Failed to poll runtime UI snapshot.')
-        with tempfile.TemporaryDirectory() as directory:
-            with (patch.object(smoke.subprocess, 'run', side_effect=[failed, failed]) as run,
-                  contextlib.redirect_stdout(io.StringIO())):
-                with self.assertRaisesRegex(ValueError, 'Failed to poll runtime UI snapshot'):
-                    smoke.invoke_mcp(Path(directory), 6, 'ui-automation', 'wait-for-ui', {})
-            self.assertEqual(2, run.call_count)
-            self.assertEqual(4, len(list(Path(directory).iterdir())))
-
-    def test_mutating_commands_are_never_replayed(self):
-        for workflow, command in [('ui-automation', 'tap'), ('simulator', 'launch-app'), ('simulator', 'record-video')]:
-            with self.subTest(command=command), tempfile.TemporaryDirectory() as directory:
-                with (patch.object(smoke.subprocess, 'run', return_value=response(
-                    'Failed to poll runtime UI snapshot.')) as run,
-                      contextlib.redirect_stdout(io.StringIO())):
-                    with self.assertRaises(ValueError):
-                        smoke.invoke_mcp(Path(directory), 6, workflow, command, {})
-                self.assertEqual(1, run.call_count)
-
-    def test_predicate_timeout_and_semantic_failures_are_not_retried(self):
-        for code, message in [('WAIT_TIMEOUT', "Timed out after 20000ms waiting for UI predicate 'exists'."),
-                              ('WAIT_TIMEOUT', "Timed out after 60000ms waiting for UI predicate 'settled'."),
-                              ('TARGET_NOT_FOUND', 'The requested element was not found.'),
-                              ('TARGET_NOT_FOUND', 'Failed to poll runtime UI snapshot.'),
-                              ('SNAPSHOT_PARSE_FAILED', 'Failed to parse runtime UI snapshot.'),
-                              ('ACTION_FAILED', 'A different action failed.')]:
-            with self.subTest(code=code, message=message), tempfile.TemporaryDirectory() as directory:
-                with (patch.object(smoke.subprocess, 'run', return_value=response(message, code)) as run,
-                      contextlib.redirect_stdout(io.StringIO())):
-                    with self.assertRaises(ValueError):
-                        smoke.invoke_mcp(Path(directory), 6, 'ui-automation', 'wait-for-ui', {})
-                self.assertEqual(1, run.call_count)
-
-
-class AppSmokeJourneyTests(unittest.TestCase):
-    def test_navigation_uses_latest_checkpoint_capture_after_each_mutation(self):
+class NativeCommandTests(unittest.TestCase):
+    def test_command_logs_output_and_rejects_failure_with_process_diagnostics(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
-            screenshot = directory / 'fixture.jpeg'
-            screenshot.write_bytes(b'screenshot fixture')
-            current = 'Home'
-            taps = []
-            generation = 0
-            latest = None
-            photographed = None
+            failed = subprocess.CompletedProcess(['xcodebuild'], 65, stdout='build output', stderr='compile error')
+            fake_process = Mock()
+            fake_process.communicate.return_value = ('build output', 'compile error')
+            fake_process.returncode = 65
+            with patch.object(smoke.subprocess, 'Popen', return_value=fake_process), \
+                    patch.object(smoke.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, 'pid list', '')):
+                with self.assertRaisesRegex(smoke.NativeCommandError, 'exited 65'):
+                    smoke.run_command(directory, 'build', ['xcodebuild'], 20)
+            self.assertIn('compile error', (directory / 'build.log').read_text())
+            self.assertEqual('pid list', (directory / 'build-processes.log').read_text())
 
-            def capture():
-                nonlocal generation
-                generation += 1
-                prefix = f'{current}-{generation}-'
-                return {'elements': [
-                    *[{'ref': prefix + 'tab-' + label, 'label': label, 'role': 'tab', 'actions': ['tap'],
-                       'value': '1' if current == label else '0'} for label in ('Home', 'People', 'Insights')],
-                    {'ref': 'heading', 'identifier': current, 'role': 'other', 'state': {'visible': True}},
-                    {'ref': prefix + 'add-gift', 'label': 'Add a gift', 'role': 'button', 'actions': ['tap']},
-                    *([{'ref': 'name', 'identifier': 'add-gift.name', 'role': 'text-field'}]
-                      if current == 'Add a gift' else [])]}
+    @unittest.skipUnless(os.name == 'posix', 'process-group cleanup requires POSIX')
+    def test_timeout_kills_child_processes_before_returning(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            heartbeat = directory / 'child-heartbeat'
+            child = "import pathlib,time; p=pathlib.Path(%r); " % str(heartbeat) + \
+                    "exec(\"while True: p.open('a').write('x'); time.sleep(.02)\")"
+            parent = "import subprocess,sys,time; subprocess.Popen([sys.executable, '-c', %r]); time.sleep(30)" % child
+            with patch.object(smoke, '_diagnose_processes'):
+                with self.assertRaisesRegex(smoke.NativeCommandError, 'timed out after 0.5s'):
+                    smoke.run_command(directory, 'bounded', [sys.executable, '-c', parent], 0.5)
+            first = heartbeat.read_text()
+            time.sleep(0.1)
+            self.assertEqual(first, heartbeat.read_text())
 
-            def backend(_directory, _sequence, workflow, command, parameters):
-                nonlocal current, latest, photographed
-                if command == 'list':
-                    return {'simulators': [{'isAvailable': True, 'name': 'iPhone 17 Pro', 'state': 'Booted',
-                                            'runtime': 'iOS 26.5', 'simulatorId': 'fixture'}]}
-                if command == 'snapshot-ui':
-                    latest = {'elements': [e for e in capture()['elements'] if e['role'] != 'tab']}
-                    return {'capture': latest}
-                if command == 'wait-for-ui':
-                    ready = capture()
-                    if parameters['predicate'] == 'exists':
-                        self.assertTrue(any(all(element.get(key) == parameters[key]
-                                                for key in ('label', 'identifier', 'role') if key in parameters)
-                                            for element in ready['elements']))
-                    latest = ready
-                    return {'capture': ready}
-                if command == 'tap':
-                    ref = parameters['elementRef']
-                    self.assertIsNotNone(photographed)
-                    self.assertIn(ref, [element['ref'] for element in photographed['elements']])
-                    matches = [element for element in latest['elements'] if element['ref'] == ref]
-                    self.assertEqual(1, len(matches))
-                    self.assertIn('tap', matches[0]['actions'])
-                    current = matches[0]['label']
-                    taps.append(current)
-                    latest = None
-                    photographed = None
-                if command == 'screenshot':
-                    photographed = latest
-                    return {'artifacts': {'screenshotPath': str(screenshot)}}
-                if command == 'record-video' and parameters.get('stop'):
-                    Path(parameters['outputFile']).write_bytes(b'video fixture')
-                return {}
+    @unittest.skipUnless(os.name == 'posix', 'process-group cleanup requires POSIX')
+    def test_denied_group_kill_bounds_inherited_pipes_and_preserves_timeout_logs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            child_pid = directory / 'child.pid'
+            child = "import pathlib,time; pathlib.Path(%r).write_text(str(__import__('os').getpid())); time.sleep(30)" % str(child_pid)
+            parent = "import subprocess,sys,time; print('partial stdout', flush=True); " + \
+                     "print('partial stderr', file=sys.stderr, flush=True); " + \
+                     "subprocess.Popen([sys.executable, '-c', %r]); time.sleep(30)" % child
+            def denied_killpg(_pid, _signal):
+                raise PermissionError('group signal denied')
 
-            def normalize_image(command, **kwargs):
-                Path(command[-1]).write_bytes(b'normalized image fixture')
-                return subprocess.CompletedProcess(command, 0)
+            def diagnostics(path, label):
+                (path / f'{label}-processes.log').write_text('process list captured')
 
-            def native_output(command, **kwargs):
-                if command[0] == 'git':
-                    return 'a' * 40
-                path = Path(command[-1])
-                if path.name == 'InfoPlist.strings':
-                    name = 'Who Gave' if path.parent.name == 'en.lproj' else 'кто че'
-                    return json.dumps({'CFBundleDisplayName': name, 'CFBundleName': name})
-                return json.dumps({'NSUserActivityTypes': ['com.apple.corespotlightitem']})
+            started = time.monotonic()
+            try:
+                with patch.object(smoke.os, 'killpg', side_effect=denied_killpg), \
+                        patch.object(smoke, '_diagnose_processes', side_effect=diagnostics):
+                    with self.assertRaisesRegex(smoke.NativeCommandError, 'timed out after 1s'):
+                        smoke.run_command(directory, 'bounded', [sys.executable, '-c', parent], 1)
+                self.assertLess(time.monotonic() - started, 10)
+                log = (directory / 'bounded.log').read_text()
+                self.assertIn('partial stdout', log)
+                self.assertIn('partial stderr', log)
+                self.assertIn('group signal denied', log)
+                self.assertEqual('process list captured', (directory / 'bounded-processes.log').read_text())
+                self.assertTrue(child_pid.is_file())
+            finally:
+                if child_pid.exists():
+                    try:
+                        os.kill(int(child_pid.read_text()), signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
 
-            with (patch.object(smoke, 'invoke_mcp', side_effect=backend),
-                  patch.object(smoke.subprocess, 'run', side_effect=normalize_image),
-                  patch.object(smoke.subprocess, 'check_output', side_effect=native_output)):
+    def test_nonzero_command_output_is_preserved(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            with patch.object(smoke.subprocess, 'Popen') as popen, patch.object(smoke, '_diagnose_processes'):
+                process = popen.return_value
+                process.communicate.return_value = ('stdout detail', 'stderr detail')
+                process.returncode = 65
+                with self.assertRaisesRegex(smoke.NativeCommandError, 'stderr detail'):
+                    smoke.run_command(Path(temporary), 'native', ['xcodebuild'], 10)
+            log = (Path(temporary) / 'native.log').read_text()
+            self.assertIn('stdout detail', log)
+            self.assertIn('stderr detail', log)
+
+    def test_simulator_selection_reuses_booted_phone_else_latest_17_pro(self):
+        payload = {'devices': {
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-4': [
+                {'name': 'iPhone 17 Pro', 'udid': 'newer', 'state': 'Shutdown', 'isAvailable': True}],
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-2': [
+                {'name': 'iPhone 16', 'udid': 'booted', 'state': 'Booted', 'isAvailable': True}],
+        }}
+        self.assertEqual('booted', smoke.select_simulator(payload)['udid'])
+        payload['devices']['com.apple.CoreSimulator.SimRuntime.iOS-26-2'][0]['state'] = 'Shutdown'
+        self.assertEqual('newer', smoke.select_simulator(payload)['udid'])
+        with self.assertRaisesRegex(ValueError, 'No available'):
+            smoke.select_simulator({'devices': {}})
+
+    def test_video_recording_is_stopped_with_sigint_and_log_is_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            process = Mock()
+            process.poll.return_value = None
+            process.returncode = -signal.SIGINT
+            with patch.object(smoke.subprocess, 'Popen', return_value=process), patch.object(smoke.time, 'sleep'):
+                recording = smoke.start_recording(Path(temporary), 'sim-id', Path(temporary) / 'journey.mp4')
+            smoke.stop_recording(Path(temporary), recording)
+            process.send_signal.assert_called_once_with(signal.SIGINT)
+            process.wait.assert_called_once_with(timeout=30)
+            self.assertTrue(recording[1].closed)
+
+    def test_video_timeout_terminates_and_kills_stuck_recorder(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            process = Mock()
+            process.poll.return_value = None
+            process.wait.side_effect = [subprocess.TimeoutExpired('recordVideo', 30),
+                                        subprocess.TimeoutExpired('recordVideo', 5), None]
+            process.returncode = -9
+            with patch.object(smoke.subprocess, 'Popen', return_value=process), patch.object(smoke.time, 'sleep'), \
+                    patch.object(smoke, '_diagnose_processes'):
+                recording = smoke.start_recording(Path(temporary), 'sim-id', Path(temporary) / 'journey.mp4')
+                with self.assertRaisesRegex(smoke.NativeCommandError, 'did not stop'):
+                    smoke.stop_recording(Path(temporary), recording)
+            process.terminate.assert_called_once()
+            process.kill.assert_called_once()
+            self.assertTrue(recording[1].closed)
+
+
+class EvidenceExportTests(unittest.TestCase):
+    def test_repeated_run_clears_stale_evidence_and_preserves_unrelated_files(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            result = directory / 'Acceptance.xcresult'
+            generations = []
+            test_number = 0
+
+            def native(_directory, label, command, _timeout, **_kwargs):
+                nonlocal test_number
+                if label == 'simulator-list':
+                    return subprocess.CompletedProcess(command, 0, json.dumps({'devices': {
+                        'com.apple.CoreSimulator.SimRuntime.iOS-26-4': [
+                            {'name': 'iPhone 17 Pro', 'udid': 'sim-id', 'state': 'Booted', 'isAvailable': True}]}}), '')
+                if label == 'xcodebuild-test':
+                    test_number += 1
+                    self.assertFalse(result.exists(), 'runner must remove the previous result bundle before xcodebuild')
+                    result.mkdir()
+                    (result / 'generation').write_text(str(test_number))
+                    generations.append(test_number)
+                    if test_number == 2:
+                        raise smoke.NativeCommandError('second native test failed')
+                return subprocess.CompletedProcess(command, 0, '', '')
+
+            def make_recording(_directory, _simulator_id, _video_path):
+                recorder = Mock()
+                recorder.poll.return_value = None
+                recorder.returncode = -signal.SIGINT
+                log = (directory / 'record-video.log').open('w')
+                return recorder, log
+
+            real_stop_recording = smoke.stop_recording
+            def stop_recording(_directory, recording):
+                real_stop_recording(_directory, recording)
+                if test_number == 1:
+                    (directory / 'journeys.mp4').write_bytes(b'first-run-video')
+
+            def export(_result, attachments, _directory):
+                attachments.mkdir(parents=True, exist_ok=True)
+                names = ([*smoke.PLANNED_CHECKPOINT_NAMES, 'calendar-4-weeks', 'calendar-6-weeks']
+                         if test_number == 1 else ['home-start'])
+                exported = []
+                for index, name in enumerate(names):
+                    filename = f'checkpoint-{index}.png'
+                    (attachments / filename).write_bytes(b'new' if test_number == 2 else b'first')
+                    exported.append({'exportedFileName': filename, 'suggestedHumanReadableName': name + '_1.png'})
+                (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
+
+            unrelated = directory / 'notes.txt'
+            unrelated.write_text('keep this file')
+            patches = (
+                patch.object(smoke.subprocess, 'check_output', return_value='a' * 40),
+                patch.object(smoke, 'run_command', side_effect=native),
+                patch.object(smoke, 'start_recording', side_effect=make_recording),
+                patch.object(smoke, 'stop_recording', side_effect=stop_recording),
+                patch.object(smoke, '_export_xcresult_attachments', side_effect=export),
+            )
+            with patches[0], patches[1], patches[2], patches[3], patches[4]:
                 smoke.run(directory)
+                self.assertTrue((directory / 'journeys.mp4').is_file())
+                self.assertTrue((directory / 'attachments/people.png').is_file())
+                (directory / 'index.html').write_text('old successful report')
+                with self.assertRaisesRegex(smoke.NativeCommandError, 'second native test failed'):
+                    smoke.run(directory)
+
             metadata = json.loads((directory / 'metadata.json').read_text())
-            self.assertEqual('success', metadata['journey_outcome'])
-            self.assertEqual('success', metadata['export_outcome'])
-            self.assertEqual(['home', 'people', 'insights', 'add-gift'],
-                             [checkpoint['name'] for checkpoint in metadata['checkpoints']])
-            self.assertEqual(['People', 'Insights', 'Add a gift'], taps)
+            self.assertEqual([1, 2], generations)
+            self.assertEqual('failure', metadata['journey_outcome'])
+            self.assertNotEqual('success', metadata['export_outcome'])
+            self.assertEqual('feature-acceptance', metadata['evidence_kind'])
+            self.assertEqual(
+                'Native People disclosure and detail navigation plus grouped person editing, photo crop cancel and confirm, and photo persistence and removal',
+                metadata['scenario'],
+            )
+            self.assertFalse((directory / 'journeys.mp4').exists())
+            self.assertFalse((directory / 'index.html').exists())
+            self.assertFalse((directory / 'attachments/people.png').exists())
+            self.assertEqual(b'new', (directory / 'attachments/home-start.png').read_bytes())
+            self.assertEqual('2', (result / 'generation').read_text())
+            self.assertEqual('keep this file', unrelated.read_text())
+
+    def test_failed_native_journey_stops_video_and_preserves_result_and_metadata(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            result = directory / 'Acceptance.xcresult'
+            metadata_path = directory / 'metadata.json'
+            log = directory / 'recorder.log'
+            log.touch()
+            recorder = Mock()
+            recorder.poll.return_value = None
+            recorder.returncode = -signal.SIGINT
+            recording = (recorder, log.open('w'))
+            stop_recording = smoke.stop_recording
+            named = [*smoke.PLANNED_CHECKPOINT_NAMES, 'calendar-4-weeks', 'calendar-6-weeks']
+
+            def native(directory, label, command, timeout, **kwargs):
+                if label == 'simulator-list':
+                    return subprocess.CompletedProcess(command, 0, json.dumps({'devices': {
+                        'com.apple.CoreSimulator.SimRuntime.iOS-26-4': [
+                            {'name': 'iPhone 17 Pro', 'udid': 'sim-id', 'state': 'Booted', 'isAvailable': True}]}}), '')
+                if label == 'xcodebuild-test':
+                    result.mkdir()
+                    raise smoke.NativeCommandError('xcodebuild-test exited 65: assertion failed')
+                return subprocess.CompletedProcess(command, 0, '', '')
+
+            def export(_result, attachments, _directory):
+                attachments.mkdir(parents=True, exist_ok=True)
+                exported = []
+                for index, name in enumerate(named):
+                    filename = f'{index}.png'
+                    (attachments / filename).write_bytes(b'png')
+                    exported.append({'exportedFileName': filename, 'suggestedHumanReadableName': name + '_1.png'})
+                (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
+
+            def stop(_directory, active_recording):
+                stop_recording(_directory, active_recording)
+                (directory / 'journeys.mp4').write_bytes(b'mp4')
+
+            with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
+                    patch.object(smoke, 'run_command', side_effect=native), \
+                    patch.object(smoke, 'start_recording', return_value=recording), \
+                    patch.object(smoke, 'stop_recording', side_effect=stop), \
+                    patch.object(smoke, '_export_xcresult_attachments', side_effect=export):
+                with self.assertRaisesRegex(smoke.NativeCommandError, 'assertion failed'):
+                    smoke.run(directory)
+            metadata = json.loads(metadata_path.read_text())
+            self.assertEqual('failure', metadata['journey_outcome'])
+            self.assertIn('assertion failed', metadata['native_test_error'])
+            self.assertEqual(len(named), len(metadata['checkpoints']))
+            self.assertTrue((result).is_dir())
+            self.assertTrue((directory / 'attachments/home-start.png').is_file())
+            self.assertTrue((directory / 'journeys.mp4').is_file())
+
+    def test_exports_xcresult_and_maps_named_screenshots(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            result = directory / 'Acceptance.xcresult'
+            result.mkdir()
+            attachments = directory / 'attachments'
+            def export(command, **kwargs):
+                attachments.mkdir(exist_ok=True)
+                names = [*smoke.PLANNED_CHECKPOINT_NAMES, 'calendar-4-weeks', 'calendar-6-weeks']
+                exported = []
+                for index, name in enumerate(names):
+                    filename = f'checkpoint-{index}.png'
+                    (attachments / filename).write_bytes(b'png')
+                    exported.append({'exportedFileName': filename, 'suggestedHumanReadableName': f'{name}_1.png'})
+                (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
+                return subprocess.CompletedProcess(command, 0, '', '')
+            metadata = {'planned_checkpoint_names': list(smoke.PLANNED_CHECKPOINT_NAMES), 'checkpoints': []}
+            process = Mock()
+            process.returncode = 0
+            process.communicate.side_effect = lambda timeout: (export([], timeout=timeout) and ('', ''))
+            with patch.object(smoke.subprocess, 'Popen', return_value=process):
+                smoke._export_xcresult_attachments(result, attachments, directory)
+            self.assertEqual([], smoke._export_named_checkpoints(directory, metadata))
+            self.assertTrue((attachments / 'home-start.png').is_file())
+            self.assertEqual('home-start', metadata['checkpoints'][0]['name'])
+            self.assertIn('calendar-4-weeks.png', [item['image'].split('/')[-1] for item in metadata['checkpoints']])
+
+    def test_attachment_export_failure_is_not_hidden(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            process = Mock()
+            process.returncode = 1
+            process.communicate.return_value = ('', 'xcresult failed')
+            with patch.object(smoke.subprocess, 'Popen', return_value=process), \
+                    patch.object(smoke, '_diagnose_processes'):
+                with self.assertRaisesRegex(smoke.NativeCommandError, 'xcresult failed'):
+                    smoke._export_xcresult_attachments(directory / 'a.xcresult', directory / 'attachments', directory)
+
+
+class AppDiscoveryAcceptanceTests(unittest.TestCase):
+    def test_built_localized_names_and_activity_declaration_are_checked(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            metadata = {}
+            def native(_directory, label, command, timeout):
+                if label == 'bundle-info':
+                    payload = {'NSUserActivityTypes': ['com.apple.corespotlightitem']}
+                else:
+                    name = 'Who Gave' if label == 'bundle-names-en' else 'кто че'
+                    payload = {'CFBundleDisplayName': name, 'CFBundleName': name}
+                self.assertEqual(30, timeout)
+                self.assertEqual(['plutil', '-convert', 'xml1', '-o', '-'], command[:5])
+                return subprocess.CompletedProcess(command, 0, plistlib.dumps(payload).decode(), '')
+            with patch.object(smoke, 'run_command', side_effect=native) as command:
+                smoke.verify_built_app_names(Path(temporary), metadata)
+            self.assertEqual({'en': 'Who Gave', 'ru': 'кто че'}, metadata['bundle_names'])
+            self.assertEqual(3, command.call_count)
+
+    def test_wrong_compiled_name_or_missing_activity_cannot_pass_acceptance(self):
+        for failure in ('CFBundleName', 'CFBundleDisplayName', 'activity'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                def native(_directory, label, command, timeout):
+                    if label == 'bundle-info':
+                        payload = {'NSUserActivityTypes': []}
+                    else:
+                        name = 'Who Gave' if label == 'bundle-names-en' else 'кто че'
+                        payload = {'CFBundleDisplayName': name, 'CFBundleName': name}
+                        if label == 'bundle-names-ru' and failure != 'activity':
+                            payload[failure] = 'Wrong name'
+                    return subprocess.CompletedProcess(command, 0, plistlib.dumps(payload).decode(), '')
+                metadata = {}
+                with patch.object(smoke, 'run_command', side_effect=native), self.assertRaises(ValueError):
+                    smoke.verify_built_app_names(Path(temporary), metadata)
+                self.assertNotIn('bundle_names', metadata)
+
+    def test_disposable_language_journey_is_opt_in_and_requires_all_feature_checkpoints(self):
+        for verify in (False, True):
+            with self.subTest(verify=verify), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                test_commands = []
+                def native(_directory, label, command, timeout):
+                    if label == 'simulator-list':
+                        payload = {'devices': {'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
+                            dict(name='iPhone 17 Pro', udid='sim-id', state='Booted', isAvailable=True)]}}
+                        return subprocess.CompletedProcess(command, 0, json.dumps(payload), '')
+                    if label == 'xcodebuild-test':
+                        test_commands.append(command)
+                        raise smoke.NativeCommandError('native assertion failed')
+                    return subprocess.CompletedProcess(command, 0, '', '')
+                with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
+                        patch.object(smoke, 'run_command', side_effect=native), \
+                        patch.object(smoke, 'start_recording', return_value=(Mock(), Mock())), \
+                        patch.object(smoke, 'stop_recording'):
+                    with self.assertRaisesRegex(smoke.NativeCommandError, 'native assertion failed'):
+                        smoke.run(directory, verify_app_names=verify)
+                metadata = json.loads((directory / 'metadata.json').read_text())
+                skipped = '-skip-testing:WhoGaveWhatUITests/AppDiscoveryUITests' in test_commands[0]
+                self.assertEqual(not verify, skipped)
+                for checkpoint in smoke.APP_DISCOVERY_CHECKPOINT_NAMES:
+                    self.assertEqual(verify, checkpoint in metadata['planned_checkpoint_names'])
+                    self.assertEqual(verify, checkpoint in metadata['missing_checkpoints'])
+                self.assertNotEqual('success', metadata['export_outcome'])
+
+    def test_missing_spotlight_checkpoint_fails_export_even_if_other_screenshots_exist(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            attachments = directory / 'attachments'
+            attachments.mkdir()
+            names = [name for name in smoke.APP_DISCOVERY_CHECKPOINT_NAMES if name != 'spotlight-english-opened']
+            names += ['calendar-4-weeks', 'calendar-6-weeks']
+            exported = []
+            for index, name in enumerate(names):
+                filename = f'{index}.png'
+                (attachments / filename).write_bytes(b'png')
+                exported.append({'exportedFileName': filename, 'suggestedHumanReadableName': f'{name}_1.png'})
+            (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
+            metadata = {'planned_checkpoint_names': list(smoke.APP_DISCOVERY_CHECKPOINT_NAMES), 'checkpoints': []}
+            self.assertEqual(['spotlight-english-opened'], smoke._export_named_checkpoints(directory, metadata))
+
+
+if __name__ == '__main__':
+    unittest.main()

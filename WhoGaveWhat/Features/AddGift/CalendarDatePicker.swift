@@ -21,6 +21,8 @@ struct CalendarDatePicker: UIViewRepresentable {
         let components = dayComponents(for: selectedDate)
         selection.setSelected(components, animated: false)
         calendarView.setVisibleDateComponents(components, animated: false)
+        calendarView.accessibilityIdentifier = selectedDayAccessibilityIdentifier(components)
+        context.coordinator.calendarView = calendarView
         context.coordinator.selectedComponents = components
         return calendarView
     }
@@ -34,6 +36,8 @@ struct CalendarDatePicker: UIViewRepresentable {
             return
         }
         selection.setSelected(components, animated: false)
+        calendarView.setVisibleDateComponents(components, animated: false)
+        calendarView.accessibilityIdentifier = selectedDayAccessibilityIdentifier(components)
         context.coordinator.selectedComponents = components
     }
 
@@ -55,9 +59,14 @@ struct CalendarDatePicker: UIViewRepresentable {
         Calendar.autoupdatingCurrent.dateComponents([.era, .year, .month, .day], from: date)
     }
 
+    private func selectedDayAccessibilityIdentifier(_ components: DateComponents) -> String {
+        String(format: "selected-day:%04d-%02d-%02d", components.year ?? 0, components.month ?? 0, components.day ?? 0)
+    }
+
     final class Coordinator: NSObject, UICalendarSelectionSingleDateDelegate {
         var parent: CalendarDatePicker
         var selectedComponents: DateComponents?
+        weak var calendarView: UICalendarView?
 
         init(parent: CalendarDatePicker) {
             self.parent = parent
@@ -71,6 +80,7 @@ struct CalendarDatePicker: UIViewRepresentable {
                 let date = Calendar.autoupdatingCurrent.date(from: dateComponents)
             else { return }
             selectedComponents = dateComponents
+            calendarView?.accessibilityIdentifier = parent.selectedDayAccessibilityIdentifier(dateComponents)
             parent.onSelectDate(date)
         }
     }
