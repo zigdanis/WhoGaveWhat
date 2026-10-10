@@ -548,7 +548,21 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(hero.waitForExistence(timeout: timeout))
         attach("person-detail-selected-photo")
 
-        app.buttons["person-detail.edit"].tap()
+        // iOS 26 exposes a toolbar wrapper and nested button with the same identifier.
+        // Resolve the current native wrapper and tap its observed center once.
+        let editControl = detailNavigationBar.otherElements["person-detail.edit"].firstMatch
+        XCTAssertTrue(editControl.waitForExistence(timeout: timeout))
+        XCTAssertTrue(editControl.isHittable)
+        let editFrame = editControl.frame
+        XCTAssertFalse(editFrame.isEmpty)
+        XCTAssertTrue(detailNavigationBar.frame.contains(editFrame))
+        let target = XCTAttachment(
+            string: "editFrame=\(editFrame)\ncenter=(\(editFrame.midX), \(editFrame.midY))\nbarFrame=\(detailNavigationBar.frame)"
+        )
+        target.name = "person-editor-reopen-target"
+        target.lifetime = .keepAlways
+        add(target)
+        editControl.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
         XCTAssertEqual(editorTitle.label, giverName)
         XCTAssertFalse(app.keyboards.firstMatch.exists)

@@ -100,17 +100,13 @@ final class AppDiscoveryUITests: XCTestCase {
         try tapSetting("General")
         try tapSetting("Language & Region")
         attach("language-region-before")
-        if !settings.buttons["Reorder Russian"].exists && !settings.buttons["Reorder Русский"].exists {
-            try tapSetting("Add Language", contains: true)
-            try enterSettingsSearch("Russian")
-            attach("russian-language-picker")
-            try tapSetting("Russian", contains: true)
-            attach("language-confirmation")
-            try tapSetting("Use English", contains: true)
-        }
-        let english = settings.buttons["Reorder English"].firstMatch
+        // The disposable device's secondary language is prepared before XCTest starts.
+        // Editing the system language list here would terminate this test runner.
+        let english = settings.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH 'Reorder English'")
+        ).firstMatch
         let russian = settings.buttons.matching(
-            NSPredicate(format: "label == 'Reorder Russian' OR label == 'Reorder Русский'")
+            NSPredicate(format: "label BEGINSWITH 'Reorder Russian' OR label BEGINSWITH 'Reorder Русский'")
         ).firstMatch
         XCTAssertTrue(english.waitForExistence(timeout: timeout))
         XCTAssertTrue(russian.waitForExistence(timeout: timeout))

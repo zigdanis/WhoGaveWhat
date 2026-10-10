@@ -347,6 +347,9 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
             with self.subTest(verify=verify), tempfile.TemporaryDirectory() as temporary:
                 directory = Path(temporary)
                 test_commands = []
+                events = []
+                def prepare(_directory, _simulator, _metadata):
+                    events.append('prepare-languages')
                 def native(_directory, label, command, timeout):
                     if label == 'simulator-list':
                         payload = {'devices': {'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
@@ -354,21 +357,61 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                         return subprocess.CompletedProcess(command, 0, json.dumps(payload), '')
                     if label == 'xcodebuild-test':
                         test_commands.append(command)
+                        events.append('xcodebuild-test')
                         raise smoke.NativeCommandError('native assertion failed')
                     return subprocess.CompletedProcess(command, 0, '', '')
                 with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
                         patch.object(smoke, 'run_command', side_effect=native), \
+                        patch.object(smoke, 'prepare_disposable_languages', side_effect=prepare), \
                         patch.object(smoke, 'start_recording', return_value=(Mock(), Mock())), \
                         patch.object(smoke, 'stop_recording'):
                     with self.assertRaisesRegex(smoke.NativeCommandError, 'native assertion failed'):
                         smoke.run(directory, verify_app_names=verify)
                 metadata = json.loads((directory / 'metadata.json').read_text())
+                self.assertEqual(['prepare-languages', 'xcodebuild-test'] if verify else ['xcodebuild-test'], events)
                 skipped = '-skip-testing:WhoGaveWhatUITests/AppDiscoveryUITests' in test_commands[0]
                 self.assertEqual(not verify, skipped)
                 for checkpoint in smoke.APP_DISCOVERY_CHECKPOINT_NAMES:
                     self.assertEqual(verify, checkpoint in metadata['planned_checkpoint_names'])
                     self.assertEqual(verify, checkpoint in metadata['missing_checkpoints'])
                 self.assertNotEqual('success', metadata['export_outcome'])
+
+    def test_language_preparation_updates_only_the_selected_simulator_preferences_while_shutdown(self):
+        original = {'AppleLanguages': ['en-US'], 'AppleLocale': 'en_US', 'AppleICUForce24HourTime': True}
+        prepared = {**original, 'AppleLanguages': ['en-US', 'ru-RU']}
+        calls = []
+        metadata = {}
+        def native(_directory, label, command, timeout):
+            calls.append((label, command, timeout))
+            payload = original if label == 'language-preferences-before' else prepared
+            return subprocess.CompletedProcess(command, 0, plistlib.dumps(payload).decode(), '')
+        with tempfile.TemporaryDirectory() as temporary, patch.object(smoke, 'run_command', side_effect=native):
+            directory = Path(temporary)
+            smoke.prepare_disposable_languages(directory, {'udid': 'selected-id', 'dataPath': str(directory)}, metadata)
+        self.assertEqual(['language-shutdown', 'language-preferences-before', 'language-preferences-languages',
+                          'language-preferences-locale', 'language-preferences-after', 'language-boot',
+                          'language-bootstatus'], [item[0] for item in calls])
+        self.assertEqual(['xcrun', 'simctl', 'shutdown', 'selected-id'], calls[0][1])
+        self.assertEqual(['plutil', '-replace', 'AppleLanguages', '-json', '["en-US", "ru-RU"]'], calls[2][1][:-1])
+        self.assertEqual(str(directory / 'Library/Preferences/.GlobalPreferences.plist'), calls[2][1][-1])
+        self.assertEqual(['xcrun', 'simctl', 'boot', 'selected-id'], calls[-2][1])
+        self.assertEqual(smoke.COLD_BOOT_TIMEOUT_SECONDS, calls[-1][2])
+        self.assertTrue(metadata['language_preparation']['verified'])
+
+    def test_language_preparation_cannot_discard_existing_preferences(self):
+        original = {'AppleLanguages': ['en-US'], 'existingSetting': True}
+        invalid = {'AppleLanguages': ['en-US', 'ru-RU'], 'AppleLocale': 'en_US'}
+        labels = []
+        def native(_directory, label, command, timeout):
+            labels.append(label)
+            payload = original if label == 'language-preferences-before' else invalid
+            return subprocess.CompletedProcess(command, 0, plistlib.dumps(payload).decode(), '')
+        metadata = {}
+        with tempfile.TemporaryDirectory() as temporary, patch.object(smoke, 'run_command', side_effect=native):
+            with self.assertRaisesRegex(ValueError, 'preserve its other preferences'):
+                smoke.prepare_disposable_languages(Path(temporary), {'udid': 'selected-id', 'dataPath': temporary}, metadata)
+        self.assertNotIn('language-boot', labels)
+        self.assertFalse(metadata['language_preparation']['verified'])
 
     def test_missing_spotlight_checkpoint_fails_export_even_if_other_screenshots_exist(self):
         with tempfile.TemporaryDirectory() as temporary:

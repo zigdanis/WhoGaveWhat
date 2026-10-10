@@ -43,6 +43,8 @@ APP_DISCOVERY_CHECKPOINT_NAMES = (
 GENERATED_LOG_LABELS = (
     "simulator-list", "simulator-boot", "simulator-bootstatus", "record-video",
     "record-video-stop", "xcodebuild-test", "export-attachments", "bundle-info", "bundle-names-en", "bundle-names-ru",
+    "language-shutdown", "language-preferences-before", "language-preferences-languages", "language-preferences-locale",
+    "language-preferences-after", "language-boot", "language-bootstatus",
 )
 COLD_BOOT_TIMEOUT_SECONDS = 600
 
@@ -302,6 +304,40 @@ def verify_built_app_names(directory, metadata):
     metadata["bundle_names"] = names
 
 
+def prepare_disposable_languages(directory, simulator, metadata):
+    """Prepare preferred languages while the disposable device is off, before XCTest exists.
+
+    Changing the system language list through Settings terminates the running test
+    runner on iOS 26. The journey still selects the app's language through real Settings.
+    """
+    simulator_id = simulator["udid"]
+    data_path = Path(simulator.get("dataPath") or (
+        Path.home() / "Library/Developer/CoreSimulator/Devices" / simulator_id / "data"))
+    preferences = data_path / "Library/Preferences/.GlobalPreferences.plist"
+    desired = {"AppleLanguages": ["en-US", "ru-RU"], "AppleLocale": "en_US"}
+    metadata["language_preparation"] = {"preferred_languages": desired["AppleLanguages"],
+                                        "locale": desired["AppleLocale"], "verified": False}
+    run_command(directory, "language-shutdown", ["xcrun", "simctl", "shutdown", simulator_id], 60)
+    before = run_command(directory, "language-preferences-before", [
+        "plutil", "-convert", "xml1", "-o", "-", str(preferences)], 30)
+    original = plistlib.loads(before.stdout.encode())
+    for key, value, label in (("AppleLanguages", desired["AppleLanguages"], "languages"),
+                              ("AppleLocale", desired["AppleLocale"], "locale")):
+        operation = "-replace" if key in original else "-insert"
+        run_command(directory, f"language-preferences-{label}", [
+            "plutil", operation, key, "-json", json.dumps(value), str(preferences)], 30)
+    after = run_command(directory, "language-preferences-after", [
+        "plutil", "-convert", "xml1", "-o", "-", str(preferences)], 30)
+    prepared = plistlib.loads(after.stdout.encode())
+    expected = {**original, **desired}
+    if prepared != expected:
+        raise ValueError("Simulator language preparation did not preserve its other preferences")
+    run_command(directory, "language-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
+    run_command(directory, "language-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
+                COLD_BOOT_TIMEOUT_SECONDS)
+    metadata["language_preparation"]["verified"] = True
+
+
 def run(directory, verify_app_names=False):
     """Run the native XCTest journey, preserving diagnostics and real evidence."""
     directory = directory.resolve()
@@ -336,6 +372,8 @@ def run(directory, verify_app_names=False):
             run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
         run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
                     COLD_BOOT_TIMEOUT_SECONDS)
+        if verify_app_names:
+            prepare_disposable_languages(directory, simulator, metadata)
         recording = start_recording(directory, simulator_id, directory / "journeys.mp4")
         command = ["xcodebuild", "test", "-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
                    "-destination", f"platform=iOS Simulator,id={simulator_id}", "-derivedDataPath", str(directory / "DerivedData"),
