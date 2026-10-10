@@ -254,6 +254,7 @@ final class AppDiscoveryUITests: XCTestCase {
             throw DiscoveryFailure.missingSpotlightSearchField(query)
         }
         try clearSpotlightQuery(search)
+        try selectSpotlightKeyboard(for: query, checkpoint: checkpoint)
         search.typeText(query)
         attachSpotlightHierarchy("\(checkpoint)-typed-query", typedValue: search.value as? String)
         XCTAssertEqual(search.value as? String, query)
@@ -286,6 +287,7 @@ final class AppDiscoveryUITests: XCTestCase {
             spotlightQuery = "кто че"
             do {
                 try clearSpotlightQuery(search)
+                try selectSpotlightKeyboard(for: "кто че", checkpoint: "\(checkpoint)-diagnostic-russian-title")
                 search.typeText("кто че")
                 guard search.value as? String == "кто че" else {
                     throw DiscoveryFailure.mismatchedDiagnosticQuery("кто че", String(describing: search.value))
@@ -302,10 +304,13 @@ final class AppDiscoveryUITests: XCTestCase {
             }
             attach("\(checkpoint)-diagnostic-russian-title")
             attachSpotlightHierarchy("\(checkpoint)-diagnostic-russian-title", typedValue: search.value as? String)
+        }
+        if spotlight.state == .runningForeground, search.isHittable {
             // A built-in app provides a control for the system app catalog, without opening it.
             spotlightQuery = "Calendar"
             do {
                 try clearSpotlightQuery(search)
+                try selectSpotlightKeyboard(for: "Calendar", checkpoint: "\(checkpoint)-diagnostic-calendar")
                 search.typeText("Calendar")
                 guard search.value as? String == "Calendar" else {
                     throw DiscoveryFailure.mismatchedDiagnosticQuery("Calendar", String(describing: search.value))
@@ -330,6 +335,32 @@ final class AppDiscoveryUITests: XCTestCase {
             attachSpotlightHierarchy("\(checkpoint)-diagnostic-calendar", typedValue: search.value as? String)
         }
         throw DiscoveryFailure.missingSpotlightResult(query, failedHierarchy)
+    }
+
+    private func selectSpotlightKeyboard(for query: String, checkpoint: String) throws {
+        // Typing Cyrillic through XCTest does not change the keyboard's input language.
+        // Use the observed globe control, then verify the actual alphabet before typing.
+        let russian = query.unicodeScalars.contains { (0x0400...0x04FF).contains($0.value) }
+        let expectedKeys = russian ? ["й", "ц", "у"] : ["q", "w", "e"]
+        let keyboard = spotlight.keyboards.firstMatch
+        attachSpotlightHierarchy("\(checkpoint)-keyboard-before")
+        guard keyboard.waitForExistence(timeout: timeout) else {
+            throw DiscoveryFailure.missingSpotlightKeyboard(query)
+        }
+        if !expectedKeys.allSatisfy({ keyboard.keys[$0].exists }) {
+            let nextKeyboard = spotlight.buttons["Next keyboard"].firstMatch
+            guard nextKeyboard.waitForExistence(timeout: timeout), nextKeyboard.isHittable else {
+                throw DiscoveryFailure.missingSpotlightKeyboardControl
+            }
+            nextKeyboard.tap()
+            guard keyboard.keys[expectedKeys[0]].waitForExistence(timeout: timeout),
+                expectedKeys.allSatisfy({ keyboard.keys[$0].exists })
+            else {
+                attachSpotlightHierarchy("\(checkpoint)-keyboard-mismatch")
+                throw DiscoveryFailure.mismatchedSpotlightKeyboard(query)
+            }
+        }
+        attachSpotlightHierarchy("\(checkpoint)-keyboard-ready")
     }
 
     private func clearSpotlightQuery(_ search: XCUIElement) throws {
@@ -380,6 +411,9 @@ final class AppDiscoveryUITests: XCTestCase {
         case missingHomeIcon(String)
         case spotlightNotForeground
         case missingSpotlightSearchField(String)
+        case missingSpotlightKeyboard(String)
+        case missingSpotlightKeyboardControl
+        case mismatchedSpotlightKeyboard(String)
         case missingSpotlightClearControl
         case spotlightQueryNotCleared(String)
         case mismatchedDiagnosticQuery(String, String)
