@@ -37,8 +37,11 @@ final class AppDiscoveryIndexer {
         defer { isIndexing = false }
 
         let title = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Who Gave"
+        let isAvailable = CSSearchableIndex.isIndexingAvailable()
+        Self.logger.notice("Refreshing app launcher: indexingAvailable=\(isAvailable), title=\(title, privacy: .public)")
         do {
             try await indexItems([Self.makeItem(title: title)])
+            Self.logger.notice("App launcher index update completed: title=\(title, privacy: .public)")
         } catch {
             Self.logger.error("Unable to index app launcher: \(error.localizedDescription, privacy: .public)")
         }

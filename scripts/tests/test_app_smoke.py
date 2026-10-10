@@ -197,6 +197,8 @@ class EvidenceExportTests(unittest.TestCase):
                 self.assertTrue((directory / 'journeys.mp4').is_file())
                 self.assertTrue((directory / 'attachments/people.png').is_file())
                 (directory / 'index.html').write_text('old successful report')
+                for suffix in ('.log', '-processes.log'):
+                    (directory / f'app-discovery-index-log{suffix}').write_text('old-head diagnostics')
                 with self.assertRaisesRegex(smoke.NativeCommandError, 'second native test failed'):
                     smoke.run(directory)
 
@@ -211,6 +213,8 @@ class EvidenceExportTests(unittest.TestCase):
             )
             self.assertFalse((directory / 'journeys.mp4').exists())
             self.assertFalse((directory / 'index.html').exists())
+            for suffix in ('.log', '-processes.log'):
+                self.assertFalse((directory / f'app-discovery-index-log{suffix}').exists())
             self.assertFalse((directory / 'attachments/people.png').exists())
             self.assertEqual(b'new', (directory / 'attachments/home-start.png').read_bytes())
             self.assertEqual('2', (result / 'generation').read_text())
@@ -361,6 +365,12 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                         test_commands.append(command)
                         events.append('xcodebuild-test')
                         raise smoke.NativeCommandError('native assertion failed')
+                    if label == 'app-discovery-index-log':
+                        self.assertEqual(['xcrun', 'simctl', 'spawn', 'sim-id', 'log', 'show'], command[:6])
+                        self.assertEqual(30, timeout)
+                        self.assertIn('20m', command)
+                        self.assertEqual('subsystem == "pro.ziganshin.WhoGaveWhat" AND category == "AppDiscovery"', command[-1])
+                        raise smoke.NativeCommandError('diagnostic log unavailable')
                     return subprocess.CompletedProcess(command, 0, '', '')
                 with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
                         patch.object(smoke, 'run_command', side_effect=native), \
@@ -373,6 +383,9 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                 self.assertEqual(['prepare-languages', 'xcodebuild-test'] if verify else ['xcodebuild-test'], events)
                 self.assertEqual(not verify, 'simulator-bootstatus' in native_labels)
                 self.assertNotIn('simulator-boot', native_labels)
+                self.assertEqual(verify, 'app-discovery-index-log' in native_labels)
+                self.assertEqual(verify, 'app_discovery_diagnostic_error' in metadata)
+                self.assertIn('native assertion failed', metadata['native_test_error'])
                 skipped = '-skip-testing:WhoGaveWhatUITests/AppDiscoveryUITests' in test_commands[0]
                 self.assertEqual(not verify, skipped)
                 for checkpoint in smoke.APP_DISCOVERY_CHECKPOINT_NAMES:

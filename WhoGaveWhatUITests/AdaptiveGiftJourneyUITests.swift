@@ -3,6 +3,7 @@ import XCTest
 final class AdaptiveGiftJourneyUITests: XCTestCase {
     private var app: XCUIApplication!
     private let timeout: TimeInterval = 12
+    private let photoLoadTimeout: TimeInterval = 60
     private var giftName = "CI gift \(UUID().uuidString.prefix(8))"
     private var secondGiftName = "CI second gift \(UUID().uuidString.prefix(8))"
     private var giverName = "CI giver \(UUID().uuidString.prefix(8))"
@@ -499,7 +500,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             )
         ).tap()
         let cropConfirm = app.buttons["crop.use"]
-        XCTAssertTrue(cropConfirm.waitForExistence(timeout: timeout))
+        // Loading the selected asset can outlast a normal sheet transition on a cold Simulator.
+        XCTAssertTrue(cropConfirm.waitForExistence(timeout: photoLoadTimeout))
         attach("person-photo-crop")
         app.buttons["crop.cancel"].tap()
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
@@ -519,7 +521,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 dy: secondPhoto.frame.midY / secondWindowFrame.height
             )
         ).tap()
-        XCTAssertTrue(cropConfirm.waitForExistence(timeout: timeout))
+        XCTAssertTrue(cropConfirm.waitForExistence(timeout: photoLoadTimeout))
         let cropWindow = app.windows.firstMatch
         cropWindow.pinch(withScale: 1.35, velocity: 1)
         let cropStart = cropWindow.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55))
@@ -582,7 +584,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 dy: replacementPhoto.frame.midY / replacementWindow.height
             )
         ).tap()
-        XCTAssertTrue(cropConfirm.waitForExistence(timeout: timeout))
+        XCTAssertTrue(cropConfirm.waitForExistence(timeout: photoLoadTimeout))
         attach("person-photo-replacement-crop")
         app.buttons["crop.cancel"].tap()
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))

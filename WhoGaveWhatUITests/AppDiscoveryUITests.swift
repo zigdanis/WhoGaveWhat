@@ -273,7 +273,21 @@ final class AppDiscoveryUITests: XCTestCase {
         } while Date() < deadline
         attach("\(checkpoint)-missing")
         attachSpotlightHierarchy("\(checkpoint)-missing-result", typedValue: search.value as? String)
-        throw DiscoveryFailure.missingSpotlightResult(query, spotlight.debugDescription)
+        let failedHierarchy = spotlight.debugDescription
+        if query == "Who Gave", spotlight.state == .runningForeground, search.isHittable {
+            // Probe the localized title to distinguish missing indexing from missing English aliases.
+            // This diagnostic never taps a result or satisfies the failed English acceptance check.
+            spotlightQuery = "кто че"
+            search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: query.count))
+            search.typeText("кто че")
+            let diagnosticDeadline = Date().addingTimeInterval(30)
+            while !results.allElementsBoundByIndex.contains(where: { $0.isHittable }), Date() < diagnosticDeadline {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+            }
+            attach("\(checkpoint)-diagnostic-russian-title")
+            attachSpotlightHierarchy("\(checkpoint)-diagnostic-russian-title", typedValue: search.value as? String)
+        }
+        throw DiscoveryFailure.missingSpotlightResult(query, failedHierarchy)
     }
 
     private func attachSpotlightHierarchy(_ name: String, typedValue: String? = nil) {

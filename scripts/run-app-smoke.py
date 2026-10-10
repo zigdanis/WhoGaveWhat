@@ -46,6 +46,7 @@ GENERATED_LOG_LABELS = (
     "record-video-stop", "xcodebuild-test", "export-attachments", "bundle-info", "bundle-names-en", "bundle-names-ru",
     "language-shutdown", "language-preferences-before", "language-preferences-languages", "language-preferences-locale",
     "language-preferences-after", "language-boot", "language-bootstatus", "language-device-state",
+    "app-discovery-index-log",
 )
 COLD_BOOT_TIMEOUT_SECONDS = 600
 LANGUAGE_SHUTDOWN_TIMEOUT_SECONDS = 180
@@ -416,6 +417,15 @@ def run(directory, verify_app_names=False):
                 stop_recording(directory, recording)
             except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
                 metadata["recording_error"] = str(error)
+        if verify_app_names and simulator:
+            try:
+                run_command(directory, "app-discovery-index-log", [
+                    "xcrun", "simctl", "spawn", simulator["udid"], "log", "show", "--last", "20m",
+                    "--info", "--style", "compact", "--predicate",
+                    'subsystem == "pro.ziganshin.WhoGaveWhat" AND category == "AppDiscovery"'], 30)
+            except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
+                # This diagnostic must never replace the native test failure or its evidence.
+                metadata["app_discovery_diagnostic_error"] = str(error)
         if result_bundle.is_dir():
             try:
                 _export_xcresult_attachments(result_bundle, directory / "attachments", directory)
