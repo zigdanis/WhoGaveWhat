@@ -5,8 +5,10 @@ final class AppDiscoveryUITests: XCTestCase {
     private let app = XCUIApplication()
     private let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
     private let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+    private let spotlight = XCUIApplication(bundleIdentifier: "com.apple.Spotlight")
     private let timeout: TimeInterval = 15
     private var shouldRestoreAppLanguage = false
+    private var spotlightQuery: String?
 
     override func setUp() {
         super.setUp()
@@ -28,6 +30,7 @@ final class AppDiscoveryUITests: XCTestCase {
                 hierarchy.lifetime = .keepAlways
                 add(hierarchy)
             }
+            attachSpotlightHierarchy("app-discovery-spotlight-hierarchy")
         }
         // Keep the original failure evidence above intact before cleanup changes either app.
         guard shouldRestoreAppLanguage else { return }
@@ -229,18 +232,26 @@ final class AppDiscoveryUITests: XCTestCase {
     }
 
     private func openSpotlightLauncher(query: String, checkpoint: String) throws {
+        spotlightQuery = query
         let home = try regularHomeScreen()
         // A regular Home-screen swipe opens Spotlight; App Library search is explicitly excluded.
         home.swipeDown()
-        let search = springboard.descendants(matching: .any)["SpotlightSearchField"].firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: timeout))
+        // Query the system search owner without launching or activating it ourselves.
+        let isForeground = spotlight.wait(for: .runningForeground, timeout: timeout)
+        attachSpotlightHierarchy("\(checkpoint)-owner")
+        guard isForeground else { throw DiscoveryFailure.spotlightNotForeground }
+        let search = spotlight.descendants(matching: .any)["SpotlightSearchField"].firstMatch
+        guard search.waitForExistence(timeout: timeout), search.isHittable else {
+            throw DiscoveryFailure.missingSpotlightSearchField(query)
+        }
         search.tap()
         if let existing = search.value as? String, !existing.isEmpty {
             search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existing.count))
         }
         search.typeText(query)
+        attachSpotlightHierarchy("\(checkpoint)-typed-query", typedValue: search.value as? String)
         XCTAssertEqual(search.value as? String, query)
-        let results = springboard.descendants(matching: .any).matching(
+        let results = spotlight.descendants(matching: .any).matching(
             NSPredicate(
                 format: "identifier CONTAINS 'ResultCell' AND (label CONTAINS[c] 'кто че' OR label CONTAINS[c] 'Who Gave')"
             )
@@ -249,6 +260,7 @@ final class AppDiscoveryUITests: XCTestCase {
         repeat {
             if let result = results.allElementsBoundByIndex.first(where: { $0.isHittable }) {
                 attach(checkpoint)
+                attachSpotlightHierarchy("\(checkpoint)-result", typedValue: search.value as? String)
                 let observed = XCTAttachment(string: "query=\(query)\nresult=\(result.label)\nidentifier=\(result.identifier)")
                 observed.name = "\(checkpoint)-observed-result"
                 observed.lifetime = .keepAlways
@@ -260,7 +272,20 @@ final class AppDiscoveryUITests: XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.5))
         } while Date() < deadline
         attach("\(checkpoint)-missing")
-        throw DiscoveryFailure.missingSpotlightResult(query, springboard.debugDescription)
+        attachSpotlightHierarchy("\(checkpoint)-missing-result", typedValue: search.value as? String)
+        throw DiscoveryFailure.missingSpotlightResult(query, spotlight.debugDescription)
+    }
+
+    private func attachSpotlightHierarchy(_ name: String, typedValue: String? = nil) {
+        let state = spotlight.state
+        let hierarchy = state == .notRunning ? "Spotlight is not running" : spotlight.debugDescription
+        let observation = XCTAttachment(
+            string: "bundle=com.apple.Spotlight\nstate=\(state.rawValue)\nrequestedQuery=\(spotlightQuery ?? "")\n"
+                + "typedValue=\(typedValue ?? "")\n\n\(hierarchy)"
+        )
+        observation.name = name
+        observation.lifetime = .keepAlways
+        add(observation)
     }
 
     private func attach(_ name: String) {
@@ -275,6 +300,8 @@ final class AppDiscoveryUITests: XCTestCase {
         case settingsNotForeground
         case appLibraryStillVisible(String)
         case missingHomeIcon(String)
+        case spotlightNotForeground
+        case missingSpotlightSearchField(String)
         case missingSpotlightResult(String, String)
     }
 }
