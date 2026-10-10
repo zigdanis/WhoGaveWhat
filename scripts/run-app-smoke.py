@@ -38,7 +38,8 @@ APP_DISCOVERY_CHECKPOINT_NAMES = (
     "app-settings-before", "app-language-picker", "app-language-russian",
     "home-screen-russian-app", "russian-app-home", "spotlight-draft-before",
     "spotlight-russian", "spotlight-russian-opened", "spotlight-english", "spotlight-english-opened",
-    "spotlight-navigation-preserved", "spotlight-cold-launch", "spotlight-cold-onboarding",
+    "spotlight-navigation-result", "spotlight-navigation-preserved", "spotlight-draft-cancelled",
+    "spotlight-cold-launch", "spotlight-cold-onboarding",
 )
 GENERATED_LOG_LABELS = (
     "simulator-list", "simulator-boot", "simulator-bootstatus", "record-video",

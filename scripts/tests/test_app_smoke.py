@@ -483,20 +483,21 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                 self.assertNotIn('language-boot', labels)
 
     def test_missing_spotlight_checkpoint_fails_export_even_if_other_screenshots_exist(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            directory = Path(temporary)
-            attachments = directory / 'attachments'
-            attachments.mkdir()
-            names = [name for name in smoke.APP_DISCOVERY_CHECKPOINT_NAMES if name != 'spotlight-english-opened']
-            names += ['calendar-4-weeks', 'calendar-6-weeks']
-            exported = []
-            for index, name in enumerate(names):
-                filename = f'{index}.png'
-                (attachments / filename).write_bytes(b'png')
-                exported.append({'exportedFileName': filename, 'suggestedHumanReadableName': f'{name}_1.png'})
-            (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
-            metadata = {'planned_checkpoint_names': list(smoke.APP_DISCOVERY_CHECKPOINT_NAMES), 'checkpoints': []}
-            self.assertEqual(['spotlight-english-opened'], smoke._export_named_checkpoints(directory, metadata))
+        for missing in ('spotlight-english-opened', 'spotlight-navigation-result', 'spotlight-draft-cancelled'):
+            with self.subTest(missing=missing), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                attachments = directory / 'attachments'
+                attachments.mkdir()
+                names = [name for name in smoke.APP_DISCOVERY_CHECKPOINT_NAMES if name != missing]
+                names += ['calendar-4-weeks', 'calendar-6-weeks']
+                exported = []
+                for index, name in enumerate(names):
+                    filename = f'{index}.png'
+                    (attachments / filename).write_bytes(b'png')
+                    exported.append({'exportedFileName': filename, 'suggestedHumanReadableName': f'{name}_1.png'})
+                (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
+                metadata = {'planned_checkpoint_names': list(smoke.APP_DISCOVERY_CHECKPOINT_NAMES), 'checkpoints': []}
+                self.assertEqual([missing], smoke._export_named_checkpoints(directory, metadata))
 
 
 if __name__ == '__main__':

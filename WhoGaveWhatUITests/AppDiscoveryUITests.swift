@@ -67,7 +67,23 @@ final class AppDiscoveryUITests: XCTestCase {
         attach("home-screen-russian-app")
         app.activate()
 
-        app.tabBars.buttons["Люди"].tap()
+        let peopleTab = app.tabBars.buttons["Люди"]
+        XCTAssertTrue(peopleTab.waitForExistence(timeout: timeout))
+        peopleTab.tap()
+        XCTAssertTrue(peopleTab.isSelected)
+        XCTAssertTrue(app.buttons["people.add-person"].waitForExistence(timeout: timeout))
+        try openSpotlightLauncher(query: "Who Gave", checkpoint: "spotlight-navigation-result")
+        XCTAssertTrue(peopleTab.waitForExistence(timeout: timeout))
+        XCTAssertTrue(peopleTab.isSelected, "Spotlight must preserve the selected People tab")
+        XCTAssertTrue(app.buttons["people.add-person"].waitForExistence(timeout: timeout))
+        XCTAssertFalse(app.textFields["add-gift.name"].exists)
+        attach("spotlight-navigation-preserved")
+
+        let homeTab = app.tabBars.buttons["Главная"]
+        XCTAssertTrue(homeTab.waitForExistence(timeout: timeout))
+        homeTab.tap()
+        XCTAssertTrue(homeTab.isSelected)
+        XCTAssertTrue(app.buttons["Добавить подарок"].waitForExistence(timeout: timeout))
         app.buttons["Добавить подарок"].tap()
         let field = app.textFields["add-gift.name"]
         XCTAssertTrue(field.waitForExistence(timeout: timeout))
@@ -82,8 +98,10 @@ final class AppDiscoveryUITests: XCTestCase {
             attach("\(checkpoint)-opened")
         }
         app.buttons["Отмена"].tap()
-        XCTAssertTrue(app.tabBars.buttons["Люди"].isSelected, "Spotlight must preserve the selected tab")
-        attach("spotlight-navigation-preserved")
+        let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: field)
+        XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: timeout), .completed)
+        XCTAssertTrue(homeTab.isSelected, "Cancelling the Spotlight-preserved draft must retain Home")
+        attach("spotlight-draft-cancelled")
 
         // The UI launch shortcut never completes onboarding. SpringBoard must launch without that shortcut.
         app.terminate()
