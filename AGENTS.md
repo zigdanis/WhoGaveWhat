@@ -19,6 +19,7 @@
 - Use Luna only when Danis explicitly requests it.
 - Check the actual provider/model mapping before delegating; role names do not select the model.
 - Keep subagents at or below the primary thread's model rank. If the default exceeds that ceiling or is unavailable, continue in the primary thread and report the limitation instead of silently substituting Luna.
+- Independent review remains required. If a distinct eligible reviewer is unavailable, finish reviewable preparation and stop before merge or deployment until independent review can be completed.
 
 # Xcode and Simulator execution
 
