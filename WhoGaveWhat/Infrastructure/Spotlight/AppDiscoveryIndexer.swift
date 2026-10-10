@@ -25,7 +25,7 @@ final class AppDiscoveryIndexer {
             try await index.indexSearchableItems(items)
             #if DEBUG
                 if ProcessInfo.processInfo.environment["KS_SPOTLIGHT_DIAGNOSTICS"] == "1" {
-                    Task { await Self.observeIndexedLauncher() }
+                    Self.scheduleLauncherDiagnostics()
                 }
             #endif
         }
@@ -36,6 +36,20 @@ final class AppDiscoveryIndexer {
     }
 
     #if DEBUG
+        private static var isObservingLauncher = false
+
+        private static func scheduleLauncherDiagnostics() {
+            // Reserve the slot before creating a task, including across multiple indexer instances.
+            guard !isObservingLauncher else { return }
+            isObservingLauncher = true
+            Task {
+                defer { isObservingLauncher = false }
+                await observeIndexedLauncher()
+                await observeLauncherUserQuery("Who Gave", keyboardLanguage: "en-US")
+                await observeLauncherUserQuery("кто че", keyboardLanguage: "ru-RU")
+            }
+        }
+
         private static func observeIndexedLauncher() async {
             let context = CSSearchQueryContext()
             context.fetchAttributes = ["title", "displayName"]
@@ -66,6 +80,45 @@ final class AppDiscoveryIndexer {
                 logger.notice("Launcher index read-back completed: count=\(launcherCount)")
             } catch {
                 logger.error("Launcher index read-back failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+
+        private static func observeLauncherUserQuery(_ text: String, keyboardLanguage: String) async {
+            let context = CSUserQueryContext(currentSuggestion: nil)
+            context.fetchAttributes = ["title", "displayName"]
+            context.keyboardLanguage = keyboardLanguage
+            context.disableSemanticSearch = true
+            context.enableRankedResults = false
+            let query = CSUserQuery(userQueryString: text, userQueryContext: context)
+            logger.notice("Launcher lexical user query started: query=\(text, privacy: .public), keyboardLanguage=\(keyboardLanguage, privacy: .public)")
+            let cancellation = Task {
+                do {
+                    try await Task.sleep(nanoseconds: 10_000_000_000)
+                } catch {
+                    return
+                }
+                logger.notice("Launcher lexical user query timed out after 10 seconds: query=\(text, privacy: .public)")
+                query.cancel()
+            }
+            defer { cancellation.cancel() }
+            var launcherCount = 0
+            do {
+                // Reading responses starts this public user-query API automatically.
+                for try await response in query.responses {
+                    guard case .item(let result) = response else { continue }
+                    let item = result.item
+                    guard item.uniqueIdentifier == itemIdentifier else { continue }
+                    launcherCount += 1
+                    let title = item.attributeSet.title ?? ""
+                    logger.notice(
+                        "Launcher lexical user query found: query=\(text, privacy: .public), identifier=\(itemIdentifier, privacy: .public), title=\(title, privacy: .public)"
+                    )
+                }
+                logger.notice("Launcher lexical user query completed: query=\(text, privacy: .public), count=\(launcherCount)")
+            } catch {
+                let failure = error as NSError
+                logger.error(
+                    "Launcher lexical user query failed: query=\(text, privacy: .public), domain=\(failure.domain, privacy: .public), code=\(failure.code)")
             }
         }
     #endif

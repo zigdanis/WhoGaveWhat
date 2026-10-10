@@ -316,13 +316,14 @@ final class AppDiscoveryUITests: XCTestCase {
                     throw DiscoveryFailure.mismatchedDiagnosticQuery("Calendar", String(describing: search.value))
                 }
                 let calendar = spotlight.cells.matching(
-                    NSPredicate(format: "identifier CONTAINS 'ResultCell' AND label == 'Calendar'")
+                    NSPredicate(format: "identifier CONTAINS 'GridCell' AND label == 'Calendar'")
                 ).firstMatch
+                let calendarIcon = calendar.icons["Calendar"].firstMatch
                 let topHit = spotlight.otherElements.matching(
                     NSPredicate(format: "identifier CONTAINS 'SectionHeader' AND identifier CONTAINS 'Title:Top Hit'")
                 ).firstMatch
                 let controlDeadline = Date().addingTimeInterval(30)
-                while !(topHit.exists && calendar.exists && calendar.isHittable), Date() < controlDeadline {
+                while !(topHit.exists && calendar.exists && calendar.isHittable && calendarIcon.exists), Date() < controlDeadline {
                     RunLoop.current.run(until: Date().addingTimeInterval(0.5))
                 }
             } catch {
