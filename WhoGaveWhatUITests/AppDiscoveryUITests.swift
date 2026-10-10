@@ -287,6 +287,9 @@ final class AppDiscoveryUITests: XCTestCase {
             do {
                 try clearSpotlightQuery(search)
                 search.typeText("кто че")
+                guard search.value as? String == "кто че" else {
+                    throw DiscoveryFailure.mismatchedDiagnosticQuery("кто че", String(describing: search.value))
+                }
                 let diagnosticDeadline = Date().addingTimeInterval(30)
                 while !results.allElementsBoundByIndex.contains(where: { $0.isHittable }), Date() < diagnosticDeadline {
                     RunLoop.current.run(until: Date().addingTimeInterval(0.5))
@@ -299,6 +302,32 @@ final class AppDiscoveryUITests: XCTestCase {
             }
             attach("\(checkpoint)-diagnostic-russian-title")
             attachSpotlightHierarchy("\(checkpoint)-diagnostic-russian-title", typedValue: search.value as? String)
+            // A built-in app provides a control for the system app catalog, without opening it.
+            spotlightQuery = "Calendar"
+            do {
+                try clearSpotlightQuery(search)
+                search.typeText("Calendar")
+                guard search.value as? String == "Calendar" else {
+                    throw DiscoveryFailure.mismatchedDiagnosticQuery("Calendar", String(describing: search.value))
+                }
+                let calendar = spotlight.cells.matching(
+                    NSPredicate(format: "identifier CONTAINS 'ResultCell' AND label == 'Calendar'")
+                ).firstMatch
+                let topHit = spotlight.otherElements.matching(
+                    NSPredicate(format: "identifier CONTAINS 'SectionHeader' AND identifier CONTAINS 'Title:Top Hit'")
+                ).firstMatch
+                let controlDeadline = Date().addingTimeInterval(30)
+                while !(topHit.exists && calendar.exists && calendar.isHittable), Date() < controlDeadline {
+                    RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+                }
+            } catch {
+                let failure = XCTAttachment(string: "\(error)")
+                failure.name = "\(checkpoint)-diagnostic-calendar-failure"
+                failure.lifetime = .keepAlways
+                add(failure)
+            }
+            attach("\(checkpoint)-diagnostic-calendar")
+            attachSpotlightHierarchy("\(checkpoint)-diagnostic-calendar", typedValue: search.value as? String)
         }
         throw DiscoveryFailure.missingSpotlightResult(query, failedHierarchy)
     }
@@ -353,6 +382,7 @@ final class AppDiscoveryUITests: XCTestCase {
         case missingSpotlightSearchField(String)
         case missingSpotlightClearControl
         case spotlightQueryNotCleared(String)
+        case mismatchedDiagnosticQuery(String, String)
         case missingSpotlightResult(String, String)
     }
 }

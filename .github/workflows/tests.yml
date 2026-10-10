@@ -5,6 +5,11 @@ on:
     branches: [master]
   pull_request:
   workflow_dispatch:
+    inputs:
+      spotlight_diagnostics:
+        description: Run an additional focused Spotlight diagnostic (full tests still run)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -77,5 +82,38 @@ jobs:
         with:
           name: ui-app-smoke-attempt-${{ github.run_attempt }}
           path: ${{ runner.temp }}/ui-app-smoke
+          if-no-files-found: warn
+          retention-days: 14
+
+  spotlight-diagnostics:
+    name: Spotlight diagnostics (non-acceptance)
+    if: github.event_name == 'workflow_dispatch' && inputs.spotlight_diagnostics
+    runs-on: macos-26
+    timeout-minutes: 55
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      XCODE_VERSION: '26.6'
+      HEAD_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show native tool versions
+        run: |
+          xcodebuild -version
+          xcrun simctl help
+          xcrun xcresulttool version
+      - name: Run focused Spotlight diagnostic
+        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/spotlight-diagnostics" --verify-app-names --discovery-only
+      - name: Render diagnostic report
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/spotlight-diagnostics/metadata.json"; then
+            python3 scripts/ui-evidence-report.py "$RUNNER_TEMP/spotlight-diagnostics"
+          fi
+      - name: Upload non-acceptance Spotlight diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spotlight-diagnostics-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/spotlight-diagnostics
           if-no-files-found: warn
           retention-days: 14

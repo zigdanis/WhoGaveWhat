@@ -46,7 +46,7 @@ GENERATED_LOG_LABELS = (
     "record-video-stop", "xcodebuild-test", "export-attachments", "bundle-info", "bundle-names-en", "bundle-names-ru",
     "language-shutdown", "language-preferences-before", "language-preferences-languages", "language-preferences-locale",
     "language-preferences-after", "language-boot", "language-bootstatus", "language-device-state",
-    "app-discovery-index-log",
+    "app-discovery-index-log", "spotlight-pipeline-log",
 )
 COLD_BOOT_TIMEOUT_SECONDS = 600
 LANGUAGE_SHUTDOWN_TIMEOUT_SECONDS = 180
@@ -282,7 +282,7 @@ def _export_named_checkpoints(directory, metadata):
             metadata["checkpoints"].append({"name": f"calendar-{count}-weeks", "image": f"attachments/{stable}"})
     missing = [name for name in metadata["planned_checkpoint_names"]
                if name not in {checkpoint["name"] for checkpoint in metadata["checkpoints"]}]
-    if len(calendar_counts) < 2:
+    if metadata.get("evidence_kind") != "diagnostic" and len(calendar_counts) < 2:
         missing.append("two calendar checkpoints with distinct week counts")
     if missing:
         metadata["missing_checkpoints"] = missing
@@ -357,8 +357,10 @@ def prepare_disposable_languages(directory, simulator, metadata):
     metadata["language_preparation"]["verified"] = True
 
 
-def run(directory, verify_app_names=False):
+def run(directory, verify_app_names=False, discovery_only=False):
     """Run the native XCTest journey, preserving diagnostics and real evidence."""
+    if discovery_only and not verify_app_names:
+        raise ValueError("Discovery-only diagnostics require --verify-app-names")
     directory = directory.resolve()
     directory.mkdir(parents=True, exist_ok=True)
     clear_previous_outputs(directory)
@@ -378,6 +380,12 @@ def run(directory, verify_app_names=False):
             "; English system with Russian app language selected in Settings; real Russian and English Spotlight"
             " launcher results preserve the gift draft and navigation, then cold launch preserves onboarding")
         metadata["app_discovery_queries"] = ["кто че", "Who Gave"]
+    if discovery_only:
+        metadata.update(
+            evidence_kind="diagnostic",
+            native_test="AppDiscoveryUITests only (partial suite; not acceptance)",
+            scenario="Spotlight diagnostic: real Settings language selection and bilingual launcher searches",
+            planned_checkpoint_names=list(APP_DISCOVERY_CHECKPOINT_NAMES))
     simulator = None
     recording = None
     result_bundle = directory / "Acceptance.xcresult"
@@ -400,8 +408,10 @@ def run(directory, verify_app_names=False):
                    "-resultBundlePath", str(result_bundle), "-parallel-testing-enabled", "NO", "CODE_SIGNING_ALLOWED=NO"]
         if not verify_app_names:
             command.append("-skip-testing:WhoGaveWhatUITests/AppDiscoveryUITests")
+        if discovery_only:
+            command.append("-only-testing:WhoGaveWhatUITests/AppDiscoveryUITests")
         try:
-            run_command(directory, "xcodebuild-test", command, 1800)
+            run_command(directory, "xcodebuild-test", command, 900 if discovery_only else 1800)
             if verify_app_names:
                 verify_built_app_names(directory, metadata)
             test_succeeded = True
@@ -426,6 +436,14 @@ def run(directory, verify_app_names=False):
             except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
                 # This diagnostic must never replace the native test failure or its evidence.
                 metadata["app_discovery_diagnostic_error"] = str(error)
+            try:
+                run_command(directory, "spotlight-pipeline-log", [
+                    "xcrun", "simctl", "spawn", simulator["udid"], "log", "show", "--last", "20m",
+                    "--info", "--style", "compact", "--predicate",
+                    '(process == "corespotlightd" OR process == "Spotlight" OR subsystem CONTAINS[c] "spotlight") '
+                    'AND (eventMessage CONTAINS[c] "pro.ziganshin.WhoGaveWhat" OR messageType == 16 OR messageType == 17)'], 30)
+            except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
+                metadata["spotlight_pipeline_diagnostic_error"] = str(error)
         if result_bundle.is_dir():
             try:
                 _export_xcresult_attachments(result_bundle, directory / "attachments", directory)
@@ -451,5 +469,7 @@ if __name__ == "__main__":
     parser.add_argument("directory", type=Path)
     parser.add_argument("--verify-app-names", action="store_true",
                         help="Exercise real Settings language selection and Spotlight on a disposable Simulator")
+    parser.add_argument("--discovery-only", action="store_true",
+                        help="Run only AppDiscoveryUITests and mark partial evidence as diagnostic, never acceptance")
     args = parser.parse_args()
-    run(args.directory, args.verify_app_names)
+    run(args.directory, args.verify_app_names, args.discovery_only)
