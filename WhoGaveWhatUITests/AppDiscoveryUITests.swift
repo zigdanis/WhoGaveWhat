@@ -347,16 +347,13 @@ final class AppDiscoveryUITests: XCTestCase {
         guard keyboard.waitForExistence(timeout: timeout) else {
             throw DiscoveryFailure.missingSpotlightKeyboard(query)
         }
-        if !expectedKeys.allSatisfy({ keyboard.keys[$0].exists }) {
-            let nextKeyboard = spotlight.buttons["Next keyboard"].firstMatch
-            guard nextKeyboard.waitForExistence(timeout: timeout), nextKeyboard.isHittable else {
-                throw DiscoveryFailure.missingSpotlightKeyboardControl
-            }
-            nextKeyboard.tap()
-        }
         let tutorial = spotlight.staticTexts["Quickly Change Keyboards"].firstMatch
         let keyboardDeadline = Date().addingTimeInterval(timeout)
         var dismissedTutorial = false
+        var keyboardSwitches = 0
+        var layoutBeforeSwitch: [String]?
+        var observedLayout = keyboard.keys.allElementsBoundByIndex.map(\.label)
+        var layoutChangedAt = Date()
         while true {
             // The first-use overlay can arrive after the initial keyboard snapshot.
             if tutorial.exists {
@@ -386,6 +383,31 @@ final class AppDiscoveryUITests: XCTestCase {
             guard Date() < keyboardDeadline else {
                 attachSpotlightHierarchy("\(checkpoint)-keyboard-mismatch")
                 throw DiscoveryFailure.mismatchedSpotlightKeyboard(query)
+            }
+            let layout = keyboard.keys.allElementsBoundByIndex.map(\.label)
+            if layout != observedLayout {
+                observedLayout = layout
+                layoutChangedAt = Date()
+            }
+            // Extra installed keyboards can make one globe tap land on another alphabet.
+            // Require a changed, settled layout before another tap so transitions cannot skip the target.
+            let switchSettled =
+                layoutBeforeSwitch == nil
+                || (layout != layoutBeforeSwitch && Date().timeIntervalSince(layoutChangedAt) >= 0.75)
+            if !expectedKeys.allSatisfy({ keyboard.keys[$0].exists }), !tutorial.exists, switchSettled {
+                guard keyboardSwitches < 4 else {
+                    attachSpotlightHierarchy("\(checkpoint)-keyboard-mismatch")
+                    throw DiscoveryFailure.mismatchedSpotlightKeyboard(query)
+                }
+                let nextKeyboard = spotlight.buttons["Next keyboard"].firstMatch
+                guard nextKeyboard.waitForExistence(timeout: max(0, keyboardDeadline.timeIntervalSinceNow)),
+                    nextKeyboard.isHittable
+                else {
+                    throw DiscoveryFailure.missingSpotlightKeyboardControl
+                }
+                layoutBeforeSwitch = layout
+                nextKeyboard.tap()
+                keyboardSwitches += 1
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.25))
         }
