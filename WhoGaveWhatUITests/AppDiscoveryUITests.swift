@@ -207,7 +207,7 @@ final class AppDiscoveryUITests: XCTestCase {
     }
 
     private func attach(_ name: String) {
-        let screenshot = XCTAttachment(screenshot: XCUIDevice.shared.screenshot())
+        let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         screenshot.name = name
         screenshot.lifetime = .keepAlways
         add(screenshot)
