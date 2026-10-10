@@ -329,6 +329,36 @@ final class AppDiscoveryUITests: XCTestCase {
             }
             attach("\(checkpoint)-diagnostic-russian-title")
             attachSpotlightHierarchy("\(checkpoint)-diagnostic-russian-title", typedValue: search.value as? String)
+            if search.value as? String == "кто че", results.firstMatch.exists {
+                // Compare aliases only after the localized item is actually retrievable.
+                // Offscreen rows count as retrieval evidence here; these probes never open them.
+                let pairedDeadline = Date().addingTimeInterval(90)
+                let englishObserved = observePairedSpotlightQuery(
+                    "Who Gave", search: search, results: results,
+                    checkpoint: "\(checkpoint)-diagnostic-paired-english", retrievalTimeout: 30,
+                    waitDeadline: pairedDeadline
+                )
+                if englishObserved {
+                    observePairedSpotlightQuery(
+                        "кто че", search: search, results: results,
+                        checkpoint: "\(checkpoint)-diagnostic-paired-russian", retrievalTimeout: 15,
+                        waitDeadline: pairedDeadline
+                    )
+                } else {
+                    let skipped = XCTAttachment(string: "outcome=skipped\nreason=paired English probe inconclusive or failed")
+                    skipped.name = "\(checkpoint)-diagnostic-paired-russian-skipped"
+                    skipped.lifetime = .keepAlways
+                    add(skipped)
+                }
+            } else {
+                let skipped = XCTAttachment(
+                    string: "outcome=skipped\nreason=localized launcher row not confirmed\n"
+                        + "typedValue=\(String(describing: search.value))\nresultExists=\(results.firstMatch.exists)"
+                )
+                skipped.name = "\(checkpoint)-diagnostic-paired-skipped"
+                skipped.lifetime = .keepAlways
+                add(skipped)
+            }
         }
         if spotlight.state == .runningForeground, search.isHittable {
             // A built-in app provides a control for the system app catalog, without opening it.
@@ -363,18 +393,86 @@ final class AppDiscoveryUITests: XCTestCase {
         throw DiscoveryFailure.missingSpotlightResult(query, failedHierarchy)
     }
 
-    private func selectSpotlightKeyboard(for query: String, checkpoint: String) throws {
+    @discardableResult
+    private func observePairedSpotlightQuery(
+        _ query: String, search: XCUIElement, results: XCUIElementQuery,
+        checkpoint: String, retrievalTimeout: TimeInterval, waitDeadline: Date
+    ) -> Bool {
+        let startedAt = Date()
+        attach("\(checkpoint)-start")
+        attachSpotlightHierarchy("\(checkpoint)-start", typedValue: search.value as? String)
+        spotlightQuery = query
+        var outcome: String
+        var queryObserved = false
+        var phase = "clear"
+        do {
+            guard Date() < waitDeadline else { throw DiscoveryFailure.diagnosticWaitBudgetExpired }
+            guard spotlight.state == .runningForeground, search.exists, search.isHittable else {
+                throw DiscoveryFailure.missingSpotlightSearchField(query)
+            }
+            try clearSpotlightQuery(search, waitDeadline: waitDeadline)
+            phase = "empty-results"
+            attachSpotlightHierarchy("\(checkpoint)-empty-query", typedValue: search.value as? String)
+            let emptyDeadline = min(Date().addingTimeInterval(5), waitDeadline)
+            while results.firstMatch.exists, Date() < emptyDeadline {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+            }
+            guard !results.firstMatch.exists else { throw DiscoveryFailure.diagnosticPriorResultNotCleared }
+            phase = "keyboard-and-focus"
+            guard Date() < waitDeadline else { throw DiscoveryFailure.diagnosticWaitBudgetExpired }
+            try selectSpotlightKeyboard(for: query, checkpoint: checkpoint, waitDeadline: waitDeadline)
+            phase = "type"
+            guard Date() < waitDeadline else { throw DiscoveryFailure.diagnosticWaitBudgetExpired }
+            search.typeText(query)
+            guard search.value as? String == query else {
+                throw DiscoveryFailure.mismatchedDiagnosticQuery(query, String(describing: search.value))
+            }
+            attachSpotlightHierarchy("\(checkpoint)-typed-query", typedValue: search.value as? String)
+            phase = "retrieval"
+            let deadline = min(Date().addingTimeInterval(retrievalTimeout), waitDeadline)
+            RunLoop.current.run(until: min(Date().addingTimeInterval(0.75), deadline))
+            while !results.firstMatch.exists, Date() < deadline {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+            }
+            if let result = results.allElementsBoundByIndex.first {
+                outcome = "outcome=exists\nresult=\(result.label)\nidentifier=\(result.identifier)\nhittable=\(result.isHittable)"
+            } else if Date() >= waitDeadline {
+                outcome = "outcome=inconclusive\nreason=paired wait budget expired\nphase=\(phase)"
+            } else {
+                outcome = "outcome=not-found"
+            }
+            queryObserved = Date() < waitDeadline
+        } catch DiscoveryFailure.diagnosticPriorResultNotCleared {
+            outcome = "outcome=inconclusive\nphase=\(phase)\nreason=prior launcher row persisted after clearing query"
+        } catch {
+            // Secondary probes cannot replace the original English acceptance failure.
+            let status = Date() >= waitDeadline ? "inconclusive" : "failure"
+            outcome = "outcome=\(status)\nphase=\(phase)\nerror=\(error)"
+        }
+        attach("\(checkpoint)-end")
+        attachSpotlightHierarchy("\(checkpoint)-end", typedValue: search.value as? String)
+        let observation = XCTAttachment(
+            string: "query=\(query)\nretrievalTimeout=\(retrievalTimeout)\n"
+                + "startedAt=\(startedAt.timeIntervalSince1970)\nfinishedAt=\(Date().timeIntervalSince1970)\n\(outcome)"
+        )
+        observation.name = "\(checkpoint)-outcome"
+        observation.lifetime = .keepAlways
+        add(observation)
+        return queryObserved
+    }
+
+    private func selectSpotlightKeyboard(for query: String, checkpoint: String, waitDeadline: Date? = nil) throws {
         // Typing Cyrillic through XCTest does not change the keyboard's input language.
         // Use the observed globe control, then verify the actual alphabet before typing.
         let russian = query.unicodeScalars.contains { (0x0400...0x04FF).contains($0.value) }
         let expectedKeys = russian ? ["й", "ц", "у"] : ["q", "w", "e"]
         let keyboard = spotlight.keyboards.firstMatch
         attachSpotlightHierarchy("\(checkpoint)-keyboard-before")
-        guard keyboard.waitForExistence(timeout: timeout) else {
+        guard keyboard.waitForExistence(timeout: min(timeout, max(0, waitDeadline?.timeIntervalSinceNow ?? timeout))) else {
             throw DiscoveryFailure.missingSpotlightKeyboard(query)
         }
         let tutorial = spotlight.staticTexts["Quickly Change Keyboards"].firstMatch
-        let keyboardDeadline = Date().addingTimeInterval(timeout)
+        let keyboardDeadline = min(Date().addingTimeInterval(timeout), waitDeadline ?? .distantFuture)
         var dismissedTutorial = false
         var keyboardSwitches = 0
         var layoutBeforeSwitch: [String]?
@@ -443,7 +541,7 @@ final class AppDiscoveryUITests: XCTestCase {
         }
         search.tap()
         // The observed native snapshot exposes this focus marker without private focus APIs.
-        let focusDeadline = Date().addingTimeInterval(timeout)
+        let focusDeadline = min(Date().addingTimeInterval(timeout), waitDeadline ?? .distantFuture)
         while !search.debugDescription.contains("Keyboard Focused") {
             guard Date() < focusDeadline else {
                 throw DiscoveryFailure.spotlightSearchNotFocused(query)
@@ -453,14 +551,16 @@ final class AppDiscoveryUITests: XCTestCase {
         attachSpotlightHierarchy("\(checkpoint)-keyboard-ready")
     }
 
-    private func clearSpotlightQuery(_ search: XCUIElement) throws {
+    private func clearSpotlightQuery(_ search: XCUIElement, waitDeadline: Date? = nil) throws {
         search.tap()
         let placeholder = search.placeholderValue
         if let existing = search.value as? String, !existing.isEmpty, existing != placeholder {
             // Spotlight restores the previous query with an arbitrary cursor position.
             // Its observed native clear button removes the complete query in one action.
             let clear = search.buttons["Clear text"].firstMatch
-            guard clear.waitForExistence(timeout: timeout), clear.isHittable else {
+            guard clear.waitForExistence(timeout: min(timeout, max(0, waitDeadline?.timeIntervalSinceNow ?? timeout))),
+                clear.isHittable
+            else {
                 throw DiscoveryFailure.missingSpotlightClearControl
             }
             clear.tap()
@@ -469,7 +569,7 @@ final class AppDiscoveryUITests: XCTestCase {
             predicate: NSPredicate(format: "value == nil OR value == '' OR value == %@", placeholder ?? ""),
             object: search
         )
-        guard XCTWaiter.wait(for: [empty], timeout: timeout) == .completed else {
+        guard XCTWaiter.wait(for: [empty], timeout: min(timeout, max(0, waitDeadline?.timeIntervalSinceNow ?? timeout))) == .completed else {
             throw DiscoveryFailure.spotlightQueryNotCleared(String(describing: search.value))
         }
         search.tap()
@@ -510,6 +610,8 @@ final class AppDiscoveryUITests: XCTestCase {
         case missingSpotlightClearControl
         case spotlightQueryNotCleared(String)
         case mismatchedDiagnosticQuery(String, String)
+        case diagnosticWaitBudgetExpired
+        case diagnosticPriorResultNotCleared
         case missingSpotlightResult(String, String)
     }
 }
