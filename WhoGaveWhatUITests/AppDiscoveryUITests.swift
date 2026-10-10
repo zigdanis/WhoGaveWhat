@@ -67,6 +67,7 @@ final class AppDiscoveryUITests: XCTestCase {
     func testRussianAppLanguageAndBilingualSpotlightPreserveDraftAndOnboarding() throws {
         // Launch without AppleLanguages overrides: the app must follow its real Settings preference.
         app.launchEnvironment["KS_START"] = "app"
+        app.launchEnvironment["KS_SPOTLIGHT_DIAGNOSTICS"] = "1"
         app.launch()
         XCTAssertTrue(app.buttons["Add a gift"].waitForExistence(timeout: timeout))
         try showHomeAppIcon()
@@ -153,6 +154,14 @@ final class AppDiscoveryUITests: XCTestCase {
         attach("settings-search-app")
         try tapSetting("Who Gave", contains: true)
         attach("app-settings-before")
+        try tapSetting("Search")
+        RunLoop.current.run(until: Date().addingTimeInterval(0.75))
+        attach("app-search-visibility")
+        let visibility = XCTAttachment(string: settings.debugDescription)
+        visibility.name = "app-search-visibility-hierarchy"
+        visibility.lifetime = .keepAlways
+        add(visibility)
+        try tapSetting("Who Gave")
         try tapSetting("Language")
         attach("app-language-picker")
         // Register cleanup before the mutation so a failed tap or later assertion cannot skip it.

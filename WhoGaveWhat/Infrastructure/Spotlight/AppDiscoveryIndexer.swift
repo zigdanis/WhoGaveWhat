@@ -23,12 +23,52 @@ final class AppDiscoveryIndexer {
         let index = CSSearchableIndex(name: Self.indexName)
         self.init { items in
             try await index.indexSearchableItems(items)
+            #if DEBUG
+                if ProcessInfo.processInfo.environment["KS_SPOTLIGHT_DIAGNOSTICS"] == "1" {
+                    Task { await Self.observeIndexedLauncher() }
+                }
+            #endif
         }
     }
 
     init(indexItems: @escaping @MainActor ([CSSearchableItem]) async throws -> Void) {
         self.indexItems = indexItems
     }
+
+    #if DEBUG
+        private static func observeIndexedLauncher() async {
+            let context = CSSearchQueryContext()
+            context.fetchAttributes = ["title", "displayName"]
+            let query = CSSearchQuery(
+                queryString: "title == 'Who Gave'c || title == 'кто че'c",
+                queryContext: context
+            )
+            logger.notice("Launcher index read-back started")
+            let cancellation = Task {
+                do {
+                    try await Task.sleep(nanoseconds: 10_000_000_000)
+                } catch {
+                    return
+                }
+                logger.notice("Launcher index read-back timed out after 10 seconds")
+                query.cancel()
+            }
+            defer { cancellation.cancel() }
+            var launcherCount = 0
+            do {
+                for try await result in query.results {
+                    let item = result.item
+                    guard item.uniqueIdentifier == itemIdentifier else { continue }
+                    launcherCount += 1
+                    let title = item.attributeSet.title ?? ""
+                    logger.notice("Launcher index read-back found: identifier=\(itemIdentifier, privacy: .public), title=\(title, privacy: .public)")
+                }
+                logger.notice("Launcher index read-back completed: count=\(launcherCount)")
+            } catch {
+                logger.error("Launcher index read-back failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+    #endif
 
     func refresh() async {
         // Multiple active scenes can request the same launcher update concurrently.
