@@ -353,12 +353,54 @@ final class AppDiscoveryUITests: XCTestCase {
                 throw DiscoveryFailure.missingSpotlightKeyboardControl
             }
             nextKeyboard.tap()
-            guard keyboard.keys[expectedKeys[0]].waitForExistence(timeout: timeout),
-                expectedKeys.allSatisfy({ keyboard.keys[$0].exists })
-            else {
+        }
+        let tutorial = spotlight.staticTexts["Quickly Change Keyboards"].firstMatch
+        let keyboardDeadline = Date().addingTimeInterval(timeout)
+        var dismissedTutorial = false
+        while true {
+            // The first-use overlay can arrive after the initial keyboard snapshot.
+            if tutorial.exists {
+                guard !dismissedTutorial else { throw DiscoveryFailure.keyboardTutorialNotDismissed }
+                attach("\(checkpoint)-keyboard-tutorial")
+                attachSpotlightHierarchy("\(checkpoint)-keyboard-tutorial")
+                let continueButton = spotlight.buttons["Continue"].firstMatch
+                guard continueButton.waitForExistence(timeout: max(0, keyboardDeadline.timeIntervalSinceNow)),
+                    continueButton.isHittable
+                else {
+                    throw DiscoveryFailure.missingKeyboardTutorialContinue
+                }
+                continueButton.tap()
+                dismissedTutorial = true
+                let dismissed = XCTNSPredicateExpectation(
+                    predicate: NSPredicate(format: "exists == false"), object: tutorial
+                )
+                guard XCTWaiter.wait(for: [dismissed], timeout: max(0, keyboardDeadline.timeIntervalSinceNow)) == .completed else {
+                    throw DiscoveryFailure.keyboardTutorialNotDismissed
+                }
+                attach("\(checkpoint)-keyboard-tutorial-dismissed")
+                attachSpotlightHierarchy("\(checkpoint)-keyboard-tutorial-dismissed")
+            }
+            if expectedKeys.allSatisfy({ keyboard.keys[$0].exists && keyboard.keys[$0].isHittable }), !tutorial.exists {
+                break
+            }
+            guard Date() < keyboardDeadline else {
                 attachSpotlightHierarchy("\(checkpoint)-keyboard-mismatch")
                 throw DiscoveryFailure.mismatchedSpotlightKeyboard(query)
             }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        }
+        let search = spotlight.textFields["SpotlightSearchField"].firstMatch
+        guard search.exists, search.isHittable else {
+            throw DiscoveryFailure.missingSpotlightSearchField(query)
+        }
+        search.tap()
+        // The observed native snapshot exposes this focus marker without private focus APIs.
+        let focusDeadline = Date().addingTimeInterval(timeout)
+        while !search.debugDescription.contains("Keyboard Focused") {
+            guard Date() < focusDeadline else {
+                throw DiscoveryFailure.spotlightSearchNotFocused(query)
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
         }
         attachSpotlightHierarchy("\(checkpoint)-keyboard-ready")
     }
@@ -414,6 +456,9 @@ final class AppDiscoveryUITests: XCTestCase {
         case missingSpotlightKeyboard(String)
         case missingSpotlightKeyboardControl
         case mismatchedSpotlightKeyboard(String)
+        case missingKeyboardTutorialContinue
+        case keyboardTutorialNotDismissed
+        case spotlightSearchNotFocused(String)
         case missingSpotlightClearControl
         case spotlightQueryNotCleared(String)
         case mismatchedDiagnosticQuery(String, String)
