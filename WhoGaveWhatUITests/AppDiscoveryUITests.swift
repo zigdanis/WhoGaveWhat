@@ -32,17 +32,28 @@ final class AppDiscoveryUITests: XCTestCase {
         // Keep the original failure evidence above intact before cleanup changes either app.
         guard shouldRestoreAppLanguage else { return }
         do {
-            settings.activate()
-            let englishChoice = settings.descendants(matching: .any).matching(
-                NSPredicate(format: "label CONTAINS[c] 'English'")
-            )
-            if !englishChoice.allElementsBoundByIndex.contains(where: { $0.isHittable }) {
-                // Some iOS versions return to app settings after choosing a language.
+            // Dismiss a system search before starting a fresh, foreground Settings process.
+            XCUIDevice.shared.press(.home)
+            settings.launch()
+            guard settings.wait(for: .runningForeground, timeout: timeout) else {
+                throw DiscoveryFailure.settingsNotForeground
+            }
+            let englishChoice = settings.cells["English"]
+            if !englishChoice.waitForExistence(timeout: 3) {
+                // Settings can restore either its root, Apps list, or the app's detail page.
+                if settings.navigationBars["Settings"].exists {
+                    try tapSetting("Apps", attemptLimit: 2)
+                }
+                if settings.navigationBars["Apps"].exists {
+                    try enterSettingsSearch("Who Gave")
+                    try tapSetting("Who Gave", contains: true, attemptLimit: 2)
+                }
                 try tapSetting("Language", attemptLimit: 2)
             }
             try tapSetting("English", contains: true, attemptLimit: 2)
         } catch {
-            let cleanup = XCTAttachment(string: "\(error)\n\n\(settings.debugDescription)")
+            let hierarchy = settings.state == .notRunning ? "Settings is not running" : settings.debugDescription
+            let cleanup = XCTAttachment(string: "\(error)\n\n\(hierarchy)")
             cleanup.name = "app-discovery-language-cleanup-failure"
             cleanup.lifetime = .keepAlways
             add(cleanup)
@@ -55,7 +66,7 @@ final class AppDiscoveryUITests: XCTestCase {
         app.launchEnvironment["KS_START"] = "app"
         app.launch()
         XCTAssertTrue(app.buttons["Add a gift"].waitForExistence(timeout: timeout))
-        XCUIDevice.shared.press(.home)
+        try showHomeAppIcon()
         attach("home-screen-english")
 
         try setRussianAppLanguageWithEnglishSystem()
@@ -151,6 +162,7 @@ final class AppDiscoveryUITests: XCTestCase {
         let predicate = NSPredicate(format: contains ? "label CONTAINS[c] %@" : "label == %@", label)
         for _ in 0..<attemptLimit {
             for type in [XCUIElement.ElementType.cell, .button, .staticText] {
+                guard settings.state == .runningForeground else { throw DiscoveryFailure.settingsNotForeground }
                 let query = settings.descendants(matching: type).matching(predicate)
                 _ = query.firstMatch.waitForExistence(timeout: 1)
                 if let control = query.allElementsBoundByIndex.first(where: { $0.isHittable }) {
@@ -176,19 +188,50 @@ final class AppDiscoveryUITests: XCTestCase {
         search.typeText(text)
     }
 
+    private var isAppLibraryVisible: Bool {
+        let librarySearch = springboard.searchFields["dewey-search-field"]
+        let libraryPods = springboard.otherElements["dewey-pod-view"]
+        return (librarySearch.exists && librarySearch.isHittable) || (libraryPods.exists && libraryPods.isHittable)
+    }
+
+    private func regularHomeScreen() throws -> XCUIElement {
+        // The first Home action exits the app; the second returns from the last page to Home.
+        XCUIDevice.shared.press(.home)
+        XCUIDevice.shared.press(.home)
+        let icons = springboard.otherElements["Home screen icons"].firstMatch
+        XCTAssertTrue(icons.waitForExistence(timeout: timeout))
+        for _ in 0..<3 {
+            // Home/page transitions briefly expose nonhittable icons and blurred snapshots.
+            RunLoop.current.run(until: Date().addingTimeInterval(0.75))
+            if !isAppLibraryVisible {
+                XCTAssertTrue(icons.isHittable)
+                return icons
+            }
+            // The observed dewey UI is App Library, including its alphabetical search.
+            // Close that search, then move to a regular Home page before swiping down.
+            XCUIDevice.shared.press(.home)
+            icons.swipeRight()
+        }
+        throw DiscoveryFailure.appLibraryStillVisible(springboard.debugDescription)
+    }
+
     private func showHomeAppIcon() throws {
+        let home = try regularHomeScreen()
         let icons = springboard.icons.matching(NSPredicate(format: "label == 'Who Gave' OR label == 'кто че'"))
         for _ in 0..<4 {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.75))
+            // App Library icons cannot establish the app's Home-screen label.
+            guard !isAppLibraryVisible else { break }
             if icons.allElementsBoundByIndex.contains(where: { $0.isHittable }) { return }
-            springboard.swipeLeft()
+            home.swipeLeft()
         }
         throw DiscoveryFailure.missingHomeIcon(springboard.debugDescription)
     }
 
     private func openSpotlightLauncher(query: String, checkpoint: String) throws {
-        XCUIDevice.shared.press(.home)
-        // A Home-screen swipe opens the real Spotlight field; no result or index state is injected.
-        springboard.swipeDown()
+        let home = try regularHomeScreen()
+        // A regular Home-screen swipe opens Spotlight; App Library search is explicitly excluded.
+        home.swipeDown()
         let search = springboard.descendants(matching: .any)["SpotlightSearchField"].firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: timeout))
         search.tap()
@@ -229,6 +272,8 @@ final class AppDiscoveryUITests: XCTestCase {
 
     private enum DiscoveryFailure: Error {
         case missingSettingsControl(String, String)
+        case settingsNotForeground
+        case appLibraryStillVisible(String)
         case missingHomeIcon(String)
         case missingSpotlightResult(String, String)
     }
