@@ -17,6 +17,100 @@ smoke = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(smoke)
 
 
+def signing_fixture(label):
+    if label == 'simulator-signing-info':
+        return plistlib.dumps({'CFBundleIdentifier': 'org.example.launcher'}).decode()
+    if label == 'simulator-signing-display':
+        return 'Identifier=org.example.launcher\nSignature=adhoc\n'
+    return ''
+
+
+class SimulatorIdentityTests(unittest.TestCase):
+    def test_real_bundle_identifier_and_signature_from_either_output_stream_are_verified(self):
+        for details_in_stderr in (False, True):
+            with self.subTest(stderr=details_in_stderr), tempfile.TemporaryDirectory() as temporary:
+                def native(_directory, label, command, timeout):
+                    self.assertEqual(30, timeout)
+                    output = signing_fixture(label)
+                    if label == 'simulator-signing-display' and details_in_stderr:
+                        return subprocess.CompletedProcess(command, 0, '', output)
+                    return subprocess.CompletedProcess(command, 0, output, '')
+                metadata = {}
+                with patch.object(smoke, 'run_command', side_effect=native):
+                    smoke.verify_built_simulator_identity(Path(temporary), metadata)
+                self.assertEqual(dict(verified=True, bundle_identifier='org.example.launcher',
+                                      signing_identifier='org.example.launcher', signature='adhoc'),
+                                 metadata['simulator_signing'])
+
+    def test_missing_mismatched_nonadhoc_or_invalid_signature_cannot_be_verified(self):
+        for failure in ('missing-bundle', 'missing-identifier', 'wrong-identifier', 'missing-signature',
+                        'wrong-signature', 'verification-failed', 'unsigned'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                def native(_directory, label, command, _timeout):
+                    output = signing_fixture(label)
+                    if label == 'simulator-signing-info' and failure == 'missing-bundle':
+                        output = plistlib.dumps({}).decode()
+                    if label == 'simulator-signing-display':
+                        if failure == 'unsigned':
+                            raise smoke.NativeCommandError('code object is not signed at all')
+                        if failure == 'missing-identifier':
+                            output = 'Signature=adhoc\n'
+                        if failure == 'wrong-identifier':
+                            output = 'Identifier=OtherExecutable\nSignature=adhoc\n'
+                        if failure == 'missing-signature':
+                            output = 'Identifier=org.example.launcher\n'
+                        if failure == 'wrong-signature':
+                            output = 'Identifier=org.example.launcher\nSignature=unexpected\n'
+                    if label == 'simulator-signing-verify' and failure == 'verification-failed':
+                        raise smoke.NativeCommandError('signature verification failed')
+                    return subprocess.CompletedProcess(command, 0, '', output) if label == 'simulator-signing-display' \
+                        else subprocess.CompletedProcess(command, 0, output, '')
+                metadata = {}
+                with patch.object(smoke, 'run_command', side_effect=native), self.assertRaises(ValueError):
+                    smoke.verify_built_simulator_identity(Path(temporary), metadata)
+                self.assertFalse(metadata['simulator_signing']['verified'])
+
+    def test_identity_failure_blocks_success_and_preserves_original_native_failure(self):
+        for native_failure in (False, True):
+            with self.subTest(native_failure=native_failure), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                def native(_directory, label, command, _timeout):
+                    if label == 'simulator-list':
+                        output = json.dumps({'devices': {'runtime': [dict(
+                            name='iPhone 17 Pro', udid='sim-id', state='Booted', isAvailable=True)]}})
+                    else:
+                        output = signing_fixture(label)
+                    if label == 'xcodebuild-test':
+                        (directory / 'Acceptance.xcresult').mkdir()
+                        self.assertIn('CODE_SIGNING_ALLOWED=YES', command)
+                        self.assertIn('CODE_SIGN_IDENTITY=-', command)
+                        if native_failure:
+                            raise smoke.NativeCommandError('original native assertion')
+                    if label == 'simulator-signing-verify':
+                        raise smoke.NativeCommandError('invalid built app signature')
+                    return subprocess.CompletedProcess(command, 0, output, '')
+                def stop(_directory, _recording):
+                    (directory / 'journeys.mp4').write_bytes(b'mp4')
+                with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
+                        patch.object(smoke, 'run_command', side_effect=native), \
+                        patch.object(smoke, 'start_recording', return_value=(Mock(), Mock())), \
+                        patch.object(smoke, 'stop_recording', side_effect=stop), \
+                        patch.object(smoke, '_export_xcresult_attachments',
+                                     side_effect=lambda _result, attachments, _directory: attachments.mkdir()), \
+                        patch.object(smoke, '_export_named_checkpoints', return_value=[]):
+                    expected = 'original native assertion' if native_failure else 'invalid built app signature'
+                    with self.assertRaisesRegex(ValueError, expected):
+                        smoke.run(directory)
+                metadata = json.loads((directory / 'metadata.json').read_text())
+                self.assertEqual('invalid built app signature', metadata['simulator_identity_error'])
+                self.assertFalse(metadata['simulator_signing']['verified'])
+                self.assertEqual('failure', metadata['journey_outcome'])
+                self.assertEqual('failure', metadata['export_outcome'])
+                if native_failure:
+                    self.assertEqual('original native assertion', metadata['native_test_error'])
+                self.assertFalse((directory / 'DerivedData').exists())
+
+
 class NativeCommandTests(unittest.TestCase):
     def test_command_logs_output_and_rejects_failure_with_process_diagnostics(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -158,7 +252,7 @@ class EvidenceExportTests(unittest.TestCase):
                     generations.append(test_number)
                     if test_number == 2:
                         raise smoke.NativeCommandError('second native test failed')
-                return subprocess.CompletedProcess(command, 0, '', '')
+                return subprocess.CompletedProcess(command, 0, signing_fixture(label), '')
 
             def make_recording(_directory, _simulator_id, _video_path):
                 recorder = Mock()
@@ -198,7 +292,8 @@ class EvidenceExportTests(unittest.TestCase):
                 self.assertTrue((directory / 'journeys.mp4').is_file())
                 self.assertTrue((directory / 'attachments/people.png').is_file())
                 (directory / 'index.html').write_text('old successful report')
-                for label in ('app-discovery-index-log', 'spotlight-pipeline-log'):
+                for label in ('app-discovery-index-log', 'spotlight-pipeline-log',
+                              'simulator-signing-info', 'simulator-signing-display', 'simulator-signing-verify'):
                     for suffix in ('.log', '-processes.log'):
                         (directory / f'{label}{suffix}').write_text('old-head diagnostics')
                 with self.assertRaisesRegex(smoke.NativeCommandError, 'second native test failed'):
@@ -215,7 +310,8 @@ class EvidenceExportTests(unittest.TestCase):
             )
             self.assertFalse((directory / 'journeys.mp4').exists())
             self.assertFalse((directory / 'index.html').exists())
-            for label in ('app-discovery-index-log', 'spotlight-pipeline-log'):
+            for label in ('app-discovery-index-log', 'spotlight-pipeline-log',
+                          'simulator-signing-info', 'simulator-signing-display', 'simulator-signing-verify'):
                 for suffix in ('.log', '-processes.log'):
                     self.assertFalse((directory / f'{label}{suffix}').exists())
             self.assertFalse((directory / 'attachments/people.png').exists())
@@ -427,7 +523,7 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                     return subprocess.CompletedProcess(command, 0, json.dumps(devices), '')
                 if label == 'xcodebuild-test':
                     (directory / 'Acceptance.xcresult').mkdir()
-                return subprocess.CompletedProcess(command, 0, '', '')
+                return subprocess.CompletedProcess(command, 0, signing_fixture(label), '')
             def export(_result, attachments, _directory):
                 attachments.mkdir()
                 exported = []

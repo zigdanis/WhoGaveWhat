@@ -47,6 +47,7 @@ GENERATED_LOG_LABELS = (
     "language-shutdown", "language-preferences-before", "language-preferences-languages", "language-preferences-locale",
     "language-preferences-after", "language-boot", "language-bootstatus", "language-device-state",
     "app-discovery-index-log", "spotlight-pipeline-log",
+    "simulator-signing-info", "simulator-signing-display", "simulator-signing-verify",
 )
 COLD_BOOT_TIMEOUT_SECONDS = 600
 LANGUAGE_SHUTDOWN_TIMEOUT_SECONDS = 180
@@ -289,6 +290,31 @@ def _export_named_checkpoints(directory, metadata):
     return missing
 
 
+def verify_built_simulator_identity(directory, metadata):
+    """Require the actual app's valid ad hoc signature to identify its own bundle."""
+    bundle = directory / "DerivedData/Build/Products/Debug-iphonesimulator/WhoGaveWhat.app"
+    identity = {"verified": False}
+    metadata["simulator_signing"] = identity
+    output = run_command(directory, "simulator-signing-info", [
+        "plutil", "-convert", "xml1", "-o", "-", str(bundle / "Info.plist")], 30)
+    bundle_id = plistlib.loads(output.stdout.encode()).get("CFBundleIdentifier")
+    identity["bundle_identifier"] = bundle_id
+    output = run_command(directory, "simulator-signing-display", [
+        "codesign", "--display", "--verbose=4", str(bundle)], 30)
+    description = output.stdout + "\n" + output.stderr
+    identifiers = re.findall(r"^Identifier=(.*)$", description, re.MULTILINE)
+    signatures = re.findall(r"^Signature=(.*)$", description, re.MULTILINE)
+    identity["signing_identifier"] = identifiers[0].strip() if len(identifiers) == 1 else None
+    identity["signature"] = signatures[0].strip() if len(signatures) == 1 else None
+    run_command(directory, "simulator-signing-verify", [
+        "codesign", "--verify", "--strict", "--verbose=4", str(bundle)], 30)
+    if not isinstance(bundle_id, str) or not bundle_id or identity["signing_identifier"] != bundle_id:
+        raise ValueError("Built Simulator app signing identifier does not match its CFBundleIdentifier")
+    if identity["signature"] != "adhoc":
+        raise ValueError("Built Simulator app does not have the requested ad hoc signature")
+    identity["verified"] = True
+
+
 def verify_built_app_names(directory, metadata):
     """Check the compiled resources, not only the source strings and build settings."""
     bundle = directory / "DerivedData/Build/Products/Debug-iphonesimulator/WhoGaveWhat.app"
@@ -390,6 +416,7 @@ def run(directory, verify_app_names=False, discovery_only=False):
     recording = None
     result_bundle = directory / "Acceptance.xcresult"
     test_succeeded = False
+    native_test_attempted = False
     try:
         listing = run_command(directory, "simulator-list", ["xcrun", "simctl", "list", "devices", "available", "--json"], 30)
         simulator = select_simulator(json.loads(listing.stdout))
@@ -405,12 +432,14 @@ def run(directory, verify_app_names=False, discovery_only=False):
         recording = start_recording(directory, simulator_id, directory / "journeys.mp4")
         command = ["xcodebuild", "test", "-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
                    "-destination", f"platform=iOS Simulator,id={simulator_id}", "-derivedDataPath", str(directory / "DerivedData"),
-                   "-resultBundlePath", str(result_bundle), "-parallel-testing-enabled", "NO", "CODE_SIGNING_ALLOWED=NO"]
+                   "-resultBundlePath", str(result_bundle), "-parallel-testing-enabled", "NO",
+                   "CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-"]
         if not verify_app_names:
             command.append("-skip-testing:WhoGaveWhatUITests/AppDiscoveryUITests")
         if discovery_only:
             command.append("-only-testing:WhoGaveWhatUITests/AppDiscoveryUITests")
         try:
+            native_test_attempted = True
             run_command(directory, "xcodebuild-test", command, 900 if discovery_only else 1800)
             if verify_app_names:
                 verify_built_app_names(directory, metadata)
@@ -427,6 +456,12 @@ def run(directory, verify_app_names=False, discovery_only=False):
                 stop_recording(directory, recording)
             except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
                 metadata["recording_error"] = str(error)
+        if native_test_attempted:
+            try:
+                verify_built_simulator_identity(directory, metadata)
+            except (ValueError, OSError, subprocess.SubprocessError, plistlib.InvalidFileException) as error:
+                metadata["simulator_identity_error"] = str(error)
+                test_succeeded = False
         if verify_app_names and simulator:
             try:
                 run_command(directory, "app-discovery-index-log", [
@@ -461,7 +496,7 @@ def run(directory, verify_app_names=False, discovery_only=False):
         (directory / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
         shutil.rmtree(directory / "DerivedData", ignore_errors=True)
     if metadata["export_outcome"] != "success":
-        raise ValueError("Native acceptance evidence export is incomplete")
+        raise ValueError(metadata.get("simulator_identity_error") or "Native acceptance evidence export is incomplete")
 
 
 if __name__ == "__main__":
