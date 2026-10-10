@@ -44,9 +44,10 @@ GENERATED_LOG_LABELS = (
     "simulator-list", "simulator-boot", "simulator-bootstatus", "record-video",
     "record-video-stop", "xcodebuild-test", "export-attachments", "bundle-info", "bundle-names-en", "bundle-names-ru",
     "language-shutdown", "language-preferences-before", "language-preferences-languages", "language-preferences-locale",
-    "language-preferences-after", "language-boot", "language-bootstatus",
+    "language-preferences-after", "language-boot", "language-bootstatus", "language-device-state",
 )
 COLD_BOOT_TIMEOUT_SECONDS = 600
+LANGUAGE_SHUTDOWN_TIMEOUT_SECONDS = 180
 
 
 def clear_previous_outputs(directory):
@@ -317,7 +318,23 @@ def prepare_disposable_languages(directory, simulator, metadata):
     desired = {"AppleLanguages": ["en-US", "ru-RU"], "AppleLocale": "en_US"}
     metadata["language_preparation"] = {"preferred_languages": desired["AppleLanguages"],
                                         "locale": desired["AppleLocale"], "verified": False}
-    run_command(directory, "language-shutdown", ["xcrun", "simctl", "shutdown", simulator_id], 60)
+    if simulator.get("state") != "Shutdown":
+        run_command(directory, "language-shutdown", ["xcrun", "simctl", "shutdown", simulator_id],
+                    LANGUAGE_SHUTDOWN_TIMEOUT_SECONDS)
+    listing = run_command(directory, "language-device-state", ["xcrun", "simctl", "list", "devices", "--json"], 30)
+    current = [device for devices in json.loads(listing.stdout).get("devices", {}).values()
+               for device in devices if device.get("udid") == simulator_id]
+    if len(current) != 1 or current[0].get("state") != "Shutdown":
+        raise ValueError("Selected Simulator must be shut down before writing its language preferences")
+    if not data_path.is_dir():
+        raise ValueError("Selected Simulator data directory is unavailable")
+    if not preferences.exists():
+        # An unbooted device can lack this user preference file. Create only an
+        # empty dictionary, exclusively, so an existing file can never be replaced.
+        preferences.parent.mkdir(parents=True, exist_ok=True)
+        with preferences.open("xb") as fresh:
+            fresh.write(plistlib.dumps({}))
+        metadata["language_preparation"]["initialized_preferences"] = True
     before = run_command(directory, "language-preferences-before", [
         "plutil", "-convert", "xml1", "-o", "-", str(preferences)], 30)
     original = plistlib.loads(before.stdout.encode())
@@ -368,12 +385,13 @@ def run(directory, verify_app_names=False):
         simulator = select_simulator(json.loads(listing.stdout))
         simulator_id = simulator["udid"]
         metadata.update(device=simulator["name"], simulator_id=simulator_id, runtime=simulator["runtime"])
-        if simulator.get("state") != "Booted":
-            run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
-        run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
-                    COLD_BOOT_TIMEOUT_SECONDS)
         if verify_app_names:
             prepare_disposable_languages(directory, simulator, metadata)
+        else:
+            if simulator.get("state") != "Booted":
+                run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
+            run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
+                        COLD_BOOT_TIMEOUT_SECONDS)
         recording = start_recording(directory, simulator_id, directory / "journeys.mp4")
         command = ["xcodebuild", "test", "-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
                    "-destination", f"platform=iOS Simulator,id={simulator_id}", "-derivedDataPath", str(directory / "DerivedData"),

@@ -347,10 +347,12 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
             with self.subTest(verify=verify), tempfile.TemporaryDirectory() as temporary:
                 directory = Path(temporary)
                 test_commands = []
+                native_labels = []
                 events = []
                 def prepare(_directory, _simulator, _metadata):
                     events.append('prepare-languages')
                 def native(_directory, label, command, timeout):
+                    native_labels.append(label)
                     if label == 'simulator-list':
                         payload = {'devices': {'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
                             dict(name='iPhone 17 Pro', udid='sim-id', state='Booted', isAvailable=True)]}}
@@ -369,6 +371,8 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                         smoke.run(directory, verify_app_names=verify)
                 metadata = json.loads((directory / 'metadata.json').read_text())
                 self.assertEqual(['prepare-languages', 'xcodebuild-test'] if verify else ['xcodebuild-test'], events)
+                self.assertEqual(not verify, 'simulator-bootstatus' in native_labels)
+                self.assertNotIn('simulator-boot', native_labels)
                 skipped = '-skip-testing:WhoGaveWhatUITests/AppDiscoveryUITests' in test_commands[0]
                 self.assertEqual(not verify, skipped)
                 for checkpoint in smoke.APP_DISCOVERY_CHECKPOINT_NAMES:
@@ -383,17 +387,25 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         metadata = {}
         def native(_directory, label, command, timeout):
             calls.append((label, command, timeout))
+            if label == 'language-device-state':
+                payload = {'devices': {'runtime': [{'udid': 'selected-id', 'state': 'Shutdown'}]}}
+                return subprocess.CompletedProcess(command, 0, json.dumps(payload), '')
             payload = original if label == 'language-preferences-before' else prepared
             return subprocess.CompletedProcess(command, 0, plistlib.dumps(payload).decode(), '')
         with tempfile.TemporaryDirectory() as temporary, patch.object(smoke, 'run_command', side_effect=native):
             directory = Path(temporary)
-            smoke.prepare_disposable_languages(directory, {'udid': 'selected-id', 'dataPath': str(directory)}, metadata)
-        self.assertEqual(['language-shutdown', 'language-preferences-before', 'language-preferences-languages',
+            preferences = directory / 'Library/Preferences/.GlobalPreferences.plist'
+            preferences.parent.mkdir(parents=True)
+            preferences.write_bytes(plistlib.dumps(original))
+            smoke.prepare_disposable_languages(directory, {
+                'udid': 'selected-id', 'dataPath': str(directory), 'state': 'Booted'}, metadata)
+        self.assertEqual(['language-shutdown', 'language-device-state', 'language-preferences-before', 'language-preferences-languages',
                           'language-preferences-locale', 'language-preferences-after', 'language-boot',
                           'language-bootstatus'], [item[0] for item in calls])
         self.assertEqual(['xcrun', 'simctl', 'shutdown', 'selected-id'], calls[0][1])
-        self.assertEqual(['plutil', '-replace', 'AppleLanguages', '-json', '["en-US", "ru-RU"]'], calls[2][1][:-1])
-        self.assertEqual(str(directory / 'Library/Preferences/.GlobalPreferences.plist'), calls[2][1][-1])
+        self.assertEqual(smoke.LANGUAGE_SHUTDOWN_TIMEOUT_SECONDS, calls[0][2])
+        self.assertEqual(['plutil', '-replace', 'AppleLanguages', '-json', '["en-US", "ru-RU"]'], calls[3][1][:-1])
+        self.assertEqual(str(directory / 'Library/Preferences/.GlobalPreferences.plist'), calls[3][1][-1])
         self.assertEqual(['xcrun', 'simctl', 'boot', 'selected-id'], calls[-2][1])
         self.assertEqual(smoke.COLD_BOOT_TIMEOUT_SECONDS, calls[-1][2])
         self.assertTrue(metadata['language_preparation']['verified'])
@@ -404,14 +416,71 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         labels = []
         def native(_directory, label, command, timeout):
             labels.append(label)
+            if label == 'language-device-state':
+                payload = {'devices': {'runtime': [{'udid': 'selected-id', 'state': 'Shutdown'}]}}
+                return subprocess.CompletedProcess(command, 0, json.dumps(payload), '')
             payload = original if label == 'language-preferences-before' else invalid
             return subprocess.CompletedProcess(command, 0, plistlib.dumps(payload).decode(), '')
         metadata = {}
         with tempfile.TemporaryDirectory() as temporary, patch.object(smoke, 'run_command', side_effect=native):
+            directory = Path(temporary)
+            preferences = directory / 'Library/Preferences/.GlobalPreferences.plist'
+            preferences.parent.mkdir(parents=True)
+            preferences.write_bytes(plistlib.dumps(original))
             with self.assertRaisesRegex(ValueError, 'preserve its other preferences'):
-                smoke.prepare_disposable_languages(Path(temporary), {'udid': 'selected-id', 'dataPath': temporary}, metadata)
+                smoke.prepare_disposable_languages(directory, {
+                    'udid': 'selected-id', 'dataPath': temporary, 'state': 'Shutdown'}, metadata)
         self.assertNotIn('language-boot', labels)
         self.assertFalse(metadata['language_preparation']['verified'])
+
+    def test_fresh_shutdown_device_gets_language_preferences_before_its_only_boot(self):
+        desired = {'AppleLanguages': ['en-US', 'ru-RU'], 'AppleLocale': 'en_US'}
+        calls = []
+        metadata = {}
+        def native(_directory, label, command, timeout):
+            calls.append((label, command))
+            if label == 'language-device-state':
+                payload = {'devices': {'runtime': [{'udid': 'fresh-id', 'state': 'Shutdown'}]}}
+                return subprocess.CompletedProcess(command, 0, json.dumps(payload), '')
+            if label == 'language-preferences-before':
+                # This real file must be initialized safely before plutil can insert keys.
+                self.assertEqual({}, plistlib.loads(Path(command[-1]).read_bytes()))
+                payload = {}
+            else:
+                payload = desired
+            return subprocess.CompletedProcess(command, 0, plistlib.dumps(payload).decode(), '')
+        with tempfile.TemporaryDirectory() as temporary, patch.object(smoke, 'run_command', side_effect=native):
+            smoke.prepare_disposable_languages(Path(temporary), {
+                'udid': 'fresh-id', 'dataPath': temporary, 'state': 'Shutdown'}, metadata)
+        self.assertNotIn('language-shutdown', [label for label, _ in calls])
+        self.assertEqual(['language-device-state', 'language-preferences-before', 'language-preferences-languages',
+                          'language-preferences-locale', 'language-preferences-after', 'language-boot',
+                          'language-bootstatus'], [label for label, _ in calls])
+        self.assertEqual('-insert', calls[2][1][1])
+        self.assertTrue(metadata['language_preparation']['initialized_preferences'])
+        self.assertTrue(metadata['language_preparation']['verified'])
+
+    def test_failed_shutdown_or_still_booted_state_never_writes_preferences(self):
+        for failure in ('shutdown-timeout', 'still-booted'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                preferences = directory / 'Library/Preferences/.GlobalPreferences.plist'
+                preferences.parent.mkdir(parents=True)
+                original = plistlib.dumps({'existingSetting': 'keep'})
+                preferences.write_bytes(original)
+                labels = []
+                def native(_directory, label, command, timeout):
+                    labels.append(label)
+                    if failure == 'shutdown-timeout':
+                        raise smoke.NativeCommandError('shutdown timed out')
+                    payload = {'devices': {'runtime': [{'udid': 'selected-id', 'state': 'Booted'}]}}
+                    return subprocess.CompletedProcess(command, 0, json.dumps(payload), '')
+                with patch.object(smoke, 'run_command', side_effect=native), self.assertRaises(ValueError):
+                    smoke.prepare_disposable_languages(directory, {
+                        'udid': 'selected-id', 'dataPath': temporary, 'state': 'Booted'}, {})
+                self.assertEqual(original, preferences.read_bytes())
+                self.assertNotIn('language-preferences-before', labels)
+                self.assertNotIn('language-boot', labels)
 
     def test_missing_spotlight_checkpoint_fails_export_even_if_other_screenshots_exist(self):
         with tempfile.TemporaryDirectory() as temporary:
