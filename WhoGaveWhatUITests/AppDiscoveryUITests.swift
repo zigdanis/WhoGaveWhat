@@ -6,6 +6,7 @@ final class AppDiscoveryUITests: XCTestCase {
     private let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
     private let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
     private let timeout: TimeInterval = 15
+    private var shouldRestoreAppLanguage = false
 
     override func setUp() {
         super.setUp()
@@ -13,6 +14,12 @@ final class AppDiscoveryUITests: XCTestCase {
     }
 
     override func tearDown() {
+        continueAfterFailure = true
+        defer {
+            settings.terminate()
+            app.terminate()
+            super.tearDown()
+        }
         if testRun?.failureCount ?? 0 > 0 {
             attach("app-discovery-failure")
             for (name, application) in [("app", app), ("settings", settings), ("springboard", springboard)] {
@@ -22,7 +29,25 @@ final class AppDiscoveryUITests: XCTestCase {
                 add(hierarchy)
             }
         }
-        super.tearDown()
+        // Keep the original failure evidence above intact before cleanup changes either app.
+        guard shouldRestoreAppLanguage else { return }
+        do {
+            settings.activate()
+            let englishChoice = settings.descendants(matching: .any).matching(
+                NSPredicate(format: "label CONTAINS[c] 'English'")
+            )
+            if !englishChoice.allElementsBoundByIndex.contains(where: { $0.isHittable }) {
+                // Some iOS versions return to app settings after choosing a language.
+                try tapSetting("Language", attemptLimit: 2)
+            }
+            try tapSetting("English", contains: true, attemptLimit: 2)
+        } catch {
+            let cleanup = XCTAttachment(string: "\(error)\n\n\(settings.debugDescription)")
+            cleanup.name = "app-discovery-language-cleanup-failure"
+            cleanup.lifetime = .keepAlways
+            add(cleanup)
+            XCTFail("Unable to restore the app's English language preference: \(error)")
+        }
     }
 
     func testRussianAppLanguageAndBilingualSpotlightPreserveDraftAndOnboarding() throws {
@@ -67,19 +92,6 @@ final class AppDiscoveryUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Далее"].waitForExistence(timeout: timeout))
         XCTAssertFalse(app.tabBars.firstMatch.exists)
         attach("spotlight-cold-onboarding")
-
-        // Restore the per-app preference before the other UI tests run in English.
-        settings.activate()
-        let englishChoice = settings.descendants(matching: .any).matching(
-            NSPredicate(format: "label CONTAINS[c] 'English'")
-        )
-        if !englishChoice.allElementsBoundByIndex.contains(where: { $0.isHittable }) {
-            // Some iOS versions return to app settings after choosing a language.
-            try tapSetting("Language")
-        }
-        try tapSetting("English", contains: true)
-        settings.terminate()
-        app.terminate()
     }
 
     private func setRussianAppLanguageWithEnglishSystem() throws {
@@ -115,13 +127,15 @@ final class AppDiscoveryUITests: XCTestCase {
         attach("app-settings-before")
         try tapSetting("Language")
         attach("app-language-picker")
+        // Register cleanup before the mutation so a failed tap or later assertion cannot skip it.
+        shouldRestoreAppLanguage = true
         try tapSetting("Russian", contains: true)
         attach("app-language-russian")
     }
 
-    private func tapSetting(_ label: String, contains: Bool = false) throws {
+    private func tapSetting(_ label: String, contains: Bool = false, attemptLimit: Int = 8) throws {
         let predicate = NSPredicate(format: contains ? "label CONTAINS[c] %@" : "label == %@", label)
-        for _ in 0..<8 {
+        for _ in 0..<attemptLimit {
             for type in [XCUIElement.ElementType.cell, .button, .staticText] {
                 let query = settings.descendants(matching: type).matching(predicate)
                 _ = query.firstMatch.waitForExistence(timeout: 1)
