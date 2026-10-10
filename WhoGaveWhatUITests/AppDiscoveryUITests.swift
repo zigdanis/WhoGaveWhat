@@ -69,12 +69,14 @@ final class AppDiscoveryUITests: XCTestCase {
         app.launchEnvironment["KS_START"] = "app"
         app.launchEnvironment["KS_SPOTLIGHT_DIAGNOSTICS"] = "1"
         app.launch()
+        observeLauncherQueriesWhileForeground("discovery-english")
         XCTAssertTrue(app.buttons["Add a gift"].waitForExistence(timeout: timeout))
         try showHomeAppIcon()
         attach("home-screen-english")
 
         try setRussianAppLanguageWithEnglishSystem()
         app.launch()
+        observeLauncherQueriesWhileForeground("discovery-russian")
         XCTAssertTrue(app.buttons["Добавить подарок"].waitForExistence(timeout: timeout))
         attach("russian-app-home")
         XCUIDevice.shared.press(.home)
@@ -125,6 +127,29 @@ final class AppDiscoveryUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Далее"].waitForExistence(timeout: timeout))
         XCTAssertFalse(app.tabBars.firstMatch.exists)
         attach("spotlight-cold-onboarding")
+    }
+
+    private func observeLauncherQueriesWhileForeground(_ checkpoint: String) {
+        guard app.launchEnvironment["KS_SPOTLIGHT_DIAGNOSTICS"] == "1" else { return }
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: timeout))
+        attach("\(checkpoint)-foreground-before")
+        let before = XCTAttachment(string: app.debugDescription)
+        before.name = "\(checkpoint)-foreground-before-hierarchy"
+        before.lifetime = .keepAlways
+        add(before)
+        // Keep the existing 10-second exact query and two 10-second user queries active.
+        // Home/background suspension must not confound this diagnostic batch.
+        let deadline = Date().addingTimeInterval(35)
+        repeat {
+            XCTAssertEqual(app.state, .runningForeground, "Launcher diagnostics require continuous foreground residency")
+            RunLoop.current.run(until: min(deadline, Date().addingTimeInterval(0.25)))
+        } while Date() < deadline
+        XCTAssertEqual(app.state, .runningForeground)
+        attach("\(checkpoint)-foreground-after")
+        let after = XCTAttachment(string: app.debugDescription)
+        after.name = "\(checkpoint)-foreground-after-hierarchy"
+        after.lifetime = .keepAlways
+        add(after)
     }
 
     private func setRussianAppLanguageWithEnglishSystem() throws {
