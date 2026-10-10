@@ -13,6 +13,7 @@ struct AppDiscoveryTests {
 
         #expect(attributes.title == title)
         #expect(attributes.displayName == title)
+        #expect(attributes.contentDescription == "Who Gave; Who Gave What; WhoGaveWhat; кто че; кто чё")
         for alias in ["Who Gave", "Who Gave What", "WhoGaveWhat", "кто че", "кто чё"] {
             #expect(attributes.alternateNames?.contains(alias) == true)
             #expect(attributes.keywords?.contains(alias) == true)
@@ -31,7 +32,8 @@ struct AppDiscoveryTests {
         let items = try #require(recorder.attempts.first)
         #expect(items.count == 1)
         let attributes = try #require(items.first).attributeSet
-        #expect(attributes.contentDescription == nil)
+        // The searchable description contains public app names only, never gift or person data.
+        #expect(attributes.contentDescription == "Who Gave; Who Gave What; WhoGaveWhat; кто че; кто чё")
         #expect(attributes.textContent == nil)
         #expect(attributes.contentURL == nil)
         #expect(attributes.relatedUniqueIdentifier == nil)

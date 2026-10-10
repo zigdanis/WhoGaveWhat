@@ -285,12 +285,15 @@ final class AppDiscoveryUITests: XCTestCase {
         XCTAssertEqual(search.value as? String, query)
         let results = spotlight.descendants(matching: .any).matching(
             NSPredicate(
-                format: "identifier CONTAINS 'ResultCell' AND (label CONTAINS[c] 'кто че' OR label CONTAINS[c] 'Who Gave')"
+                format:
+                    "identifier CONTAINS 'ResultCell' AND NOT (label CONTAINS[c] 'WhoGaveWhatUITests-Runner') AND (label CONTAINS[c] 'кто че' OR label CONTAINS[c] 'Who Gave')"
             )
         )
         let deadline = Date().addingTimeInterval(60)
+        var scrolls = 0
         repeat {
-            if let result = results.allElementsBoundByIndex.first(where: { $0.isHittable }) {
+            let appResults = results.allElementsBoundByIndex.filter(isAppLauncherResult)
+            if let result = appResults.first(where: { $0.isHittable }) {
                 attach(checkpoint)
                 attachSpotlightHierarchy("\(checkpoint)-result", typedValue: search.value as? String)
                 let observed = XCTAttachment(string: "query=\(query)\nresult=\(result.label)\nidentifier=\(result.identifier)")
@@ -300,6 +303,27 @@ final class AppDiscoveryUITests: XCTestCase {
                 result.tap()
                 XCTAssertTrue(app.wait(for: .runningForeground, timeout: timeout))
                 return
+            }
+            if !appResults.isEmpty, scrolls < 3, Date() < deadline {
+                let collection = spotlight.collectionViews.firstMatch
+                guard collection.exists, collection.isHittable else {
+                    throw DiscoveryFailure.missingSpotlightResultsCollection
+                }
+                // The observed collection extends behind the keyboard. Drag inside its visible list.
+                let visibleBottom = min(collection.frame.maxY, search.frame.minY)
+                let startY = visibleBottom - collection.frame.minY - 24
+                guard startY > 100 else { throw DiscoveryFailure.missingSpotlightResultsCollection }
+                let origin = collection.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0))
+                let start = origin.withOffset(CGVector(dx: 0, dy: startY))
+                let end = origin.withOffset(CGVector(dx: 0, dy: max(40, startY - 240)))
+                scrolls += 1
+                attach("\(checkpoint)-scroll-\(scrolls)-before")
+                attachSpotlightHierarchy("\(checkpoint)-scroll-\(scrolls)-before", typedValue: search.value as? String)
+                start.press(forDuration: 0.1, thenDragTo: end)
+                RunLoop.current.run(until: min(deadline, Date().addingTimeInterval(0.5)))
+                attach("\(checkpoint)-scroll-\(scrolls)-after")
+                attachSpotlightHierarchy("\(checkpoint)-scroll-\(scrolls)-after", typedValue: search.value as? String)
+                XCTAssertEqual(search.value as? String, query, "Scrolling must preserve the Spotlight query")
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.5))
         } while Date() < deadline
@@ -391,6 +415,25 @@ final class AppDiscoveryUITests: XCTestCase {
             attachSpotlightHierarchy("\(checkpoint)-diagnostic-calendar", typedValue: search.value as? String)
         }
         throw DiscoveryFailure.missingSpotlightResult(query, failedHierarchy)
+    }
+
+    private func isAppLauncherResult(_ result: XCUIElement) -> Bool {
+        guard !result.label.contains("WhoGaveWhatUITests-Runner") else { return false }
+        if result.icons.matching(NSPredicate(format: "label == 'Who Gave' OR label == 'кто че'")).firstMatch.exists {
+            return true
+        }
+        // Indexed launcher rows belong to the app's own section, rather than Websites.
+        guard let section = result.identifier.components(separatedBy: ",").first(where: { $0.hasPrefix("Section:") }) else {
+            return false
+        }
+        let header = spotlight.otherElements.matching(
+            NSPredicate(
+                format: "identifier == %@ OR identifier == %@",
+                "Identifier:SectionHeader,\(section),Title:Who Gave",
+                "Identifier:SectionHeader,\(section),Title:кто че"
+            )
+        ).firstMatch
+        return header.exists
     }
 
     @discardableResult
@@ -601,6 +644,7 @@ final class AppDiscoveryUITests: XCTestCase {
         case missingHomeIcon(String)
         case spotlightNotForeground
         case missingSpotlightSearchField(String)
+        case missingSpotlightResultsCollection
         case missingSpotlightKeyboard(String)
         case missingSpotlightKeyboardControl
         case mismatchedSpotlightKeyboard(String)

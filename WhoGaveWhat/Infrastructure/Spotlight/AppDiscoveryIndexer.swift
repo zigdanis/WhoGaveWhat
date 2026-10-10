@@ -144,6 +144,7 @@ final class AppDiscoveryIndexer {
         let attributes = CSSearchableItemAttributeSet(contentType: .content)
         attributes.title = title
         attributes.displayName = title
+        attributes.contentDescription = aliases.joined(separator: "; ")
         attributes.alternateNames = aliases
         attributes.keywords = aliases + ["who", "gave", "what", "кто", "че", "чё"]
 
