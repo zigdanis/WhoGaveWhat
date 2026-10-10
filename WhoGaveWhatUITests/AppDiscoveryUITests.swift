@@ -309,13 +309,33 @@ final class AppDiscoveryUITests: XCTestCase {
                 guard collection.exists, collection.isHittable else {
                     throw DiscoveryFailure.missingSpotlightResultsCollection
                 }
-                // The observed collection extends behind the keyboard. Drag inside its visible list.
-                let visibleBottom = min(collection.frame.maxY, search.frame.minY)
-                let startY = visibleBottom - collection.frame.minY - 24
-                guard startY > 100 else { throw DiscoveryFailure.missingSpotlightResultsCollection }
+                // Choose a contiguous results area outside both the keyboard and search field.
+                let collectionFrame = collection.frame
+                var visibleTop = collectionFrame.minY
+                var visibleBottom = collectionFrame.maxY
+                let keyboard = spotlight.keyboards.firstMatch
+                if keyboard.exists {
+                    visibleBottom = min(visibleBottom, keyboard.frame.minY)
+                }
+                let searchFrame = search.frame
+                if searchFrame.minY < visibleBottom, searchFrame.maxY > visibleTop {
+                    let aboveSearch = searchFrame.minY - visibleTop
+                    let belowSearch = visibleBottom - searchFrame.maxY
+                    if aboveSearch >= belowSearch {
+                        visibleBottom = searchFrame.minY
+                    } else {
+                        visibleTop = searchFrame.maxY
+                    }
+                }
+                guard visibleBottom - visibleTop > 124 else {
+                    throw DiscoveryFailure.missingSpotlightResultsCollection
+                }
+                let startY = visibleBottom - collectionFrame.minY - 24
+                let endY = max(visibleTop - collectionFrame.minY + 40, startY - 240)
+                guard startY > endY else { throw DiscoveryFailure.missingSpotlightResultsCollection }
                 let origin = collection.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0))
                 let start = origin.withOffset(CGVector(dx: 0, dy: startY))
-                let end = origin.withOffset(CGVector(dx: 0, dy: max(40, startY - 240)))
+                let end = origin.withOffset(CGVector(dx: 0, dy: endY))
                 scrolls += 1
                 attach("\(checkpoint)-scroll-\(scrolls)-before")
                 attachSpotlightHierarchy("\(checkpoint)-scroll-\(scrolls)-before", typedValue: search.value as? String)
