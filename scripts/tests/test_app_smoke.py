@@ -201,6 +201,68 @@ class NativeCommandTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'No available'):
             smoke.select_simulator({'devices': {}})
 
+    def test_explicit_runtime_selects_existing_exact_17_pro_instead_of_newer_runtime(self):
+        payload = {'devices': {
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-4': [
+                dict(name='iPhone 17 Pro', udid='requested', state='Shutdown', isAvailable=True)],
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
+                dict(name='iPhone 17 Pro', udid='newer', state='Shutdown', isAvailable=True)],
+        }}
+        self.assertEqual('newer', smoke.select_simulator(payload)['udid'])
+        selected = smoke.select_simulator(payload, requested_runtime='iOS 26.4')
+        self.assertEqual(('requested', 'iOS 26.4'), (selected['udid'], selected['runtime']))
+
+    def test_explicit_runtime_reuses_matching_booted_phone_and_rejects_conflict(self):
+        payload = {'devices': {
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-4': [
+                dict(name='iPhone 16', udid='booted', state='Booted', isAvailable=True),
+                dict(name='iPhone 17 Pro', udid='shutdown', state='Shutdown', isAvailable=True)],
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
+                dict(name='iPhone 17 Pro', udid='requested-shutdown', state='Shutdown', isAvailable=True)],
+        }}
+        self.assertEqual('booted', smoke.select_simulator(payload, requested_runtime='iOS 26.4')['udid'])
+        with self.assertRaisesRegex(ValueError, 'Booted iPhone booted uses iOS 26.4, not requested iOS 26.5'):
+            smoke.select_simulator(payload, requested_runtime='iOS 26.5')
+
+    def test_explicit_runtime_requires_available_exact_17_pro_without_fallback(self):
+        for requested_devices in ([],
+                                  [dict(name='iPhone 17 Pro', udid='unavailable', state='Shutdown', isAvailable=False)],
+                                  [dict(name='iPhone 17 Pro Max', udid='wrong-model', state='Shutdown', isAvailable=True)]):
+            payload = {'devices': {
+                'com.apple.CoreSimulator.SimRuntime.iOS-26-4': requested_devices,
+                'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
+                    dict(name='iPhone 17 Pro', udid='newer', state='Shutdown', isAvailable=True)],
+            }}
+            with self.subTest(devices=requested_devices), self.assertRaisesRegex(ValueError, 'requested runtime iOS 26.4'):
+                smoke.select_simulator(payload, requested_runtime='iOS 26.4')
+        with self.assertRaisesRegex(ValueError, 'requested runtime iOS-26-4'):
+            smoke.select_simulator(payload, requested_runtime='iOS-26-4')
+
+    def test_runtime_selection_failure_records_request_before_any_simulator_mutation(self):
+        for payload in ({'devices': {}}, {'devices': {
+                'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
+                    dict(name='iPhone 17 Pro', udid='booted', state='Booted', isAvailable=True)],
+                'com.apple.CoreSimulator.SimRuntime.iOS-26-4': [
+                    dict(name='iPhone 17 Pro', udid='requested-shutdown', state='Shutdown', isAvailable=True)]}}):
+            with self.subTest(payload=payload), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
+                        patch.object(smoke, 'run_command', return_value=subprocess.CompletedProcess(
+                            [], 0, json.dumps(payload), '')) as native, \
+                        patch.object(smoke, 'prepare_disposable_languages') as prepare, \
+                        patch.object(smoke, 'start_recording') as recording:
+                    with self.assertRaises(ValueError):
+                        smoke.run(directory, verify_app_names=True, runtime='iOS 26.4')
+                self.assertEqual(['simulator-list'], [call.args[1] for call in native.call_args_list])
+                prepare.assert_not_called()
+                recording.assert_not_called()
+                metadata = json.loads((directory / 'metadata.json').read_text())
+                self.assertEqual('iOS 26.4', metadata['requested_runtime'])
+                self.assertNotIn('simulator_id', metadata)
+                self.assertNotIn('runtime', metadata)
+                self.assertEqual('failure', metadata['journey_outcome'])
+                self.assertEqual('failure', metadata['export_outcome'])
+
     def test_video_recording_is_stopped_with_sigint_and_log_is_closed(self):
         with tempfile.TemporaryDirectory() as temporary:
             process = Mock()
@@ -452,12 +514,14 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                 test_commands = []
                 native_labels = []
                 events = []
+                requested_runtime = 'iOS 26.4' if verify else None
                 def prepare(_directory, _simulator, _metadata):
                     events.append('prepare-languages')
                 def native(_directory, label, command, timeout):
                     native_labels.append(label)
                     if label == 'simulator-list':
-                        payload = {'devices': {'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
+                        selected_runtime = 'com.apple.CoreSimulator.SimRuntime.iOS-26-4' if verify else 'com.apple.CoreSimulator.SimRuntime.iOS-26-5'
+                        payload = {'devices': {selected_runtime: [
                             dict(name='iPhone 17 Pro', udid='sim-id', state='Booted', isAvailable=True)]}}
                         return subprocess.CompletedProcess(command, 0, json.dumps(payload), '')
                     if label == 'xcodebuild-test':
@@ -485,8 +549,12 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                         patch.object(smoke, 'start_recording', return_value=(Mock(), Mock())), \
                         patch.object(smoke, 'stop_recording'):
                     with self.assertRaisesRegex(smoke.NativeCommandError, 'native assertion failed'):
-                        smoke.run(directory, verify_app_names=verify, discovery_only=discovery_only)
+                        smoke.run(directory, verify_app_names=verify, discovery_only=discovery_only, runtime=requested_runtime)
                 metadata = json.loads((directory / 'metadata.json').read_text())
+                self.assertEqual(requested_runtime, metadata['requested_runtime'])
+                self.assertEqual('iOS 26.4' if verify else 'iOS 26.5', metadata['runtime'])
+                self.assertEqual('sim-id', metadata['simulator_id'])
+                self.assertIn('platform=iOS Simulator,id=sim-id', test_commands[0])
                 self.assertEqual(['prepare-languages', 'xcodebuild-test'] if verify else ['xcodebuild-test'], events)
                 self.assertEqual(not verify, 'simulator-bootstatus' in native_labels)
                 self.assertNotIn('simulator-boot', native_labels)
@@ -565,6 +633,8 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         self.assertIn("if: github.event_name == 'workflow_dispatch' && inputs.spotlight_diagnostics", diagnostic)
         self.assertIn('name: Spotlight diagnostics (non-acceptance)', diagnostic)
         self.assertIn('--verify-app-names --discovery-only', diagnostic)
+        self.assertIn("--runtime 'iOS 26.4'", jobs['test'])
+        self.assertIn("--runtime 'iOS 26.4'", diagnostic)
         self.assertIn('name: spotlight-diagnostics-attempt-', diagnostic)
         # Boot, testing, export, logging, and upload need headroom beyond the native test's 15 minutes.
         diagnostic_budget = int(re.search(r'timeout-minutes: (\d+)', diagnostic).group(1))

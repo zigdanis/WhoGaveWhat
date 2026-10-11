@@ -69,7 +69,7 @@ jobs:
           xcrun simctl help
           xcrun xcresulttool version
       - name: Test and record app smoke
-        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names
+        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names --runtime 'iOS 26.4'
       - name: Render evidence report
         if: always()
         run: |
@@ -102,7 +102,7 @@ jobs:
           xcrun simctl help
           xcrun xcresulttool version
       - name: Run focused Spotlight diagnostic
-        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/spotlight-diagnostics" --verify-app-names --discovery-only
+        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/spotlight-diagnostics" --verify-app-names --discovery-only --runtime 'iOS 26.4'
       - name: Render diagnostic report
         if: always()
         run: |

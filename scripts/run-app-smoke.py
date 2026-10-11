@@ -187,8 +187,8 @@ def _runtime_version(runtime):
     return tuple(map(int, match.groups())) if match else (0,)
 
 
-def select_simulator(payload):
-    """Prefer any already booted iPhone; otherwise choose newest iPhone 17 Pro."""
+def select_simulator(payload, requested_runtime=None):
+    """Reuse a booted iPhone; otherwise select an available iPhone 17 Pro."""
     devices = []
     for runtime, runtime_devices in payload.get("devices", {}).items():
         runtime_name = runtime.replace("com.apple.CoreSimulator.SimRuntime.", "")
@@ -197,8 +197,17 @@ def select_simulator(payload):
             if device.get("isAvailable") and device.get("name", "").startswith("iPhone"):
                 devices.append({**device, "runtime": runtime_name})
     booted = [device for device in devices if device.get("state") == "Booted"]
-    candidates = booted or [device for device in devices if device.get("name") == "iPhone 17 Pro"]
+    if booted:
+        selected = max(booted, key=lambda device: _runtime_version(device["runtime"]))
+        if requested_runtime is not None and selected["runtime"] != requested_runtime:
+            raise ValueError(
+                f"Booted iPhone {selected['udid']} uses {selected['runtime']}, not requested {requested_runtime}")
+        return selected
+    candidates = [device for device in devices if device.get("name") == "iPhone 17 Pro"
+                  and (requested_runtime is None or device["runtime"] == requested_runtime)]
     if not candidates:
+        if requested_runtime is not None:
+            raise ValueError(f"No available iPhone 17 Pro Simulator was found for requested runtime {requested_runtime}")
         raise ValueError("No available booted iPhone or iPhone 17 Pro Simulator was found")
     return max(candidates, key=lambda device: _runtime_version(device["runtime"]))
 
@@ -383,7 +392,7 @@ def prepare_disposable_languages(directory, simulator, metadata):
     metadata["language_preparation"]["verified"] = True
 
 
-def run(directory, verify_app_names=False, discovery_only=False):
+def run(directory, verify_app_names=False, discovery_only=False, runtime=None):
     """Run the native XCTest journey, preserving diagnostics and real evidence."""
     if discovery_only and not verify_app_names:
         raise ValueError("Discovery-only diagnostics require --verify-app-names")
@@ -397,6 +406,7 @@ def run(directory, verify_app_names=False, discovery_only=False):
         "evidence_kind": "feature-acceptance",
         "scenario": "Native People disclosure and detail navigation plus grouped person editing, photo crop cancel and confirm, and photo persistence and removal",
         "journey_outcome": "failure", "export_outcome": "failure", "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"),
+        "requested_runtime": runtime,
         "checkpoints": [], "native_test": "WhoGaveWhat scheme complete test suite (unit and UI tests)",
         "planned_checkpoint_names": list(PLANNED_CHECKPOINT_NAMES),
     }
@@ -419,7 +429,7 @@ def run(directory, verify_app_names=False, discovery_only=False):
     native_test_attempted = False
     try:
         listing = run_command(directory, "simulator-list", ["xcrun", "simctl", "list", "devices", "available", "--json"], 30)
-        simulator = select_simulator(json.loads(listing.stdout))
+        simulator = select_simulator(json.loads(listing.stdout), requested_runtime=runtime)
         simulator_id = simulator["udid"]
         metadata.update(device=simulator["name"], simulator_id=simulator_id, runtime=simulator["runtime"])
         if verify_app_names:
@@ -506,5 +516,6 @@ if __name__ == "__main__":
                         help="Exercise real Settings language selection and Spotlight on a disposable Simulator")
     parser.add_argument("--discovery-only", action="store_true",
                         help="Run only AppDiscoveryUITests and mark partial evidence as diagnostic, never acceptance")
+    parser.add_argument("--runtime", help="Require a canonical runtime such as 'iOS 26.4'; reject conflicting booted iPhones")
     args = parser.parse_args()
-    run(args.directory, args.verify_app_names, args.discovery_only)
+    run(args.directory, args.verify_app_names, args.discovery_only, args.runtime)
