@@ -21,6 +21,18 @@ MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 
+class DiagnosticPublicationTests(unittest.TestCase):
+    def test_partial_diagnostics_cannot_be_published_even_when_the_journey_succeeds(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            (directory / 'metadata.json').write_text(json.dumps(dict(
+                journey_outcome='success', export_outcome='success', evidence_kind='diagnostic')))
+            with patch.object(MODULE, 'gh') as github:
+                with self.assertRaisesRegex(ValueError, 'Unknown evidence kind'):
+                    MODULE.publish(42, directory, 'Diagnostic only.', ['checkpoint.png'], ['demo.mp4'])
+                github.assert_not_called()
+
+
 class PublicationTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="whogavewhat-publication-test-")

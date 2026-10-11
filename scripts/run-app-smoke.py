@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import plistlib
 import re
 import shutil
 import signal
@@ -31,11 +32,25 @@ PLANNED_CHECKPOINT_NAMES = (
     "person-editor-existing-photo-crop-cancelled", "person-editor-photo-removed",
     "person-editor-photo-removal-persisted",
 )
+APP_DISCOVERY_CHECKPOINT_NAMES = (
+    "home-screen-english", "system-settings", "language-region-before",
+    "english-system-russian-secondary", "settings-apps-list", "settings-search-app",
+    "app-settings-before", "app-language-picker", "app-language-russian",
+    "home-screen-russian-app", "russian-app-home", "spotlight-draft-before",
+    "spotlight-russian", "spotlight-russian-opened", "spotlight-english", "spotlight-english-opened",
+    "spotlight-navigation-result", "spotlight-navigation-preserved", "spotlight-draft-cancelled",
+    "spotlight-cold-launch", "spotlight-cold-onboarding",
+)
 GENERATED_LOG_LABELS = (
     "simulator-list", "simulator-boot", "simulator-bootstatus", "record-video",
-    "record-video-stop", "xcodebuild-test", "export-attachments",
+    "record-video-stop", "xcodebuild-test", "export-attachments", "bundle-info", "bundle-names-en", "bundle-names-ru",
+    "language-shutdown", "language-preferences-before", "language-preferences-languages", "language-preferences-locale",
+    "language-preferences-after", "language-boot", "language-bootstatus", "language-device-state",
+    "app-discovery-index-log", "spotlight-pipeline-log",
+    "simulator-signing-info", "simulator-signing-display", "simulator-signing-verify",
 )
 COLD_BOOT_TIMEOUT_SECONDS = 600
+LANGUAGE_SHUTDOWN_TIMEOUT_SECONDS = 180
 
 
 def clear_previous_outputs(directory):
@@ -172,8 +187,8 @@ def _runtime_version(runtime):
     return tuple(map(int, match.groups())) if match else (0,)
 
 
-def select_simulator(payload):
-    """Prefer any already booted iPhone; otherwise choose newest iPhone 17 Pro."""
+def select_simulator(payload, requested_runtime=None):
+    """Reuse a booted iPhone; otherwise select an available iPhone 17 Pro."""
     devices = []
     for runtime, runtime_devices in payload.get("devices", {}).items():
         runtime_name = runtime.replace("com.apple.CoreSimulator.SimRuntime.", "")
@@ -182,8 +197,17 @@ def select_simulator(payload):
             if device.get("isAvailable") and device.get("name", "").startswith("iPhone"):
                 devices.append({**device, "runtime": runtime_name})
     booted = [device for device in devices if device.get("state") == "Booted"]
-    candidates = booted or [device for device in devices if device.get("name") == "iPhone 17 Pro"]
+    if booted:
+        selected = max(booted, key=lambda device: _runtime_version(device["runtime"]))
+        if requested_runtime is not None and selected["runtime"] != requested_runtime:
+            raise ValueError(
+                f"Booted iPhone {selected['udid']} uses {selected['runtime']}, not requested {requested_runtime}")
+        return selected
+    candidates = [device for device in devices if device.get("name") == "iPhone 17 Pro"
+                  and (requested_runtime is None or device["runtime"] == requested_runtime)]
     if not candidates:
+        if requested_runtime is not None:
+            raise ValueError(f"No available iPhone 17 Pro Simulator was found for requested runtime {requested_runtime}")
         raise ValueError("No available booted iPhone or iPhone 17 Pro Simulator was found")
     return max(candidates, key=lambda device: _runtime_version(device["runtime"]))
 
@@ -268,15 +292,110 @@ def _export_named_checkpoints(directory, metadata):
             metadata["checkpoints"].append({"name": f"calendar-{count}-weeks", "image": f"attachments/{stable}"})
     missing = [name for name in metadata["planned_checkpoint_names"]
                if name not in {checkpoint["name"] for checkpoint in metadata["checkpoints"]}]
-    if len(calendar_counts) < 2:
+    if metadata.get("evidence_kind") != "diagnostic" and len(calendar_counts) < 2:
         missing.append("two calendar checkpoints with distinct week counts")
     if missing:
         metadata["missing_checkpoints"] = missing
     return missing
 
 
-def run(directory):
+def verify_built_simulator_identity(directory, metadata):
+    """Require the actual app's valid ad hoc signature to identify its own bundle."""
+    bundle = directory / "DerivedData/Build/Products/Debug-iphonesimulator/WhoGaveWhat.app"
+    identity = {"verified": False}
+    metadata["simulator_signing"] = identity
+    output = run_command(directory, "simulator-signing-info", [
+        "plutil", "-convert", "xml1", "-o", "-", str(bundle / "Info.plist")], 30)
+    bundle_id = plistlib.loads(output.stdout.encode()).get("CFBundleIdentifier")
+    identity["bundle_identifier"] = bundle_id
+    output = run_command(directory, "simulator-signing-display", [
+        "codesign", "--display", "--verbose=4", str(bundle)], 30)
+    description = output.stdout + "\n" + output.stderr
+    identifiers = re.findall(r"^Identifier=(.*)$", description, re.MULTILINE)
+    signatures = re.findall(r"^Signature=(.*)$", description, re.MULTILINE)
+    identity["signing_identifier"] = identifiers[0].strip() if len(identifiers) == 1 else None
+    identity["signature"] = signatures[0].strip() if len(signatures) == 1 else None
+    run_command(directory, "simulator-signing-verify", [
+        "codesign", "--verify", "--strict", "--verbose=4", str(bundle)], 30)
+    if not isinstance(bundle_id, str) or not bundle_id or identity["signing_identifier"] != bundle_id:
+        raise ValueError("Built Simulator app signing identifier does not match its CFBundleIdentifier")
+    if identity["signature"] != "adhoc":
+        raise ValueError("Built Simulator app does not have the requested ad hoc signature")
+    identity["verified"] = True
+
+
+def verify_built_app_names(directory, metadata):
+    """Check the compiled resources, not only the source strings and build settings."""
+    bundle = directory / "DerivedData/Build/Products/Debug-iphonesimulator/WhoGaveWhat.app"
+    names = {}
+    for language, expected in (("en", "Who Gave"), ("ru", "кто че")):
+        output = run_command(directory, f"bundle-names-{language}", [
+            "plutil", "-convert", "xml1", "-o", "-", str(bundle / f"{language}.lproj/InfoPlist.strings")], 30)
+        info = plistlib.loads(output.stdout.encode())
+        if any(info.get(key) != expected for key in ("CFBundleDisplayName", "CFBundleName")):
+            raise ValueError(f"Built {language} app names do not match {expected!r}")
+        names[language] = expected
+    output = run_command(directory, "bundle-info", [
+        "plutil", "-convert", "xml1", "-o", "-", str(bundle / "Info.plist")], 30)
+    if plistlib.loads(output.stdout.encode()).get("NSUserActivityTypes") != ["com.apple.corespotlightitem"]:
+        raise ValueError("Built app does not declare its Spotlight activity type")
+    metadata["bundle_names"] = names
+
+
+def prepare_disposable_languages(directory, simulator, metadata):
+    """Prepare preferred languages while the disposable device is off, before XCTest exists.
+
+    Changing the system language list through Settings terminates the running test
+    runner on iOS 26. The journey still selects the app's language through real Settings.
+    """
+    simulator_id = simulator["udid"]
+    data_path = Path(simulator.get("dataPath") or (
+        Path.home() / "Library/Developer/CoreSimulator/Devices" / simulator_id / "data"))
+    preferences = data_path / "Library/Preferences/.GlobalPreferences.plist"
+    desired = {"AppleLanguages": ["en-US", "ru-RU"], "AppleLocale": "en_US"}
+    metadata["language_preparation"] = {"preferred_languages": desired["AppleLanguages"],
+                                        "locale": desired["AppleLocale"], "verified": False}
+    if simulator.get("state") != "Shutdown":
+        run_command(directory, "language-shutdown", ["xcrun", "simctl", "shutdown", simulator_id],
+                    LANGUAGE_SHUTDOWN_TIMEOUT_SECONDS)
+    listing = run_command(directory, "language-device-state", ["xcrun", "simctl", "list", "devices", "--json"], 30)
+    current = [device for devices in json.loads(listing.stdout).get("devices", {}).values()
+               for device in devices if device.get("udid") == simulator_id]
+    if len(current) != 1 or current[0].get("state") != "Shutdown":
+        raise ValueError("Selected Simulator must be shut down before writing its language preferences")
+    if not data_path.is_dir():
+        raise ValueError("Selected Simulator data directory is unavailable")
+    if not preferences.exists():
+        # An unbooted device can lack this user preference file. Create only an
+        # empty dictionary, exclusively, so an existing file can never be replaced.
+        preferences.parent.mkdir(parents=True, exist_ok=True)
+        with preferences.open("xb") as fresh:
+            fresh.write(plistlib.dumps({}))
+        metadata["language_preparation"]["initialized_preferences"] = True
+    before = run_command(directory, "language-preferences-before", [
+        "plutil", "-convert", "xml1", "-o", "-", str(preferences)], 30)
+    original = plistlib.loads(before.stdout.encode())
+    for key, value, label in (("AppleLanguages", desired["AppleLanguages"], "languages"),
+                              ("AppleLocale", desired["AppleLocale"], "locale")):
+        operation = "-replace" if key in original else "-insert"
+        run_command(directory, f"language-preferences-{label}", [
+            "plutil", operation, key, "-json", json.dumps(value), str(preferences)], 30)
+    after = run_command(directory, "language-preferences-after", [
+        "plutil", "-convert", "xml1", "-o", "-", str(preferences)], 30)
+    prepared = plistlib.loads(after.stdout.encode())
+    expected = {**original, **desired}
+    if prepared != expected:
+        raise ValueError("Simulator language preparation did not preserve its other preferences")
+    run_command(directory, "language-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
+    run_command(directory, "language-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
+                COLD_BOOT_TIMEOUT_SECONDS)
+    metadata["language_preparation"]["verified"] = True
+
+
+def run(directory, verify_app_names=False, discovery_only=False, runtime=None):
     """Run the native XCTest journey, preserving diagnostics and real evidence."""
+    if discovery_only and not verify_app_names:
+        raise ValueError("Discovery-only diagnostics require --verify-app-names")
     directory = directory.resolve()
     directory.mkdir(parents=True, exist_ok=True)
     clear_previous_outputs(directory)
@@ -287,28 +406,53 @@ def run(directory):
         "evidence_kind": "feature-acceptance",
         "scenario": "Native People disclosure and detail navigation plus grouped person editing, photo crop cancel and confirm, and photo persistence and removal",
         "journey_outcome": "failure", "export_outcome": "failure", "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"),
+        "requested_runtime": runtime,
         "checkpoints": [], "native_test": "WhoGaveWhat scheme complete test suite (unit and UI tests)",
         "planned_checkpoint_names": list(PLANNED_CHECKPOINT_NAMES),
     }
+    if verify_app_names:
+        metadata["planned_checkpoint_names"].extend(APP_DISCOVERY_CHECKPOINT_NAMES)
+        metadata["scenario"] += (
+            "; English system with Russian app language selected in Settings; real Russian and English Spotlight"
+            " launcher results preserve the gift draft and navigation, then cold launch preserves onboarding")
+        metadata["app_discovery_queries"] = ["кто че", "Who Gave"]
+    if discovery_only:
+        metadata.update(
+            evidence_kind="diagnostic",
+            native_test="AppDiscoveryUITests only (partial suite; not acceptance)",
+            scenario="Spotlight diagnostic: real Settings language selection and bilingual launcher searches",
+            planned_checkpoint_names=list(APP_DISCOVERY_CHECKPOINT_NAMES))
     simulator = None
     recording = None
     result_bundle = directory / "Acceptance.xcresult"
     test_succeeded = False
+    native_test_attempted = False
     try:
         listing = run_command(directory, "simulator-list", ["xcrun", "simctl", "list", "devices", "available", "--json"], 30)
-        simulator = select_simulator(json.loads(listing.stdout))
+        simulator = select_simulator(json.loads(listing.stdout), requested_runtime=runtime)
         simulator_id = simulator["udid"]
         metadata.update(device=simulator["name"], simulator_id=simulator_id, runtime=simulator["runtime"])
-        if simulator.get("state") != "Booted":
-            run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
-        run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
-                    COLD_BOOT_TIMEOUT_SECONDS)
+        if verify_app_names:
+            prepare_disposable_languages(directory, simulator, metadata)
+        else:
+            if simulator.get("state") != "Booted":
+                run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
+            run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
+                        COLD_BOOT_TIMEOUT_SECONDS)
         recording = start_recording(directory, simulator_id, directory / "journeys.mp4")
         command = ["xcodebuild", "test", "-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
                    "-destination", f"platform=iOS Simulator,id={simulator_id}", "-derivedDataPath", str(directory / "DerivedData"),
-                   "-resultBundlePath", str(result_bundle), "-parallel-testing-enabled", "NO", "CODE_SIGNING_ALLOWED=NO"]
+                   "-resultBundlePath", str(result_bundle), "-parallel-testing-enabled", "NO",
+                   "CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-"]
+        if not verify_app_names:
+            command.append("-skip-testing:WhoGaveWhatUITests/AppDiscoveryUITests")
+        if discovery_only:
+            command.append("-only-testing:WhoGaveWhatUITests/AppDiscoveryUITests")
         try:
-            run_command(directory, "xcodebuild-test", command, 1800)
+            native_test_attempted = True
+            run_command(directory, "xcodebuild-test", command, 900 if discovery_only else 1800)
+            if verify_app_names:
+                verify_built_app_names(directory, metadata)
             test_succeeded = True
         except (NativeCommandError, OSError) as error:
             metadata["native_test_error"] = str(error)
@@ -322,6 +466,29 @@ def run(directory):
                 stop_recording(directory, recording)
             except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
                 metadata["recording_error"] = str(error)
+        if native_test_attempted:
+            try:
+                verify_built_simulator_identity(directory, metadata)
+            except (ValueError, OSError, subprocess.SubprocessError, plistlib.InvalidFileException) as error:
+                metadata["simulator_identity_error"] = str(error)
+                test_succeeded = False
+        if verify_app_names and simulator:
+            try:
+                run_command(directory, "app-discovery-index-log", [
+                    "xcrun", "simctl", "spawn", simulator["udid"], "log", "show", "--last", "20m",
+                    "--info", "--style", "compact", "--predicate",
+                    'subsystem == "pro.ziganshin.WhoGaveWhat" AND category == "AppDiscovery"'], 30)
+            except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
+                # This diagnostic must never replace the native test failure or its evidence.
+                metadata["app_discovery_diagnostic_error"] = str(error)
+            try:
+                run_command(directory, "spotlight-pipeline-log", [
+                    "xcrun", "simctl", "spawn", simulator["udid"], "log", "show", "--last", "20m",
+                    "--info", "--style", "compact", "--predicate",
+                    '(process == "corespotlightd" OR process == "Spotlight" OR subsystem CONTAINS[c] "spotlight") '
+                    'AND (eventMessage CONTAINS[c] "pro.ziganshin.WhoGaveWhat" OR messageType == 16 OR messageType == 17)'], 30)
+            except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
+                metadata["spotlight_pipeline_diagnostic_error"] = str(error)
         if result_bundle.is_dir():
             try:
                 _export_xcresult_attachments(result_bundle, directory / "attachments", directory)
@@ -339,10 +506,16 @@ def run(directory):
         (directory / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
         shutil.rmtree(directory / "DerivedData", ignore_errors=True)
     if metadata["export_outcome"] != "success":
-        raise ValueError("Native acceptance evidence export is incomplete")
+        raise ValueError(metadata.get("simulator_identity_error") or "Native acceptance evidence export is incomplete")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path)
-    run(parser.parse_args().directory)
+    parser.add_argument("--verify-app-names", action="store_true",
+                        help="Exercise real Settings language selection and Spotlight on a disposable Simulator")
+    parser.add_argument("--discovery-only", action="store_true",
+                        help="Run only AppDiscoveryUITests and mark partial evidence as diagnostic, never acceptance")
+    parser.add_argument("--runtime", help="Require a canonical runtime such as 'iOS 26.4'; reject conflicting booted iPhones")
+    args = parser.parse_args()
+    run(args.directory, args.verify_app_names, args.discovery_only, args.runtime)
