@@ -54,7 +54,7 @@ class PublicationTests(unittest.TestCase):
             html_url="https://github.com/owner/repo/pull/42",
         )
         self.run = dict(
-            status="completed", conclusion="success", run_attempt=2, event="pull_request", head_sha="a" * 40,
+            id=123, status="completed", conclusion="success", run_attempt=2, event="pull_request", head_sha="a" * 40,
             html_url="https://github.com/owner/repo/actions/runs/123",
         )
         self.edits = []

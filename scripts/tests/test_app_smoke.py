@@ -888,9 +888,8 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         workflow = (Path(__file__).parents[2] / '.github/workflows/tests.yml').read_text()
         job_blocks = re.split(r'^  ([a-z-]+):\n', workflow.partition('\njobs:\n')[2], flags=re.MULTILINE)
         jobs = dict(zip(job_blocks[1::2], job_blocks[2::2]))
-        for name in ('scripts', 'quality', 'test'):
-            self.assertNotRegex(jobs[name], re.compile(r'^    if:', re.MULTILINE))
-            self.assertNotIn('--discovery-only', jobs[name])
+        self.assertEqual({'test', 'spotlight-diagnostics'}, set(jobs))
+        self.assertNotIn('--discovery-only', jobs['test'])
         self.assertIn('name: Unit tests and app smoke', jobs['test'])
         self.assertIn('run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names', jobs['test'])
         diagnostic = jobs['spotlight-diagnostics']
@@ -905,6 +904,46 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         # Boot, testing, export, logging, and upload need headroom beyond the native test's 15 minutes.
         diagnostic_budget = int(re.search(r'timeout-minutes: (\d+)', diagnostic).group(1))
         self.assertGreaterEqual(diagnostic_budget, 45)
+
+    def test_native_acceptance_is_explicit_and_preserves_current_pr_head_provenance(self):
+        workflow = (Path(__file__).parents[2] / '.github/workflows/tests.yml').read_text()
+        events = workflow.partition('\non:\n')[2].partition('\npermissions:\n')[0]
+        self.assertIn('  pull_request:\n    types: [labeled]\n', events)
+        self.assertIn('  workflow_dispatch:\n', events)
+        self.assertNotIn('  push:', events)
+        for automatic_event in ('synchronize', 'opened', 'ready_for_review'):
+            self.assertNotIn(automatic_event, events)
+        self.assertIn("if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' "
+                      "&& github.event.action == 'labeled' && github.event.label.name == 'ci-ready')", workflow)
+        self.assertIn('cancel-in-progress: false', workflow)
+        self.assertIn('group: tests-${{ github.event.pull_request.number || github.ref }}', workflow)
+        self.assertIn('HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}', workflow)
+        self.assertIn('name: ui-app-smoke-attempt-${{ github.run_attempt }}', workflow)
+
+    def test_lightweight_checks_remain_automatic_with_the_existing_check_names_and_commands(self):
+        workflow = (Path(__file__).parents[2] / '.github/workflows/checks.yml').read_text()
+        self.assertIn('  push:\n    branches: [master]\n  pull_request:\n', workflow)
+        self.assertIn('cancel-in-progress: true', workflow)
+        self.assertIn('name: Scripts and secret patterns', workflow)
+        self.assertIn('name: Swift format and lint', workflow)
+        for command in ('scripts/check-secrets.sh', 'python3 -m unittest discover -s scripts/tests -v',
+                        'bundle exec ruby "$test"', 'scripts/check-formatting.sh', 'scripts/lint-swift.sh'):
+            self.assertIn(command, workflow)
+        self.assertNotIn('run-app-smoke.py', workflow)
+        self.assertNotRegex(workflow, re.compile(r'^    if:', re.MULTILINE))
+
+    def test_evidence_gate_checks_publication_and_removal_from_a_trusted_body_edit(self):
+        workflow = (Path(__file__).parents[2] / '.github/workflows/pr-evidence.yml').read_text()
+        events = workflow.partition('\non:\n')[2].partition('\npermissions:\n')[0]
+        self.assertEqual('  pull_request_target:\n    types: [edited]\n', events)
+        self.assertIn('github.event.changes.body &&', workflow)
+        self.assertIn("contains(github.event.pull_request.body, '<!-- visual-evidence:') ||", workflow)
+        self.assertIn("contains(github.event.changes.body.from, '<!-- visual-evidence:')", workflow)
+        self.assertIn('ref: ${{ github.event.pull_request.base.sha || github.event.repository.default_branch }}', workflow)
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn('statuses: write', workflow)
+        self.assertIn('scripts/pr-evidence-gate.py --event-file "$GITHUB_EVENT_PATH" --publish-status', workflow)
+        self.assertNotIn('pull_request.head', workflow)
 
     def test_language_preparation_updates_only_the_selected_simulator_preferences_while_shutdown(self):
         original = {'AppleLanguages': ['en-US'], 'AppleLocale': 'en_US', 'AppleICUForce24HourTime': True}

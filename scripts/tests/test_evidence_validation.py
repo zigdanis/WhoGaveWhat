@@ -1,7 +1,9 @@
 import importlib.util
+import io
 import json
 import sys
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
@@ -65,7 +67,7 @@ class EvidenceTests(unittest.TestCase):
         mocked.assert_not_called()
 
     def test_gate_requires_latest_successful_pr_attempt(self):
-        run = dict(status='completed', conclusion='success', event='pull_request', head_sha=self.sha, run_attempt=2)
+        run = dict(id=123, status='completed', conclusion='success', event='pull_request', head_sha=self.sha, run_attempt=2)
         def mocked(*args):
             return json.dumps([{'databaseId': 123}]) if args[0] == 'run' else json.dumps(run)
         with patch.object(evidence, 'gh', side_effect=mocked):
@@ -77,8 +79,104 @@ class EvidenceTests(unittest.TestCase):
                 with self.subTest(key=key), self.assertRaises(ValueError):
                     evidence.checked_run('owner/repo', self.sha, self.metadata)
                 run[key] = original
-        with patch.object(evidence, 'gh', return_value='[{"databaseId":124}]'), self.assertRaises(ValueError):
+        def newer(*args):
+            return json.dumps([{'databaseId': 124}]) if args[0] == 'run' else json.dumps(dict(run, id=124))
+        with patch.object(evidence, 'gh', side_effect=newer), self.assertRaises(ValueError):
             evidence.checked_run('owner/repo', self.sha, self.metadata)
+
+    def test_later_verified_entirely_skipped_native_run_does_not_displace_acceptance(self):
+        accepted = dict(id=123, status='completed', conclusion='success', event='pull_request',
+                        head_sha=self.sha, run_attempt=2)
+        skipped = dict(accepted, id=124, run_attempt=1)
+        skipped_jobs = {'total_count': 2, 'jobs': [
+            dict(name='Unit tests and app smoke', status='completed', conclusion='skipped'),
+            dict(name='Spotlight diagnostics (non-acceptance)', status='completed', conclusion='skipped')]}
+        actual_jobs = {'total_count': 2, 'jobs': [
+            dict(name='Unit tests and app smoke', status='completed', conclusion='success'),
+            skipped_jobs['jobs'][1]]}
+        def mocked(*args):
+            if args[:2] == ('run', 'list'):
+                return json.dumps([{'databaseId': 124}, {'databaseId': 123}])
+            endpoint = args[1]
+            if endpoint.endswith('/124'):
+                return json.dumps(skipped)
+            if endpoint.endswith('/123'):
+                return json.dumps(accepted)
+            return json.dumps(skipped_jobs if '/124/' in endpoint else actual_jobs)
+        with patch.object(evidence, 'gh', side_effect=mocked):
+            self.assertEqual(123, evidence.checked_run('owner/repo', self.sha, self.metadata)['id'])
+            output = io.StringIO()
+            with redirect_stdout(output):
+                evidence.main(['owner/repo', self.sha])
+            self.assertEqual(123, json.loads(output.getvalue())['id'])
+
+    def test_newer_failed_running_or_ambiguous_native_runs_remain_authoritative(self):
+        skipped_jobs = [
+            dict(name='Unit tests and app smoke', status='completed', conclusion='skipped'),
+            dict(name='Spotlight diagnostics (non-acceptance)', status='completed', conclusion='skipped')]
+        for condition in ('failed', 'running', 'queued', 'cancelled', 'native-success', 'unknown-job',
+                          'missing-job', 'incomplete-jobs', 'unfinished-job', 'rerun'):
+            with self.subTest(condition=condition):
+                newer = dict(id=124, status='completed', conclusion='success', event='pull_request',
+                             head_sha=self.sha, run_attempt=1)
+                jobs = [dict(job) for job in skipped_jobs]
+                total = 2
+                if condition in ('failed', 'cancelled'):
+                    newer['conclusion'] = 'failure' if condition == 'failed' else 'cancelled'
+                if condition in ('running', 'queued'):
+                    newer.update(status='in_progress' if condition == 'running' else 'queued', conclusion=None)
+                if condition == 'native-success':
+                    jobs[0]['conclusion'] = 'success'
+                if condition == 'unknown-job':
+                    jobs[0]['name'] = 'Different job'
+                if condition == 'missing-job':
+                    jobs = jobs[1:]
+                    total = 1
+                if condition == 'incomplete-jobs':
+                    total = 3
+                if condition == 'unfinished-job':
+                    jobs[0]['status'] = 'in_progress'
+                if condition == 'rerun':
+                    newer['run_attempt'] = 2
+                def mocked(*args):
+                    if args[:2] == ('run', 'list'):
+                        return json.dumps([{'databaseId': 124}, {'databaseId': 123}])
+                    if args[1].endswith('/124'):
+                        return json.dumps(newer)
+                    if '/124/attempts/' in args[1]:
+                        return json.dumps({'total_count': total, 'jobs': jobs})
+                    self.fail('An older successful run must not be queried past authoritative run 124')
+                with patch.object(evidence, 'gh', side_effect=mocked):
+                    with self.assertRaisesRegex(ValueError, 'latest PR Tests run'):
+                        evidence.checked_run('owner/repo', self.sha, self.metadata)
+                    output = io.StringIO()
+                    with redirect_stdout(output):
+                        evidence.main(['owner/repo', self.sha])
+                    self.assertEqual(124, json.loads(output.getvalue())['id'])
+
+    def test_skipped_native_verification_error_or_rerun_race_never_falls_back(self):
+        for failure in ('jobs-unavailable', 'run-changed'):
+            with self.subTest(failure=failure):
+                queries = 0
+                skipped = dict(id=124, status='completed', conclusion='success', event='pull_request',
+                               head_sha=self.sha, run_attempt=1)
+                def mocked(*args):
+                    nonlocal queries
+                    if args[:2] == ('run', 'list'):
+                        return json.dumps([{'databaseId': 124}, {'databaseId': 123}])
+                    if args[1].endswith('/124'):
+                        queries += 1
+                        return json.dumps(skipped if queries == 1 else dict(skipped, status='in_progress', run_attempt=2))
+                    if '/124/attempts/' in args[1]:
+                        if failure == 'jobs-unavailable':
+                            raise evidence.subprocess.CalledProcessError(1, ['gh', 'api'])
+                        return json.dumps({'total_count': 2, 'jobs': [
+                            dict(name='Unit tests and app smoke', status='completed', conclusion='skipped'),
+                            dict(name='Spotlight diagnostics (non-acceptance)', status='completed', conclusion='skipped')]})
+                    self.fail('Verification failure must not select older run 123')
+                with patch.object(evidence, 'gh', side_effect=mocked):
+                    with self.assertRaises(evidence.subprocess.CalledProcessError if failure == 'jobs-unavailable' else ValueError):
+                        evidence.checked_run('owner/repo', self.sha, self.metadata)
 
     def test_body_change_during_gate_prevents_success_status(self):
         pr = dict(state='open', body=self.body(), head={'sha': self.sha}, html_url='https://example.com/pr')

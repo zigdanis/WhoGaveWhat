@@ -43,6 +43,7 @@
 
 # Quality and PR evidence
 
+- Before scheduling native CI, follow the [native CI budget](docs/pr-evidence.md#native-ci-budget): batch implementation and terminal reviews, then run one ready-PR suite and one final-master suite. Additional full runs require Danis's explicit exception.
 - Before handing over any PR, follow [PR evidence](docs/pr-evidence.md) for current-head inspection and compact screenshot and video attachments, including documentation and infrastructure PRs. App smoke verifies the environment; UI changes also require the changed scenario.
 - Run `scripts/check-formatting.sh`, `scripts/lint-swift.sh` and the helper tests before pushing. Use `scripts/format-swift.sh` to fix layout; SwiftLint owns source correctness rules.
 - On Raspberry Pi, use [the CI evidence workflow](docs/pr-evidence.md#raspberry-pi) for native app validation and visual review. A local Mac is optional convenience, not a dependency.

@@ -1,0 +1,48 @@
+name: Checks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scripts:
+    name: Scripts and secret patterns
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ffmpeg for evidence publisher tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ffmpeg
+      - run: scripts/check-secrets.sh
+      - run: python3 -m unittest discover -s scripts/tests -v
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - name: Release coordinator and archive validation tests
+        run: |
+          for test in fastlane/tests/test_*.rb; do
+            bundle exec ruby "$test"
+          done
+
+  quality:
+    name: Swift format and lint
+    runs-on: macos-26
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SwiftLint
+        run: brew install swiftlint
+      - run: scripts/check-formatting.sh
+      - run: scripts/lint-swift.sh
+

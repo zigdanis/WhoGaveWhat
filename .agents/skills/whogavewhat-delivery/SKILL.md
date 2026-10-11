@@ -28,24 +28,29 @@ Before delegating implementation or review, follow
    mutations with the coordinator. Register every worked PR with T3
    `link_pull_request` when available.
 3. Obtain a distinct read-only review agent after implementation. The reviewer
-   checks concrete correctness, requested behavior, and current visual evidence
-   where relevant. Fix every actionable finding through the implementation
-   agent, rerun covering checks, and send the result back for re-review.
-4. Run repository checks and the full Tests workflow. On Linux/Raspberry Pi,
+   checks concrete correctness and requested behavior. Wait for terminal bot
+   reviews, batch every actionable fix, rerun covering lightweight checks, and
+   obtain re-review. Ensure the native journey covers the changed scenario
+   before scheduling native CI.
+4. Follow the [native CI budget](../../../docs/pr-evidence.md#native-ci-budget).
+   Once the head is ready and reviews are terminal, apply `ci-ready` to run the
+   complete PR Tests suite once. The label schedules acceptance; merge and
+   release still require every gate. On Linux/Raspberry Pi,
    retrieve the current-head artifact with `scripts/pr-evidence.sh PR_NUMBER`.
-   Inspect selected screenshots and the original video against each criterion;
-   extend the CI journey when app smoke does not exercise the changed feature.
-   Fix concrete evidence failures on the same PR and refresh evidence after
-   every push or rerun.
-5. Wait for terminal bot reviews and required checks. Validate each finding,
-   fix concrete issues, rerun the covering checks, and re-review. Publish an
-   English PR description containing inspected current-head screenshots and
-   video using the existing evidence helper; the evidence gate must pass.
+   Inspect selected screenshots and the original video against each criterion.
+   Obtain independent review of the inspected evidence. A later source fix
+   requires current-head evidence and an explicit budget exception before
+   another full run.
+5. Confirm terminal independent and bot reviews and passing required checks.
+   Publish an English PR description containing inspected current-head
+   screenshots and video using the existing evidence helper; the evidence gate
+   must pass.
 6. When the current head is green, independent and bot reviews are terminal,
    no actionable conversation remains, and evidence is current, merge or enable
    auto-merge according to [AGENTS.md](../../../AGENTS.md#merge-and-approval-policy),
    unless the user explicitly requested PR-only.
-   Verify the resulting master commit and its Tests run before release.
+   Dispatch the complete Tests workflow once on the resulting master commit
+   and verify that exact source before release.
 7. For a routine feature, fix, improvement, or build request, dispatch the
    protected TestFlight workflow from verified master unless the user explicitly
    requested PR-only or do-not-deploy. Use the
