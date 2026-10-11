@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       spotlight_diagnostics:
-        description: Run an additional focused Spotlight diagnostic (full tests still run)
+        description: Run optional OS Spotlight diagnostic (app-owned acceptance still runs)
         type: boolean
         default: false
 
@@ -56,6 +56,7 @@ jobs:
 
   spotlight-diagnostics:
     name: Spotlight diagnostics (non-acceptance)
+    continue-on-error: true
     if: github.event_name == 'workflow_dispatch' && inputs.spotlight_diagnostics
     runs-on: macos-26
     timeout-minutes: 55

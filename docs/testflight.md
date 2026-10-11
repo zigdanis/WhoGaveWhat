@@ -118,6 +118,10 @@ and attempt its first upload. `notes` updates and verifies both locales on the
 existing processed build, without archiving, uploading, changing membership or
 resubmitting review.
 
+## Device Spotlight acceptance
+
+Follow [the required app-owned and optional OS Spotlight scope](pr-evidence.md#app-owned-acceptance-and-device-spotlight) when reviewing source, CI and media. An exact successful master `Tests` run establishes its declared app-owned scope; OS Spotlight retrieval remains a post-release device check when metadata declares it pending. Include that limitation and the two exact search names in EN/RU What to Test. Deliver the receipt-backed build first, then request Danis's device observations. Keep device confirmation pending until received and inspect the existing build rather than creating another upload.
+
 ## Prepared EN/RU notes
 
 The JSON file contains exactly nonempty `en` and `ru` strings, at most 4000 UTF-8

@@ -31,7 +31,9 @@ Before delegating implementation or review, follow
    checks concrete correctness and requested behavior. Wait for terminal bot
    reviews, batch every actionable fix, rerun covering lightweight checks, and
    obtain re-review. Ensure the native journey covers the changed scenario
-   before scheduling native CI.
+   before scheduling native CI. For Spotlight work, follow
+   [app-owned acceptance and device Spotlight](../../../docs/pr-evidence.md#app-owned-acceptance-and-device-spotlight)
+   for the required native scope and truthful post-release device status.
 4. Follow the [native CI budget](../../../docs/pr-evidence.md#native-ci-budget).
    Once the head is ready and reviews are terminal, apply `ci-ready` to run the
    complete PR Tests suite once. The label schedules acceptance; merge and

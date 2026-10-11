@@ -8,6 +8,9 @@ description: Capture, inspect, and embed current WhoGaveWhat screenshots and vid
 Read [docs/pr-evidence.md](../../../docs/pr-evidence.md) for the maintained
 capture, retrieval, and publication commands.
 
+For Spotlight work, use [the maintained acceptance scope](../../../docs/pr-evidence.md#app-owned-acceptance-and-device-spotlight)
+and preserve the explicit device-pending declaration in evidence.
+
 1. Define observable criteria. For UI changes, exercise the changed interaction
    and relevant success, error, and dismissal paths in the CI journey. For
    documentation, tooling, and infrastructure changes, app-smoke evidence

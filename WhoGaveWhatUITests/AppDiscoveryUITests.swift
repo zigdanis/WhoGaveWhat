@@ -64,6 +64,79 @@ final class AppDiscoveryUITests: XCTestCase {
         }
     }
 
+    /// Mandatory app-owned behavior; OS Spotlight retrieval is a separate diagnostic.
+    func testRussianAppLanguagePreservesNavigationDraftAndColdOnboarding() throws {
+        app.launchEnvironment["KS_START"] = "app"
+        app.launchEnvironment["KS_SPOTLIGHT_DIAGNOSTICS"] = "0"
+        app.launch()
+        XCTAssertTrue(app.buttons["Add a gift"].waitForExistence(timeout: timeout))
+        attach("app-language-english-home")
+
+        try setRussianAppLanguageWithEnglishSystem(inspectSearchVisibility: false)
+        app.launch()
+        XCTAssertTrue(app.buttons["Добавить подарок"].waitForExistence(timeout: timeout))
+        attach("app-language-russian-home")
+
+        let peopleTab = app.tabBars.buttons["Люди"]
+        XCTAssertTrue(peopleTab.waitForExistence(timeout: timeout))
+        peopleTab.tap()
+        XCTAssertTrue(peopleTab.isSelected)
+        XCTAssertTrue(app.buttons["people.add-person"].waitForExistence(timeout: timeout))
+        attach("app-language-navigation-before")
+        try backgroundAndResumeApp()
+        XCTAssertTrue(peopleTab.waitForExistence(timeout: timeout))
+        XCTAssertTrue(peopleTab.isSelected, "Resuming must preserve the selected People tab")
+        XCTAssertTrue(app.buttons["people.add-person"].waitForExistence(timeout: timeout))
+        XCTAssertFalse(app.textFields["add-gift.name"].exists)
+        attach("app-language-navigation-resumed")
+
+        let homeTab = app.tabBars.buttons["Главная"]
+        XCTAssertTrue(homeTab.waitForExistence(timeout: timeout))
+        homeTab.tap()
+        XCTAssertTrue(homeTab.isSelected)
+        app.buttons["Добавить подарок"].tap()
+        let field = app.textFields["add-gift.name"]
+        XCTAssertTrue(field.waitForExistence(timeout: timeout))
+        let draft = "Resume draft \(UUID().uuidString.prefix(8))"
+        field.typeText(draft)
+        attach("app-language-draft-before")
+        try backgroundAndResumeApp()
+        XCTAssertTrue(field.waitForExistence(timeout: timeout))
+        XCTAssertEqual(field.value as? String, draft, "Resuming must preserve the unsaved gift")
+        XCTAssertTrue(app.buttons["add-gift.save"].exists)
+        attach("app-language-draft-resumed")
+        app.buttons["Отмена"].tap()
+        let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: field)
+        XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: timeout), .completed)
+        XCTAssertTrue(homeTab.isSelected, "Cancelling the draft must retain Home")
+        attach("app-language-draft-cancelled")
+
+        // A normal cold launch, without the UI shortcut, must preserve onboarding.
+        app.terminate()
+        app.launchEnvironment = [:]
+        app.launch()
+        XCTAssertTrue(app.buttons["Далее"].waitForExistence(timeout: timeout))
+        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        attach("app-language-cold-onboarding")
+    }
+
+    private func backgroundAndResumeApp() throws {
+        XCUIDevice.shared.press(.home)
+        let backgrounded = XCTNSPredicateExpectation(
+            predicate: NSPredicate { _, _ in
+                self.app.state == .runningBackground || self.app.state == .runningBackgroundSuspended
+            }, object: app
+        )
+        guard XCTWaiter.wait(for: [backgrounded], timeout: timeout) == .completed else {
+            throw DiscoveryFailure.appNotBackgrounded
+        }
+        app.activate()
+        guard app.wait(for: .runningForeground, timeout: timeout) else {
+            throw DiscoveryFailure.appNotResumed
+        }
+    }
+
+    /// Optional OS-owned Spotlight diagnostic, selected explicitly by --discovery-only.
     func testRussianAppLanguageAndBilingualSpotlightPreserveDraftAndOnboarding() throws {
         // Launch without AppleLanguages overrides: the app must follow its real Settings preference.
         app.launchEnvironment["KS_START"] = "app"
@@ -153,7 +226,7 @@ final class AppDiscoveryUITests: XCTestCase {
         add(after)
     }
 
-    private func setRussianAppLanguageWithEnglishSystem() throws {
+    private func setRussianAppLanguageWithEnglishSystem(inspectSearchVisibility: Bool = true) throws {
         settings.launch()
         attach("system-settings")
         try tapSetting("General")
@@ -180,14 +253,16 @@ final class AppDiscoveryUITests: XCTestCase {
         attach("settings-search-app")
         try tapSetting("Who Gave", contains: true)
         attach("app-settings-before")
-        try tapSetting("Search")
-        RunLoop.current.run(until: Date().addingTimeInterval(0.75))
-        attach("app-search-visibility")
-        let visibility = XCTAttachment(string: settings.debugDescription)
-        visibility.name = "app-search-visibility-hierarchy"
-        visibility.lifetime = .keepAlways
-        add(visibility)
-        try tapSetting("Who Gave")
+        if inspectSearchVisibility {
+            try tapSetting("Search")
+            RunLoop.current.run(until: Date().addingTimeInterval(0.75))
+            attach("app-search-visibility")
+            let visibility = XCTAttachment(string: settings.debugDescription)
+            visibility.name = "app-search-visibility-hierarchy"
+            visibility.lifetime = .keepAlways
+            add(visibility)
+            try tapSetting("Who Gave")
+        }
         try tapSetting("Language")
         attach("app-language-picker")
         // Register cleanup before the mutation so a failed tap or later assertion cannot skip it.
@@ -760,6 +835,8 @@ final class AppDiscoveryUITests: XCTestCase {
     }
 
     private enum DiscoveryFailure: Error {
+        case appNotBackgrounded
+        case appNotResumed
         case missingSettingsControl(String, String)
         case settingsNotForeground
         case appLibraryStillVisible(String)

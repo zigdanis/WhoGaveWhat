@@ -1,6 +1,6 @@
 {
-  "target_pull_request": "https://github.com/zigdanis/WhoGaveWhat/pull/20",
-  "target_source": "Verified master merge of PR #20; the exact SHA is recorded by the release receipt.",
+  "target_pull_request": "https://github.com/zigdanis/WhoGaveWhat/pull/28",
+  "target_source": "Verified master merge of PR #28; the exact final SHA is recorded by the release receipt.",
   "latest_uploaded_build": {
     "version": "1.0.6",
     "build": "15",
@@ -9,7 +9,7 @@
     "processing": "VALID",
     "distribution_at_comparison": "IN_BETA_TESTING"
   },
-  "comparison": "Compared with the latest available build 15 source, this adds one Core Spotlight app-launch item with English and Russian aliases. It refreshes on foreground activation, retries after index failures, and handles opening without changing onboarding, navigation or gift drafts. It does not index gifts or people. Both CFBundleDisplayName and CFBundleName are localized; Russian is lowercase 'кто че' and English remains 'Who Gave'. Existing person editing, profile photo cropping and adaptive gift entry are preserved. Other changes cover native Spotlight acceptance and release documentation. No gift persistence changes.",
-  "unknown_source_gaps": "None: the latest durable receipt records the current master source, valid Apple processing, verified EN/RU notes and tester availability.",
+  "comparison": "Compared with the latest recorded published build 1.0.6 (15), this adds one stable Core Spotlight app-launch item with public English and Russian aliases and canonical bilingual displayName 'Who Gave · кто че'. Localized title and system-name resources remain English 'Who Gave' and Russian 'кто че'. Foreground indexing retry and activity routing preserve onboarding, navigation and drafts without indexing gifts or people. Required native acceptance covers compiled public metadata, real Settings app language and app-owned lifecycle; strict OS Spotlight retrieval is optional diagnostic/manual device-pending. Existing person editing, profile photo cropping, adaptive gift entry and gift persistence remain unchanged.",
+  "unknown_source_gaps": "The latest durable uploaded receipt records published source 89983b4f3f2ff426bfd51039f48cf3e01c61ad76 for 1.0.6 (15); no intervening uploaded receipt was observed. This is the latest published source, not current master. Live Apple inventory remains required in protected deployment preflight.",
   "receipt_workflow": "https://github.com/zigdanis/WhoGaveWhat/actions/runs/37857676408"
 }

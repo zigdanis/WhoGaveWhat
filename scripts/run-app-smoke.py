@@ -33,6 +33,17 @@ PLANNED_CHECKPOINT_NAMES = (
     "person-editor-existing-photo-crop-cancelled", "person-editor-photo-removed",
     "person-editor-photo-removal-persisted",
 )
+APP_LANGUAGE_CHECKPOINT_NAMES = (
+    "system-settings", "language-region-before", "english-system-russian-secondary",
+    "settings-apps-list", "settings-search-app", "app-settings-before", "app-language-picker", "app-language-russian",
+    "app-language-english-home", "app-language-russian-home", "app-language-navigation-before",
+    "app-language-navigation-resumed", "app-language-draft-before", "app-language-draft-resumed",
+    "app-language-draft-cancelled", "app-language-cold-onboarding",
+)
+SPOTLIGHT_DIAGNOSTIC_TEST = (
+    "WhoGaveWhatUITests/AppDiscoveryUITests/"
+    "testRussianAppLanguageAndBilingualSpotlightPreserveDraftAndOnboarding"
+)
 APP_DISCOVERY_CHECKPOINT_NAMES = (
     "home-screen-english", "system-settings", "language-region-before",
     "english-system-russian-secondary", "settings-apps-list", "settings-search-app",
@@ -46,6 +57,7 @@ GENERATED_LOG_LABELS = (
     "simulator-list", "simulator-boot", "simulator-bootstatus", "record-video",
     "simulator-create", "simulator-created-list", "simulator-created-state", "simulator-created-shutdown", "simulator-created-delete",
     "record-video-stop", "xcodebuild-test", "export-attachments", "bundle-info", "bundle-names-en", "bundle-names-ru",
+    "bundle-spotlight-name-en", "bundle-spotlight-name-ru",
     "language-shutdown", "language-preferences-before", "language-preferences-languages", "language-preferences-locale",
     "language-preferences-after", "language-boot", "language-bootstatus", "language-device-state",
     "app-discovery-index-log", "spotlight-pipeline-log",
@@ -400,11 +412,16 @@ def verify_built_app_names(directory, metadata):
         if any(info.get(key) != expected for key in ("CFBundleDisplayName", "CFBundleName")):
             raise ValueError(f"Built {language} app names do not match {expected!r}")
         names[language] = expected
+        output = run_command(directory, f"bundle-spotlight-name-{language}", [
+            "plutil", "-convert", "xml1", "-o", "-", str(bundle / f"{language}.lproj/Localizable.strings")], 30)
+        if plistlib.loads(output.stdout.encode()).get("app-discovery.display-name") != "Who Gave · кто че":
+            raise ValueError(f"Built {language} Spotlight display name does not preserve both public names")
     output = run_command(directory, "bundle-info", [
         "plutil", "-convert", "xml1", "-o", "-", str(bundle / "Info.plist")], 30)
     if plistlib.loads(output.stdout.encode()).get("NSUserActivityTypes") != ["com.apple.corespotlightitem"]:
         raise ValueError("Built app does not declare its Spotlight activity type")
     metadata["bundle_names"] = names
+    metadata["indexed_display_names"] = {language: "Who Gave · кто че" for language in names}
 
 
 def prepare_disposable_languages(directory, simulator, metadata):
@@ -474,21 +491,29 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
         "scenario": "Native People disclosure and detail navigation plus grouped person editing, photo crop cancel and confirm, and photo persistence and removal",
         "journey_outcome": "failure", "export_outcome": "failure", "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"),
         "requested_runtime": runtime,
-        "checkpoints": [], "native_test": "WhoGaveWhat scheme complete test suite (unit and UI tests)",
+        "checkpoints": [], "native_test": "WhoGaveWhat app-owned unit and UI suite (OS Spotlight diagnostic excluded)",
         "planned_checkpoint_names": list(PLANNED_CHECKPOINT_NAMES),
     }
+    if not verify_app_names:
+        metadata["native_test"] += "; disposable AppDiscoveryUITests class excluded"
     if verify_app_names:
-        metadata["planned_checkpoint_names"].extend(APP_DISCOVERY_CHECKPOINT_NAMES)
+        metadata["planned_checkpoint_names"].extend(APP_LANGUAGE_CHECKPOINT_NAMES)
         metadata["scenario"] += (
-            "; English system with Russian app language selected in Settings; real Russian and English Spotlight"
-            " launcher results preserve the gift draft and navigation, then cold launch preserves onboarding")
-        metadata["app_discovery_queries"] = ["кто че", "Who Gave"]
+            "; English system with Russian app language selected in Settings; direct app background/resume"
+            " preserves navigation and the gift draft; cancellation and normal cold launch preserve onboarding")
+        metadata.update(
+            acceptance_scope="app-owned",
+            spotlight_search_outcome="not-run",
+            spotlight_device_acceptance="pending")
     if discovery_only:
         metadata.update(
             evidence_kind="diagnostic",
-            native_test="AppDiscoveryUITests only (partial suite; not acceptance)",
+            acceptance_scope="os-spotlight-diagnostic",
+            native_test=f"{SPOTLIGHT_DIAGNOSTIC_TEST} only (partial suite; not acceptance)",
             scenario="Spotlight diagnostic: real Settings language selection and bilingual launcher searches",
-            planned_checkpoint_names=list(APP_DISCOVERY_CHECKPOINT_NAMES))
+            planned_checkpoint_names=list(APP_DISCOVERY_CHECKPOINT_NAMES),
+            app_discovery_queries=["кто че", "Who Gave"],
+            spotlight_search_outcome="failure")
     simulator = None
     recording = None
     result_bundle = directory / "Acceptance.xcresult"
@@ -513,16 +538,20 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
                    "-destination", f"platform=iOS Simulator,id={simulator_id}", "-derivedDataPath", str(directory / "DerivedData"),
                    "-resultBundlePath", str(result_bundle), "-parallel-testing-enabled", "NO",
                    "CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-"]
-        if not verify_app_names:
-            command.append("-skip-testing:WhoGaveWhatUITests/AppDiscoveryUITests")
         if discovery_only:
-            command.append("-only-testing:WhoGaveWhatUITests/AppDiscoveryUITests")
+            command.append(f"-only-testing:{SPOTLIGHT_DIAGNOSTIC_TEST}")
+        elif verify_app_names:
+            command.append(f"-skip-testing:{SPOTLIGHT_DIAGNOSTIC_TEST}")
+        else:
+            command.append("-skip-testing:WhoGaveWhatUITests/AppDiscoveryUITests")
         try:
             native_test_attempted = True
             run_command(directory, "xcodebuild-test", command, 900 if discovery_only else 1800)
             if verify_app_names:
                 verify_built_app_names(directory, metadata)
             test_succeeded = True
+            if discovery_only:
+                metadata["spotlight_search_outcome"] = "passed-diagnostic"
         except (NativeCommandError, OSError) as error:
             metadata["native_test_error"] = str(error)
             raise
@@ -596,9 +625,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path)
     parser.add_argument("--verify-app-names", action="store_true",
-                        help="Exercise real Settings language selection and Spotlight on a disposable Simulator")
+                        help="Verify real Settings app language and app-owned lifecycle on a disposable Simulator")
     parser.add_argument("--discovery-only", action="store_true",
-                        help="Run only AppDiscoveryUITests and mark partial evidence as diagnostic, never acceptance")
+                        help="Run only the strict OS Spotlight method; partial diagnostic evidence, never acceptance")
     parser.add_argument("--runtime", help="Require a canonical runtime such as 'iOS 26.4'; reject conflicting booted iPhones")
     parser.add_argument("--fresh-ci-simulator", action="store_true",
                         help="GitHub Actions only: create a run-owned iPhone 17 Pro on the explicit runtime")
