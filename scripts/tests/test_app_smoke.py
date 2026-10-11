@@ -762,7 +762,7 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
                 def native(_directory, label, command, timeout):
                     if label == 'bundle-info':
-                        payload = {'NSUserActivityTypes': []}
+                        payload = {'NSUserActivityTypes': [] if failure == 'activity' else ['com.apple.corespotlightitem']}
                     elif label.startswith('bundle-spotlight-name-'):
                         payload = {'app-discovery.display-name': 'Wrong name' if failure == 'spotlight-name' else 'Who Gave · кто че'}
                     else:
@@ -771,8 +771,14 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                         if label == 'bundle-names-ru' and failure in ('CFBundleName', 'CFBundleDisplayName'):
                             payload[failure] = 'Wrong name'
                     return subprocess.CompletedProcess(command, 0, plistlib.dumps(payload).decode(), '')
+                expected_error = {
+                    'CFBundleName': 'Built ru app names do not match',
+                    'CFBundleDisplayName': 'Built ru app names do not match',
+                    'activity': 'Built app does not declare its Spotlight activity type',
+                    'spotlight-name': 'Built en Spotlight display name does not preserve both public names',
+                }[failure]
                 metadata = {}
-                with patch.object(smoke, 'run_command', side_effect=native), self.assertRaises(ValueError):
+                with patch.object(smoke, 'run_command', side_effect=native), self.assertRaisesRegex(ValueError, expected_error):
                     smoke.verify_built_app_names(Path(temporary), metadata)
                 self.assertNotIn('bundle_names', metadata)
 

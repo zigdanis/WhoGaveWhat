@@ -64,7 +64,7 @@ scripts/pr-evidence.sh PR_NUMBER
 
 The helper waits for the latest scheduled native PR `Tests` run, downloads only its current-attempt `ui-*` artifacts and verifies the PR head SHA, run ID and attempt before and after download. It prints a retained temporary directory. Failed runs remain diagnostic material and cannot be published as acceptance evidence.
 
-If Danis authorizes an additional full attempt, rerun the **whole** `Tests` workflow for an unchanged head, or apply `ci-ready` again after the reviewed head changes. Retrieve, inspect and publish that attempt's new screenshots and video. A push alone does not schedule native acceptance; stale media and partial-job reruns cannot pass the current-head gate.
+If Danis authorizes an additional full attempt, rerun the **whole** `Tests` workflow for an unchanged head, or remove the existing `ci-ready` label and reapply it after the new head has completed review. Retrieve, inspect and publish that attempt's new screenshots and video. A push alone does not schedule native acceptance; stale media and partial-job reruns cannot pass the current-head gate.
 
 Open the artifact's `index.html`, inspect every selected PNG, and watch `journeys.mp4`. On Linux, extract frames throughout the recording to inspect the transitions:
 
