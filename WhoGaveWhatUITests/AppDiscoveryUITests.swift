@@ -83,6 +83,7 @@ final class AppDiscoveryUITests: XCTestCase {
         try showHomeAppIcon()
         attach("home-screen-russian-app")
         app.activate()
+        try waitForSpotlightAppCatalog()
 
         let peopleTab = app.tabBars.buttons["Люди"]
         XCTAssertTrue(peopleTab.waitForExistence(timeout: timeout))
@@ -263,6 +264,77 @@ final class AppDiscoveryUITests: XCTestCase {
             home.swipeLeft()
         }
         throw DiscoveryFailure.missingHomeIcon(springboard.debugDescription)
+    }
+
+    private func waitForSpotlightAppCatalog() throws {
+        let checkpoint = "spotlight-catalog-readiness"
+        let startedAt = Date()
+        let deadline = startedAt.addingTimeInterval(180)
+        var outcome = "failure"
+        attach("\(checkpoint)-before")
+        defer {
+            let observation = XCTAttachment(
+                string: "outcome=\(outcome)\nstartedAt=\(startedAt.timeIntervalSince1970)\nelapsed=\(Date().timeIntervalSince(startedAt))"
+            )
+            observation.name = "\(checkpoint)-outcome"
+            observation.lifetime = .keepAlways
+            add(observation)
+            attach("\(checkpoint)-end")
+            attachSpotlightHierarchy("\(checkpoint)-end")
+        }
+        do {
+            spotlightQuery = "Calendar"
+            let home = try regularHomeScreen()
+            home.swipeDown()
+            guard spotlight.wait(for: .runningForeground, timeout: min(timeout, max(0, deadline.timeIntervalSinceNow))) else {
+                throw DiscoveryFailure.spotlightNotForeground
+            }
+            let search = spotlight.textFields["SpotlightSearchField"].firstMatch
+            guard search.waitForExistence(timeout: min(timeout, max(0, deadline.timeIntervalSinceNow))), search.isHittable else {
+                throw DiscoveryFailure.missingSpotlightSearchField("Calendar")
+            }
+            attach("\(checkpoint)-start")
+            attachSpotlightHierarchy("\(checkpoint)-start", typedValue: search.value as? String)
+            try clearSpotlightQuery(search, waitDeadline: deadline)
+            try selectSpotlightKeyboard(for: "Calendar", checkpoint: checkpoint, waitDeadline: deadline)
+            search.typeText("Calendar")
+            attachSpotlightHierarchy("\(checkpoint)-typed-query", typedValue: search.value as? String)
+            let calendar = spotlight.cells.matching(
+                NSPredicate(format: "identifier CONTAINS 'GridCell' AND label == 'Calendar'")
+            ).firstMatch
+            while true {
+                guard Date() < deadline else { throw DiscoveryFailure.catalogReadinessDeadlineExpired }
+                guard spotlight.state == .runningForeground, search.exists, search.isHittable,
+                    search.debugDescription.contains("Keyboard Focused")
+                else {
+                    throw DiscoveryFailure.spotlightSearchNotFocused("Calendar")
+                }
+                guard search.value as? String == "Calendar" else {
+                    throw DiscoveryFailure.mismatchedDiagnosticQuery("Calendar", String(describing: search.value))
+                }
+                if calendar.exists, calendar.isHittable, calendar.icons["Calendar"].firstMatch.exists,
+                    let section = calendar.identifier.components(separatedBy: ",").first(where: { $0.hasPrefix("Section:") }),
+                    spotlight.otherElements["Identifier:SectionHeader,\(section),Title:Top Hit"].firstMatch.exists
+                {
+                    guard Date() < deadline else { throw DiscoveryFailure.catalogReadinessDeadlineExpired }
+                    break
+                }
+                RunLoop.current.run(until: min(deadline, Date().addingTimeInterval(0.5)))
+            }
+            // This observes the built-in catalog only; it never opens Calendar or an app launcher.
+            attach("\(checkpoint)-ready")
+            attachSpotlightHierarchy("\(checkpoint)-ready", typedValue: search.value as? String)
+            try clearSpotlightQuery(search, waitDeadline: deadline)
+            XCUIDevice.shared.press(.home)
+            app.activate()
+            guard app.wait(for: .runningForeground, timeout: timeout) else {
+                throw DiscoveryFailure.catalogReadinessAppNotRestored
+            }
+            outcome = "ready"
+        } catch {
+            outcome = "failure: \(error)"
+            throw DiscoveryFailure.catalogReadinessFailed(String(describing: error))
+        }
     }
 
     private func openSpotlightLauncher(query: String, checkpoint: String) throws {
@@ -683,6 +755,9 @@ final class AppDiscoveryUITests: XCTestCase {
         case mismatchedDiagnosticQuery(String, String)
         case diagnosticWaitBudgetExpired
         case diagnosticPriorResultNotCleared
+        case catalogReadinessDeadlineExpired
+        case catalogReadinessAppNotRestored
+        case catalogReadinessFailed(String)
         case missingSpotlightResult(String, String)
     }
 }
