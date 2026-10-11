@@ -272,6 +272,108 @@ class FreshCISimulatorTests(unittest.TestCase):
                     self.assertLess(events.index(before), events.index(after))
                 self.assertEqual(metadata_in_flight['simulator_fixture'], fixture)
 
+    def test_checkpoint_export_failure_keeps_native_error_and_owned_teardown(self):
+        original_copy = smoke.shutil.copy2
+        for export_failure in ('malformed-manifest', 'copy-error'):
+            for native_failure in (False, True):
+                with self.subTest(export_failure=export_failure, native_failure=native_failure), \
+                        tempfile.TemporaryDirectory() as temporary:
+                    directory = Path(temporary)
+                    events = []
+                    created_name = None
+                    def native(_directory, label, command, _timeout):
+                        nonlocal created_name
+                        events.append(label)
+                        output = signing_fixture(label)
+                        if label == 'simulator-list':
+                            output = json.dumps(self.source_payload())
+                        elif label == 'simulator-create':
+                            created_name = command[3]
+                            output = self.created_id
+                        elif label in ('simulator-created-list', 'simulator-created-state'):
+                            output = json.dumps({'devices': {self.runtime_id: [dict(
+                                name=created_name, udid=self.created_id, state='Shutdown', isAvailable=True,
+                                deviceTypeIdentifier=self.device_type)]}})
+                        elif label == 'xcodebuild-test':
+                            (directory / 'Acceptance.xcresult').mkdir()
+                            (directory / 'DerivedData').mkdir()
+                            if native_failure:
+                                raise smoke.NativeCommandError('original native assertion')
+                        return subprocess.CompletedProcess(command, 0, output, '')
+                    def export(_result, attachments, _directory):
+                        events.append('export-attachments')
+                        attachments.mkdir()
+                        manifest = attachments / 'manifest.json'
+                        if export_failure == 'malformed-manifest':
+                            manifest.write_text('{broken')
+                        else:
+                            (attachments / 'source.png').write_bytes(b'png')
+                            manifest.write_text(json.dumps([{'attachments': [{
+                                'exportedFileName': 'source.png', 'suggestedHumanReadableName': 'home-start_1.png'}]}]))
+                    def stop(_directory, _recording):
+                        (directory / 'journeys.mp4').write_bytes(b'mp4')
+                    with patch.dict(os.environ, {'GITHUB_ACTIONS': 'true'}), \
+                            patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
+                            patch.object(smoke, 'run_command', side_effect=native), \
+                            patch.object(smoke, 'prepare_disposable_languages'), \
+                            patch.object(smoke, 'verify_built_app_names'), \
+                            patch.object(smoke, 'start_recording', return_value=(Mock(), Mock())), \
+                            patch.object(smoke, 'stop_recording', side_effect=stop), \
+                            patch.object(smoke, '_export_xcresult_attachments', side_effect=export), \
+                            patch.object(smoke.shutil, 'copy2', side_effect=OSError('screenshot copy failed')
+                                         if export_failure == 'copy-error' else original_copy):
+                        expected = 'original native assertion' if native_failure else 'Native acceptance evidence export is incomplete'
+                        with self.assertRaisesRegex(ValueError, expected):
+                            smoke.run(directory, verify_app_names=True, runtime='iOS 26.4', fresh_ci_simulator=True)
+                    metadata = json.loads((directory / 'metadata.json').read_text())
+                    self.assertEqual('failure', metadata['export_outcome'])
+                    self.assertEqual('success', metadata['simulator_fixture']['cleanup_outcome'])
+                    self.assertIn('export_error', metadata)
+                    if native_failure:
+                        self.assertEqual('original native assertion', metadata['native_test_error'])
+                    self.assertFalse((directory / 'DerivedData').exists())
+                    self.assertLess(events.index('export-attachments'), events.index('simulator-created-delete'))
+                    self.assertLess(events.index('spotlight-pipeline-log'), events.index('simulator-created-delete'))
+
+    def test_teardown_attempts_metadata_after_unexpected_cleanup_error_and_removes_derived_data_after_write_error(self):
+        original_write = Path.write_text
+        for failure in ('cleanup', 'metadata-write'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                writes = []
+                def native(_directory, label, command, _timeout):
+                    output = signing_fixture(label)
+                    if label == 'simulator-list':
+                        output = json.dumps(self.source_payload())
+                    if label == 'xcodebuild-test':
+                        (directory / 'DerivedData').mkdir()
+                        (directory / 'attachments').mkdir()
+                    return subprocess.CompletedProcess(command, 0, output, '')
+                def write(path, contents, *args, **kwargs):
+                    writes.append(path)
+                    if failure == 'metadata-write':
+                        raise OSError('metadata disk full')
+                    return original_write(path, contents, *args, **kwargs)
+                def stop(_directory, _recording):
+                    (directory / 'journeys.mp4').write_bytes(b'mp4')
+                with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
+                        patch.object(smoke, 'run_command', side_effect=native), \
+                        patch.object(smoke, 'start_recording', return_value=(Mock(), Mock())), \
+                        patch.object(smoke, 'stop_recording', side_effect=stop), \
+                        patch.object(smoke, '_export_named_checkpoints', return_value=[]), \
+                        patch.object(smoke, 'cleanup_ci_simulator', side_effect=RuntimeError('unexpected cleanup failure')
+                                     if failure == 'cleanup' else None) as cleanup, \
+                        patch.object(Path, 'write_text', autospec=True, side_effect=write):
+                    with self.assertRaisesRegex(RuntimeError if failure == 'cleanup' else OSError,
+                                                'unexpected cleanup failure' if failure == 'cleanup' else 'metadata disk full'):
+                        smoke.run(directory, runtime='iOS 26.4')
+                cleanup.assert_called_once()
+                self.assertEqual([directory / 'metadata.json'], writes)
+                self.assertFalse((directory / 'DerivedData').exists())
+                if failure == 'cleanup':
+                    metadata = json.loads((directory / 'metadata.json').read_text())
+                    self.assertEqual('failure', metadata['export_outcome'])
+
 
 class NativeCommandTests(unittest.TestCase):
     def test_command_logs_output_and_rejects_failure_with_process_diagnostics(self):

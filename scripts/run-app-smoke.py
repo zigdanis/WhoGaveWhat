@@ -530,51 +530,64 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
         metadata.setdefault("native_test_error", str(error))
         raise
     finally:
-        if recording:
+        try:
+            if recording:
+                try:
+                    stop_recording(directory, recording)
+                except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
+                    metadata["recording_error"] = str(error)
+            if native_test_attempted:
+                try:
+                    verify_built_simulator_identity(directory, metadata)
+                except (ValueError, OSError, subprocess.SubprocessError, plistlib.InvalidFileException) as error:
+                    metadata["simulator_identity_error"] = str(error)
+                    test_succeeded = False
+            if verify_app_names and simulator:
+                try:
+                    run_command(directory, "app-discovery-index-log", [
+                        "xcrun", "simctl", "spawn", simulator["udid"], "log", "show", "--last", "20m",
+                        "--info", "--style", "compact", "--predicate",
+                        'subsystem == "pro.ziganshin.WhoGaveWhat" AND category == "AppDiscovery"'], 30)
+                except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
+                    # This diagnostic must never replace the native test failure or its evidence.
+                    metadata["app_discovery_diagnostic_error"] = str(error)
+                try:
+                    run_command(directory, "spotlight-pipeline-log", [
+                        "xcrun", "simctl", "spawn", simulator["udid"], "log", "show", "--last", "20m",
+                        "--info", "--style", "compact", "--predicate",
+                        '(process == "corespotlightd" OR process == "Spotlight" OR subsystem CONTAINS[c] "spotlight") '
+                        'AND (eventMessage CONTAINS[c] "pro.ziganshin.WhoGaveWhat" OR messageType == 16 OR messageType == 17)'], 30)
+                except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
+                    metadata["spotlight_pipeline_diagnostic_error"] = str(error)
+            if result_bundle.is_dir():
+                try:
+                    _export_xcresult_attachments(result_bundle, directory / "attachments", directory)
+                except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
+                    metadata["export_error"] = str(error)
             try:
-                stop_recording(directory, recording)
-            except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
-                metadata["recording_error"] = str(error)
-        if native_test_attempted:
-            try:
-                verify_built_simulator_identity(directory, metadata)
-            except (ValueError, OSError, subprocess.SubprocessError, plistlib.InvalidFileException) as error:
-                metadata["simulator_identity_error"] = str(error)
-                test_succeeded = False
-        if verify_app_names and simulator:
-            try:
-                run_command(directory, "app-discovery-index-log", [
-                    "xcrun", "simctl", "spawn", simulator["udid"], "log", "show", "--last", "20m",
-                    "--info", "--style", "compact", "--predicate",
-                    'subsystem == "pro.ziganshin.WhoGaveWhat" AND category == "AppDiscovery"'], 30)
-            except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
-                # This diagnostic must never replace the native test failure or its evidence.
-                metadata["app_discovery_diagnostic_error"] = str(error)
-            try:
-                run_command(directory, "spotlight-pipeline-log", [
-                    "xcrun", "simctl", "spawn", simulator["udid"], "log", "show", "--last", "20m",
-                    "--info", "--style", "compact", "--predicate",
-                    '(process == "corespotlightd" OR process == "Spotlight" OR subsystem CONTAINS[c] "spotlight") '
-                    'AND (eventMessage CONTAINS[c] "pro.ziganshin.WhoGaveWhat" OR messageType == 16 OR messageType == 17)'], 30)
-            except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
-                metadata["spotlight_pipeline_diagnostic_error"] = str(error)
-        if result_bundle.is_dir():
-            try:
-                _export_xcresult_attachments(result_bundle, directory / "attachments", directory)
-            except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
+                missing = _export_named_checkpoints(directory, metadata) if (directory / "attachments").exists() else metadata["planned_checkpoint_names"]
+            except (ValueError, OSError) as error:
                 metadata["export_error"] = str(error)
-        missing = _export_named_checkpoints(directory, metadata) if (directory / "attachments").exists() else metadata["planned_checkpoint_names"]
-        if missing:
-            metadata["missing_checkpoints"] = missing
-        if test_succeeded:
-            metadata["journey_outcome"] = "success"
-        video = directory / "journeys.mp4"
-        if (test_succeeded and not missing and not metadata.get("export_error") and not metadata.get("recording_error")
-                and video.is_file() and video.stat().st_size):
-            metadata["export_outcome"] = "success"
-        cleanup_ci_simulator(directory, metadata)
-        (directory / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
-        shutil.rmtree(directory / "DerivedData", ignore_errors=True)
+                missing = metadata["planned_checkpoint_names"]
+            if missing:
+                metadata["missing_checkpoints"] = missing
+            if test_succeeded:
+                metadata["journey_outcome"] = "success"
+            video = directory / "journeys.mp4"
+            if (test_succeeded and not missing and not metadata.get("export_error") and not metadata.get("recording_error")
+                    and video.is_file() and video.stat().st_size):
+                metadata["export_outcome"] = "success"
+        finally:
+            try:
+                cleanup_ci_simulator(directory, metadata)
+            except Exception:
+                metadata["export_outcome"] = "failure"
+                raise
+            finally:
+                try:
+                    (directory / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
+                finally:
+                    shutil.rmtree(directory / "DerivedData", ignore_errors=True)
     if metadata["export_outcome"] != "success":
         raise ValueError(metadata.get("simulator_identity_error") or "Native acceptance evidence export is incomplete")
 
