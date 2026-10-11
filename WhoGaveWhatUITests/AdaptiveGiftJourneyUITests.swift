@@ -3,6 +3,7 @@ import XCTest
 final class AdaptiveGiftJourneyUITests: XCTestCase {
     private var app: XCUIApplication!
     private let timeout: TimeInterval = 12
+    private let photoLoadTimeout: TimeInterval = 60
     private var giftName = "CI gift \(UUID().uuidString.prefix(8))"
     private var secondGiftName = "CI second gift \(UUID().uuidString.prefix(8))"
     private var giverName = "CI giver \(UUID().uuidString.prefix(8))"
@@ -489,17 +490,69 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         }
         XCTAssertTrue(photoImages.firstMatch.exists)
         attach("person-photo-picker")
-        let firstPhoto = photoImages.firstMatch
-        let windowFrame = app.windows.firstMatch.frame
-        // Photo tiles are visible in CI but reported as non-hittable by XCTest.
-        app.coordinate(
-            withNormalizedOffset: CGVector(
-                dx: firstPhoto.frame.midX / windowFrame.width,
-                dy: firstPhoto.frame.midY / windowFrame.height
-            )
-        ).tap()
         let cropConfirm = app.buttons["crop.use"]
-        XCTAssertTrue(cropConfirm.waitForExistence(timeout: timeout))
+        for attempt in 1...2 {
+            guard pickerNavigationBar.exists, !cropConfirm.exists else { break }
+            if attempt == 2, photoControl.exists,
+                !photoControl.isEnabled || photoControl.images["hourglass"].exists
+            {
+                break
+            }
+            let frameDeadline = Date().addingTimeInterval(5)
+            var previousFrame: CGRect?
+            var settledPhoto: XCUIElement?
+            while Date() < frameDeadline {
+                guard pickerNavigationBar.exists, !cropConfirm.exists else { break }
+                let candidate = photoImages.firstMatch
+                if candidate.exists {
+                    let frame = candidate.frame
+                    let windowFrame = app.windows.firstMatch.frame
+                    if frame.width > 0, frame.height > 0, windowFrame.contains(frame), frame == previousFrame {
+                        settledPhoto = candidate
+                        break
+                    }
+                    previousFrame = frame
+                } else {
+                    previousFrame = nil
+                }
+                RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+            }
+            guard pickerNavigationBar.exists, !cropConfirm.exists else { break }
+            guard let photo = settledPhoto else {
+                XCTFail("The visible photo tile did not settle")
+                return
+            }
+            let frame = photo.frame
+            XCTAssertEqual(frame, previousFrame)
+            XCTAssertTrue(app.windows.firstMatch.frame.contains(frame))
+            let target = XCTAttachment(
+                string: "attempt=\(attempt)\nidentifier=\(photo.identifier)\nlabel=\(photo.label)\nframe=\(frame)\nhittable=\(photo.isHittable)"
+            )
+            target.name = "person-photo-selection-\(attempt)-target"
+            target.lifetime = .keepAlways
+            add(target)
+            attach("person-photo-selection-\(attempt)-before")
+            guard pickerNavigationBar.exists, !cropConfirm.exists else { break }
+            if attempt == 2, photoControl.exists,
+                !photoControl.isEnabled || photoControl.images["hourglass"].exists
+            {
+                break
+            }
+            XCTAssertTrue(photo.exists)
+            XCTAssertEqual(photo.frame, frame)
+            XCTAssertTrue(app.windows.firstMatch.frame.contains(photo.frame))
+            // Visible Photos tiles may be reported as non-hittable; target the tile's own center.
+            photo.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            let responseDeadline = Date().addingTimeInterval(5)
+            while pickerNavigationBar.exists, !cropConfirm.exists, Date() < responseDeadline {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+            }
+            attach("person-photo-selection-\(attempt)-after")
+            attachHierarchy("person-photo-selection-\(attempt)-after", selectedValue: nil)
+        }
+        waitForDisappearance(pickerNavigationBar)
+        // Loading the selected asset can outlast a normal sheet transition on a cold Simulator.
+        XCTAssertTrue(cropConfirm.waitForExistence(timeout: photoLoadTimeout))
         attach("person-photo-crop")
         app.buttons["crop.cancel"].tap()
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
@@ -519,7 +572,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 dy: secondPhoto.frame.midY / secondWindowFrame.height
             )
         ).tap()
-        XCTAssertTrue(cropConfirm.waitForExistence(timeout: timeout))
+        XCTAssertTrue(cropConfirm.waitForExistence(timeout: photoLoadTimeout))
         let cropWindow = app.windows.firstMatch
         cropWindow.pinch(withScale: 1.35, velocity: 1)
         let cropStart = cropWindow.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55))
@@ -548,7 +601,21 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(hero.waitForExistence(timeout: timeout))
         attach("person-detail-selected-photo")
 
-        app.buttons["person-detail.edit"].tap()
+        // iOS 26 exposes a toolbar wrapper and nested button with the same identifier.
+        // Resolve the current native wrapper and tap its observed center once.
+        let editControl = detailNavigationBar.otherElements["person-detail.edit"].firstMatch
+        XCTAssertTrue(editControl.waitForExistence(timeout: timeout))
+        XCTAssertTrue(editControl.isHittable)
+        let editFrame = editControl.frame
+        XCTAssertFalse(editFrame.isEmpty)
+        XCTAssertTrue(detailNavigationBar.frame.contains(editFrame))
+        let target = XCTAttachment(
+            string: "editFrame=\(editFrame)\ncenter=(\(editFrame.midX), \(editFrame.midY))\nbarFrame=\(detailNavigationBar.frame)"
+        )
+        target.name = "person-editor-reopen-target"
+        target.lifetime = .keepAlways
+        add(target)
+        editControl.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
         XCTAssertEqual(editorTitle.label, giverName)
         XCTAssertFalse(app.keyboards.firstMatch.exists)
@@ -568,7 +635,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 dy: replacementPhoto.frame.midY / replacementWindow.height
             )
         ).tap()
-        XCTAssertTrue(cropConfirm.waitForExistence(timeout: timeout))
+        XCTAssertTrue(cropConfirm.waitForExistence(timeout: photoLoadTimeout))
         attach("person-photo-replacement-crop")
         app.buttons["crop.cancel"].tap()
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))

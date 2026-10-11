@@ -1,6 +1,8 @@
 import importlib.util
 import json
 import os
+import plistlib
+import re
 from pathlib import Path
 import signal
 import subprocess
@@ -13,6 +15,100 @@ from unittest.mock import Mock, patch
 spec = importlib.util.spec_from_file_location('app_smoke', Path(__file__).parents[1] / 'run-app-smoke.py')
 smoke = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(smoke)
+
+
+def signing_fixture(label):
+    if label == 'simulator-signing-info':
+        return plistlib.dumps({'CFBundleIdentifier': 'org.example.launcher'}).decode()
+    if label == 'simulator-signing-display':
+        return 'Identifier=org.example.launcher\nSignature=adhoc\n'
+    return ''
+
+
+class SimulatorIdentityTests(unittest.TestCase):
+    def test_real_bundle_identifier_and_signature_from_either_output_stream_are_verified(self):
+        for details_in_stderr in (False, True):
+            with self.subTest(stderr=details_in_stderr), tempfile.TemporaryDirectory() as temporary:
+                def native(_directory, label, command, timeout):
+                    self.assertEqual(30, timeout)
+                    output = signing_fixture(label)
+                    if label == 'simulator-signing-display' and details_in_stderr:
+                        return subprocess.CompletedProcess(command, 0, '', output)
+                    return subprocess.CompletedProcess(command, 0, output, '')
+                metadata = {}
+                with patch.object(smoke, 'run_command', side_effect=native):
+                    smoke.verify_built_simulator_identity(Path(temporary), metadata)
+                self.assertEqual(dict(verified=True, bundle_identifier='org.example.launcher',
+                                      signing_identifier='org.example.launcher', signature='adhoc'),
+                                 metadata['simulator_signing'])
+
+    def test_missing_mismatched_nonadhoc_or_invalid_signature_cannot_be_verified(self):
+        for failure in ('missing-bundle', 'missing-identifier', 'wrong-identifier', 'missing-signature',
+                        'wrong-signature', 'verification-failed', 'unsigned'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                def native(_directory, label, command, _timeout):
+                    output = signing_fixture(label)
+                    if label == 'simulator-signing-info' and failure == 'missing-bundle':
+                        output = plistlib.dumps({}).decode()
+                    if label == 'simulator-signing-display':
+                        if failure == 'unsigned':
+                            raise smoke.NativeCommandError('code object is not signed at all')
+                        if failure == 'missing-identifier':
+                            output = 'Signature=adhoc\n'
+                        if failure == 'wrong-identifier':
+                            output = 'Identifier=OtherExecutable\nSignature=adhoc\n'
+                        if failure == 'missing-signature':
+                            output = 'Identifier=org.example.launcher\n'
+                        if failure == 'wrong-signature':
+                            output = 'Identifier=org.example.launcher\nSignature=unexpected\n'
+                    if label == 'simulator-signing-verify' and failure == 'verification-failed':
+                        raise smoke.NativeCommandError('signature verification failed')
+                    return subprocess.CompletedProcess(command, 0, '', output) if label == 'simulator-signing-display' \
+                        else subprocess.CompletedProcess(command, 0, output, '')
+                metadata = {}
+                with patch.object(smoke, 'run_command', side_effect=native), self.assertRaises(ValueError):
+                    smoke.verify_built_simulator_identity(Path(temporary), metadata)
+                self.assertFalse(metadata['simulator_signing']['verified'])
+
+    def test_identity_failure_blocks_success_and_preserves_original_native_failure(self):
+        for native_failure in (False, True):
+            with self.subTest(native_failure=native_failure), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                def native(_directory, label, command, _timeout):
+                    if label == 'simulator-list':
+                        output = json.dumps({'devices': {'runtime': [dict(
+                            name='iPhone 17 Pro', udid='sim-id', state='Booted', isAvailable=True)]}})
+                    else:
+                        output = signing_fixture(label)
+                    if label == 'xcodebuild-test':
+                        (directory / 'Acceptance.xcresult').mkdir()
+                        self.assertIn('CODE_SIGNING_ALLOWED=YES', command)
+                        self.assertIn('CODE_SIGN_IDENTITY=-', command)
+                        if native_failure:
+                            raise smoke.NativeCommandError('original native assertion')
+                    if label == 'simulator-signing-verify':
+                        raise smoke.NativeCommandError('invalid built app signature')
+                    return subprocess.CompletedProcess(command, 0, output, '')
+                def stop(_directory, _recording):
+                    (directory / 'journeys.mp4').write_bytes(b'mp4')
+                with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
+                        patch.object(smoke, 'run_command', side_effect=native), \
+                        patch.object(smoke, 'start_recording', return_value=(Mock(), Mock())), \
+                        patch.object(smoke, 'stop_recording', side_effect=stop), \
+                        patch.object(smoke, '_export_xcresult_attachments',
+                                     side_effect=lambda _result, attachments, _directory: attachments.mkdir()), \
+                        patch.object(smoke, '_export_named_checkpoints', return_value=[]):
+                    expected = 'original native assertion' if native_failure else 'invalid built app signature'
+                    with self.assertRaisesRegex(ValueError, expected):
+                        smoke.run(directory)
+                metadata = json.loads((directory / 'metadata.json').read_text())
+                self.assertEqual('invalid built app signature', metadata['simulator_identity_error'])
+                self.assertFalse(metadata['simulator_signing']['verified'])
+                self.assertEqual('failure', metadata['journey_outcome'])
+                self.assertEqual('failure', metadata['export_outcome'])
+                if native_failure:
+                    self.assertEqual('original native assertion', metadata['native_test_error'])
+                self.assertFalse((directory / 'DerivedData').exists())
 
 
 class NativeCommandTests(unittest.TestCase):
@@ -105,6 +201,68 @@ class NativeCommandTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'No available'):
             smoke.select_simulator({'devices': {}})
 
+    def test_explicit_runtime_selects_existing_exact_17_pro_instead_of_newer_runtime(self):
+        payload = {'devices': {
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-4': [
+                dict(name='iPhone 17 Pro', udid='requested', state='Shutdown', isAvailable=True)],
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
+                dict(name='iPhone 17 Pro', udid='newer', state='Shutdown', isAvailable=True)],
+        }}
+        self.assertEqual('newer', smoke.select_simulator(payload)['udid'])
+        selected = smoke.select_simulator(payload, requested_runtime='iOS 26.4')
+        self.assertEqual(('requested', 'iOS 26.4'), (selected['udid'], selected['runtime']))
+
+    def test_explicit_runtime_reuses_matching_booted_phone_and_rejects_conflict(self):
+        payload = {'devices': {
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-4': [
+                dict(name='iPhone 16', udid='booted', state='Booted', isAvailable=True),
+                dict(name='iPhone 17 Pro', udid='shutdown', state='Shutdown', isAvailable=True)],
+            'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
+                dict(name='iPhone 17 Pro', udid='requested-shutdown', state='Shutdown', isAvailable=True)],
+        }}
+        self.assertEqual('booted', smoke.select_simulator(payload, requested_runtime='iOS 26.4')['udid'])
+        with self.assertRaisesRegex(ValueError, 'Booted iPhone booted uses iOS 26.4, not requested iOS 26.5'):
+            smoke.select_simulator(payload, requested_runtime='iOS 26.5')
+
+    def test_explicit_runtime_requires_available_exact_17_pro_without_fallback(self):
+        for requested_devices in ([],
+                                  [dict(name='iPhone 17 Pro', udid='unavailable', state='Shutdown', isAvailable=False)],
+                                  [dict(name='iPhone 17 Pro Max', udid='wrong-model', state='Shutdown', isAvailable=True)]):
+            payload = {'devices': {
+                'com.apple.CoreSimulator.SimRuntime.iOS-26-4': requested_devices,
+                'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
+                    dict(name='iPhone 17 Pro', udid='newer', state='Shutdown', isAvailable=True)],
+            }}
+            with self.subTest(devices=requested_devices), self.assertRaisesRegex(ValueError, 'requested runtime iOS 26.4'):
+                smoke.select_simulator(payload, requested_runtime='iOS 26.4')
+        with self.assertRaisesRegex(ValueError, 'requested runtime iOS-26-4'):
+            smoke.select_simulator(payload, requested_runtime='iOS-26-4')
+
+    def test_runtime_selection_failure_records_request_before_any_simulator_mutation(self):
+        for payload in ({'devices': {}}, {'devices': {
+                'com.apple.CoreSimulator.SimRuntime.iOS-26-5': [
+                    dict(name='iPhone 17 Pro', udid='booted', state='Booted', isAvailable=True)],
+                'com.apple.CoreSimulator.SimRuntime.iOS-26-4': [
+                    dict(name='iPhone 17 Pro', udid='requested-shutdown', state='Shutdown', isAvailable=True)]}}):
+            with self.subTest(payload=payload), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
+                        patch.object(smoke, 'run_command', return_value=subprocess.CompletedProcess(
+                            [], 0, json.dumps(payload), '')) as native, \
+                        patch.object(smoke, 'prepare_disposable_languages') as prepare, \
+                        patch.object(smoke, 'start_recording') as recording:
+                    with self.assertRaises(ValueError):
+                        smoke.run(directory, verify_app_names=True, runtime='iOS 26.4')
+                self.assertEqual(['simulator-list'], [call.args[1] for call in native.call_args_list])
+                prepare.assert_not_called()
+                recording.assert_not_called()
+                metadata = json.loads((directory / 'metadata.json').read_text())
+                self.assertEqual('iOS 26.4', metadata['requested_runtime'])
+                self.assertNotIn('simulator_id', metadata)
+                self.assertNotIn('runtime', metadata)
+                self.assertEqual('failure', metadata['journey_outcome'])
+                self.assertEqual('failure', metadata['export_outcome'])
+
     def test_video_recording_is_stopped_with_sigint_and_log_is_closed(self):
         with tempfile.TemporaryDirectory() as temporary:
             process = Mock()
@@ -156,7 +314,7 @@ class EvidenceExportTests(unittest.TestCase):
                     generations.append(test_number)
                     if test_number == 2:
                         raise smoke.NativeCommandError('second native test failed')
-                return subprocess.CompletedProcess(command, 0, '', '')
+                return subprocess.CompletedProcess(command, 0, signing_fixture(label), '')
 
             def make_recording(_directory, _simulator_id, _video_path):
                 recorder = Mock()
@@ -196,6 +354,10 @@ class EvidenceExportTests(unittest.TestCase):
                 self.assertTrue((directory / 'journeys.mp4').is_file())
                 self.assertTrue((directory / 'attachments/people.png').is_file())
                 (directory / 'index.html').write_text('old successful report')
+                for label in ('app-discovery-index-log', 'spotlight-pipeline-log',
+                              'simulator-signing-info', 'simulator-signing-display', 'simulator-signing-verify'):
+                    for suffix in ('.log', '-processes.log'):
+                        (directory / f'{label}{suffix}').write_text('old-head diagnostics')
                 with self.assertRaisesRegex(smoke.NativeCommandError, 'second native test failed'):
                     smoke.run(directory)
 
@@ -210,6 +372,10 @@ class EvidenceExportTests(unittest.TestCase):
             )
             self.assertFalse((directory / 'journeys.mp4').exists())
             self.assertFalse((directory / 'index.html').exists())
+            for label in ('app-discovery-index-log', 'spotlight-pipeline-log',
+                          'simulator-signing-info', 'simulator-signing-display', 'simulator-signing-verify'):
+                for suffix in ('.log', '-processes.log'):
+                    self.assertFalse((directory / f'{label}{suffix}').exists())
             self.assertFalse((directory / 'attachments/people.png').exists())
             self.assertEqual(b'new', (directory / 'attachments/home-start.png').read_bytes())
             self.assertEqual('2', (result / 'generation').read_text())
@@ -304,6 +470,294 @@ class EvidenceExportTests(unittest.TestCase):
                     patch.object(smoke, '_diagnose_processes'):
                 with self.assertRaisesRegex(smoke.NativeCommandError, 'xcresult failed'):
                     smoke._export_xcresult_attachments(directory / 'a.xcresult', directory / 'attachments', directory)
+
+
+class AppDiscoveryAcceptanceTests(unittest.TestCase):
+    def test_built_localized_names_and_activity_declaration_are_checked(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            metadata = {}
+            def native(_directory, label, command, timeout):
+                if label == 'bundle-info':
+                    payload = {'NSUserActivityTypes': ['com.apple.corespotlightitem']}
+                else:
+                    name = 'Who Gave' if label == 'bundle-names-en' else 'кто че'
+                    payload = {'CFBundleDisplayName': name, 'CFBundleName': name}
+                self.assertEqual(30, timeout)
+                self.assertEqual(['plutil', '-convert', 'xml1', '-o', '-'], command[:5])
+                return subprocess.CompletedProcess(command, 0, plistlib.dumps(payload).decode(), '')
+            with patch.object(smoke, 'run_command', side_effect=native) as command:
+                smoke.verify_built_app_names(Path(temporary), metadata)
+            self.assertEqual({'en': 'Who Gave', 'ru': 'кто че'}, metadata['bundle_names'])
+            self.assertEqual(3, command.call_count)
+
+    def test_wrong_compiled_name_or_missing_activity_cannot_pass_acceptance(self):
+        for failure in ('CFBundleName', 'CFBundleDisplayName', 'activity'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                def native(_directory, label, command, timeout):
+                    if label == 'bundle-info':
+                        payload = {'NSUserActivityTypes': []}
+                    else:
+                        name = 'Who Gave' if label == 'bundle-names-en' else 'кто че'
+                        payload = {'CFBundleDisplayName': name, 'CFBundleName': name}
+                        if label == 'bundle-names-ru' and failure != 'activity':
+                            payload[failure] = 'Wrong name'
+                    return subprocess.CompletedProcess(command, 0, plistlib.dumps(payload).decode(), '')
+                metadata = {}
+                with patch.object(smoke, 'run_command', side_effect=native), self.assertRaises(ValueError):
+                    smoke.verify_built_app_names(Path(temporary), metadata)
+                self.assertNotIn('bundle_names', metadata)
+
+    def test_disposable_language_journey_is_opt_in_and_requires_all_feature_checkpoints(self):
+        for verify, discovery_only in ((False, False), (True, False), (True, True)):
+            with self.subTest(verify=verify, discovery_only=discovery_only), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                test_commands = []
+                native_labels = []
+                events = []
+                requested_runtime = 'iOS 26.4' if verify else None
+                def prepare(_directory, _simulator, _metadata):
+                    events.append('prepare-languages')
+                def native(_directory, label, command, timeout):
+                    native_labels.append(label)
+                    if label == 'simulator-list':
+                        selected_runtime = 'com.apple.CoreSimulator.SimRuntime.iOS-26-4' if verify else 'com.apple.CoreSimulator.SimRuntime.iOS-26-5'
+                        payload = {'devices': {selected_runtime: [
+                            dict(name='iPhone 17 Pro', udid='sim-id', state='Booted', isAvailable=True)]}}
+                        return subprocess.CompletedProcess(command, 0, json.dumps(payload), '')
+                    if label == 'xcodebuild-test':
+                        self.assertEqual(900 if discovery_only else 1800, timeout)
+                        test_commands.append(command)
+                        events.append('xcodebuild-test')
+                        raise smoke.NativeCommandError('native assertion failed')
+                    if label == 'app-discovery-index-log':
+                        self.assertEqual(['xcrun', 'simctl', 'spawn', 'sim-id', 'log', 'show'], command[:6])
+                        self.assertEqual(30, timeout)
+                        self.assertIn('20m', command)
+                        self.assertEqual('subsystem == "pro.ziganshin.WhoGaveWhat" AND category == "AppDiscovery"', command[-1])
+                        raise smoke.NativeCommandError('diagnostic log unavailable')
+                    if label == 'spotlight-pipeline-log':
+                        self.assertEqual(['xcrun', 'simctl', 'spawn', 'sim-id', 'log', 'show'], command[:6])
+                        self.assertEqual(30, timeout)
+                        self.assertIn('20m', command)
+                        self.assertIn('"pro.ziganshin.WhoGaveWhat"', command[-1])
+                        self.assertIn('process == "corespotlightd"', command[-1])
+                        raise smoke.NativeCommandError('pipeline log unavailable')
+                    return subprocess.CompletedProcess(command, 0, '', '')
+                with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
+                        patch.object(smoke, 'run_command', side_effect=native), \
+                        patch.object(smoke, 'prepare_disposable_languages', side_effect=prepare), \
+                        patch.object(smoke, 'start_recording', return_value=(Mock(), Mock())), \
+                        patch.object(smoke, 'stop_recording'):
+                    with self.assertRaisesRegex(smoke.NativeCommandError, 'native assertion failed'):
+                        smoke.run(directory, verify_app_names=verify, discovery_only=discovery_only, runtime=requested_runtime)
+                metadata = json.loads((directory / 'metadata.json').read_text())
+                self.assertEqual(requested_runtime, metadata['requested_runtime'])
+                self.assertEqual('iOS 26.4' if verify else 'iOS 26.5', metadata['runtime'])
+                self.assertEqual('sim-id', metadata['simulator_id'])
+                self.assertIn('platform=iOS Simulator,id=sim-id', test_commands[0])
+                self.assertEqual(['prepare-languages', 'xcodebuild-test'] if verify else ['xcodebuild-test'], events)
+                self.assertEqual(not verify, 'simulator-bootstatus' in native_labels)
+                self.assertNotIn('simulator-boot', native_labels)
+                self.assertEqual(verify, 'app-discovery-index-log' in native_labels)
+                self.assertEqual(verify, 'app_discovery_diagnostic_error' in metadata)
+                self.assertEqual(verify, 'spotlight-pipeline-log' in native_labels)
+                self.assertEqual(verify, 'spotlight_pipeline_diagnostic_error' in metadata)
+                self.assertIn('native assertion failed', metadata['native_test_error'])
+                self.assertEqual(discovery_only, '-only-testing:WhoGaveWhatUITests/AppDiscoveryUITests' in test_commands[0])
+                self.assertEqual('diagnostic' if discovery_only else 'feature-acceptance', metadata['evidence_kind'])
+                if discovery_only:
+                    self.assertEqual(list(smoke.APP_DISCOVERY_CHECKPOINT_NAMES), metadata['planned_checkpoint_names'])
+                    self.assertIn('partial suite; not acceptance', metadata['native_test'])
+                skipped = '-skip-testing:WhoGaveWhatUITests/AppDiscoveryUITests' in test_commands[0]
+                self.assertEqual(not verify, skipped)
+                for checkpoint in smoke.APP_DISCOVERY_CHECKPOINT_NAMES:
+                    self.assertEqual(verify, checkpoint in metadata['planned_checkpoint_names'])
+                    self.assertEqual(verify, checkpoint in metadata['missing_checkpoints'])
+                self.assertNotEqual('success', metadata['export_outcome'])
+
+    def test_discovery_only_requires_real_language_scenario_before_native_actions(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.object(smoke, 'run_command') as native:
+            with self.assertRaisesRegex(ValueError, 'require --verify-app-names'):
+                smoke.run(Path(temporary), discovery_only=True)
+            native.assert_not_called()
+
+    def test_successful_partial_diagnostic_exports_all_discovery_checkpoints_without_calendar(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            def native(_directory, label, command, _timeout):
+                if label == 'simulator-list':
+                    devices = {'devices': {'runtime': [dict(
+                        name='iPhone 17 Pro', udid='sim-id', state='Booted', isAvailable=True)]}}
+                    return subprocess.CompletedProcess(command, 0, json.dumps(devices), '')
+                if label == 'xcodebuild-test':
+                    (directory / 'Acceptance.xcresult').mkdir()
+                return subprocess.CompletedProcess(command, 0, signing_fixture(label), '')
+            def export(_result, attachments, _directory):
+                attachments.mkdir()
+                exported = []
+                for index, name in enumerate(smoke.APP_DISCOVERY_CHECKPOINT_NAMES):
+                    filename = f'{index}.png'
+                    (attachments / filename).write_bytes(b'png')
+                    exported.append({'exportedFileName': filename, 'suggestedHumanReadableName': f'{name}_1.png'})
+                (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
+            def stop(_directory, _recording):
+                (directory / 'journeys.mp4').write_bytes(b'mp4')
+            with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
+                    patch.object(smoke, 'run_command', side_effect=native), \
+                    patch.object(smoke, 'prepare_disposable_languages'), \
+                    patch.object(smoke, 'start_recording', return_value=(Mock(), Mock())), \
+                    patch.object(smoke, 'stop_recording', side_effect=stop), \
+                    patch.object(smoke, 'verify_built_app_names'), \
+                    patch.object(smoke, '_export_xcresult_attachments', side_effect=export):
+                smoke.run(directory, verify_app_names=True, discovery_only=True)
+            metadata = json.loads((directory / 'metadata.json').read_text())
+            self.assertEqual('diagnostic', metadata['evidence_kind'])
+            self.assertEqual('success', metadata['journey_outcome'])
+            self.assertEqual('success', metadata['export_outcome'])
+            self.assertNotIn('missing_checkpoints', metadata)
+            self.assertEqual(list(smoke.APP_DISCOVERY_CHECKPOINT_NAMES), [item['name'] for item in metadata['checkpoints']])
+            full_metadata = dict(metadata, evidence_kind='feature-acceptance', checkpoints=[])
+            self.assertEqual(['two calendar checkpoints with distinct week counts'],
+                             smoke._export_named_checkpoints(directory, full_metadata))
+
+    def test_manual_diagnostic_job_cannot_replace_required_full_suite(self):
+        workflow = (Path(__file__).parents[2] / '.github/workflows/tests.yml').read_text()
+        job_blocks = re.split(r'^  ([a-z-]+):\n', workflow.partition('\njobs:\n')[2], flags=re.MULTILINE)
+        jobs = dict(zip(job_blocks[1::2], job_blocks[2::2]))
+        for name in ('scripts', 'quality', 'test'):
+            self.assertNotRegex(jobs[name], re.compile(r'^    if:', re.MULTILINE))
+            self.assertNotIn('--discovery-only', jobs[name])
+        self.assertIn('name: Unit tests and app smoke', jobs['test'])
+        self.assertIn('run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names', jobs['test'])
+        diagnostic = jobs['spotlight-diagnostics']
+        self.assertIn("if: github.event_name == 'workflow_dispatch' && inputs.spotlight_diagnostics", diagnostic)
+        self.assertIn('name: Spotlight diagnostics (non-acceptance)', diagnostic)
+        self.assertIn('--verify-app-names --discovery-only', diagnostic)
+        self.assertIn("--runtime 'iOS 26.4'", jobs['test'])
+        self.assertIn("--runtime 'iOS 26.4'", diagnostic)
+        self.assertIn('name: spotlight-diagnostics-attempt-', diagnostic)
+        # Boot, testing, export, logging, and upload need headroom beyond the native test's 15 minutes.
+        diagnostic_budget = int(re.search(r'timeout-minutes: (\d+)', diagnostic).group(1))
+        self.assertGreaterEqual(diagnostic_budget, 45)
+
+    def test_language_preparation_updates_only_the_selected_simulator_preferences_while_shutdown(self):
+        original = {'AppleLanguages': ['en-US'], 'AppleLocale': 'en_US', 'AppleICUForce24HourTime': True}
+        prepared = {**original, 'AppleLanguages': ['en-US', 'ru-RU']}
+        calls = []
+        metadata = {}
+        def native(_directory, label, command, timeout):
+            calls.append((label, command, timeout))
+            if label == 'language-device-state':
+                payload = {'devices': {'runtime': [{'udid': 'selected-id', 'state': 'Shutdown'}]}}
+                return subprocess.CompletedProcess(command, 0, json.dumps(payload), '')
+            payload = original if label == 'language-preferences-before' else prepared
+            return subprocess.CompletedProcess(command, 0, plistlib.dumps(payload).decode(), '')
+        with tempfile.TemporaryDirectory() as temporary, patch.object(smoke, 'run_command', side_effect=native):
+            directory = Path(temporary)
+            preferences = directory / 'Library/Preferences/.GlobalPreferences.plist'
+            preferences.parent.mkdir(parents=True)
+            preferences.write_bytes(plistlib.dumps(original))
+            smoke.prepare_disposable_languages(directory, {
+                'udid': 'selected-id', 'dataPath': str(directory), 'state': 'Booted'}, metadata)
+        self.assertEqual(['language-shutdown', 'language-device-state', 'language-preferences-before', 'language-preferences-languages',
+                          'language-preferences-locale', 'language-preferences-after', 'language-boot',
+                          'language-bootstatus'], [item[0] for item in calls])
+        self.assertEqual(['xcrun', 'simctl', 'shutdown', 'selected-id'], calls[0][1])
+        self.assertEqual(smoke.LANGUAGE_SHUTDOWN_TIMEOUT_SECONDS, calls[0][2])
+        self.assertEqual(['plutil', '-replace', 'AppleLanguages', '-json', '["en-US", "ru-RU"]'], calls[3][1][:-1])
+        self.assertEqual(str(directory / 'Library/Preferences/.GlobalPreferences.plist'), calls[3][1][-1])
+        self.assertEqual(['xcrun', 'simctl', 'boot', 'selected-id'], calls[-2][1])
+        self.assertEqual(smoke.COLD_BOOT_TIMEOUT_SECONDS, calls[-1][2])
+        self.assertTrue(metadata['language_preparation']['verified'])
+
+    def test_language_preparation_cannot_discard_existing_preferences(self):
+        original = {'AppleLanguages': ['en-US'], 'existingSetting': True}
+        invalid = {'AppleLanguages': ['en-US', 'ru-RU'], 'AppleLocale': 'en_US'}
+        labels = []
+        def native(_directory, label, command, timeout):
+            labels.append(label)
+            if label == 'language-device-state':
+                payload = {'devices': {'runtime': [{'udid': 'selected-id', 'state': 'Shutdown'}]}}
+                return subprocess.CompletedProcess(command, 0, json.dumps(payload), '')
+            payload = original if label == 'language-preferences-before' else invalid
+            return subprocess.CompletedProcess(command, 0, plistlib.dumps(payload).decode(), '')
+        metadata = {}
+        with tempfile.TemporaryDirectory() as temporary, patch.object(smoke, 'run_command', side_effect=native):
+            directory = Path(temporary)
+            preferences = directory / 'Library/Preferences/.GlobalPreferences.plist'
+            preferences.parent.mkdir(parents=True)
+            preferences.write_bytes(plistlib.dumps(original))
+            with self.assertRaisesRegex(ValueError, 'preserve its other preferences'):
+                smoke.prepare_disposable_languages(directory, {
+                    'udid': 'selected-id', 'dataPath': temporary, 'state': 'Shutdown'}, metadata)
+        self.assertNotIn('language-boot', labels)
+        self.assertFalse(metadata['language_preparation']['verified'])
+
+    def test_fresh_shutdown_device_gets_language_preferences_before_its_only_boot(self):
+        desired = {'AppleLanguages': ['en-US', 'ru-RU'], 'AppleLocale': 'en_US'}
+        calls = []
+        metadata = {}
+        def native(_directory, label, command, timeout):
+            calls.append((label, command))
+            if label == 'language-device-state':
+                payload = {'devices': {'runtime': [{'udid': 'fresh-id', 'state': 'Shutdown'}]}}
+                return subprocess.CompletedProcess(command, 0, json.dumps(payload), '')
+            if label == 'language-preferences-before':
+                # This real file must be initialized safely before plutil can insert keys.
+                self.assertEqual({}, plistlib.loads(Path(command[-1]).read_bytes()))
+                payload = {}
+            else:
+                payload = desired
+            return subprocess.CompletedProcess(command, 0, plistlib.dumps(payload).decode(), '')
+        with tempfile.TemporaryDirectory() as temporary, patch.object(smoke, 'run_command', side_effect=native):
+            smoke.prepare_disposable_languages(Path(temporary), {
+                'udid': 'fresh-id', 'dataPath': temporary, 'state': 'Shutdown'}, metadata)
+        self.assertNotIn('language-shutdown', [label for label, _ in calls])
+        self.assertEqual(['language-device-state', 'language-preferences-before', 'language-preferences-languages',
+                          'language-preferences-locale', 'language-preferences-after', 'language-boot',
+                          'language-bootstatus'], [label for label, _ in calls])
+        self.assertEqual('-insert', calls[2][1][1])
+        self.assertTrue(metadata['language_preparation']['initialized_preferences'])
+        self.assertTrue(metadata['language_preparation']['verified'])
+
+    def test_failed_shutdown_or_still_booted_state_never_writes_preferences(self):
+        for failure in ('shutdown-timeout', 'still-booted'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                preferences = directory / 'Library/Preferences/.GlobalPreferences.plist'
+                preferences.parent.mkdir(parents=True)
+                original = plistlib.dumps({'existingSetting': 'keep'})
+                preferences.write_bytes(original)
+                labels = []
+                def native(_directory, label, command, timeout):
+                    labels.append(label)
+                    if failure == 'shutdown-timeout':
+                        raise smoke.NativeCommandError('shutdown timed out')
+                    payload = {'devices': {'runtime': [{'udid': 'selected-id', 'state': 'Booted'}]}}
+                    return subprocess.CompletedProcess(command, 0, json.dumps(payload), '')
+                with patch.object(smoke, 'run_command', side_effect=native), self.assertRaises(ValueError):
+                    smoke.prepare_disposable_languages(directory, {
+                        'udid': 'selected-id', 'dataPath': temporary, 'state': 'Booted'}, {})
+                self.assertEqual(original, preferences.read_bytes())
+                self.assertNotIn('language-preferences-before', labels)
+                self.assertNotIn('language-boot', labels)
+
+    def test_missing_spotlight_checkpoint_fails_export_even_if_other_screenshots_exist(self):
+        for missing in ('spotlight-english-opened', 'spotlight-navigation-result', 'spotlight-draft-cancelled'):
+            with self.subTest(missing=missing), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                attachments = directory / 'attachments'
+                attachments.mkdir()
+                names = [name for name in smoke.APP_DISCOVERY_CHECKPOINT_NAMES if name != missing]
+                names += ['calendar-4-weeks', 'calendar-6-weeks']
+                exported = []
+                for index, name in enumerate(names):
+                    filename = f'{index}.png'
+                    (attachments / filename).write_bytes(b'png')
+                    exported.append({'exportedFileName': filename, 'suggestedHumanReadableName': f'{name}_1.png'})
+                (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
+                metadata = {'planned_checkpoint_names': list(smoke.APP_DISCOVERY_CHECKPOINT_NAMES), 'checkpoints': []}
+                self.assertEqual([missing], smoke._export_named_checkpoints(directory, metadata))
 
 
 if __name__ == '__main__':
