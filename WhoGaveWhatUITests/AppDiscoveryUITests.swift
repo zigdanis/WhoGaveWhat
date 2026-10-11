@@ -448,8 +448,10 @@ final class AppDiscoveryUITests: XCTestCase {
         }
         // Spotlight can promote this indexed launcher into Top Hit without exposing an AX icon.
         let indexedLauncherLabel = "кто че, Who Gave; Who Gave What; WhoGaveWhat; кто че; кто чё, Who Gave"
-        if result.label.precomposedStringWithCanonicalMapping == indexedLauncherLabel {
-            return spotlight.otherElements["Identifier:SectionHeader,\(section),Title:Top Hit"].firstMatch.exists
+        if result.label.precomposedStringWithCanonicalMapping == indexedLauncherLabel,
+            spotlight.otherElements["Identifier:SectionHeader,\(section),Title:Top Hit"].firstMatch.exists
+        {
+            return true
         }
         let header = spotlight.otherElements.matching(
             NSPredicate(
