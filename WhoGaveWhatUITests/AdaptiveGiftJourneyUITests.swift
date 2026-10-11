@@ -518,7 +518,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 RunLoop.current.run(until: Date().addingTimeInterval(0.3))
             }
             guard pickerNavigationBar.exists, !cropConfirm.exists else { break }
-            let photo = try XCTUnwrap(settledPhoto, "The visible photo tile did not settle")
+            guard let photo = settledPhoto else {
+                XCTFail("The visible photo tile did not settle")
+                return
+            }
             let frame = photo.frame
             XCTAssertEqual(frame, previousFrame)
             XCTAssertTrue(app.windows.firstMatch.frame.contains(frame))
