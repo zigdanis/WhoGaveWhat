@@ -498,8 +498,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             {
                 break
             }
-            let frameDeadline = Date().addingTimeInterval(5)
+            // XCTest snapshots can consume several seconds per observation on a cold Simulator.
+            let frameDeadline = Date().addingTimeInterval(timeout)
             var previousFrame: CGRect?
+            var frameObservationCount = 0
             var settledPhoto: XCUIElement?
             while Date() < frameDeadline {
                 guard pickerNavigationBar.exists, !cropConfirm.exists else { break }
@@ -507,6 +509,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 if candidate.exists {
                     let frame = candidate.frame
                     let windowFrame = app.windows.firstMatch.frame
+                    frameObservationCount += 1
                     if frame.width > 0, frame.height > 0, windowFrame.contains(frame), frame == previousFrame {
                         settledPhoto = candidate
                         break
@@ -519,7 +522,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             }
             guard pickerNavigationBar.exists, !cropConfirm.exists else { break }
             guard let photo = settledPhoto else {
-                XCTFail("The visible photo tile did not settle")
+                XCTFail(
+                    "The visible photo tile did not settle within \(timeout)s "
+                        + "(observations=\(frameObservationCount), lastFrame=\(String(describing: previousFrame)))"
+                )
                 return
             }
             let frame = photo.frame
