@@ -9,6 +9,7 @@ import shutil
 import signal
 import subprocess
 import time
+import uuid
 from pathlib import Path
 
 
@@ -43,6 +44,7 @@ APP_DISCOVERY_CHECKPOINT_NAMES = (
 )
 GENERATED_LOG_LABELS = (
     "simulator-list", "simulator-boot", "simulator-bootstatus", "record-video",
+    "simulator-create", "simulator-created-list", "simulator-created-state", "simulator-created-shutdown", "simulator-created-delete",
     "record-video-stop", "xcodebuild-test", "export-attachments", "bundle-info", "bundle-names-en", "bundle-names-ru",
     "language-shutdown", "language-preferences-before", "language-preferences-languages", "language-preferences-locale",
     "language-preferences-after", "language-boot", "language-bootstatus", "language-device-state",
@@ -195,7 +197,7 @@ def select_simulator(payload, requested_runtime=None):
         runtime_name = re.sub(r"^iOS-(\d+)-(\d+)$", r"iOS \1.\2", runtime_name)
         for device in runtime_devices:
             if device.get("isAvailable") and device.get("name", "").startswith("iPhone"):
-                devices.append({**device, "runtime": runtime_name})
+                devices.append({**device, "runtime": runtime_name, "runtime_identifier": runtime})
     booted = [device for device in devices if device.get("state") == "Booted"]
     if booted:
         selected = max(booted, key=lambda device: _runtime_version(device["runtime"]))
@@ -210,6 +212,69 @@ def select_simulator(payload, requested_runtime=None):
             raise ValueError(f"No available iPhone 17 Pro Simulator was found for requested runtime {requested_runtime}")
         raise ValueError("No available booted iPhone or iPhone 17 Pro Simulator was found")
     return max(candidates, key=lambda device: _runtime_version(device["runtime"]))
+
+
+def create_ci_simulator(directory, payload, requested_runtime, metadata):
+    """Create one owned fixture using an available exact iPhone 17 Pro runtime."""
+    # Retain the existing guard against a conflicting booted iPhone runtime.
+    select_simulator(payload, requested_runtime=requested_runtime)
+    source_payload = {"devices": {runtime: [device for device in devices
+                     if device.get("name") == "iPhone 17 Pro"]
+                     for runtime, devices in payload.get("devices", {}).items()}}
+    source = select_simulator(source_payload, requested_runtime=requested_runtime)
+    device_type = source.get("deviceTypeIdentifier")
+    if device_type != "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro":
+        raise ValueError("Available iPhone 17 Pro does not expose its expected native device type")
+    fixture = {"mode": "fresh-ci", "source_simulator_id": source["udid"],
+               "device_type_identifier": device_type, "runtime_identifier": source["runtime_identifier"],
+               "name": f"WhoGaveWhat CI {uuid.uuid4()}", "creation_verified": False}
+    metadata["simulator_fixture"] = fixture
+    output = run_command(directory, "simulator-create", [
+        "xcrun", "simctl", "create", fixture["name"], device_type, source["runtime_identifier"]], 60)
+    try:
+        created_id = str(uuid.UUID(output.stdout.strip())).upper()
+    except ValueError as error:
+        raise ValueError("simctl create did not return a Simulator UDID") from error
+    existing_ids = {device.get("udid", "").upper() for devices in payload.get("devices", {}).values()
+                    for device in devices}
+    if created_id in existing_ids:
+        raise ValueError("simctl create returned a pre-existing Simulator; refusing ownership")
+    # Record ownership immediately so a later list or preparation failure still cleans up only this device.
+    fixture["created_simulator_id"] = created_id
+    listing = run_command(directory, "simulator-created-list", [
+        "xcrun", "simctl", "list", "devices", "available", "--json"], 30)
+    matches = [device for device in json.loads(listing.stdout).get("devices", {}).get(source["runtime_identifier"], [])
+               if device.get("udid", "").upper() == created_id]
+    if (len(matches) != 1 or not matches[0].get("isAvailable") or matches[0].get("state") != "Shutdown"
+            or matches[0].get("deviceTypeIdentifier") != device_type or matches[0].get("name") != fixture["name"]):
+        raise ValueError("Created Simulator does not match the requested fresh iPhone 17 Pro fixture")
+    fixture["creation_verified"] = True
+    return {**matches[0], "udid": created_id, "runtime": source["runtime"],
+            "runtime_identifier": source["runtime_identifier"]}
+
+
+def cleanup_ci_simulator(directory, metadata):
+    """Remove only the Simulator whose creation this invocation recorded."""
+    fixture = metadata.get("simulator_fixture", {})
+    created_id = fixture.get("created_simulator_id")
+    if not created_id:
+        return
+    fixture["cleanup_outcome"] = "failure"
+    try:
+        listing = run_command(directory, "simulator-created-state", [
+            "xcrun", "simctl", "list", "devices", "--json"], 30)
+        matches = [device for devices in json.loads(listing.stdout).get("devices", {}).values()
+                   for device in devices if device.get("udid", "").upper() == created_id]
+        if len(matches) != 1:
+            raise ValueError("Cannot locate the run-owned Simulator for cleanup")
+        if matches[0].get("state") != "Shutdown":
+            run_command(directory, "simulator-created-shutdown", ["xcrun", "simctl", "shutdown", created_id],
+                        LANGUAGE_SHUTDOWN_TIMEOUT_SECONDS)
+        run_command(directory, "simulator-created-delete", ["xcrun", "simctl", "delete", created_id], 60)
+        fixture["cleanup_outcome"] = "success"
+    except (ValueError, OSError, subprocess.SubprocessError) as error:
+        # Preserve the original native result and exported diagnostics on cleanup failure.
+        fixture["cleanup_error"] = str(error)
 
 
 def start_recording(directory, simulator_id, video_path):
@@ -392,10 +457,12 @@ def prepare_disposable_languages(directory, simulator, metadata):
     metadata["language_preparation"]["verified"] = True
 
 
-def run(directory, verify_app_names=False, discovery_only=False, runtime=None):
+def run(directory, verify_app_names=False, discovery_only=False, runtime=None, fresh_ci_simulator=False):
     """Run the native XCTest journey, preserving diagnostics and real evidence."""
     if discovery_only and not verify_app_names:
         raise ValueError("Discovery-only diagnostics require --verify-app-names")
+    if fresh_ci_simulator and (os.environ.get("GITHUB_ACTIONS") != "true" or runtime is None):
+        raise ValueError("Fresh CI Simulator requires GitHub Actions and an explicit --runtime")
     directory = directory.resolve()
     directory.mkdir(parents=True, exist_ok=True)
     clear_previous_outputs(directory)
@@ -429,7 +496,9 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None):
     native_test_attempted = False
     try:
         listing = run_command(directory, "simulator-list", ["xcrun", "simctl", "list", "devices", "available", "--json"], 30)
-        simulator = select_simulator(json.loads(listing.stdout), requested_runtime=runtime)
+        payload = json.loads(listing.stdout)
+        simulator = (create_ci_simulator(directory, payload, runtime, metadata) if fresh_ci_simulator
+                     else select_simulator(payload, requested_runtime=runtime))
         simulator_id = simulator["udid"]
         metadata.update(device=simulator["name"], simulator_id=simulator_id, runtime=simulator["runtime"])
         if verify_app_names:
@@ -503,6 +572,7 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None):
         if (test_succeeded and not missing and not metadata.get("export_error") and not metadata.get("recording_error")
                 and video.is_file() and video.stat().st_size):
             metadata["export_outcome"] = "success"
+        cleanup_ci_simulator(directory, metadata)
         (directory / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
         shutil.rmtree(directory / "DerivedData", ignore_errors=True)
     if metadata["export_outcome"] != "success":
@@ -517,5 +587,7 @@ if __name__ == "__main__":
     parser.add_argument("--discovery-only", action="store_true",
                         help="Run only AppDiscoveryUITests and mark partial evidence as diagnostic, never acceptance")
     parser.add_argument("--runtime", help="Require a canonical runtime such as 'iOS 26.4'; reject conflicting booted iPhones")
+    parser.add_argument("--fresh-ci-simulator", action="store_true",
+                        help="GitHub Actions only: create a run-owned iPhone 17 Pro on the explicit runtime")
     args = parser.parse_args()
-    run(args.directory, args.verify_app_names, args.discovery_only, args.runtime)
+    run(args.directory, args.verify_app_names, args.discovery_only, args.runtime, args.fresh_ci_simulator)

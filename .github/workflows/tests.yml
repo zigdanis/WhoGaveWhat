@@ -67,9 +67,11 @@ jobs:
           swift --version
           xcodebuild -version
           xcrun simctl help
+          xcrun simctl help create
+          xcrun simctl help delete
           xcrun xcresulttool version
       - name: Test and record app smoke
-        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names --runtime 'iOS 26.4'
+        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names --runtime 'iOS 26.4' --fresh-ci-simulator
       - name: Render evidence report
         if: always()
         run: |
@@ -100,9 +102,11 @@ jobs:
         run: |
           xcodebuild -version
           xcrun simctl help
+          xcrun simctl help create
+          xcrun simctl help delete
           xcrun xcresulttool version
       - name: Run focused Spotlight diagnostic
-        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/spotlight-diagnostics" --verify-app-names --discovery-only --runtime 'iOS 26.4'
+        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/spotlight-diagnostics" --verify-app-names --discovery-only --runtime 'iOS 26.4' --fresh-ci-simulator
       - name: Render diagnostic report
         if: always()
         run: |
