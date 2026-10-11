@@ -143,7 +143,10 @@ final class AppDiscoveryIndexer {
     static func makeItem(title: String) -> CSSearchableItem {
         let attributes = CSSearchableItemAttributeSet(contentType: .content)
         attributes.title = title
-        attributes.displayName = title
+        attributes.displayName = String(
+            localized: "app-discovery.display-name", defaultValue: "Who Gave · кто че",
+            comment: "Public Spotlight launcher name. Keep both English and Russian app names in every translation."
+        )
         attributes.contentDescription = aliases.joined(separator: "; ")
         attributes.alternateNames = aliases
         attributes.keywords = aliases + ["who", "gave", "what", "кто", "че", "чё"]

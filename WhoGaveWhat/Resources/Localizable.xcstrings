@@ -130,6 +130,24 @@
         }
       }
     },
+    "app-discovery.display-name" : {
+      "comment" : "Public Spotlight launcher name. Keep both English and Russian app names in every translation.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Who Gave · кто че"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Who Gave · кто че"
+          }
+        }
+      }
+    },
     "≈ value" : {
       "extractionState" : "manual",
       "localizations" : {

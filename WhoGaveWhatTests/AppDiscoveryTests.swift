@@ -7,12 +7,12 @@ import Testing
 @MainActor
 struct AppDiscoveryTests {
     @Test(arguments: ["Who Gave", "кто че"])
-    func launcherIsSearchableInBothLanguagesRegardlessOfTitle(title: String) {
+    func launcherKeepsBothPublicNamesRegardlessOfLocalizedTitle(title: String) {
         let item = AppDiscoveryIndexer.makeItem(title: title)
         let attributes = item.attributeSet
 
         #expect(attributes.title == title)
-        #expect(attributes.displayName == title)
+        #expect(attributes.displayName == "Who Gave · кто че")
         #expect(attributes.contentDescription == "Who Gave; Who Gave What; WhoGaveWhat; кто че; кто чё")
         for alias in ["Who Gave", "Who Gave What", "WhoGaveWhat", "кто че", "кто чё"] {
             #expect(attributes.alternateNames?.contains(alias) == true)
@@ -21,6 +21,16 @@ struct AppDiscoveryTests {
         #expect(item.uniqueIdentifier == "pro.ziganshin.WhoGaveWhat.launch")
         #expect(item.domainIdentifier == "pro.ziganshin.WhoGaveWhat.app-discovery")
         #expect(item.expirationDate == .distantFuture)
+    }
+
+    @Test(arguments: ["en", "ru"])
+    func spotlightDisplayNameResourceKeepsBothNames(language: String) throws {
+        let path = try #require(Bundle.main.path(forResource: language, ofType: "lproj"))
+        let bundle = try #require(Bundle(path: path))
+        #expect(
+            bundle.localizedString(forKey: "app-discovery.display-name", value: nil, table: nil)
+                == "Who Gave · кто че"
+        )
     }
 
     @Test func launcherDoesNotIndexPrivateAppData() async throws {
