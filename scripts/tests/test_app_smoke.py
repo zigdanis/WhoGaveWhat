@@ -992,18 +992,19 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         diagnostic_budget = int(re.search(r'timeout-minutes: (\d+)', diagnostic).group(1))
         self.assertGreaterEqual(diagnostic_budget, 45)
 
-    def test_native_acceptance_is_explicit_and_preserves_current_pr_head_provenance(self):
+    def test_native_acceptance_runs_automatically_for_app_changes_and_preserves_pr_head_provenance(self):
         workflow = (Path(__file__).parents[2] / '.github/workflows/tests.yml').read_text()
         events = workflow.partition('\non:\n')[2].partition('\npermissions:\n')[0]
-        self.assertIn('  pull_request:\n    types: [labeled]\n', events)
+        non_app_paths = ("    paths-ignore:\n      - '*.md'\n      - '*.html'\n      - '.agents/**'\n"
+                         "      - '.claude/**'\n      - 'docs/**'\n")
+        self.assertIn('  push:\n    branches: [master]\n' + non_app_paths, events)
+        self.assertIn('  pull_request:\n' + non_app_paths, events)
         self.assertIn('  workflow_dispatch:\n', events)
-        self.assertNotIn('  push:', events)
-        for automatic_event in ('synchronize', 'opened', 'ready_for_review'):
-            self.assertNotIn(automatic_event, events)
-        self.assertIn("if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' "
-                      "&& github.event.action == 'labeled' && github.event.label.name == 'ci-ready')", workflow)
-        self.assertIn('cancel-in-progress: false', workflow)
-        self.assertIn('group: tests-${{ github.event.pull_request.number || github.ref }}', workflow)
+        self.assertNotIn('types:', events)
+        self.assertNotIn('ci-ready', workflow)
+        self.assertIn('cancel-in-progress: true', workflow)
+        self.assertIn("group: tests-${{ github.event.pull_request.number && "
+                      "format('pr-{0}', github.event.pull_request.number) || github.run_id }}", workflow)
         self.assertIn('HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}', workflow)
         self.assertIn('name: ui-app-smoke-attempt-${{ github.run_attempt }}', workflow)
 

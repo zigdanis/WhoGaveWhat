@@ -1,8 +1,21 @@
 name: Tests
 
 on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '*.md'
+      - '*.html'
+      - '.agents/**'
+      - '.claude/**'
+      - 'docs/**'
   pull_request:
-    types: [labeled]
+    paths-ignore:
+      - '*.md'
+      - '*.html'
+      - '.agents/**'
+      - '.claude/**'
+      - 'docs/**'
   workflow_dispatch:
     inputs:
       spotlight_diagnostics:
@@ -13,13 +26,14 @@ on:
 permissions:
   contents: read
 
+# Superseded PR runs are cancelled. Master and manual runs get unique groups, so
+# every master commit keeps its run for deployment.
 concurrency:
-  group: tests-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: false
+  group: tests-${{ github.event.pull_request.number && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   test:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'ci-ready')
     name: Unit tests and app smoke
     runs-on: macos-26
     timeout-minutes: 55
