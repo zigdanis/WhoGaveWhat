@@ -1002,8 +1002,9 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         self.assertIn('  workflow_dispatch:\n', events)
         self.assertNotIn('types:', events)
         self.assertNotIn('ci-ready', workflow)
-        self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", workflow)
-        self.assertIn('group: tests-${{ github.event.pull_request.number || github.ref }}', workflow)
+        self.assertIn('cancel-in-progress: true', workflow)
+        self.assertIn("group: tests-${{ github.event.pull_request.number && "
+                      "format('pr-{0}', github.event.pull_request.number) || github.run_id }}", workflow)
         self.assertIn('HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}', workflow)
         self.assertIn('name: ui-app-smoke-attempt-${{ github.run_attempt }}', workflow)
 

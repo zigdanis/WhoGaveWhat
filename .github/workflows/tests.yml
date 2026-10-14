@@ -26,10 +26,11 @@ on:
 permissions:
   contents: read
 
+# Superseded PR runs are cancelled. Master and manual runs get unique groups, so
+# every master commit keeps its run for deployment.
 concurrency:
-  group: tests-${{ github.event.pull_request.number || github.ref }}
-  # Superseded PR runs are cancelled; every master commit keeps its run for deployment.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: tests-${{ github.event.pull_request.number && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   test:
