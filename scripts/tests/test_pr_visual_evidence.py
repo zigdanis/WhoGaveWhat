@@ -54,7 +54,7 @@ class PublicationTests(unittest.TestCase):
             html_url="https://github.com/owner/repo/pull/42",
         )
         self.run = dict(
-            status="completed", conclusion="success", run_attempt=2, event="pull_request", head_sha="a" * 40,
+            id=123, status="completed", conclusion="success", run_attempt=2, event="pull_request", head_sha="a" * 40,
             html_url="https://github.com/owner/repo/actions/runs/123",
         )
         self.edits = []
@@ -115,6 +115,13 @@ class PublicationTests(unittest.TestCase):
         self.assertIn("user-attachments/assets/checkpoint-png", body)
         self.assertIn("user-attachments/assets/demo-mp4", body)
         self.assertNotIn(self.temporary.name, body)
+
+    def test_app_owned_evidence_declares_pending_device_spotlight_without_claiming_search_passed(self):
+        self.metadata.update(acceptance_scope="app-owned", spotlight_search_outcome="not-run",
+                             spotlight_device_acceptance="pending")
+        self.publish("Inspected the Russian app interface and lifecycle.")
+        self.assertIn("OS Spotlight search is excluded from this acceptance run", self.pr["body"])
+        self.assertIn("real-device Spotlight verification is pending", self.pr["body"])
 
     def test_stale_head_or_attempt_never_uploads(self):
         for field, value in [("head_sha", "old-head"), ("run_attempt", "1"), ("run_id", "122")]:

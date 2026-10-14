@@ -9,7 +9,8 @@ For this repository, [whogavewhat-delivery](../whogavewhat-delivery/SKILL.md) is
 authoritative. Read and apply it for routine feature work; it owns the complete
 implementation, review, CI evidence, bot convergence, merge, and authorized
 TestFlight path. This skill preserves the useful delegation shape but does not
-add a separate HTML-plan or human-approval gate.
+add a separate HTML-plan or human-approval gate. Spotlight acceptance follows
+[the maintained app-owned/device scope](../../../docs/pr-evidence.md#app-owned-acceptance-and-device-spotlight).
 
 ## Authorization boundary
 

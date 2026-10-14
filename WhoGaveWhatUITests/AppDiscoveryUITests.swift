@@ -64,6 +64,79 @@ final class AppDiscoveryUITests: XCTestCase {
         }
     }
 
+    /// Mandatory app-owned behavior; OS Spotlight retrieval is a separate diagnostic.
+    func testRussianAppLanguagePreservesNavigationDraftAndColdOnboarding() throws {
+        app.launchEnvironment["KS_START"] = "app"
+        app.launchEnvironment["KS_SPOTLIGHT_DIAGNOSTICS"] = "0"
+        app.launch()
+        XCTAssertTrue(app.buttons["Add a gift"].waitForExistence(timeout: timeout))
+        attach("app-language-english-home")
+
+        try setRussianAppLanguageWithEnglishSystem(inspectSearchVisibility: false)
+        app.launch()
+        XCTAssertTrue(app.buttons["Добавить подарок"].waitForExistence(timeout: timeout))
+        attach("app-language-russian-home")
+
+        let peopleTab = app.tabBars.buttons["Люди"]
+        XCTAssertTrue(peopleTab.waitForExistence(timeout: timeout))
+        peopleTab.tap()
+        XCTAssertTrue(peopleTab.isSelected)
+        XCTAssertTrue(app.buttons["people.add-person"].waitForExistence(timeout: timeout))
+        attach("app-language-navigation-before")
+        try backgroundAndResumeApp()
+        XCTAssertTrue(peopleTab.waitForExistence(timeout: timeout))
+        XCTAssertTrue(peopleTab.isSelected, "Resuming must preserve the selected People tab")
+        XCTAssertTrue(app.buttons["people.add-person"].waitForExistence(timeout: timeout))
+        XCTAssertFalse(app.textFields["add-gift.name"].exists)
+        attach("app-language-navigation-resumed")
+
+        let homeTab = app.tabBars.buttons["Главная"]
+        XCTAssertTrue(homeTab.waitForExistence(timeout: timeout))
+        homeTab.tap()
+        XCTAssertTrue(homeTab.isSelected)
+        app.buttons["Добавить подарок"].tap()
+        let field = app.textFields["add-gift.name"]
+        XCTAssertTrue(field.waitForExistence(timeout: timeout))
+        let draft = "Resume draft \(UUID().uuidString.prefix(8))"
+        field.typeText(draft)
+        attach("app-language-draft-before")
+        try backgroundAndResumeApp()
+        XCTAssertTrue(field.waitForExistence(timeout: timeout))
+        XCTAssertEqual(field.value as? String, draft, "Resuming must preserve the unsaved gift")
+        XCTAssertTrue(app.buttons["add-gift.save"].exists)
+        attach("app-language-draft-resumed")
+        app.buttons["Отмена"].tap()
+        let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: field)
+        XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: timeout), .completed)
+        XCTAssertTrue(homeTab.isSelected, "Cancelling the draft must retain Home")
+        attach("app-language-draft-cancelled")
+
+        // A normal cold launch, without the UI shortcut, must preserve onboarding.
+        app.terminate()
+        app.launchEnvironment = [:]
+        app.launch()
+        XCTAssertTrue(app.buttons["Далее"].waitForExistence(timeout: timeout))
+        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        attach("app-language-cold-onboarding")
+    }
+
+    private func backgroundAndResumeApp() throws {
+        XCUIDevice.shared.press(.home)
+        let backgrounded = XCTNSPredicateExpectation(
+            predicate: NSPredicate { _, _ in
+                self.app.state == .runningBackground || self.app.state == .runningBackgroundSuspended
+            }, object: app
+        )
+        guard XCTWaiter.wait(for: [backgrounded], timeout: timeout) == .completed else {
+            throw DiscoveryFailure.appNotBackgrounded
+        }
+        app.activate()
+        guard app.wait(for: .runningForeground, timeout: timeout) else {
+            throw DiscoveryFailure.appNotResumed
+        }
+    }
+
+    /// Optional OS-owned Spotlight diagnostic, selected explicitly by --discovery-only.
     func testRussianAppLanguageAndBilingualSpotlightPreserveDraftAndOnboarding() throws {
         // Launch without AppleLanguages overrides: the app must follow its real Settings preference.
         app.launchEnvironment["KS_START"] = "app"
@@ -153,7 +226,7 @@ final class AppDiscoveryUITests: XCTestCase {
         add(after)
     }
 
-    private func setRussianAppLanguageWithEnglishSystem() throws {
+    private func setRussianAppLanguageWithEnglishSystem(inspectSearchVisibility: Bool = true) throws {
         settings.launch()
         attach("system-settings")
         try tapSetting("General")
@@ -180,14 +253,16 @@ final class AppDiscoveryUITests: XCTestCase {
         attach("settings-search-app")
         try tapSetting("Who Gave", contains: true)
         attach("app-settings-before")
-        try tapSetting("Search")
-        RunLoop.current.run(until: Date().addingTimeInterval(0.75))
-        attach("app-search-visibility")
-        let visibility = XCTAttachment(string: settings.debugDescription)
-        visibility.name = "app-search-visibility-hierarchy"
-        visibility.lifetime = .keepAlways
-        add(visibility)
-        try tapSetting("Who Gave")
+        if inspectSearchVisibility {
+            try tapSetting("Search")
+            RunLoop.current.run(until: Date().addingTimeInterval(0.75))
+            attach("app-search-visibility")
+            let visibility = XCTAttachment(string: settings.debugDescription)
+            visibility.name = "app-search-visibility-hierarchy"
+            visibility.lifetime = .keepAlways
+            add(visibility)
+            try tapSetting("Who Gave")
+        }
         try tapSetting("Language")
         attach("app-language-picker")
         // Register cleanup before the mutation so a failed tap or later assertion cannot skip it.
@@ -351,6 +426,7 @@ final class AppDiscoveryUITests: XCTestCase {
             throw DiscoveryFailure.missingSpotlightSearchField(query)
         }
         try clearSpotlightQuery(search)
+        try waitForPriorLauncherRowsToClear(search: search, checkpoint: checkpoint)
         try selectSpotlightKeyboard(for: query, checkpoint: checkpoint)
         search.typeText(query)
         attachSpotlightHierarchy("\(checkpoint)-typed-query", typedValue: search.value as? String)
@@ -364,6 +440,9 @@ final class AppDiscoveryUITests: XCTestCase {
         let deadline = Date().addingTimeInterval(60)
         var scrolls = 0
         repeat {
+            guard search.value as? String == query else {
+                throw DiscoveryFailure.mismatchedDiagnosticQuery(query, String(describing: search.value))
+            }
             let appResults = results.allElementsBoundByIndex.filter(isAppLauncherResult)
             if let result = appResults.first(where: { $0.isHittable }) {
                 attach(checkpoint)
@@ -509,30 +588,52 @@ final class AppDiscoveryUITests: XCTestCase {
         throw DiscoveryFailure.missingSpotlightResult(query, failedHierarchy)
     }
 
+    private func waitForPriorLauncherRowsToClear(search: XCUIElement, checkpoint: String) throws {
+        attachSpotlightHierarchy("\(checkpoint)-empty-query", typedValue: search.value as? String)
+        let priorRows = spotlight.descendants(matching: .any).matching(
+            NSPredicate(format: "identifier CONTAINS 'ResultCell'")
+        )
+        let priorDisplayNames = ["Who Gave", "кто че", "Who Gave · кто че"]
+        let hasPriorIndexedRow = {
+            priorRows.allElementsBoundByIndex.contains {
+                self.isIndexedLauncherResult($0, displayNames: priorDisplayNames)
+            }
+        }
+        let deadline = Date().addingTimeInterval(5)
+        while hasPriorIndexedRow(), Date() < deadline {
+            RunLoop.current.run(until: min(deadline, Date().addingTimeInterval(0.25)))
+        }
+        guard !hasPriorIndexedRow() else {
+            attachSpotlightHierarchy("\(checkpoint)-prior-result-not-cleared", typedValue: search.value as? String)
+            throw DiscoveryFailure.diagnosticPriorResultNotCleared
+        }
+    }
+
+    private static func isIndexedLauncherLabel(_ label: String, displayNames: [String]) -> Bool {
+        let canonical = label.precomposedStringWithCanonicalMapping
+        let description = "Who Gave; Who Gave What; WhoGaveWhat; кто че; кто чё"
+        return displayNames.contains { displayName in
+            ["Who Gave", "кто че"].contains { owner in
+                canonical == "\(displayName), \(description), \(owner)"
+            }
+        }
+    }
+
     private func isAppLauncherResult(_ result: XCUIElement) -> Bool {
-        guard !result.label.contains("WhoGaveWhatUITests-Runner") else { return false }
-        if result.icons.matching(NSPredicate(format: "label == 'Who Gave' OR label == 'кто че'")).firstMatch.exists {
-            return true
+        isIndexedLauncherResult(result, displayNames: ["Who Gave · кто че"])
+    }
+
+    private func isIndexedLauncherResult(_ result: XCUIElement, displayNames: [String]) -> Bool {
+        guard result.identifier.contains("ResultCell"),
+            !result.label.contains("WhoGaveWhatUITests-Runner"),
+            Self.isIndexedLauncherLabel(result.label, displayNames: displayNames),
+            let section = result.identifier.components(separatedBy: ",").first(where: { $0.hasPrefix("Section:") })
+        else { return false }
+        // Indexed public payloads belong to the app's section or a promoted Top Hit.
+        // Catalog icons and ordinary app-name suggestions cannot establish alias retrieval.
+        return ["Who Gave", "кто че", "Top Hit"].contains { title in
+            spotlight.otherElements["Identifier:SectionHeader,\(section),Title:\(title)"].firstMatch.exists
         }
-        // Indexed launcher rows belong to the app's own section, rather than Websites.
-        guard let section = result.identifier.components(separatedBy: ",").first(where: { $0.hasPrefix("Section:") }) else {
-            return false
-        }
-        // Spotlight can promote this indexed launcher into Top Hit without exposing an AX icon.
-        let indexedLauncherLabel = "кто че, Who Gave; Who Gave What; WhoGaveWhat; кто че; кто чё, Who Gave"
-        if result.label.precomposedStringWithCanonicalMapping == indexedLauncherLabel,
-            spotlight.otherElements["Identifier:SectionHeader,\(section),Title:Top Hit"].firstMatch.exists
-        {
-            return true
-        }
-        let header = spotlight.otherElements.matching(
-            NSPredicate(
-                format: "identifier == %@ OR identifier == %@",
-                "Identifier:SectionHeader,\(section),Title:Who Gave",
-                "Identifier:SectionHeader,\(section),Title:кто че"
-            )
-        ).firstMatch
-        return header.exists
     }
 
     @discardableResult
@@ -604,11 +705,11 @@ final class AppDiscoveryUITests: XCTestCase {
     }
 
     private func selectSpotlightKeyboard(for query: String, checkpoint: String, waitDeadline: Date? = nil) throws {
-        // Typing Cyrillic through XCTest does not change the keyboard's input language.
-        // Use the observed globe control, then verify the actual alphabet before typing.
         let russian = query.unicodeScalars.contains { (0x0400...0x04FF).contains($0.value) }
         let expectedKeys = russian ? ["й", "ц", "у"] : ["q", "w", "e"]
+        let keyboardName = russian ? "Русская" : "English (US)"
         let keyboard = spotlight.keyboards.firstMatch
+        let picker = spotlight.tables["InputSwitcherTable"].firstMatch
         attachSpotlightHierarchy("\(checkpoint)-keyboard-before")
         guard keyboard.waitForExistence(timeout: min(timeout, max(0, waitDeadline?.timeIntervalSinceNow ?? timeout))) else {
             throw DiscoveryFailure.missingSpotlightKeyboard(query)
@@ -616,12 +717,8 @@ final class AppDiscoveryUITests: XCTestCase {
         let tutorial = spotlight.staticTexts["Quickly Change Keyboards"].firstMatch
         let keyboardDeadline = min(Date().addingTimeInterval(timeout), waitDeadline ?? .distantFuture)
         var dismissedTutorial = false
-        var keyboardSwitches = 0
-        var layoutBeforeSwitch: [String]?
-        var observedLayout = keyboard.keys.allElementsBoundByIndex.map(\.label)
-        var layoutChangedAt = Date()
+        var choseKeyboard = false
         while true {
-            // The first-use overlay can arrive after the initial keyboard snapshot.
             if tutorial.exists {
                 guard !dismissedTutorial else { throw DiscoveryFailure.keyboardTutorialNotDismissed }
                 attach("\(checkpoint)-keyboard-tutorial")
@@ -629,67 +726,68 @@ final class AppDiscoveryUITests: XCTestCase {
                 let continueButton = spotlight.buttons["Continue"].firstMatch
                 guard continueButton.waitForExistence(timeout: max(0, keyboardDeadline.timeIntervalSinceNow)),
                     continueButton.isHittable
-                else {
-                    throw DiscoveryFailure.missingKeyboardTutorialContinue
-                }
+                else { throw DiscoveryFailure.missingKeyboardTutorialContinue }
                 continueButton.tap()
                 dismissedTutorial = true
-                let dismissed = XCTNSPredicateExpectation(
-                    predicate: NSPredicate(format: "exists == false"), object: tutorial
-                )
+                let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: tutorial)
                 guard XCTWaiter.wait(for: [dismissed], timeout: max(0, keyboardDeadline.timeIntervalSinceNow)) == .completed else {
                     throw DiscoveryFailure.keyboardTutorialNotDismissed
                 }
                 attach("\(checkpoint)-keyboard-tutorial-dismissed")
                 attachSpotlightHierarchy("\(checkpoint)-keyboard-tutorial-dismissed")
             }
-            if expectedKeys.allSatisfy({ keyboard.keys[$0].exists && keyboard.keys[$0].isHittable }), !tutorial.exists {
-                break
-            }
             guard Date() < keyboardDeadline else {
                 attachSpotlightHierarchy("\(checkpoint)-keyboard-mismatch")
                 throw DiscoveryFailure.mismatchedSpotlightKeyboard(query)
             }
-            let layout = keyboard.keys.allElementsBoundByIndex.map(\.label)
-            if layout != observedLayout {
-                observedLayout = layout
-                layoutChangedAt = Date()
+            // A visible picker can show Russian preview keys before selection is committed.
+            // Its dismissal must precede acceptance of any expected alphabet.
+            if !picker.exists, !tutorial.exists,
+                expectedKeys.allSatisfy({ keyboard.keys[$0].exists && keyboard.keys[$0].isHittable })
+            {
+                break
             }
-            // Extra installed keyboards can make one globe tap land on another alphabet.
-            // Require a changed, settled layout before another tap so transitions cannot skip the target.
-            let switchSettled =
-                layoutBeforeSwitch == nil
-                || (layout != layoutBeforeSwitch && Date().timeIntervalSince(layoutChangedAt) >= 0.75)
-            if !expectedKeys.allSatisfy({ keyboard.keys[$0].exists }), !tutorial.exists, switchSettled {
-                guard keyboardSwitches < 4 else {
-                    attachSpotlightHierarchy("\(checkpoint)-keyboard-mismatch")
-                    throw DiscoveryFailure.mismatchedSpotlightKeyboard(query)
+            if !tutorial.exists, !choseKeyboard {
+                if !picker.exists {
+                    let globe = spotlight.buttons["Next keyboard"].firstMatch
+                    guard globe.waitForExistence(timeout: max(0, keyboardDeadline.timeIntervalSinceNow)), globe.isHittable else {
+                        throw DiscoveryFailure.missingSpotlightKeyboardControl
+                    }
+                    globe.press(forDuration: 1)
+                    guard picker.waitForExistence(timeout: max(0, keyboardDeadline.timeIntervalSinceNow)) else {
+                        throw DiscoveryFailure.missingKeyboardPicker(query)
+                    }
                 }
-                let nextKeyboard = spotlight.buttons["Next keyboard"].firstMatch
-                guard nextKeyboard.waitForExistence(timeout: max(0, keyboardDeadline.timeIntervalSinceNow)),
-                    nextKeyboard.isHittable
-                else {
-                    throw DiscoveryFailure.missingSpotlightKeyboardControl
+                attachSpotlightHierarchy("\(checkpoint)-keyboard-picker", typedValue: spotlight.textFields["SpotlightSearchField"].firstMatch.value as? String)
+                let choice = picker.cells.matching(NSPredicate(format: "label == %@", keyboardName)).firstMatch
+                guard choice.waitForExistence(timeout: max(0, keyboardDeadline.timeIntervalSinceNow)), choice.isHittable else {
+                    throw DiscoveryFailure.missingKeyboardPickerChoice(keyboardName)
                 }
-                layoutBeforeSwitch = layout
-                nextKeyboard.tap()
-                keyboardSwitches += 1
+                choice.tap()
+                choseKeyboard = true
+                let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: picker)
+                guard XCTWaiter.wait(for: [dismissed], timeout: max(0, keyboardDeadline.timeIntervalSinceNow)) == .completed else {
+                    throw DiscoveryFailure.keyboardPickerNotDismissed
+                }
+                attachSpotlightHierarchy("\(checkpoint)-keyboard-picker-dismissed")
+            } else if choseKeyboard, picker.exists {
+                throw DiscoveryFailure.keyboardPickerNotDismissed
             }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+            RunLoop.current.run(until: min(keyboardDeadline, Date().addingTimeInterval(0.25)))
         }
         let search = spotlight.textFields["SpotlightSearchField"].firstMatch
         guard search.exists, search.isHittable else {
             throw DiscoveryFailure.missingSpotlightSearchField(query)
         }
         search.tap()
-        // The observed native snapshot exposes this focus marker without private focus APIs.
         let focusDeadline = min(Date().addingTimeInterval(timeout), waitDeadline ?? .distantFuture)
         while !search.debugDescription.contains("Keyboard Focused") {
-            guard Date() < focusDeadline else {
-                throw DiscoveryFailure.spotlightSearchNotFocused(query)
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+            guard Date() < focusDeadline else { throw DiscoveryFailure.spotlightSearchNotFocused(query) }
+            RunLoop.current.run(until: min(focusDeadline, Date().addingTimeInterval(0.25)))
         }
+        guard !picker.exists,
+            expectedKeys.allSatisfy({ keyboard.keys[$0].exists && keyboard.keys[$0].isHittable })
+        else { throw DiscoveryFailure.mismatchedSpotlightKeyboard(query) }
         attachSpotlightHierarchy("\(checkpoint)-keyboard-ready")
     }
 
@@ -737,6 +835,8 @@ final class AppDiscoveryUITests: XCTestCase {
     }
 
     private enum DiscoveryFailure: Error {
+        case appNotBackgrounded
+        case appNotResumed
         case missingSettingsControl(String, String)
         case settingsNotForeground
         case appLibraryStillVisible(String)
@@ -747,6 +847,9 @@ final class AppDiscoveryUITests: XCTestCase {
         case missingSpotlightKeyboard(String)
         case missingSpotlightKeyboardControl
         case mismatchedSpotlightKeyboard(String)
+        case missingKeyboardPicker(String)
+        case missingKeyboardPickerChoice(String)
+        case keyboardPickerNotDismissed
         case missingKeyboardTutorialContinue
         case keyboardTutorialNotDismissed
         case spotlightSearchNotFocused(String)

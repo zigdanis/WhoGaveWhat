@@ -39,6 +39,12 @@ def render(directory):
         '<h2>Test results</h2>',
         f'<pre>{html.escape(json.dumps(summary, indent=2)) if summary else "No test summary exported; inspect the logs."}</pre>',
     ]
+    if metadata.get("acceptance_scope") == "app-owned":
+        parts += [
+            '<h2>Acceptance scope</h2>',
+            '<p>App-owned language, metadata, routing and lifecycle checks only. '
+            'OS Spotlight search was not run; real-device Spotlight verification is pending.</p>',
+        ]
     video = directory / "journeys.mp4"
     if video.exists():
         parts += ['<h2>Journey recording</h2>', f'<video controls preload="metadata" src="{link(video)}"></video>']

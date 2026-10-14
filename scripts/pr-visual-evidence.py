@@ -173,6 +173,11 @@ def publish(number, directory, summary, images, videos):
         f"{metadata['device']} / iOS {metadata['runtime']} / Xcode {metadata['xcode']}\n\n"
         f"{summary.strip()}\n\n"
     )
+    if metadata.get("acceptance_scope") == "app-owned":
+        evidence += (
+            "Automated scope: app language, compiled public metadata, activity routing and app-owned lifecycle. "
+            "OS Spotlight search is excluded from this acceptance run; real-device Spotlight verification is pending.\n\n"
+        )
     image_attachments = [(path, url) for path, url in attachments if path.suffix.lower() == ".png"]
     for index in range(0, len(image_attachments), 2):
         row = image_attachments[index:index + 2]
