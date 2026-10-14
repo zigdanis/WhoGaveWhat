@@ -995,7 +995,7 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
     def test_native_acceptance_runs_automatically_for_app_changes_and_preserves_pr_head_provenance(self):
         workflow = (Path(__file__).parents[2] / '.github/workflows/tests.yml').read_text()
         events = workflow.partition('\non:\n')[2].partition('\npermissions:\n')[0]
-        non_app_paths = ("    paths-ignore:\n      - '**.md'\n      - '**.html'\n      - '.agents/**'\n"
+        non_app_paths = ("    paths-ignore:\n      - '*.md'\n      - '*.html'\n      - '.agents/**'\n"
                          "      - '.claude/**'\n      - 'docs/**'\n")
         self.assertIn('  push:\n    branches: [master]\n' + non_app_paths, events)
         self.assertIn('  pull_request:\n' + non_app_paths, events)

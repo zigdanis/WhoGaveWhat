@@ -4,15 +4,15 @@ on:
   push:
     branches: [master]
     paths-ignore:
-      - '**.md'
-      - '**.html'
+      - '*.md'
+      - '*.html'
       - '.agents/**'
       - '.claude/**'
       - 'docs/**'
   pull_request:
     paths-ignore:
-      - '**.md'
-      - '**.html'
+      - '*.md'
+      - '*.html'
       - '.agents/**'
       - '.claude/**'
       - 'docs/**'

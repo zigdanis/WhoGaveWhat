@@ -5,7 +5,7 @@ User-visible changes include reviewed screenshots **and** a video in the PR desc
 ## CI
 
 - **`Checks`** runs automatically on every PR update and master push: Python helper tests, Ruby release tests and secret checks on Linux, plus Swift formatting and SwiftLint on macOS.
-- **`Tests`** runs automatically on PR updates and master pushes that touch app, test, script or workflow files. It runs the required app-owned unit and native XCUITest suite through `scripts/run-app-smoke.py` on macOS 26 with Xcode 26.6 and the iOS 26.4 Simulator runtime, in a run-owned iPhone 17 Pro (`--fresh-ci-simulator`). Changes confined to Markdown, HTML, `docs/`, `.agents/` or `.claude/` skip it.
+- **`Tests`** runs automatically on PR updates and master pushes that touch app, test, script or workflow files. It runs the required app-owned unit and native XCUITest suite through `scripts/run-app-smoke.py` on macOS 26 with Xcode 26.6 and the iOS 26.4 Simulator runtime, in a run-owned iPhone 17 Pro (`--fresh-ci-simulator`). Changes confined to root-level Markdown/HTML files, `docs/`, `.agents/` or `.claude/` skip it; bundled resources such as `THIRD_PARTY_NOTICES.md` still run it.
 - A new push cancels the superseded run for the same PR; master runs are never cancelled. Batch fixes before pushing; see the [verification policy](../.agents/skills/full-send/references/verification-policy.md).
 - TestFlight deployment requires a successful `Tests` run on the exact master SHA. If that commit skipped `Tests`, dispatch it once: `gh workflow run tests.yml --repo zigdanis/WhoGaveWhat --ref master`.
 
