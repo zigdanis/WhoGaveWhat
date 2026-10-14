@@ -126,7 +126,7 @@ def publish(number, directory, summary, images, videos):
     if START in summary or END in summary or "<!-- visual-evidence:metadata" in summary:
         raise ValueError("Summary must not contain visual evidence markers.")
     if not images or not videos:
-        raise ValueError("Every PR needs at least one PNG screenshot AND one MP4 video.")
+        raise ValueError("Visual evidence needs at least one PNG screenshot AND one MP4 video.")
     sources = [media_file(directory, name, ".png") for name in images]
     sources += [media_file(directory, name, ".mp4") for name in videos]
     if not 1 <= len(sources) <= 50 or len(set(sources)) != len(sources):

@@ -58,7 +58,7 @@ value models rather than SwiftData records.
 | `WhoGaveWhat/Resources/` | Assets, fonts and localization catalogs |
 | `WhoGaveWhatTests/` | Swift Testing coverage for use cases, router and gateway-backed integration |
 | `fastlane/` | Receipt-based TestFlight release, preflight, status and notes lanes |
-| `.github/workflows/tests.yml` | CI — runs the test suite on push to `master` + PRs |
+| `.github/workflows/tests.yml` | CI — runs the native test suite on app changes to `master` and PRs |
 
 ### Testing entry points
 Launch env vars jump straight to a state (used for verification / previews):
@@ -79,8 +79,8 @@ write-through against isolated in-memory SwiftData stores.
 python3 scripts/run-app-smoke.py /tmp/whogavewhat-evidence
 ```
 
-GitHub Actions (`.github/workflows/tests.yml`) runs the suite on every push to
-`master` and on pull requests.
+GitHub Actions (`.github/workflows/tests.yml`) runs the native suite on pushes to
+`master` and pull requests that change app, test, script or workflow files.
 
 ## Shipping
 
@@ -108,4 +108,4 @@ fonts and icons remain subject to the licenses listed in
 
 ## Development checks and PR media
 
-Run `scripts/check-formatting.sh`, `scripts/lint-swift.sh` and the Python helper tests before pushing. Every PR includes current-head screenshots and a video, including tooling and documentation changes. See [the evidence workflow](docs/pr-evidence.md) for local checks, macOS CI, publishing and Raspberry Pi review.
+Run `scripts/check-formatting.sh`, `scripts/lint-swift.sh` and the Python helper tests before pushing. User-visible changes include current-head screenshots and a video; non-UI changes report their checks. See [the evidence workflow](docs/pr-evidence.md) for local checks, macOS CI, publishing and Raspberry Pi review.

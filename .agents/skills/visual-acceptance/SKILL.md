@@ -1,36 +1,17 @@
 ---
 name: visual-acceptance
-description: Capture, inspect, and embed current WhoGaveWhat screenshots and video in PR descriptions for feature, fix, documentation, and tooling delivery, using macOS CI when local iOS execution is unavailable.
+description: Capture, inspect and attach WhoGaveWhat Simulator screenshots and video to pull requests. Use for user-visible features and UI fixes before merge or TestFlight deployment.
 ---
 
 # Visual acceptance
 
-Read [docs/pr-evidence.md](../../../docs/pr-evidence.md) for the maintained
-capture, retrieval, and publication commands.
+Capture and inspect screenshots and video that show the requested UI change, then attach them to the PR. For non-UI changes, report functional checks instead.
 
-For Spotlight work, use [the maintained acceptance scope](../../../docs/pr-evidence.md#app-owned-acceptance-and-device-spotlight)
-and preserve the explicit device-pending declaration in evidence.
+Use the existing tools in [PR evidence](../../../docs/pr-evidence.md). On Linux or Raspberry Pi, the PR's macOS CI produces the media.
 
-1. Define observable criteria. For UI changes, exercise the changed interaction
-   and relevant success, error, and dismissal paths in the CI journey. For
-   documentation, tooling, and infrastructure changes, app-smoke evidence
-   covers environment integrity and must be labelled accordingly.
-2. Follow [the native execution policy](../../../AGENTS.md#xcode-and-simulator-execution).
-   Reuse a booted iPhone or prefer
-   iPhone 17 Pro. On Linux/Raspberry Pi, retrieve the PR's macOS CI artifact
-   with `scripts/pr-evidence.sh PR_NUMBER`.
-3. Inspect every selected PNG and the original MP4 against the criteria. Use
-   extracted frames for transitions and inspect the recording itself when
-   timing or animation matters. Write a short English review outside the
-   checkout, publish screenshots and video with
-   `scripts/pr-visual-evidence.py`, then inspect every rendered compact
-   attachment in the PR at 1280×800 and run `scripts/pr-evidence-gate.py`.
-   Follow `docs/pr-evidence.md` for attachment layout.
-4. After every push or full CI rerun, retrieve and inspect the latest attempt
-   and republish evidence. Old media cannot establish current-head acceptance.
+- **Show:** extend the native XCUITest journey so it exercises the changed scenario, then use media from the current head's CI run.
+- **Limit:** use 2–6 screenshots and the recording. Skip duplicates and unrelated screens.
+- **Check:** confirm that the media shows the requested behavior, publish it with `scripts/pr-visual-evidence.py` and check that it displays clearly.
+- **Clean up:** remove downloaded evidence after publishing.
 
-Finish only when current inspected evidence and functional checks demonstrate
-the requested outcome. Report exact gaps when a capture or publication step is
-blocked. Follow [TestFlight operations](../../../docs/testflight.md) for every
-routine feature, fix, improvement, and build request; only explicit discussion,
-plan-only, PR-only, or do-not-deploy limits suppress the beta release path.
+A new push makes old media stale. Republish after the final head's CI run, then merge.

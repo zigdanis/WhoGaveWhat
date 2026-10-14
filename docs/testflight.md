@@ -81,10 +81,9 @@ storage. Do not paste keys or passwords into a conversation or commit them.
 
 ## Manual commands
 
-Review the workflow and its current screenshots/video using
-[PR evidence](pr-evidence.md) before enabling it on master. Follow the repository's
-the [merge and approval policy](../AGENTS.md#merge-and-approval-policy); routine
-deployment authorization includes the normal merge after all gates pass.
+Deploy the merged master commit after its `Tests` run passes. If that commit
+skipped `Tests` (docs or agent files only), dispatch `Tests` on master once first. Routine delivery
+authorization covers the release; see [full-send](../.agents/skills/full-send/SKILL.md).
 
 ```sh
 python3 scripts/testflight.py --repo zigdanis/WhoGaveWhat ready
@@ -120,7 +119,7 @@ resubmitting review.
 
 ## Device Spotlight acceptance
 
-Follow [the required app-owned and optional OS Spotlight scope](pr-evidence.md#app-owned-acceptance-and-device-spotlight) when reviewing source, CI and media. An exact successful master `Tests` run establishes its declared app-owned scope; OS Spotlight retrieval remains a post-release device check when metadata declares it pending. Include that limitation and the two exact search names in EN/RU What to Test. Deliver the receipt-backed build first, then request Danis's device observations. Keep device confirmation pending until received and inspect the existing build rather than creating another upload.
+CI covers [app-owned Spotlight behavior](pr-evidence.md#app-owned-acceptance-and-device-spotlight); Spotlight search itself is a post-release device check. Include the two exact search names in EN/RU What to Test, deliver the build, then ask Danis for device observations. Inspect the existing build instead of uploading another.
 
 ## Prepared EN/RU notes
 
