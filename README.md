@@ -23,12 +23,27 @@ xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
 - **Sign in** — *placeholder only* (Apple / email / "keep it on this phone" all just
   enter the app). Real auth + remote sync is intentionally deferred.
 - **Home** — year summary (↙ Received / ↗ Given), filter chips, gifts grouped by month.
-- **Add a gift** — type a name → live emoji + value guess; Received/Given segment,
+- **Add a gift** — type a name → the icon beside it updates from the gift text (see
+  [On-device icon inference](#on-device-icon-inference)); Received/Given segment,
   unified person picker, "Paid by you" toggle, occasion, date. Saving writes
   to SwiftData and updates the timeline.
 - **People** — family + friends/relatives, each with running totals.
 - **Person detail** — per-person stats, by-occasion chart, full history.
 - **Insights** — received vs. given split, "Who's really paying" card, top people, by occasion.
+
+## On-device icon inference
+
+The icon next to the gift name is picked from the gift text. A keyword heuristic
+(`SuggestGiftUseCase`) answers instantly in Russian and English. About 500 ms after
+typing stops, the on-device Apple Foundation Models language model is asked for one
+emoji and replaces the heuristic's pick when it answers, with a small spinner on the
+icon meanwhile. Typing again cancels the pending request. Nothing leaves the device.
+
+Precedence: an icon chosen in the picker, then the model's emoji, then the keyword
+heuristic. The model's reply must be exactly one emoji; anything else is ignored. When
+Apple Intelligence is unavailable (Simulator, unsupported or disabled device, model
+still downloading) the heuristic stays in charge and nothing else changes. Renaming a
+gift in the editor re-infers its icon unless one was picked manually in that session.
 
 ## Persistence
 
