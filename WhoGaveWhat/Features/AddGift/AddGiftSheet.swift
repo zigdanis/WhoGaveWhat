@@ -834,7 +834,7 @@ private struct PersonPickerContent: View {
     }
 }
 
-private struct PersonPickerRow: View {
+struct PersonPickerRow: View {
     let name: String
     let color: Color
     let imageData: Data?

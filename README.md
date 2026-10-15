@@ -22,14 +22,14 @@ xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
 - **Onboarding** — three floating intro cards.
 - **Sign in** — *placeholder only* (Apple / email / "keep it on this phone" all just
   enter the app). Real auth + remote sync is intentionally deferred.
-- **Home** — year summary (↙ Received / ↗ Given), filter chips, gifts grouped by month.
+- **Home** — a title and a summary card for the displayed year, then gifts grouped by month with each month's total. The year is never hardcoded: it defaults to the current calendar year (or the latest year with gifts) and a glass year menu appears once gifts span several years. With a viewpoint the card shows received and given totals, counts and the net balance; without one it shows what circulated and links to People to mark yourself.
 - **Add a gift** — type a name → the icon beside it updates from the gift text (see
   [On-device icon inference](#on-device-icon-inference)); Received/Given segment,
   unified person picker, "Paid by you" toggle, occasion, date. Saving writes
   to SwiftData and updates the timeline.
 - **People** — one flat alphabetical list of equal people with running totals. Optionally mark one person as "This is me" (shown with a You badge) to set your viewpoint.
 - **Person detail** — per-person stats, by-occasion chart, full history.
-- **Insights** — received vs. given split relative to the person marked as you (a prompt appears until someone is marked), "Who's really paying" card, top people, by occasion.
+- **Insights** — the same year menu and summary, then **Balance with each person**: for the person marked as you, one row per person you exchanged gifts with (received, given and a signed net, largest absolute net first; tap to open them). Without a viewpoint a "Person A" picker chooses whose balances to list. **Compare two people** takes any two people through modal pickers and shows both directions' totals and counts, the net from A's side and a two-segment bar. Calculations live in `BuildInsightsUseCase`.
 
 ## Design system
 
@@ -99,7 +99,7 @@ value models rather than SwiftData records.
 
 ### Testing entry points
 Launch env vars jump straight to a state (used for verification / previews):
-`KS_START=app|signin`, `KS_TAB=home|people|insights`, `KS_SHEET=1`, `KS_APPEARANCE=dark|light`.
+`KS_START=app|signin`, `KS_TAB=home|people|insights`, `KS_SHEET=1`, `KS_APPEARANCE=dark|light`, `KS_RESET_SELF=1` (clear the stored viewpoint at launch).
 
 ```bash
 SIMCTL_CHILD_KS_START=app SIMCTL_CHILD_KS_TAB=insights \
