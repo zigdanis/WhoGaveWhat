@@ -54,7 +54,8 @@ struct SaveGiftUseCase {
             occasion: input.occasion ?? "Just because",
             date: input.date,
             value: input.valueTouched ? Double(input.value ?? 0) : 0,
-            createdAt: input.createdAt ?? Date()
+            createdAt: input.createdAt ?? Date(),
+            emojiPickedByUser: input.emoji != nil
         )
         try giftGateway.save(gift)
         return gift

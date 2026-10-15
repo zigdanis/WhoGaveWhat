@@ -13,10 +13,15 @@ struct SuggestGiftUseCase {
     }
 
     func instantSuggestion(for name: String) -> GiftSuggestion {
+        keywordSuggestion(for: name) ?? GiftSuggestion(keywords: [], emoji: "🎁", value: 2_000)
+    }
+
+    /// The catalog entry whose keywords occur in the name, or nil when only the generic gift fits.
+    func keywordSuggestion(for name: String) -> GiftSuggestion? {
         let normalizedName = name.lowercased()
         return Self.catalog.first { suggestion in
             suggestion.keywords.contains { normalizedName.contains($0) }
-        } ?? GiftSuggestion(keywords: [], emoji: "🎁", value: 2_000)
+        }
     }
 
     func intelligentSuggestion(for name: String) async -> GiftIntelligenceResult? {

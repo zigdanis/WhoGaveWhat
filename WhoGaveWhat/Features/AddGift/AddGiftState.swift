@@ -12,6 +12,8 @@ final class AddGiftState {
     private let suggestGift: SuggestGiftUseCase
     private let debounce: Duration
     private(set) var suggestionTask: Task<Void, Never>?
+    /// The automatically chosen emoji a gift being edited already has; kept until a rename yields a better guess.
+    private var storedEmoji: String?
 
     init(
         route: GiftSheetRoute,
@@ -26,10 +28,10 @@ final class AddGiftState {
         if let giftID = route.editingGiftID,
             let gift = data.gifts.first(where: { $0.id == giftID })
         {
-            // The stored emoji is the current automatic choice, so renaming the gift
-            // re-infers it; only an emoji picked in the picker is sticky.
+            // An emoji the user picked stays sticky; an inferred one is re-inferred on rename.
             draft = AddGiftDraft(
                 name: gift.name,
+                emoji: gift.emojiPickedByUser ? gift.emoji : nil,
                 value: Int(gift.value),
                 valueTouched: true,
                 fromID: gift.giverID,
@@ -38,8 +40,9 @@ final class AddGiftState {
                 occasion: gift.occasion,
                 date: gift.date,
                 createdAt: gift.createdAt,
-                aiEmoji: gift.emoji
+                aiEmoji: gift.emojiPickedByUser ? nil : gift.emoji
             )
+            if !gift.emojiPickedByUser { storedEmoji = gift.emoji }
         }
     }
 
@@ -96,7 +99,8 @@ final class AddGiftState {
     func setName(_ name: String) {
         guard name != draft.name else { return }
         draft.name = name
-        draft.aiEmoji = nil
+        // Without a specific keyword match, keep the emoji the gift already had instead of the generic one.
+        draft.aiEmoji = suggestGift.keywordSuggestion(for: name) == nil ? storedEmoji : nil
         suggestionTask?.cancel()
         suggestionTask = nil
         aiLoading = false

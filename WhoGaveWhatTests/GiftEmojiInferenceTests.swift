@@ -192,18 +192,89 @@ struct GiftEmojiInferenceTests {
         #expect(gateway.requests == [renamed])
         #expect(state.effectiveEmoji == "🧩")
     }
+
+    @Test func manuallyPickedEmojiSurvivesSaveReopenAndRename() async throws {
+        let composition = try makeTestComposition()
+        let gateway = ScriptedIntelligenceGateway()
+        gateway.results["Bouquet fixed"] = result("🌷")
+        let suggest = SuggestGiftUseCase(intelligenceGateway: gateway)
+        let people = composition.data.people.map(\.id)
+        let creating = AddGiftState(route: .create, data: composition.data, suggestGift: suggest, debounce: .milliseconds(5))
+        creating.setName("Bouquet")
+        creating.previewFrom(people[0])
+        creating.previewTo(people[1])
+        creating.selectEmoji("🐶")
+        composition.saveGift(creating.input)
+
+        let saved = try #require(composition.data.gifts.first { $0.name == "Bouquet" })
+        #expect(saved.emoji == "🐶")
+        #expect(saved.emojiPickedByUser)
+
+        let editing = AddGiftState(route: .edit(giftID: saved.id), data: composition.data, suggestGift: suggest, debounce: .milliseconds(5))
+        #expect(editing.input.emoji == "🐶")
+        editing.setName("Bouquet fixed")
+        await editing.suggestionTask?.value
+        #expect(editing.effectiveEmoji == "🐶")
+        #expect(gateway.requests.isEmpty)
+    }
+
+    @Test func inferredEmojiIsRevisedWhenRenamingAfterReopen() async throws {
+        let composition = try makeTestComposition()
+        let gateway = ScriptedIntelligenceGateway()
+        gateway.results["Bouquet fixed"] = result("🌷")
+        let suggest = SuggestGiftUseCase(intelligenceGateway: gateway)
+        let people = composition.data.people.map(\.id)
+        let creating = AddGiftState(route: .create, data: composition.data, suggestGift: suggest, debounce: .milliseconds(5))
+        creating.setName("Bouquet")
+        creating.previewFrom(people[0])
+        creating.previewTo(people[1])
+        composition.saveGift(creating.input)
+
+        let saved = try #require(composition.data.gifts.first { $0.name == "Bouquet" })
+        #expect(saved.emojiPickedByUser == false)
+
+        let editing = AddGiftState(route: .edit(giftID: saved.id), data: composition.data, suggestGift: suggest, debounce: .milliseconds(5))
+        editing.setName("Bouquet fixed")
+        await editing.suggestionTask?.value
+        #expect(editing.effectiveEmoji == "🌷")
+    }
+
+    @Test func renamingKeepsStoredEmojiWhenNothingBetterIsKnown() async throws {
+        let gateway = ScriptedIntelligenceGateway()
+        gateway.isAvailable = false
+        let composition = try makeTestComposition()
+        let gift = try #require(composition.data.gifts.first { $0.emoji != "🎁" && $0.emoji != "🍷" })
+        let state = AddGiftState(
+            route: .edit(giftID: gift.id),
+            data: composition.data,
+            suggestGift: SuggestGiftUseCase(intelligenceGateway: gateway),
+            debounce: .milliseconds(5)
+        )
+
+        state.setName("zzz unknown thing")
+        #expect(state.effectiveEmoji == gift.emoji)
+        #expect(state.input.aiEmoji == gift.emoji)
+
+        state.setName("red wine")
+        #expect(state.effectiveEmoji == "🍷")
+    }
 }
 
 struct GiftEmojiValidationTests {
     @Test func acceptsSingleEmojiGraphemes() {
-        for emoji in ["🎁", "💐", "🕯️", "❤️", "🧑‍🍳", "👍🏽", "🇷🇺", "⌚"] {
+        for emoji in [
+            "🎁", "💐", "🕯️", "❤️", "🧑‍🍳", "👍🏽", "🇷🇺", "⌚", "☝🏽", "1️⃣", "#️⃣", "©️", "®️", "™️", "▶️", "👁‍🗨"
+        ] {
             #expect(GiftEmoji.validated(emoji) == emoji, "\(emoji)")
         }
         #expect(GiftEmoji.validated("  🎧\n") == "🎧")
     }
 
     @Test func rejectsTextAndMultipleEmoji() {
-        for text in ["", "  ", "a", "Я", "7", "#", "*", "©", "gift", "🎁🎁", "🎁 x", "букет"] {
+        for text in [
+            "", "  ", "a", "Я", "7", "#", "*", "©", "®", "™", "‼", "↔", "▶", "❤", "🏻", "🇦", "a\u{FE0F}", "1\u{FE0F}",
+            "gift", "🎁🎁", "🎁 x", "букет"
+        ] {
             #expect(GiftEmoji.validated(text) == nil, "\(text)")
         }
     }
