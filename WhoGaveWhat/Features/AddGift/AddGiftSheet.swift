@@ -38,6 +38,9 @@ struct AddGiftSheet: View {
                 VStack(alignment: .leading, spacing: 0) {
                     GiftBasicsSection(
                         name: $state.name,
+                        emoji: state.effectiveEmoji,
+                        isInferringEmoji: state.aiLoading,
+                        onSelectEmoji: { state.open(.emoji) },
                         focus: $focus,
                         fromName: state.draft.fromID.map(composition.data.entityName),
                         toName: state.draft.toID.map(composition.data.entityName),
@@ -95,6 +98,7 @@ struct AddGiftSheet: View {
             .onChange(of: state.picker) { _, _ in focus = nil }
             // Open the keyboard on the gift title the moment the sheet settles.
             .onAppear {
+                state.prewarm()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focus = .name }
             }
         }
@@ -156,6 +160,9 @@ private struct GiftSaveButton: View {
 
 private struct GiftBasicsSection: View {
     @Binding var name: String
+    let emoji: String
+    let isInferringEmoji: Bool
+    let onSelectEmoji: () -> Void
     @FocusState.Binding var focus: AddGiftField?
     let fromName: String?
     let toName: String?
@@ -168,18 +175,10 @@ private struct GiftBasicsSection: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            TextField("Gift name", text: $name)
-                .font(Font.app(18, .semibold)).foregroundColor(Color.textPrimary)
-                .tint(accent)
-                .focused($focus, equals: .name)
-                .submitLabel(.done)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 14)
-                .frame(height: 58)
-                .background(fieldSurface)
-                .contentShape(Rectangle())
-                .onTapGesture { focus = .name }
-                .accessibilityIdentifier("add-gift.name")
+            HStack(spacing: 10) {
+                emojiSlot
+                nameField
+            }
 
             Card {
                 VStack(spacing: 0) {
@@ -205,6 +204,42 @@ private struct GiftBasicsSection: View {
                 }
             }
         }
+    }
+
+    private var nameField: some View {
+        TextField("Gift name", text: $name)
+            .font(Font.app(18, .semibold)).foregroundColor(Color.textPrimary)
+            .tint(accent)
+            .focused($focus, equals: .name)
+            .submitLabel(.done)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 14)
+            .frame(height: 58)
+            .background(fieldSurface)
+            .contentShape(Rectangle())
+            .onTapGesture { focus = .name }
+            .accessibilityIdentifier("add-gift.name")
+    }
+
+    /// The icon the gift will get: the keyword guess at once, the on-device model's
+    /// pick when it arrives. Tapping opens the picker for a manual choice.
+    private var emojiSlot: some View {
+        Button(action: onSelectEmoji) {
+            Text(emoji)
+                .font(.system(size: 28))
+                .frame(width: 58, height: 58)
+                .background(fieldSurface)
+                .overlay(alignment: .bottomTrailing) {
+                    if isInferringEmoji {
+                        ProgressView().controlSize(.mini).padding(6)
+                    }
+                }
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Icon")
+        .accessibilityValue(emoji)
+        .accessibilityIdentifier("add-gift.emoji")
     }
 
     private var fieldSurface: some View {

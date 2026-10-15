@@ -12,6 +12,8 @@ struct Gift: Identifiable, Hashable {
     var date: Date
     var value: Double
     let createdAt: Date
+    /// True when the user chose the emoji in the picker rather than inferring it from the name.
+    var emojiPickedByUser = false
 
     /// Newest date first, then newest creation order within the same day.
     static func newestFirst(_ lhs: Gift, _ rhs: Gift) -> Bool {
