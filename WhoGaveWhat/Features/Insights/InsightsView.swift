@@ -77,7 +77,6 @@ struct InsightsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20)
         }
-        .accessibilityIdentifier("insights.viewpoint-prompt")
     }
 
     private func spotlightCard(received: Double, given: Double) -> some View {
