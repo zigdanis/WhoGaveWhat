@@ -142,7 +142,7 @@ private struct GiftSaveButton: View {
         Button(action: onSave) {
             Text("Save")
                 .font(Font.app(17, .semibold))
-                .foregroundStyle(Color.onFill)
+                .foregroundStyle(isEnabled ? Color.onFill : Color.textSecondary)
                 .frame(maxWidth: .infinity).padding(.vertical, 8)
         }
         .buttonStyle(.glassProminent)

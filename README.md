@@ -80,7 +80,7 @@ value models rather than SwiftData records.
 
 ### Testing entry points
 Launch env vars jump straight to a state (used for verification / previews):
-`KS_START=app|signin`, `KS_TAB=home|people|insights`, `KS_SHEET=1`.
+`KS_START=app|signin`, `KS_TAB=home|people|insights`, `KS_SHEET=1`, `KS_APPEARANCE=dark|light`.
 
 ```bash
 SIMCTL_CHILD_KS_START=app SIMCTL_CHILD_KS_TAB=insights \

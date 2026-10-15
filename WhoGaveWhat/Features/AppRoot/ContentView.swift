@@ -23,5 +23,15 @@ struct ContentView: View {
         }
         .foregroundColor(Color.textPrimary)
         .animation(.easeInOut(duration: 0.25), value: composition.router.screen)
+        .preferredColorScheme(launchColorScheme)
+    }
+
+    /// Follows the system unless a verification launch sets `KS_APPEARANCE=dark|light`.
+    private var launchColorScheme: ColorScheme? {
+        switch ProcessInfo.processInfo.environment["KS_APPEARANCE"] {
+        case "dark": ColorScheme.dark
+        case "light": ColorScheme.light
+        default: nil
+        }
     }
 }

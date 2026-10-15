@@ -445,11 +445,18 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertFalse(app.buttons["add-gift.save"].exists)
     }
 
-    /// Dark-mode checkpoint: the key screens render with adaptive colors, then the
-    /// device returns to light so later checkpoints are unaffected.
+    /// Dark-mode checkpoint: relaunches with `KS_APPEARANCE=dark` so the key screens
+    /// render with adaptive colors, then relaunches in the system appearance.
     private func verifyDarkAppearance() {
-        XCUIDevice.shared.appearance = .dark
-        defer { XCUIDevice.shared.appearance = .light }
+        app.terminate()
+        app.launchEnvironment["KS_APPEARANCE"] = "dark"
+        app.launch()
+        defer {
+            app.terminate()
+            app.launchEnvironment["KS_APPEARANCE"] = nil
+            app.launch()
+            XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: timeout))
+        }
         XCTAssertTrue(app.staticTexts[giftName].waitForExistence(timeout: timeout))
         attach("dark-home")
 
