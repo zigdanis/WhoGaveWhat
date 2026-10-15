@@ -19,6 +19,7 @@ final class TestPreferencesGateway: PreferencesGateway {
 @MainActor
 final class TestIntelligenceGateway: GiftIntelligenceGateway {
     var isAvailable = false
+    func prewarm() {}
     func suggestGift(named name: String) async -> GiftIntelligenceResult? { nil }
 }
 

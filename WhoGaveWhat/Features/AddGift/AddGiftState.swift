@@ -10,18 +10,28 @@ final class AddGiftState {
 
     private(set) var editingGiftID: String?
     private let suggestGift: SuggestGiftUseCase
-    private var suggestionTask: Task<Void, Never>?
+    private let debounce: Duration
+    private(set) var suggestionTask: Task<Void, Never>?
+    /// The automatically chosen emoji a gift being edited already has; kept until a rename yields a better guess.
+    private var storedEmoji: String?
 
-    init(route: GiftSheetRoute, data: AppData, suggestGift: SuggestGiftUseCase) {
+    init(
+        route: GiftSheetRoute,
+        data: AppData,
+        suggestGift: SuggestGiftUseCase,
+        debounce: Duration = .milliseconds(500)
+    ) {
         self.suggestGift = suggestGift
+        self.debounce = debounce
         editingGiftID = route.editingGiftID
 
         if let giftID = route.editingGiftID,
             let gift = data.gifts.first(where: { $0.id == giftID })
         {
+            // An emoji the user picked stays sticky; an inferred one is re-inferred on rename.
             draft = AddGiftDraft(
                 name: gift.name,
-                emoji: gift.emoji,
+                emoji: gift.emojiPickedByUser ? gift.emoji : nil,
                 value: Int(gift.value),
                 valueTouched: true,
                 fromID: gift.giverID,
@@ -29,9 +39,17 @@ final class AddGiftState {
                 paidByYou: gift.paidByYou,
                 occasion: gift.occasion,
                 date: gift.date,
-                createdAt: gift.createdAt
+                createdAt: gift.createdAt,
+                aiEmoji: gift.emojiPickedByUser ? nil : gift.emoji
             )
+            if !gift.emojiPickedByUser { storedEmoji = gift.emoji }
         }
+    }
+
+    /// Loads the on-device model while the sheet opens so the first inference is fast.
+    func prewarm() {
+        guard suggestGift.isIntelligenceAvailable else { return }
+        suggestGift.prewarmIntelligence()
     }
 
     var input: SaveGiftInput {
@@ -81,31 +99,36 @@ final class AddGiftState {
         )
     }
 
+    /// Updates the name, shows the keyword heuristic right away and, after a short
+    /// pause in typing, asks the on-device model for a better emoji.
     func setName(_ name: String) {
+        guard name != draft.name else { return }
         draft.name = name
-        draft.aiEmoji = nil
+        // Without a specific keyword match, keep the emoji the gift already had instead of the generic one.
+        draft.aiEmoji = suggestGift.keywordSuggestion(for: name) == nil ? storedEmoji : nil
         suggestionTask?.cancel()
+        suggestionTask = nil
         aiLoading = false
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.count >= 2, suggestGift.isIntelligenceAvailable else { return }
+        guard draft.emoji == nil, trimmed.count >= 2, suggestGift.isIntelligenceAvailable else {
+            return
+        }
         suggestionTask = Task {
-            try? await Task.sleep(for: .milliseconds(600))
-            guard !Task.isCancelled,
-                draft.name.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed
-            else { return }
+            try? await Task.sleep(for: debounce)
+            guard !isStale(trimmed) else { return }
             aiLoading = true
             let result = await suggestGift.intelligentSuggestion(for: trimmed)
-            guard !Task.isCancelled,
-                draft.name.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed
-            else {
-                aiLoading = false
-                return
-            }
-            if let result {
-                if draft.emoji == nil { draft.aiEmoji = result.emoji }
-            }
+            guard !isStale(trimmed) else { return }
             aiLoading = false
+            if let result, draft.emoji == nil { draft.aiEmoji = result.emoji }
         }
+    }
+
+    /// True once this inference was cancelled or the name moved on. Whoever cancelled it
+    /// already reset `aiLoading` or started the newer inference that now owns it.
+    private func isStale(_ trimmedName: String) -> Bool {
+        Task.isCancelled
+            || draft.name.trimmingCharacters(in: .whitespacesAndNewlines) != trimmedName
     }
 
     func open(_ picker: AddGiftPicker) { self.picker = picker }
@@ -124,7 +147,13 @@ final class AddGiftState {
         draft.occasion = occasion
         picker = nil
     }
-    func selectEmoji(_ emoji: String) { draft.emoji = emoji; picker = nil }
+    func selectEmoji(_ emoji: String) {
+        draft.emoji = emoji
+        suggestionTask?.cancel()
+        suggestionTask = nil
+        aiLoading = false
+        picker = nil
+    }
     func selectDate(_ date: Date) { draft.date = date; picker = nil }
 
     func useCustomEmoji(_ value: String) {
@@ -142,6 +171,7 @@ final class AddGiftState {
 
     func cancel() {
         suggestionTask?.cancel()
+        suggestionTask = nil
         aiLoading = false
     }
 }

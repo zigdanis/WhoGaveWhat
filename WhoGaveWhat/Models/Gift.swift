@@ -11,6 +11,8 @@ struct Gift: Identifiable, Hashable {
     var date: Date
     var value: Double
     let createdAt: Date
+    /// True when the user chose the emoji in the picker rather than inferring it from the name.
+    var emojiPickedByUser = false
 
     /// Direction as seen by the viewpoint person, or nil without a viewpoint or when it isn't an endpoint.
     func direction(relativeTo personID: String?) -> GiftDirection? {
