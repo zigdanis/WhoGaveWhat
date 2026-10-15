@@ -42,6 +42,7 @@ struct PersonDetailView: View {
                 relativeTo: entityId
             ) == .given
         }
+        let isSelf = composition.data.isSelf(entityId)
         let list = filter == "received" ? recv : (filter == "given" ? given : gs)
 
         List {
@@ -55,6 +56,15 @@ struct PersonDetailView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityAddTraits(.isImage)
                 .accessibilityIdentifier("person-detail.hero")
+
+                Card {
+                    Toggle("This is me", isOn: selfBinding(isSelf))
+                        .font(Font.app(16, .regular)).foregroundColor(Color.textPrimary)
+                        .tint(Color.brandFill)
+                        .padding(.horizontal, 14).frame(minHeight: 50)
+                        .accessibilityIdentifier("person-detail.is-me")
+                }
+                .padding(.top, 18)
 
                 HStack(spacing: 10) {
                     statCard(
@@ -144,6 +154,13 @@ struct PersonDetailView: View {
         .sheet(isPresented: $renaming) {
             renameSheet(name: name, count: giftsCount)
         }
+    }
+
+    /// Exactly one person can be the viewpoint; switching this one on moves it from anyone else.
+    private func selfBinding(_ isSelf: Bool) -> Binding<Bool> {
+        Binding(
+            get: { isSelf },
+            set: { composition.markSelf($0, personID: entityId) })
     }
 
     /// Drives the per-gift delete dialog off the optional pending gift.

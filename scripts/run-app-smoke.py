@@ -22,6 +22,7 @@ PLANNED_CHECKPOINT_NAMES = (
     "details-value", "gift-saved", "gift-after-relaunch", "settings-currency", "licenses",
     "calendar-reverse", "gift-content-sized-compact-keyboard", "gift-content-sized-details",
     "gift-content-sized-details-keyboard", "gift-content-sized-refocused-compact-keyboard",
+    "person-detail-is-me", "people-you-badge",
     "person-add-cancel-draft", "person-add-created", "person-editor-delete-keyboard",
     "person-editor-delete-confirmation", "person-editor-delete-cancelled", "person-add-deleted",
     "person-editor", "person-editor-photo", "person-detail", "person-editor-keyboard",

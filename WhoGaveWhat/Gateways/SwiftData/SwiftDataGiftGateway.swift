@@ -103,12 +103,6 @@ private extension Gift {
             id: storedGift.id,
             emoji: storedGift.emoji,
             name: storedGift.name,
-            direction: GiftDirectionResolver.resolve(
-                giverID: storedGift.giver.id,
-                giverRole: PersonRole(rawValue: storedGift.giver.roleRawValue) ?? .contact,
-                recipientID: storedGift.recipient.id,
-                recipientRole: PersonRole(rawValue: storedGift.recipient.roleRawValue) ?? .contact
-            ),
             giverID: storedGift.giver.id,
             recipientID: storedGift.recipient.id,
             paidByYou: storedGift.paidByYou,

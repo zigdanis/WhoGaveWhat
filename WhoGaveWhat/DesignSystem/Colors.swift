@@ -100,8 +100,20 @@ extension Person {
 struct GiftDirectionAppearance {
     let main: Color
     let tint: Color
-    let label: LocalizedStringResource
+    let label: LocalizedStringResource?
     let arrow: String
+
+    /// Used when there is no viewpoint person or the viewpoint isn't part of the gift.
+    static let neutral = GiftDirectionAppearance(
+        main: .given,
+        tint: .givenTint,
+        label: nil,
+        arrow: ""
+    )
+
+    static func appearance(for direction: GiftDirection?) -> GiftDirectionAppearance {
+        direction?.appearance ?? .neutral
+    }
 }
 
 extension GiftDirection {

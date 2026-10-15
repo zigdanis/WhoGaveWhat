@@ -90,8 +90,13 @@ final class AddGiftState {
         }
     }
 
-    func direction(householdIDs: Set<String>, saveGift: SaveGiftUseCase) -> GiftDirection {
-        saveGift.direction(for: input, householdIDs: householdIDs)
+    func direction(relativeTo selfPersonID: String?) -> GiftDirection? {
+        guard let selfPersonID, let fromID = input.fromID, let toID = input.toID else { return nil }
+        return GiftDirectionResolver.resolve(
+            giverID: fromID,
+            recipientID: toID,
+            relativeTo: selfPersonID
+        )
     }
 
     /// Updates the name, shows the keyword heuristic right away and, after a short

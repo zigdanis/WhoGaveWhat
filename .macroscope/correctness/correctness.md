@@ -33,9 +33,9 @@ Review for concrete correctness, persistence, concurrency, localization, target-
 
 ## Gift and persistence invariants
 
-- A saved gift has nonempty trimmed text, distinct existing giver and recipient IDs, a stable ID, and a stable `createdAt` when edited. Its direction is derived from endpoint roles rather than trusted as independent persisted state.
+- A saved gift has nonempty trimmed text, distinct existing giver and recipient IDs, a stable ID, and a stable `createdAt` when edited. Its direction is never persisted: it is derived from the giver and recipient relative to the optional `selfPersonID` viewpoint, and is nil when there is no viewpoint or it is not an endpoint.
 - SwiftData writes must either save the full intended mutation or roll the context back and surface the error. Flag swallowed persistence failures, partial relationship updates, or deletes that leave related gifts invalid.
-- People are represented by one unified value model with household/contact roles. Creating, renaming, and deleting people must preserve gift endpoint validity and the product's explicit delete behavior.
+- People are one flat, equal value model with no household, family, or contact roles; the only distinction is the optional single `selfPersonID` viewpoint, which must be cleared when that person is deleted. Creating, renaming, and deleting people must preserve gift endpoint validity and the product's explicit delete behavior.
 - The deliberately named `WhoGaveWhatSwiftData` store and the plain-value-model boundary are intentional. Do not introduce legacy imports, migration scaffolding, or alternate containers without a current product requirement.
 - Home timelines, person totals, and insights must agree on direction, dates, values, and filtering. Flag changes that make the same gift count differently across those views.
 

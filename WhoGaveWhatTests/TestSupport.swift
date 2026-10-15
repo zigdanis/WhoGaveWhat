@@ -4,11 +4,15 @@
 final class TestPreferencesGateway: PreferencesGateway {
     var didCompleteOnboarding = false
     var currencyCode = "USD"
+    var selfPersonID: String?
     func setDidCompleteOnboarding(_ completed: Bool) {
         didCompleteOnboarding = completed
     }
     func setCurrencyCode(_ currencyCode: String) {
         self.currencyCode = currencyCode
+    }
+    func setSelfPersonID(_ id: String?) {
+        selfPersonID = id
     }
 }
 
@@ -34,10 +38,14 @@ final class TestGiftGateway: GiftGateway {
 }
 
 @MainActor
-func makeTestComposition() throws -> AppComposition {
-    AppComposition(
+func makeTestComposition(
+    selfPersonID: String? = SwiftDataStore.seedSelfPersonID
+) throws -> AppComposition {
+    let preferences = TestPreferencesGateway()
+    preferences.selfPersonID = selfPersonID
+    return AppComposition(
         store: try SwiftDataStore(inMemory: true, seed: true),
-        preferences: TestPreferencesGateway(),
+        preferences: preferences,
         intelligence: TestIntelligenceGateway()
     )
 }

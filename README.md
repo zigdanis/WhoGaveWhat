@@ -1,6 +1,6 @@
 # Who Gave What
 
-A warm little ledger for every gift your family gives and gets. Native **iOS** app
+A warm little ledger for every gift you give and get. Native **iOS** app
 built with **Swift + SwiftUI**, backed by **SwiftData**, implementing a design from
 Claude Design.
 
@@ -27,9 +27,9 @@ xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
   [On-device icon inference](#on-device-icon-inference)); Received/Given segment,
   unified person picker, "Paid by you" toggle, occasion, date. Saving writes
   to SwiftData and updates the timeline.
-- **People** — family + friends/relatives, each with running totals.
+- **People** — one flat alphabetical list of equal people with running totals. Optionally mark one person as "This is me" (shown with a You badge) to set your viewpoint.
 - **Person detail** — per-person stats, by-occasion chart, full history.
-- **Insights** — received vs. given split, "Who's really paying" card, top people, by occasion.
+- **Insights** — received vs. given split relative to the person marked as you (a prompt appears until someone is marked), "Who's really paying" card, top people, by occasion.
 
 ## Design system
 
@@ -67,9 +67,13 @@ gift in the editor re-infers its icon unless one was picked manually in that ses
 
 Storage is **SwiftData**, isolated behind `GiftGateway` and `PeopleGateway`:
 
-- `StoredPerson` persists one unified person model with a household or contact role.
+- `StoredPerson` persists one flat person model: all people are equal, with no family,
+  household or contact roles.
 - `StoredGift` persists required giver and recipient relationships, occasion, gift
-  date, and explicit creation time. Direction is derived from the endpoint roles.
+  date, and explicit creation time. Direction is not stored: `Gift.direction(relativeTo:)`
+  derives received/given from the giver and recipient relative to the optional viewpoint
+  person, kept as `selfPersonID` in `PreferencesGateway`. Without a viewpoint, or when it
+  is not part of the gift, the gift is shown neutrally.
 
 `SwiftDataStore` owns a distinctly named `WhoGaveWhatSwiftData` store. The app has not
 shipped, so this schema intentionally starts fresh: there is no legacy import,

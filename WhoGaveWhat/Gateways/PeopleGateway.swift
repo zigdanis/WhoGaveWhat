@@ -12,7 +12,6 @@ protocol PeopleGateway: AnyObject {
         id: String,
         name: String,
         colorHex: UInt,
-        role: PersonRole,
         sortIndex: Int
     ) throws
     func renamePerson(id: String, name: String) throws

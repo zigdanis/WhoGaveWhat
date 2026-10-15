@@ -8,22 +8,41 @@ struct SeededDataTests {
     @Test func loadsTheSampleDatasetThroughGateways() throws {
         let composition = try makeTestComposition()
         #expect(composition.data.gifts.count == 12)
-        #expect(composition.data.householdMembers.count == 4)
-        #expect(composition.data.contacts.count == 6)
         #expect(composition.data.people.count == 10)
+        #expect(composition.data.selfPersonID == "anton")
+        #expect(composition.data.isSelf("anton"))
+        #expect(!composition.data.isSelf("marina"))
     }
 
     @Test func insightsSplitAndSumGifts() throws {
         let composition = try makeTestComposition()
         let insights = composition.buildInsights.execute(
             gifts: composition.data.gifts,
-            people: composition.data.contacts
+            people: composition.data.people,
+            selfPersonID: composition.data.selfPersonID
         )
-        #expect(insights.received.count == 7)
-        #expect(insights.given.count == 5)
-        #expect(insights.receivedValue == 19_300)
-        #expect(insights.givenValue == 11_800)
+        #expect(insights.received.count == 3)
+        #expect(insights.given.count == 3)
+        #expect(insights.receivedValue == 13_200)
+        #expect(insights.givenValue == 5_800)
+        #expect(insights.circulatedValue == 31_100)
+        #expect(insights.topGivers.first?.person.id == "pavel")
+        #expect(insights.topReceivers.first?.person.id == "dmitri")
         #expect([Gift]().totalValue == 0)
+    }
+
+    @Test func insightsWithoutViewpointHaveNoBalance() throws {
+        let composition = try makeTestComposition(selfPersonID: nil)
+        let insights = composition.buildInsights.execute(
+            gifts: composition.data.gifts,
+            people: composition.data.people,
+            selfPersonID: composition.data.selfPersonID
+        )
+        #expect(insights.received.isEmpty)
+        #expect(insights.given.isEmpty)
+        #expect(insights.topGivers.isEmpty)
+        #expect(insights.topReceivers.isEmpty)
+        #expect(insights.circulatedValue == 31_100)
     }
 }
 
@@ -38,30 +57,103 @@ struct SaveGiftInputTests {
         #expect(!makeGiftInput(name: "   ", fromID: "igor", toID: "you").canSave)
     }
 
-    @Test func directionDerivesFromHouseholdSide() throws {
+    @Test func draftDirectionIsRelativeToTheViewpoint() throws {
         let composition = try makeTestComposition()
-        let ids = composition.data.householdIDs
-        let useCase = composition.saveGiftUseCase
-        #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "anton"), householdIDs: ids) == .received)
-        #expect(useCase.direction(for: makeGiftInput(fromID: "anton", toID: "maria"), householdIDs: ids) == .given)
-        #expect(useCase.direction(for: makeGiftInput(fromID: "marina", toID: "igor"), householdIDs: ids) == .given)
+        let state = AddGiftState(
+            route: .create,
+            data: composition.data,
+            suggestGift: composition.suggestGift
+        )
+        #expect(state.direction(relativeTo: "anton") == nil)
+
+        state.selectFrom("maria")
+        state.selectTo("anton")
+        #expect(state.direction(relativeTo: "anton") == .received)
+        #expect(state.direction(relativeTo: "maria") == .given)
+        #expect(state.direction(relativeTo: "igor") == nil)
+        #expect(state.direction(relativeTo: nil) == nil)
+    }
+}
+
+struct GiftViewpointTests {
+    @Test func directionIsRelativeToTheViewpointPerson() {
+        let gift = makeGift(giverID: "maria", recipientID: "igor")
+        #expect(gift.direction(relativeTo: "maria") == .given)
+        #expect(gift.direction(relativeTo: "igor") == .received)
+        #expect(gift.direction(relativeTo: "olga") == nil)
+        #expect(gift.direction(relativeTo: nil) == nil)
     }
 
-    @Test func directionFallsBackToReceivedForSameSideEndpoints() {
-        let useCase = makeSaveGiftUseCase().0
-        let householdIDs: Set<String> = ["you", "marina", "sofia"]
-
-        #expect(useCase.direction(for: makeGiftInput(fromID: "marina", toID: "sofia"), householdIDs: householdIDs) == .received)
-        #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "igor"), householdIDs: householdIDs) == .received)
+    @Test func timelineFilterFollowsTheViewpoint() {
+        let gifts = [
+            makeGift(id: "in", giverID: "maria", recipientID: "igor"),
+            makeGift(id: "out", giverID: "igor", recipientID: "maria"),
+            makeGift(id: "other", giverID: "maria", recipientID: "olga")
+        ]
+        let useCase = BuildGiftTimelineUseCase()
+        func ids(_ filter: String, _ viewpoint: String?) -> Set<String> {
+            Set(useCase.execute(gifts: gifts, filter: filter, relativeTo: viewpoint).flatMap(\.gifts).map(\.id))
+        }
+        #expect(ids("all", nil) == ["in", "out", "other"])
+        #expect(ids("received", "igor") == ["in"])
+        #expect(ids("given", "igor") == ["out"])
+        #expect(ids("received", nil).isEmpty)
     }
 
-    @Test func directionDoesNotSpecialCaseLegacySelfID() {
-        let useCase = makeSaveGiftUseCase().0
+    private func makeGift(id: String = "g", giverID: String, recipientID: String) -> Gift {
+        Gift(
+            id: id, emoji: "🎁", name: id, giverID: giverID, recipientID: recipientID,
+            paidByYou: false, occasion: "", date: AppDate.today, value: 0,
+            createdAt: AppDate.today)
+    }
+}
 
-        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "marina"), householdIDs: ["you", "marina"]) == .received)
-        #expect(useCase.direction(for: makeGiftInput(fromID: "marina", toID: "you"), householdIDs: ["you", "marina"]) == .received)
-        #expect(useCase.direction(for: makeGiftInput(fromID: "you", toID: "maria"), householdIDs: []) == .received)
-        #expect(useCase.direction(for: makeGiftInput(fromID: "maria", toID: "you"), householdIDs: []) == .received)
+@MainActor
+struct SelfPersonTests {
+    @Test func settingTheViewpointPersistsAndKeepsExactlyOne() throws {
+        let preferences = TestPreferencesGateway()
+        let composition = AppComposition(
+            store: try SwiftDataStore(inMemory: true, seed: true),
+            preferences: preferences,
+            intelligence: TestIntelligenceGateway()
+        )
+        #expect(composition.data.selfPersonID == nil)
+
+        composition.markSelf(true, personID: "marina")
+        composition.markSelf(true, personID: "igor")
+        #expect(composition.data.selfPersonID == "igor")
+        #expect(preferences.selfPersonID == "igor")
+        #expect(!composition.data.isSelf("marina"))
+
+        composition.markSelf(false, personID: "marina")
+        #expect(composition.data.selfPersonID == "igor")
+        composition.markSelf(false, personID: "igor")
+        #expect(composition.data.selfPersonID == nil)
+        #expect(preferences.selfPersonID == nil)
+    }
+
+    @Test func deletingTheViewpointPersonClearsIt() throws {
+        let composition = try makeTestComposition()
+        composition.deletePerson(id: "marina")
+        #expect(composition.data.selfPersonID == "anton")
+
+        composition.deletePerson(id: "anton")
+        #expect(composition.data.selfPersonID == nil)
+        #expect(composition.data.people.contains { $0.id == "anton" } == false)
+    }
+
+    @Test func userDefaultsGatewayPersistsAndClearsTheViewpoint() {
+        let suiteName = "SelfPersonTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let gateway = UserDefaultsPreferencesGateway(defaults: defaults)
+        #expect(gateway.selfPersonID == nil)
+
+        gateway.setSelfPersonID("anton")
+        #expect(UserDefaultsPreferencesGateway(defaults: defaults).selfPersonID == "anton")
+
+        gateway.setSelfPersonID(nil)
+        #expect(UserDefaultsPreferencesGateway(defaults: defaults).selfPersonID == nil)
     }
 }
 
@@ -96,9 +188,9 @@ struct AddGiftDraftTests {
 @MainActor
 struct PersonPickerStateTests {
     private let people = [
-        Person(id: "alex", name: "Alex", colorHex: 0x123456, role: .contact),
-        Person(id: "alice", name: "Alice", colorHex: 0x654321, role: .household),
-        Person(id: "bob", name: "Bob", colorHex: 0xABCDEF, role: .contact)
+        Person(id: "alex", name: "Alex", colorHex: 0x123456),
+        Person(id: "alice", name: "Alice", colorHex: 0x654321),
+        Person(id: "bob", name: "Bob", colorHex: 0xABCDEF)
     ]
 
     @Test func initialMissingOrInvalidSelectionDefaultsToFirstPerson() {
@@ -161,7 +253,7 @@ struct PersonPickerStateTests {
         let id = try #require(
             pickerState.createAndSelectPerson(
                 named: "Dana",
-                create: { composition.createPerson(name: $0, isFamily: false) },
+                create: { composition.createPerson(name: $0) },
                 select: giftState.selectFrom
             ))
 
@@ -186,7 +278,7 @@ struct PersonPickerStateTests {
         let id = try #require(
             pickerState.createAndSelectPerson(
                 named: "Dana",
-                create: { composition.createPerson(name: $0, isFamily: false) },
+                create: { composition.createPerson(name: $0) },
                 select: giftState.selectFrom
             ))
 
@@ -211,7 +303,7 @@ struct PersonPickerStateTests {
         let id = try #require(
             pickerState.createAndSelectPerson(
                 named: existingPerson.name.uppercased(),
-                create: { composition.createPerson(name: $0, isFamily: false) },
+                create: { composition.createPerson(name: $0) },
                 select: giftState.selectTo
             ))
 
@@ -273,13 +365,12 @@ struct SaveGiftTests {
     @Test func savingUsesSuggestedEmojiButLeavesUntouchedValueAtZero() {
         let (useCase, gateway) = makeSaveGiftUseCase()
         _ = try? useCase.execute(
-            makeGiftInput(name: "Bottle of wine", fromID: "you", toID: "igor"),
-            householdIDs: ["you", "marina"]
+            makeGiftInput(name: "Bottle of wine", fromID: "you", toID: "igor")
         )
         let saved = gateway.gifts.first { $0.name == "Bottle of wine" }
         #expect(saved?.value == 0)
         #expect(saved?.emoji == "🍷")
-        #expect(saved?.direction == .given)
+        #expect(saved?.direction(relativeTo: "you") == .given)
         #expect(saved?.giverID == "you")
         #expect(saved?.recipientID == "igor")
         #expect(saved?.paidByYou == false)
@@ -290,7 +381,7 @@ struct SaveGiftTests {
         _ = try? useCase.execute(
             makeGiftInput(
                 name: "Bottle of wine", fromID: "you", toID: "igor", value: 2_500,
-                valueTouched: true), householdIDs: ["you"])
+                valueTouched: true))
         #expect(gateway.gifts.contains { $0.name == "Bottle of wine" && $0.value == 2_500 })
     }
 
@@ -299,20 +390,21 @@ struct SaveGiftTests {
         _ = try? useCase.execute(
             makeGiftInput(
                 name: "Soft teddy", fromID: "maria", toID: "you", paidByYou: true
-            ), householdIDs: ["you"])
+            ))
         let saved = gateway.gifts.first { $0.name == "Soft teddy" }
-        #expect(saved?.direction == .received)
+        #expect(saved?.direction(relativeTo: "you") == .received)
         #expect(saved?.paidByYou == true)
     }
 
-    @Test func familyMemberGiftKeepsPaidByYouFalse() {
+    @Test func thirdPartyGiftKeepsPaidByYouFalse() {
         let (useCase, gateway) = makeSaveGiftUseCase()
         _ = try? useCase.execute(
             makeGiftInput(
                 name: "Marina's wine", fromID: "marina", toID: "igor"
-            ), householdIDs: ["you", "marina"])
+            ))
         let saved = gateway.gifts.first { $0.name == "Marina's wine" }
-        #expect(saved?.direction == .given)
+        #expect(saved?.direction(relativeTo: "you") == nil)
+        #expect(saved?.direction(relativeTo: "marina") == .given)
         #expect(saved?.giverID == "marina")
         #expect(saved?.recipientID == "igor")
         #expect(saved?.paidByYou == false)
@@ -325,7 +417,7 @@ struct SaveGiftTests {
         input.editingGiftID = "existing-id"
         input.createdAt = createdAt
 
-        try useCase.execute(input, householdIDs: ["you"])
+        try useCase.execute(input)
 
         #expect(gateway.gifts.first?.id == "existing-id")
         #expect(gateway.gifts.first?.createdAt == createdAt)
@@ -335,7 +427,7 @@ struct SaveGiftTests {
 struct OrderingTests {
     private func gift(_ id: String, date: Date, createdAt: Date) -> Gift {
         Gift(
-            id: id, emoji: "🎁", name: id, direction: .received, giverID: "p",
+            id: id, emoji: "🎁", name: id, giverID: "p",
             recipientID: "you", paidByYou: false, occasion: "", date: date, value: 0,
             createdAt: createdAt)
     }
