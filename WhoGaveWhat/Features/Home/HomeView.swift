@@ -39,7 +39,7 @@ struct HomeView: View {
                         }
                     } header: {
                         Text(group.label)
-                            .font(Font.app(13, .regular)).foregroundColor(Color.muted)
+                            .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
                             .textCase(nil)
                     }
                 }
@@ -47,7 +47,8 @@ struct HomeView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color.bg)
+        .scrollEdgeEffectStyle(.soft, for: .bottom)
+        .background(Color.appBackground)
         .floatingAddButton(composition: composition)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -86,11 +87,11 @@ struct HomeView: View {
         VStack(spacing: 12) {
             Image(systemName: "gift")
                 .font(.system(size: 46, weight: .light))
-                .foregroundColor(Color.muted4)
+                .foregroundColor(Color.textTertiary)
             Text("No gifts yet")
-                .font(Font.app(17, .semibold)).foregroundColor(Color.muted2)
+                .font(Font.app(17, .semibold)).foregroundColor(Color.textSecondary)
             Text("Nothing here yet — add your first to start tracking.")
-                .font(Font.app(14, .regular)).foregroundColor(Color.muted)
+                .font(Font.app(14, .regular)).foregroundColor(Color.textSecondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 260)
         }

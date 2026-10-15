@@ -43,6 +43,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.staticTexts[giftName].waitForExistence(timeout: timeout))
         attach("gift-after-relaunch")
+        verifyDarkAppearance()
 
         try addGift(named: secondGiftName, createPeople: false)
         XCTAssertTrue(app.staticTexts[secondGiftName].waitForExistence(timeout: timeout))
@@ -272,6 +273,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
         XCTAssertTrue(people.waitForExistence(timeout: timeout))
         people.tap()
+        // Names wrap at accessibility sizes, so the row can start below the fold.
+        for _ in 0..<8 where !personRow.exists {
+            app.swipeUp()
+        }
         XCTAssertTrue(personRow.waitForExistence(timeout: timeout))
         personRow.tap()
         app.buttons["person-detail.edit"].tap()
@@ -442,6 +447,48 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.buttons["add-gift.save"].tap()
         XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
         XCTAssertFalse(app.buttons["add-gift.save"].exists)
+    }
+
+    /// Dark-mode checkpoint: relaunches with `KS_APPEARANCE=dark` so the key screens
+    /// render with adaptive colors, then relaunches in the system appearance.
+    private func verifyDarkAppearance() {
+        continueAfterFailure = false
+        app.terminate()
+        app.launchEnvironment["KS_APPEARANCE"] = "dark"
+        app.launch()
+        defer {
+            app.terminate()
+            app.launchEnvironment["KS_APPEARANCE"] = nil
+            app.launch()
+            XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: timeout))
+        }
+        XCTAssertTrue(
+            app.descendants(matching: .any)["appearance.dark"].waitForExistence(timeout: timeout),
+            "App did not report dark appearance"
+        )
+        XCTAssertTrue(app.staticTexts[giftName].waitForExistence(timeout: timeout))
+        attach("dark-home")
+
+        app.tabBars.buttons["People"].tap()
+        XCTAssertTrue(app.navigationBars["People"].waitForExistence(timeout: timeout))
+        attach("dark-people")
+        app.tabBars.buttons["Home"].tap()
+
+        app.staticTexts[giftName].tap()
+        let detailBar = app.navigationBars["Gift"]
+        XCTAssertTrue(detailBar.waitForExistence(timeout: timeout))
+        attach("dark-gift-detail")
+        let back = detailBar.buttons["BackButton"]
+        XCTAssertTrue(back.waitForExistence(timeout: timeout))
+        back.tap()
+
+        app.buttons["Add a gift"].tap()
+        let title = app.descendants(matching: .any)["add-gift.title"]
+        XCTAssertTrue(title.waitForExistence(timeout: timeout))
+        attach("dark-add-gift")
+        app.buttons["Cancel"].tap()
+        waitForDisappearance(title)
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
     }
 
     private func verifyPersonProfileJourney() {
@@ -742,7 +789,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.buttons["settings.third-party-licenses"].tap()
         let licenses = element(identifier: "settings.third-party-licenses.screen")
         XCTAssertTrue(licenses.waitForExistence(timeout: timeout))
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'Archivo'")).firstMatch.waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'Lucide'")).firstMatch.waitForExistence(timeout: timeout))
         attach("licenses")
         let licensesNavigationBar = app.navigationBars["Third-party licenses"]
         XCTAssertTrue(licensesNavigationBar.waitForExistence(timeout: timeout))

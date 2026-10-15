@@ -32,6 +32,7 @@ PLANNED_CHECKPOINT_NAMES = (
     "person-editor-photo-persisted", "person-photo-replacement-crop",
     "person-editor-existing-photo-crop-cancelled", "person-editor-photo-removed",
     "person-editor-photo-removal-persisted",
+    "dark-home", "dark-people", "dark-gift-detail", "dark-add-gift",
 )
 APP_LANGUAGE_CHECKPOINT_NAMES = (
     "system-settings", "language-region-before", "english-system-russian-secondary",

@@ -4,7 +4,6 @@ struct Segmented: View {
     struct Option {
         let key: String
         let label: LocalizedStringResource
-        let accent: Color
     }
 
     let options: [Option]
@@ -20,22 +19,18 @@ struct Segmented: View {
                 } label: {
                     Text(option.label)
                         .font(Font.app(14, .semibold))
-                        .foregroundColor(isSelected ? .white : Color.chipText)
+                        .foregroundColor(isSelected ? Color.onFill : Color.textSecondary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 7)
-                        .background(
-                            RoundedRectangle(cornerRadius: 7, style: .continuous)
-                                .fill(isSelected ? Color.emerald : Color.clear)
-                                .shadow(
-                                    color: isSelected ? Color.emerald.opacity(0.35) : .clear,
-                                    radius: 2, x: 0, y: 1)
-                        )
-                        .contentShape(Rectangle())
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(isSelected ? Color.brandFill : Color.clear))
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(2)
-        .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.track))
+        .padding(3)
+        .background(Capsule().fill(Color.fillTrack))
     }
 }
