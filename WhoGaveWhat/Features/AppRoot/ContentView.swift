@@ -5,7 +5,7 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            Color.bg.ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
             switch composition.router.screen {
             case .onboarding:
                 OnboardingView(
@@ -21,8 +21,7 @@ struct ContentView: View {
                     .transition(.opacity)
             }
         }
-        .foregroundColor(Color.ink)
+        .foregroundColor(Color.textPrimary)
         .animation(.easeInOut(duration: 0.25), value: composition.router.screen)
-        .preferredColorScheme(.light)
     }
 }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Native iOS 26 shell: a Liquid Glass tab bar floating over three navigation
-/// stacks, with a floating "Add a gift" pill pinned just above it. Person detail
+/// stacks, with a floating "Add a gift" glass button pinned just above it. Person detail
 /// is a native push; "Add a gift" and Settings are native sheets.
 struct RootAppView: View {
     let composition: AppComposition
@@ -25,7 +25,7 @@ struct RootAppView: View {
                     .navigationTitle("Insights")
             }
         }
-        .tint(Color.recv)
+        .tint(Color.brand)
         .tabBarMinimizeBehavior(.onScrollDown)
         .sheet(item: giftSheetBinding) { route in
             AddGiftSheet(route: route, composition: composition)
@@ -71,7 +71,7 @@ struct RootAppView: View {
 }
 
 /// Shared scroll container for a tab's root screen — content scrolls under the
-/// floating glass tab bar, and the "Add a gift" pill is pinned just above it via
+/// floating glass tab bar, and the "Add a gift" glass button is pinned just above it via
 /// a bottom safe-area inset (so it never overlaps the bar on any device).
 struct ScreenScroll<Content: View>: View {
     let composition: AppComposition
@@ -84,29 +84,21 @@ struct ScreenScroll<Content: View>: View {
                 .padding(.bottom, 12)
         }
         .scrollIndicators(.hidden)
-        .background(Color.bg)
+        .scrollEdgeEffectStyle(.soft, for: .bottom)
+        .background(Color.appBackground)
         .floatingAddButton(composition: composition)
     }
 }
 
-/// The floating "Add a gift" button — a rounded-rect pill (Claude Design) pinned
-/// just above the tab bar. Shared by `ScreenScroll` and Home's native List.
+/// The floating "Add a gift" button, pinned just above the tab bar. Shared by
+/// `ScreenScroll` and Home's native List.
 struct AddGiftFAB: View {
     let router: AppRouter
 
     var body: some View {
-        Button {
+        FloatingActionButton(title: "Add a gift", systemImage: "plus") {
             router.presentNewGift()
-        } label: {
-            Label("Add a gift", systemImage: "plus")
-                .font(Font.app(16, .semibold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 22).padding(.vertical, 13)
-                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(Color.ink))
-                .ksCardShadow(strong: true)
         }
-        .buttonStyle(.plain)
-        .padding(.bottom, 6)
         .accessibilityLabel("Add a gift")
     }
 }

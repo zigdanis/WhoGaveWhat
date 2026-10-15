@@ -1,6 +1,5 @@
 import PhotosUI
 import SwiftUI
-import UIKit
 
 struct PersonEditorSheet: View {
     let title: LocalizedStringResource
@@ -85,10 +84,10 @@ struct PersonEditorSheet: View {
             .accessibilityIdentifier("person-editor.scroll")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.bg)
+        .background(Color.appBackground)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        .presentationBackground(Color.bg)
+        .presentationBackground(Color.appBackground)
         .interactiveDismissDisabled(isLoadingPhoto)
         .onAppear {
             if focusesNameOnAppear {
@@ -204,9 +203,9 @@ private struct PersonEditorHeader: View {
             Button(action: onCancel) {
                 Image(systemName: "xmark")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(Color.ink)
+                    .foregroundStyle(Color.textPrimary)
                     .frame(width: 44, height: 44)
-                    .background(Color.card, in: Circle())
+                    .glassEffect(.regular.interactive(), in: Circle())
             }
             .accessibilityLabel(Text("Cancel"))
             .accessibilityIdentifier("person-editor.cancel")
@@ -226,16 +225,18 @@ private struct PersonEditorHeader: View {
             Button(action: onSave) {
                 Image(systemName: "checkmark")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(Color.white)
+                    .foregroundStyle(canSave ? Color.onFill : Color.textSecondary)
                     .frame(width: 44, height: 44)
-                    .background(canSave ? Color.ink : Color.muted3, in: Circle())
+                    .glassEffect(
+                        .regular.tint(canSave ? Color.brandFill : nil).interactive(),
+                        in: Circle())
             }
             .disabled(!canSave)
             .accessibilityLabel(Text("Save"))
             .accessibilityIdentifier("person-editor.save")
         }
         .font(.headline)
-        .foregroundStyle(Color.ink)
+        .foregroundStyle(Color.textPrimary)
         .multilineTextAlignment(.center)
         .lineLimit(2)
         .minimumScaleFactor(0.75)
@@ -259,7 +260,10 @@ private struct PersonEditorNameField: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .frame(minHeight: 58)
-            .background(Color.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .background(
+                Color.surface,
+                in: RoundedRectangle(cornerRadius: DesignMetrics.radiusXLarge, style: .continuous)
+            )
             .accessibilityIdentifier("person-editor.name")
     }
 }
@@ -296,46 +300,29 @@ private struct PersonEditorPhotoMenu: View {
         } label: {
             VStack(spacing: 10) {
                 ZStack(alignment: .bottomTrailing) {
-                    photoPreview
-                        .frame(width: 116, height: 116)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.sep, lineWidth: 1))
+                    AvatarView(initials: "", color: Color.avatarPlaceholder, size: .hero, imageData: imageData)
                     Image(systemName: isLoading ? "hourglass" : "plus")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(Color.onFill)
                         .frame(width: 28, height: 28)
-                        .background(Color.ink, in: Circle())
-                        .overlay(Circle().stroke(Color.bg, lineWidth: 2))
+                        .background(Color.brandFill, in: Circle())
+                        .overlay(Circle().stroke(Color.surface, lineWidth: 2))
                 }
                 Text("Photo")
                     .font(.body.weight(.medium))
-                    .foregroundStyle(Color.muted)
+                    .foregroundStyle(Color.textSecondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 20)
-            .background(Color.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .background(
+                Color.surface,
+                in: RoundedRectangle(cornerRadius: DesignMetrics.radiusXLarge, style: .continuous)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: DesignMetrics.radiusXLarge, style: .continuous))
         }
         .disabled(isLoading)
         .accessibilityLabel(imageData == nil ? Text("Choose photo") : Text("Change photo"))
         .accessibilityIdentifier("person-editor.photo")
-    }
-
-    @ViewBuilder
-    private var photoPreview: some View {
-        if let imageData, let image = UIImage(data: imageData) {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-        } else {
-            Circle()
-                .fill(Color.bg)
-                .overlay {
-                    Image(systemName: "person.crop.circle")
-                        .font(.system(size: 48, weight: .light, design: .default))
-                        .foregroundStyle(Color.muted3)
-                }
-        }
     }
 }
 
@@ -352,11 +339,14 @@ private struct PersonEditorDeleteAction: View {
         } label: {
             Label("Delete", systemImage: "trash")
                 .font(.body.weight(.semibold))
-                .foregroundStyle(Color.red)
+                .foregroundStyle(Color.destructive)
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: 58)
-                .background(Color.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .background(
+                    Color.surface,
+                    in: RoundedRectangle(cornerRadius: DesignMetrics.radiusXLarge, style: .continuous)
+                )
+                .contentShape(RoundedRectangle(cornerRadius: DesignMetrics.radiusXLarge, style: .continuous))
         }
         .buttonStyle(.plain)
         .disabled(isDisabled)

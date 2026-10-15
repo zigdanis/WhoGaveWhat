@@ -43,6 +43,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.staticTexts[giftName].waitForExistence(timeout: timeout))
         attach("gift-after-relaunch")
+        verifyDarkAppearance()
 
         try addGift(named: secondGiftName, createPeople: false)
         XCTAssertTrue(app.staticTexts[secondGiftName].waitForExistence(timeout: timeout))
@@ -440,6 +441,36 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertFalse(app.buttons["add-gift.save"].exists)
     }
 
+    /// Dark-mode checkpoint: the key screens render with adaptive colors, then the
+    /// device returns to light so later checkpoints are unaffected.
+    private func verifyDarkAppearance() {
+        XCUIDevice.shared.appearance = .dark
+        defer { XCUIDevice.shared.appearance = .light }
+        XCTAssertTrue(app.staticTexts[giftName].waitForExistence(timeout: timeout))
+        attach("dark-home")
+
+        app.tabBars.buttons["People"].tap()
+        XCTAssertTrue(app.navigationBars["People"].waitForExistence(timeout: timeout))
+        attach("dark-people")
+        app.tabBars.buttons["Home"].tap()
+
+        app.staticTexts[giftName].tap()
+        let detailBar = app.navigationBars["Gift"]
+        XCTAssertTrue(detailBar.waitForExistence(timeout: timeout))
+        attach("dark-gift-detail")
+        let back = detailBar.buttons["BackButton"]
+        XCTAssertTrue(back.waitForExistence(timeout: timeout))
+        back.tap()
+
+        app.buttons["Add a gift"].tap()
+        let title = app.descendants(matching: .any)["add-gift.title"]
+        XCTAssertTrue(title.waitForExistence(timeout: timeout))
+        attach("dark-add-gift")
+        app.buttons["Cancel"].tap()
+        waitForDisappearance(title)
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
+    }
+
     private func verifyPersonProfileJourney() {
         let people = app.tabBars.buttons["People"]
         people.tap()
@@ -738,7 +769,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.buttons["settings.third-party-licenses"].tap()
         let licenses = element(identifier: "settings.third-party-licenses.screen")
         XCTAssertTrue(licenses.waitForExistence(timeout: timeout))
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'Archivo'")).firstMatch.waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'Lucide'")).firstMatch.waitForExistence(timeout: timeout))
         attach("licenses")
         let licensesNavigationBar = app.navigationBars["Third-party licenses"]
         XCTAssertTrue(licensesNavigationBar.waitForExistence(timeout: timeout))

@@ -18,29 +18,29 @@ struct InsightsView: View {
             Card {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Circulated in 2026")
-                        .font(Font.app(13, .regular)).foregroundColor(Color.muted)
+                        .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
                     Text(formattedCurrency(rv + gv, code: composition.currencyCode))
-                        .font(Font.app(32, .bold)).tracking(-0.6).foregroundColor(Color.ink)
+                        .font(Font.app(32, .bold, rounded: true)).tracking(-0.6).foregroundColor(Color.textPrimary)
                         .padding(.top, 7)
 
                     Text(verbatim: "\(LocalizedCount.gifts(composition.data.gifts.count)) · \(LocalizedCount.people(composition.data.contacts.count))")
-                        .font(Font.app(14, .regular)).foregroundColor(Color.muted).padding(.top, 4)
+                        .font(Font.app(14, .regular)).foregroundColor(Color.textSecondary).padding(.top, 4)
 
                     // Stacked received/given bar
                     GeometryReader { geo in
                         HStack(spacing: 0) {
-                            Rectangle().fill(Color.recv).frame(width: geo.size.width * CGFloat(rv / tot))
-                            Rectangle().fill(Color.ink).frame(width: geo.size.width * CGFloat(gv / tot))
+                            Rectangle().fill(Color.received).frame(width: geo.size.width * CGFloat(rv / tot))
+                            Rectangle().fill(Color.given).frame(width: geo.size.width * CGFloat(gv / tot))
                         }
                     }
                     .frame(height: 13)
-                    .background(Color.track)
+                    .background(Color.fillTrack)
                     .clipShape(Capsule())
                     .padding(.top, 18)
 
                     HStack(spacing: 18) {
-                        legend(color: Color.recv, label: "Received", value: formattedCurrency(rv, code: composition.currencyCode))
-                        legend(color: Color.ink, label: "Given", value: formattedCurrency(gv, code: composition.currencyCode))
+                        legend(color: Color.received, label: "Received", value: formattedCurrency(rv, code: composition.currencyCode))
+                        legend(color: Color.given, label: "Given", value: formattedCurrency(gv, code: composition.currencyCode))
                     }
                     .padding(.top, 12)
                 }
@@ -65,25 +65,25 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 0) {
             if received > given {
                 Text("Received gifts lead")
-                    .font(Font.app(13, .semibold)).foregroundColor(.white.opacity(0.7))
+                    .font(Font.app(13, .semibold)).foregroundColor(Color.onFill.opacity(0.85))
                 Text("Received total \(formattedCurrency(received, code: composition.currencyCode))")
-                    .font(Font.app(24, .bold)).tracking(-0.4).foregroundColor(.white).padding(.top, 10)
+                    .font(Font.app(24, .bold, rounded: true)).tracking(-0.4).foregroundColor(Color.onFill).padding(.top, 10)
                 Text("\(formattedCurrency(received - given, code: composition.currencyCode)) more is recorded as received than given.")
-                    .font(Font.app(15, .regular)).foregroundColor(.white.opacity(0.8)).padding(.top, 4)
+                    .font(Font.app(15, .regular)).foregroundColor(Color.onFill.opacity(0.9)).padding(.top, 4)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 Text("Given gifts lead")
-                    .font(Font.app(13, .semibold)).foregroundColor(.white.opacity(0.7))
+                    .font(Font.app(13, .semibold)).foregroundColor(Color.onFill.opacity(0.85))
                 Text("Given total \(formattedCurrency(given, code: composition.currencyCode))")
-                    .font(Font.app(24, .bold)).tracking(-0.4).foregroundColor(.white).padding(.top, 10)
+                    .font(Font.app(24, .bold, rounded: true)).tracking(-0.4).foregroundColor(Color.onFill).padding(.top, 10)
                 Text("\(formattedCurrency(given - received, code: composition.currencyCode)) more is recorded as given than received.")
-                    .font(Font.app(15, .regular)).foregroundColor(.white.opacity(0.8)).padding(.top, 4)
+                    .font(Font.app(15, .regular)).foregroundColor(Color.onFill.opacity(0.9)).padding(.top, 4)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(Color.ink))
+        .background(RoundedRectangle(cornerRadius: DesignMetrics.radiusLarge, style: .continuous).fill(Color.brandFill))
     }
 
     @ViewBuilder
@@ -111,8 +111,8 @@ struct InsightsView: View {
     private func legend(color: Color, label: String, value: String) -> some View {
         HStack(spacing: 7) {
             RoundedRectangle(cornerRadius: 3).fill(color).frame(width: 10, height: 10)
-            Text(LocalizedStringKey(label)).font(Font.app(13, .semibold)).foregroundColor(Color.ink)
-            Text(value).font(Font.app(13, .regular)).foregroundColor(Color.muted)
+            Text(LocalizedStringKey(label)).font(Font.app(13, .semibold)).foregroundColor(Color.textPrimary)
+            Text(value).font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
         }
     }
 
@@ -127,13 +127,16 @@ private struct RankRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AvatarView(initials: person.name.initials, color: person.color, size: 38, imageData: person.imageData)
+            AvatarView(initials: person.name.initials, color: person.color, size: .compact, imageData: person.imageData)
             VStack(alignment: .leading, spacing: 9) {
                 HStack(alignment: .firstTextBaseline, spacing: 5) {
-                    Text(person.name).font(Font.app(15, .semibold)).foregroundColor(Color.ink)
-                    Spacer(minLength: 8)
+                    Text(person.name).font(Font.app(15, .semibold)).foregroundColor(Color.textPrimary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     Text(verbatim: "\(LocalizedCount.gifts(count)) · \(formattedCurrency(value, code: currencyCode))")
-                        .font(Font.app(13, .regular)).foregroundColor(Color.muted)
+                        .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
+                        .multilineTextAlignment(.trailing)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .layoutPriority(1)
                 }
                 BarView(pct: value / maxValue * 100, color: person.color, height: 7)
             }

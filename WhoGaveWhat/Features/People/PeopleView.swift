@@ -20,7 +20,8 @@ struct PeopleView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color.bg)
+        .scrollEdgeEffectStyle(.soft, for: .bottom)
+        .background(Color.appBackground)
         .safeAreaInset(edge: .bottom) {
             AddPersonFloatingAction {
                 isAddingPerson = true
@@ -88,7 +89,7 @@ struct PeopleView: View {
                 }
             } header: {
                 Text(LocalizedStringKey(header))
-                    .font(Font.app(13, .regular)).foregroundColor(Color.muted)
+                    .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
                     .textCase(nil)
             }
         }
@@ -133,22 +134,9 @@ private struct AddPersonFloatingAction: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Label("Add person", systemImage: "plus")
-                .font(Font.app(16, .semibold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 22)
-                .padding(.vertical, 13)
-                .background(
-                    RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-                        .fill(Color.ink)
-                )
-                .ksCardShadow(strong: true)
-        }
-        .buttonStyle(.plain)
-        .padding(.bottom, 6)
-        .accessibilityLabel("Add person")
-        .accessibilityIdentifier("people.add-person")
+        FloatingActionButton(title: "Add person", systemImage: "plus", action: action)
+            .accessibilityLabel("Add person")
+            .accessibilityIdentifier("people.add-person")
     }
 }
 
@@ -177,15 +165,19 @@ struct PersonRow: View {
         }.count
 
         HStack(spacing: 12) {
-            AvatarView(initials: name.initials, color: color, size: 42, imageData: imageData)
+            AvatarView(initials: name.initials, color: color, size: .regular, imageData: imageData)
             VStack(alignment: .leading, spacing: 2) {
-                Text(name).font(Font.app(16, .semibold)).foregroundColor(Color.ink)
+                Text(name).font(Font.app(16, .semibold)).foregroundColor(Color.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text("\(r) received · \(gv) given")
-                    .font(Font.app(13, .regular)).foregroundColor(Color.muted3)
+                    .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer(minLength: 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
             Text(formattedCurrency(gifts.totalValue, code: currencyCode))
-                .font(Font.app(15, .semibold)).foregroundColor(Color.ink)
+                .font(Font.app(15, .semibold, rounded: true)).foregroundColor(Color.textPrimary)
+                .lineLimit(1)
+                .layoutPriority(1)
         }
         .padding(.horizontal, 0).padding(.vertical, 13)
         .contentShape(Rectangle())

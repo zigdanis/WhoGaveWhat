@@ -14,7 +14,7 @@ struct ThirdPartyLicensesView: View {
             .textSelection(.enabled)
             .padding(16)
         }
-        .background(Color.bg)
+        .background(Color.appBackground)
         .accessibilityIdentifier("settings.third-party-licenses.screen")
         .navigationTitle("Third-party licenses")
         .navigationBarTitleDisplayMode(.inline)
@@ -24,21 +24,10 @@ struct ThirdPartyLicensesView: View {
     }
 
     private func loadNotice() -> [LicenseBlock] {
-        let resources = [
-            (name: "THIRD_PARTY_NOTICES", extension: "md"),
-            (name: "Archivo-OFL", extension: "txt")
-        ]
-        let documents = resources.compactMap { resource -> String? in
-            guard
-                let url = Bundle.main.url(
-                    forResource: resource.name,
-                    withExtension: resource.extension)
-            else {
-                return nil
-            }
-            return try? String(contentsOf: url, encoding: .utf8)
-        }
-        guard documents.count == resources.count else {
+        guard
+            let url = Bundle.main.url(forResource: "THIRD_PARTY_NOTICES", withExtension: "md"),
+            let markdown = try? String(contentsOf: url, encoding: .utf8)
+        else {
             return [
                 LicenseBlock(
                     id: 0,
@@ -46,8 +35,6 @@ struct ThirdPartyLicensesView: View {
                     text: String(localized: "License information is unavailable."))
             ]
         }
-
-        let markdown = documents.joined(separator: "\n\n---\n\n# Archivo license\n\n")
         return LicenseBlock.parse(markdown)
     }
 }
@@ -115,12 +102,12 @@ private struct LicenseBlockView: View {
         case .heading(let level):
             Text(block.text)
                 .font(level == 1 ? .title2.bold() : .headline)
-                .foregroundColor(Color.ink)
+                .foregroundColor(Color.textPrimary)
                 .padding(.top, level == 1 ? 8 : 2)
         case .paragraph:
             Text(inlineMarkdown)
                 .font(.body)
-                .foregroundColor(Color.ink)
+                .foregroundColor(Color.textPrimary)
         case .divider:
             Divider()
                 .padding(.vertical, 4)

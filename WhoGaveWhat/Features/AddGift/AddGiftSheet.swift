@@ -89,7 +89,7 @@ struct AddGiftSheet: View {
             .accessibilityIdentifier("add-gift.scroll")
             .scrollDismissesKeyboard(.interactively)
             // Empty scroll area below the content also dismisses the keyboard.
-            .background(Color.bg.contentShape(Rectangle()).onTapGesture { focus = nil })
+            .background(Color.clear.contentShape(Rectangle()).onTapGesture { focus = nil })
             // Opening a picker must drop keyboard focus so it doesn't bounce back
             // onto the previously-edited text field when the picker sheet closes.
             .onChange(of: state.picker) { _, _ in focus = nil }
@@ -104,7 +104,7 @@ struct AddGiftSheet: View {
         }
         .presentationDetents([.height(sheetHeight)], selection: $selectedDetent)
         .presentationDragIndicator(.visible)
-        .presentationBackground(Color.bg)
+        .presentationBackground(.regularMaterial)
         .sheet(item: $state.picker) { kind in
             AddGiftPickerPresentation(kind: kind, state: state, composition: composition)
         }
@@ -141,13 +141,13 @@ private struct GiftSaveButton: View {
     var body: some View {
         Button(action: onSave) {
             Text("Save")
-                .font(Font.app(17, .semibold)).foregroundColor(.white)
-                .frame(maxWidth: .infinity).padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-                        .fill(isEnabled ? Color.ink : Color(hex: 0xC3CAD3)))
+                .font(Font.app(17, .semibold))
+                .frame(maxWidth: .infinity).padding(.vertical, 8)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.glassProminent)
+        .buttonBorderShape(.capsule)
+        .controlSize(.large)
+        .tint(Color.brandFill)
         .disabled(!isEnabled)
         .accessibilityIdentifier("add-gift.save")
     }
@@ -168,7 +168,7 @@ private struct GiftBasicsSection: View {
     var body: some View {
         VStack(spacing: 12) {
             TextField("Gift name", text: $name)
-                .font(Font.app(18, .semibold)).foregroundColor(Color.ink)
+                .font(Font.app(18, .semibold)).foregroundColor(Color.textPrimary)
                 .tint(accent)
                 .focused($focus, equals: .name)
                 .submitLabel(.done)
@@ -207,13 +207,8 @@ private struct GiftBasicsSection: View {
     }
 
     private var fieldSurface: some View {
-        RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-            .fill(Color.card)
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-                    .stroke(Color.border, lineWidth: 1)
-            )
-            .ksCardShadow()
+        RoundedRectangle(cornerRadius: DesignMetrics.radiusLarge, style: .continuous)
+            .fill(Color.surface)
     }
 }
 
@@ -231,11 +226,11 @@ private struct GiftDetailsDisclosure: View {
             HStack(spacing: 8) {
                 Text("Details")
                     .font(Font.app(16, .semibold))
-                    .foregroundColor(Color.ink)
+                    .foregroundColor(Color.textPrimary)
                 Spacer(minLength: 8)
                 Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Color.muted2)
+                    .foregroundColor(Color.textSecondary)
             }
             .padding(.horizontal, 4)
             .contentShape(Rectangle())
@@ -305,12 +300,13 @@ private struct GiftEntryRow: View {
         Button(action: onTap) {
             HStack(spacing: 12) {
                 GiftEntryIconView(icon: icon, accent: accent, tint: tint)
-                Text(label).font(Font.app(16, .regular)).foregroundColor(Color.ink)
-                Spacer(minLength: 8)
+                Text(label).font(Font.app(16, .regular)).foregroundColor(Color.textPrimary)
+                    .fixedSize(horizontal: true, vertical: false)
                 Text(value ?? String(localized: "Choose"))
                     .font(Font.app(16, value == nil ? .regular : .semibold))
-                    .foregroundColor(value == nil ? Color.placeholder : accent)
-                    .lineLimit(1)
+                    .foregroundColor(value == nil ? Color.textTertiary : accent)
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 Chevron()
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
@@ -336,7 +332,7 @@ private struct GiftEntryIconView: View {
         iconImage
             .foregroundColor(accent)
             .frame(width: 34, height: 34)
-            .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(tint))
+            .background(RoundedRectangle(cornerRadius: DesignMetrics.radiusSmall, style: .continuous).fill(tint))
             .accessibilityHidden(true)
     }
 
@@ -368,11 +364,11 @@ private struct ApproximateValueRow: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(accent)
                 .frame(width: 34, height: 34)
-                .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(tint))
-            Text("Approx. value").font(Font.app(16, .regular)).foregroundColor(Color.ink)
+                .background(RoundedRectangle(cornerRadius: DesignMetrics.radiusSmall, style: .continuous).fill(tint))
+            Text("Approx. value").font(Font.app(16, .regular)).foregroundColor(Color.textPrimary)
             Spacer(minLength: 8)
             TextField("0", text: $value)
-                .font(Font.app(16, .semibold)).foregroundColor(Color.ink)
+                .font(Font.app(16, .semibold)).foregroundColor(Color.textPrimary)
                 .keyboardType(.numberPad)
                 .tint(accent)
                 .focused($focus, equals: .value)
@@ -380,7 +376,7 @@ private struct ApproximateValueRow: View {
                 .frame(minWidth: 60, maxWidth: 110)
                 .accessibilityIdentifier("add-gift.value")
             Text(currencySymbol(code: currencyCode))
-                .font(Font.app(16, .semibold)).foregroundColor(Color.muted2)
+                .font(Font.app(16, .semibold)).foregroundColor(Color.textSecondary)
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
         .contentShape(Rectangle())
@@ -428,7 +424,6 @@ private struct AddGiftPickerSheet: View {
     var body: some View {
         IntrinsicModalScaffold(title: title) {
             content
-                .background(Color.bg)
                 .onGeometryChange(for: CGFloat.self) { geometry in
                     geometry.size.height
                 } action: { contentHeight in
@@ -451,7 +446,7 @@ private struct AddGiftPickerSheet: View {
             selectedDetent = .height(fitted)
         }
         .presentationDragIndicator(.visible)
-        .presentationBackground(Color.bg)
+        .presentationBackground(.regularMaterial)
     }
 
     private var detents: Set<PresentationDetent> {
@@ -518,7 +513,7 @@ private struct AddGiftPickerSheet: View {
                                 state.selectOccasion(occasion.name)
                             } label: {
                                 HStack {
-                                    Text(composition.data.localizedOccasion(occasion.name)).font(Font.app(16, .regular)).foregroundColor(Color.ink)
+                                    Text(composition.data.localizedOccasion(occasion.name)).font(Font.app(16, .regular)).foregroundColor(Color.textPrimary)
                                     Spacer(minLength: 8)
                                     if state.draft.occasion == occasion.name { checkmark }
                                 }
@@ -546,7 +541,7 @@ private struct AddGiftPickerSheet: View {
                 VStack(alignment: .leading, spacing: 7) {
                     iconAddRow
                     Text("Pick one below, or type your own — any letter or symbol fits.")
-                        .font(Font.app(12, .regular)).foregroundColor(Color.muted3)
+                        .font(Font.app(12, .regular)).foregroundColor(Color.textSecondary)
                         .padding(.horizontal, 4)
                 }
                 Card {
@@ -558,8 +553,8 @@ private struct AddGiftPickerSheet: View {
                                 Text(e).font(.system(size: 26))
                                     .frame(maxWidth: .infinity).frame(height: 48)
                                     .background(
-                                        RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-                                            .fill(state.draft.emoji == e ? Color.recvTint : Color.track))
+                                        RoundedRectangle(cornerRadius: DesignMetrics.radiusSmall, style: .continuous)
+                                            .fill(state.draft.emoji == e ? Color.receivedTint : Color.fillTrack))
                             }
                             .buttonStyle(.plain)
                         }
@@ -580,15 +575,15 @@ private struct AddGiftPickerSheet: View {
                 Text(iconPreview)
                     .font(.system(size: 24))
                     .frame(width: 46, height: 46)
-                    .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(Color.track))
+                    .background(RoundedRectangle(cornerRadius: DesignMetrics.radiusSmall, style: .continuous).fill(Color.fillTrack))
                 TextField("Type any icon or letter", text: $customText)
-                    .font(Font.app(16, .regular)).tint(Color.recv)
+                    .font(Font.app(16, .regular)).tint(Color.brand)
                 Button {
                     state.useCustomEmoji(customText); customText = ""
                 } label: {
-                    Text("Add").font(Font.app(15, .semibold)).foregroundColor(.white)
+                    Text("Add").font(Font.app(15, .semibold)).foregroundColor(Color.onFill)
                         .padding(.horizontal, 16).padding(.vertical, 8)
-                        .background(Capsule().fill(addDisabled ? Color.muted4 : Color.ink))
+                        .background(Capsule().fill(addDisabled ? Color.textTertiary : Color.brandFill))
                 }
                 .buttonStyle(.plain)
                 .disabled(addDisabled)
@@ -637,11 +632,11 @@ private struct AddGiftPickerSheet: View {
         } label: {
             Text(LocalizedStringKey(label))
                 .font(Font.app(15, .semibold))
-                .foregroundColor(selected ? .white : Color.ink)
+                .foregroundColor(selected ? Color.onFill : Color.textPrimary)
                 .frame(maxWidth: .infinity).padding(.vertical, 13)
                 .background(
-                    RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-                        .fill(selected ? Color.ink : Color.card))
+                    RoundedRectangle(cornerRadius: DesignMetrics.radiusMedium, style: .continuous)
+                        .fill(selected ? Color.brandFill : Color.surface))
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(accessibilityIdentifier)
@@ -657,20 +652,20 @@ private struct AddGiftPickerSheet: View {
     private var checkmark: some View {
         Image(systemName: "checkmark")
             .font(.system(size: 15, weight: .semibold))
-            .foregroundColor(Color.recv)
+            .foregroundColor(Color.brand)
     }
 
     private func addRow(placeholder: String, add: @escaping (String) -> Void) -> some View {
         Card {
             HStack(spacing: 10) {
                 TextField(LocalizedStringKey(placeholder), text: $customText)
-                    .font(Font.app(16, .regular)).tint(Color.recv)
+                    .font(Font.app(16, .regular)).tint(Color.brand)
                 Button {
                     add(customText); customText = ""
                 } label: {
-                    Text("Add").font(Font.app(15, .semibold)).foregroundColor(.white)
+                    Text("Add").font(Font.app(15, .semibold)).foregroundColor(Color.onFill)
                         .padding(.horizontal, 16).padding(.vertical, 8)
-                        .background(Capsule().fill(addDisabled ? Color.muted4 : Color.ink))
+                        .background(Capsule().fill(addDisabled ? Color.textTertiary : Color.brandFill))
                 }
                 .buttonStyle(.plain)
                 .disabled(addDisabled)
@@ -763,7 +758,7 @@ private struct PersonPickerContent: View {
             HStack(spacing: 10) {
                 TextField("Add person", text: queryBinding)
                     .font(Font.app(16, .regular))
-                    .tint(Color.recv)
+                    .tint(Color.brand)
                     .textInputAutocapitalization(.words)
                     .submitLabel(.done)
                     .accessibilityIdentifier("person-picker.query")
@@ -776,10 +771,10 @@ private struct PersonPickerContent: View {
                 } label: {
                     Text("Add")
                         .font(Font.app(15, .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(Color.onFill)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(Capsule().fill(isAddDisabled ? Color.muted4 : Color.ink))
+                        .background(Capsule().fill(isAddDisabled ? Color.textTertiary : Color.brandFill))
                 }
                 .buttonStyle(.plain)
                 .disabled(isAddDisabled)
@@ -812,15 +807,15 @@ private struct PersonPickerRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AvatarView(initials: name.initials, color: color, size: 38, imageData: imageData)
+            AvatarView(initials: name.initials, color: color, size: .compact, imageData: imageData)
             Text(name)
                 .font(Font.app(16, .semibold))
-                .foregroundColor(Color.ink)
+                .foregroundColor(Color.textPrimary)
             Spacer(minLength: 8)
             if isSelected {
                 Image(systemName: "checkmark")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(Color.recv)
+                    .foregroundColor(Color.brand)
                     .accessibilityHidden(true)
             }
         }

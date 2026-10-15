@@ -13,7 +13,7 @@ struct OnboardingView: View {
                 Button {
                     router.showSignIn()
                 } label: {
-                    Text("Skip").font(Font.app(15, .bold)).foregroundColor(Color.muted)
+                    Text("Skip").font(Font.app(15, .bold)).foregroundColor(Color.textSecondary)
                         .padding(.horizontal, 6).padding(.vertical, 6)
                         .contentShape(Rectangle())
                 }
@@ -33,7 +33,7 @@ struct OnboardingView: View {
             HStack(spacing: 7) {
                 ForEach(0..<3, id: \.self) { i in
                     Capsule()
-                        .fill(i == step ? Color.give : Color(hex: 0xD7DDE5))
+                        .fill(i == step ? Color.brand : Color.separatorLine)
                         .frame(width: i == step ? 22 : 7, height: 7)
                 }
             }
@@ -47,14 +47,13 @@ struct OnboardingView: View {
             } label: {
                 Text(step == 2 ? "Get started" : "Continue")
                     .font(Font.app(17, .semibold))
-                    .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 17)
-                    .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(Color.give))
-                    .shadow(color: Color.give.opacity(0.32), radius: 13, x: 0, y: 12)
+                    .padding(.vertical, 6)
             }
-            // Plain style: the default button fade made the CTA flicker on each tap.
-            .buttonStyle(.plain)
+            .buttonStyle(.glassProminent)
+            .buttonBorderShape(.capsule)
+            .controlSize(.large)
+            .tint(Color.brandFill)
         }
         .padding(.horizontal, 26)
         .padding(.top, 8)
@@ -84,9 +83,9 @@ private struct OnbHero: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                FloatingTile(emoji: "💐", size: 84, corner: DesignMetrics.cornerRadius, bg: .white, fontSize: 42, delay: 0)
+                FloatingTile(emoji: "💐", size: 84, corner: DesignMetrics.radiusXLarge, bg: Color.surface, fontSize: 42, delay: 0)
                     .offset(x: -73, y: -33)
-                FloatingTile(emoji: "⌚", size: 78, corner: DesignMetrics.cornerRadius, bg: .white, fontSize: 38, delay: 0.6)
+                FloatingTile(emoji: "⌚", size: 78, corner: DesignMetrics.radiusXLarge, bg: Color.surface, fontSize: 38, delay: 0.6)
                     .offset(x: 73, y: -67)
                 FloatingMark(size: 94, delay: 0.3)
                     .offset(x: 0, y: 47)
@@ -99,7 +98,7 @@ private struct OnbHero: View {
                 .tracking(-0.6)
             Text("Never forget who gave what — or which gifts went where.")
                 .font(Font.app(17, .semibold))
-                .foregroundColor(Color.muted2)
+                .foregroundColor(Color.textSecondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
                 .frame(maxWidth: 286)
@@ -124,7 +123,7 @@ private struct FloatingTile: View {
             .background(
                 RoundedRectangle(cornerRadius: corner, style: .continuous)
                     .fill(bg)
-                    .shadow(color: Color(hex: 0x10141C, alpha: 0.16), radius: 16, x: 0, y: 16)
+                    .shadow(color: Color.black.opacity(0.16), radius: 16, x: 0, y: 16)
             )
             .offset(y: up ? -9 : 0)
             .onAppear {
@@ -143,7 +142,7 @@ private struct FloatingMark: View {
 
     var body: some View {
         IconMark(size: size)
-            .shadow(color: Color(hex: 0x10141C, alpha: 0.22), radius: 16, x: 0, y: 16)
+            .shadow(color: Color.black.opacity(0.22), radius: 16, x: 0, y: 16)
             .offset(y: up ? -9 : 0)
             .onAppear {
                 withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true).delay(delay)) {
@@ -160,24 +159,24 @@ private struct OnbLogged: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Card(strongShadow: true) {
+            Card(lifted: true) {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("WHAT'S THE GIFT?")
-                        .font(Font.app(12, .semibold)).tracking(0.7).foregroundColor(Color.muted)
+                        .font(Font.app(12, .semibold)).tracking(0.7).foregroundColor(Color.textSecondary)
                     HStack(spacing: 12) {
-                        GiftSquare(emoji: "💐", tint: Color.recvTint, size: 50, fontSize: 27)
+                        GiftSquare(emoji: "💐", tint: Color.receivedTint, size: 50, fontSize: 27)
                         Text("Bouquet of roses").font(Font.app(20, .semibold))
                     }
                     .padding(.top, 11)
                     HStack(spacing: 9) {
-                        Text("≈ value").font(Font.app(13, .semibold)).foregroundColor(Color.muted)
+                        Text("≈ value").font(Font.app(13, .semibold)).foregroundColor(Color.textSecondary)
                         Text(formattedCurrency(1_800, code: currencyCode))
                             .font(Font.app(16, .bold))
                         Text("optional")
                             .font(Font.app(11, .semibold))
-                            .foregroundColor(Color.recv)
+                            .foregroundColor(Color.brand)
                             .padding(.horizontal, 9).padding(.vertical, 3)
-                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.recvTint))
+                            .background(Capsule().fill(Color.receivedTint))
                     }
                     .padding(.top, 15)
                 }
@@ -190,7 +189,7 @@ private struct OnbLogged: View {
                 .padding(.top, 36)
             Text("Type what it was — Who Gave What picks the icon. Add a value only when it is useful.")
                 .font(Font.app(16, .semibold))
-                .foregroundColor(Color.muted2)
+                .foregroundColor(Color.textSecondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
                 .frame(maxWidth: 292)
@@ -205,20 +204,20 @@ private struct OnbAddsUp: View {
     let currencyCode: String
 
     private let bars: [(String, Double, Double, Color)] = [
-        ("Birthday", 6_200, 0.84, Color.give),
-        ("Anniversary", 4_500, 0.61, Color.gold),
-        ("New Year", 4_000, 0.54, Color.recv)
+        ("Birthday", 6_200, 0.84, Color.given),
+        ("Anniversary", 4_500, 0.61, Color.textSecondary),
+        ("New Year", 4_000, 0.54, Color.brand)
     ]
 
     var body: some View {
         VStack(spacing: 0) {
-            Card(strongShadow: true) {
+            Card(lifted: true) {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(spacing: 12) {
-                        AvatarView(initials: "AM", color: Color.give, size: 46)
+                        AvatarView(initials: "AM", color: Color.brandFill, size: .regular)
                         VStack(alignment: .leading, spacing: 0) {
                             Text("Aunt Maria").font(Font.app(17, .semibold))
-                            Text("6 gifts together").font(Font.app(13, .bold)).foregroundColor(Color.muted3)
+                            Text("6 gifts together").font(Font.app(13, .bold)).foregroundColor(Color.textSecondary)
                         }
                         Spacer()
                         Text(formattedCurrency(14_700, code: currencyCode))
@@ -233,7 +232,7 @@ private struct OnbAddsUp: View {
                                     Text(formattedCurrency(b.1, code: currencyCode))
                                 }
                                 .font(Font.app(12.5, .bold))
-                                .foregroundColor(Color.muted2)
+                                .foregroundColor(Color.textSecondary)
                                 BarView(pct: b.2 * 100, color: b.3, height: 7)
                             }
                         }
@@ -249,7 +248,7 @@ private struct OnbAddsUp: View {
                 .padding(.top, 34)
             Text("Every gift links to someone, so you can look back on years of giving at a glance.")
                 .font(Font.app(16, .semibold))
-                .foregroundColor(Color.muted2)
+                .foregroundColor(Color.textSecondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
                 .frame(maxWidth: 292)

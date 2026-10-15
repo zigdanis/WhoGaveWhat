@@ -15,15 +15,15 @@ struct PersonDetailView: View {
 
     private var filterOptions: [Segmented.Option] {
         [
-            .init(key: "all", label: "All", accent: Color.ink),
-            .init(key: "received", label: "Received", accent: Color.recv),
-            .init(key: "given", label: "Given", accent: Color.ink)
+            .init(key: "all", label: "All"),
+            .init(key: "received", label: "Received"),
+            .init(key: "given", label: "Given")
         ]
     }
 
     var body: some View {
         let name = composition.data.entityName(entityId)
-        let color = Color(hex: composition.data.entityColorHex(entityId))
+        let color = Color(personHex: composition.data.entityColorHex(entityId))
         let gs = composition.loadPersonGifts.execute(
             personID: entityId,
             gifts: composition.data.gifts
@@ -48,18 +48,20 @@ struct PersonDetailView: View {
             // Header + stats + filter — quiet rows, no separators.
             Section {
                 VStack(spacing: 0) {
-                    AvatarView(initials: "", color: color, size: 76, imageData: composition.data.entityImageData(entityId))
+                    AvatarView(initials: name.initials, color: color, size: .large, imageData: composition.data.entityImageData(entityId))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, 6)
+                .accessibilityElement(children: .ignore)
+                .accessibilityAddTraits(.isImage)
                 .accessibilityIdentifier("person-detail.hero")
 
                 HStack(spacing: 10) {
                     statCard(
-                        arrow: "↙", label: "Received", color: Color.recv,
+                        arrow: "↙", label: "Received", color: Color.received,
                         count: recv.count, value: recv.totalValue)
                     statCard(
-                        arrow: "↗", label: "Given", color: Color.ink,
+                        arrow: "↗", label: "Given", color: Color.given,
                         count: given.count, value: given.totalValue)
                 }
                 .padding(.top, 18)
@@ -76,7 +78,7 @@ struct PersonDetailView: View {
             if list.isEmpty {
                 Section {
                     Text(LocalizedStringKey(emptyText))
-                        .font(Font.app(14, .regular)).foregroundColor(Color.muted4)
+                        .font(Font.app(14, .regular)).foregroundColor(Color.textTertiary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 30)
                         .listRowBackground(Color.clear)
@@ -107,7 +109,7 @@ struct PersonDetailView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color.bg)
+        .background(Color.appBackground)
         .navigationTitle(name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -119,7 +121,7 @@ struct PersonDetailView: View {
                         Image(systemName: "pencil")
                             .font(.system(size: 17, weight: .semibold))
                     }
-                    .tint(Color.recv)
+                    .tint(Color.brand)
                     .accessibilityLabel("Edit person")
                     .accessibilityIdentifier("person-detail.edit")
                 }
@@ -199,9 +201,10 @@ struct PersonDetailView: View {
                     Text(LocalizedStringKey(label)).font(Font.app(13, .semibold))
                 }
                 .foregroundColor(color)
-                Text("\(count)").font(Font.app(25, .bold)).tracking(-0.4).foregroundColor(Color.ink).padding(.top, 9)
+                Text("\(count)").font(Font.app(25, .bold, rounded: true)).tracking(-0.4).foregroundColor(Color.textPrimary).padding(.top, 9)
                 Text("gifts · \(formattedCurrency(value, code: composition.currencyCode))")
-                    .font(Font.app(13, .regular)).foregroundColor(Color.muted).padding(.top, 2)
+                    .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary).padding(.top, 2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(15)
