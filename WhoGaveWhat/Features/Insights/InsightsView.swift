@@ -48,6 +48,7 @@ struct InsightsView: View {
                         .padding(.top, 12)
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20)
             }
 
