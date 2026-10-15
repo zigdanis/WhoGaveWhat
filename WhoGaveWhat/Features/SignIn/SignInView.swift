@@ -4,6 +4,13 @@ struct SignInView: View {
     let composition: AppComposition
 
     var body: some View {
+        ScrollWhenTight {
+            content
+        }
+        .padding(.horizontal, 26)
+    }
+
+    private var content: some View {
         VStack(spacing: 0) {
             Spacer()
             IconMark(size: 96)
@@ -48,7 +55,6 @@ struct SignInView: View {
                 placeholder(title: "Continue with Apple") { Image(systemName: "apple.logo") }
             }
         }
-        .padding(.horizontal, 26)
         .padding(.top, 64)
         .padding(.bottom, 40)
     }

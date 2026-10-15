@@ -65,19 +65,19 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 0) {
             if received > given {
                 Text("Received gifts lead")
-                    .font(Font.app(13, .semibold)).foregroundColor(Color.onFill.opacity(0.85))
+                    .font(Font.app(13, .semibold)).foregroundColor(Color.onFill)
                 Text("Received total \(formattedCurrency(received, code: composition.currencyCode))")
                     .font(Font.app(24, .bold, rounded: true)).tracking(-0.4).foregroundColor(Color.onFill).padding(.top, 10)
                 Text("\(formattedCurrency(received - given, code: composition.currencyCode)) more is recorded as received than given.")
-                    .font(Font.app(15, .regular)).foregroundColor(Color.onFill.opacity(0.9)).padding(.top, 4)
+                    .font(Font.app(15, .regular)).foregroundColor(Color.onFill).padding(.top, 4)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 Text("Given gifts lead")
-                    .font(Font.app(13, .semibold)).foregroundColor(Color.onFill.opacity(0.85))
+                    .font(Font.app(13, .semibold)).foregroundColor(Color.onFill)
                 Text("Given total \(formattedCurrency(given, code: composition.currencyCode))")
                     .font(Font.app(24, .bold, rounded: true)).tracking(-0.4).foregroundColor(Color.onFill).padding(.top, 10)
                 Text("\(formattedCurrency(given - received, code: composition.currencyCode)) more is recorded as given than received.")
-                    .font(Font.app(15, .regular)).foregroundColor(Color.onFill.opacity(0.9)).padding(.top, 4)
+                    .font(Font.app(15, .regular)).foregroundColor(Color.onFill).padding(.top, 4)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

@@ -69,10 +69,12 @@ struct OnboardingView: View {
 
     /// Vertically centers a step's content within the pager.
     private func page<V: View>(_ content: V) -> some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 0)
-            content
-            Spacer(minLength: 0)
+        ScrollWhenTight {
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                content
+                Spacer(minLength: 0)
+            }
         }
         .frame(maxWidth: .infinity)
     }

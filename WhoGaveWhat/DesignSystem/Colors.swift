@@ -27,7 +27,7 @@ extension Color {
     /// Accent for text, icons and tints; brightens in dark mode to stay legible.
     static let brand = Color(uiColor: .brand)
     /// Solid fill for primary controls that carry a white label in both modes.
-    static let brandFill = Color(light: 0x12805C, dark: 0x168A63)
+    static let brandFill = Color(light: 0x12805C, dark: 0x117A58)
 
     // MARK: Gift directions
     static let received = brand
