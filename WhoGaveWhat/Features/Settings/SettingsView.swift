@@ -15,7 +15,7 @@ struct SettingsView: View {
                         } label: {
                             SettingsValueRow(
                                 icon: "banknote.fill",
-                                tint: Color.recv,
+                                tint: Color.brandFill,
                                 label: "Currency",
                                 value: currencyDisplayName
                             )
@@ -32,7 +32,7 @@ struct SettingsView: View {
                         } label: {
                             SettingsActionRow(
                                 icon: "doc.text.fill",
-                                tint: Color.recv,
+                                tint: Color.brandFill,
                                 label: "Third-party licenses"
                             )
                         }
@@ -43,12 +43,12 @@ struct SettingsView: View {
                 .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 30)
             }
             .scrollIndicators(.hidden)
-            .background(Color.bg)
+            .background(Color.appBackground)
             .accessibilityIdentifier("settings.screen")
             .navigationTitle("Settings")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { composition.router.dismissSettings() }.fontWeight(.semibold).tint(Color.recv)
+                    Button("Done") { composition.router.dismissSettings() }.fontWeight(.semibold).tint(Color.brand)
                 }
             }
         }
@@ -72,9 +72,9 @@ private struct SettingsValueRow: View {
     var body: some View {
         HStack(spacing: 12) {
             SettingsIconTile(name: icon, tint: tint)
-            Text(label).font(Font.app(16, .regular)).foregroundColor(Color.ink)
+            Text(label).font(Font.app(16, .regular)).foregroundColor(Color.textPrimary)
             Spacer(minLength: 8)
-            Text(value).font(Font.app(16, .regular)).foregroundColor(Color.muted)
+            Text(value).font(Font.app(16, .regular)).foregroundColor(Color.textSecondary)
             Chevron()
         }
         .padding(.horizontal, 14).padding(.vertical, 9)
@@ -90,7 +90,7 @@ private struct SettingsActionRow: View {
     var body: some View {
         HStack(spacing: 12) {
             SettingsIconTile(name: icon, tint: tint)
-            Text(label).font(Font.app(16, .regular)).foregroundColor(Color.ink)
+            Text(label).font(Font.app(16, .regular)).foregroundColor(Color.textPrimary)
             Spacer(minLength: 8)
             Chevron()
         }
@@ -106,9 +106,9 @@ private struct SettingsIconTile: View {
     var body: some View {
         Image(systemName: name)
             .font(.system(size: 14, weight: .semibold))
-            .foregroundColor(.white)
+            .foregroundColor(Color.onFill)
             .frame(width: 30, height: 30)
-            .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(tint))
+            .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(tint))
     }
 }
 
@@ -123,21 +123,21 @@ private struct CurrencyPickerView: View {
                 HStack(spacing: 12) {
                     Text(option.symbol)
                         .font(Font.app(16, .semibold))
-                        .foregroundColor(Color.recv)
+                        .foregroundColor(Color.brand)
                         .frame(width: 42, alignment: .leading)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(option.name)
                             .font(Font.app(16, .regular))
-                            .foregroundColor(Color.ink)
+                            .foregroundColor(Color.textPrimary)
                         Text(verbatim: option.code)
                             .font(Font.app(13, .regular))
-                            .foregroundColor(Color.muted)
+                            .foregroundColor(Color.textSecondary)
                     }
                     Spacer(minLength: 8)
                     if composition.currencyCode == option.code {
                         Image(systemName: "checkmark")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(Color.recv)
+                            .foregroundColor(Color.brand)
                             .accessibilityHidden(true)
                     }
                 }
@@ -150,7 +150,7 @@ private struct CurrencyPickerView: View {
         .listStyle(.insetGrouped)
         .accessibilityIdentifier("settings.currency.list")
         .scrollContentBackground(.hidden)
-        .background(Color.bg)
+        .background(Color.appBackground)
         .navigationTitle("Currency")
         .navigationBarTitleDisplayMode(.inline)
     }

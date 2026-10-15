@@ -1,10 +1,27 @@
 import SwiftUI
 import UIKit
 
+/// Avatar sizes shared by every screen; avatars are always circles.
+enum AvatarSize {
+    case compact
+    case regular
+    case large
+    case hero
+
+    var points: CGFloat {
+        switch self {
+        case .compact: 36
+        case .regular: 44
+        case .large: 72
+        case .hero: 112
+        }
+    }
+}
+
 struct AvatarView: View {
     let initials: String
     let color: Color
-    var size: CGFloat = 44
+    var size: AvatarSize = .regular
     var selected = false
     var imageData: Data?
     @State private var decodedImage: UIImage?
@@ -15,31 +32,29 @@ struct AvatarView: View {
                 Image(uiImage: decodedImage).resizable().scaledToFill()
             } else if initials.isEmpty {
                 Image(systemName: "person.fill")
-                    .font(.system(size: size * 0.38, weight: .medium))
-                    .foregroundColor(.white.opacity(0.9))
+                    .font(.system(size: size.points * 0.42, weight: .medium))
+                    .foregroundColor(Color.onFill.opacity(0.9))
             } else {
                 Text(initials)
-                    .font(Font.app(size * 0.4, .semibold))
-                    .foregroundColor(.white)
+                    .font(.system(size: size.points * 0.4, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color.onFill)
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
             }
         }
-        .frame(width: size, height: size)
-        .clipShape(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous))
-        .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(color))
-        .onAppear { updateImageCache() }
-        .onChange(of: imageData) { _, _ in updateImageCache() }
+        .frame(width: size.points, height: size.points)
+        .background(color)
+        .clipShape(Circle())
+        .overlay(Circle().strokeBorder(Color.separatorLine, lineWidth: 0.5))
+        .task(id: imageData) {
+            decodedImage = imageData.flatMap { UIImage(data: $0) }
+        }
         .overlay {
             if selected {
-                RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-                    .stroke(Color.white, lineWidth: 3).padding(-1.5)
-                    .background(
-                        RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius + 2, style: .continuous)
-                            .stroke(color, lineWidth: 2).padding(-3.5))
+                Circle()
+                    .strokeBorder(Color.brand, lineWidth: 2.5)
+                    .padding(-4)
             }
         }
-    }
-
-    private func updateImageCache() {
-        decodedImage = imageData.flatMap { UIImage(data: $0) }
     }
 }

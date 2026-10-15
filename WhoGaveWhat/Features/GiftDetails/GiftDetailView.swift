@@ -7,6 +7,7 @@ struct GiftDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let giftId: String
     let composition: AppComposition
+    @State private var confirmingDelete = false
 
     var body: some View {
         Group {
@@ -17,7 +18,7 @@ struct GiftDetailView: View {
                 Color.clear.onAppear { dismiss() }
             }
         }
-        .background(Color.bg)
+        .background(Color.appBackground)
         .navigationTitle("Gift")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -46,7 +47,7 @@ struct GiftDetailView: View {
                     Image(systemName: "pencil")
                         .font(.system(size: 17, weight: .semibold))
                 }
-                .tint(Color.recv)
+                .tint(Color.brand)
                 .accessibilityLabel("Edit")
             }
         }
@@ -60,9 +61,12 @@ struct GiftDetailView: View {
                 Text(g.emoji)
                     .font(.system(size: 28))
                     .frame(width: 58, height: 58)
-                    .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(.white))
+                    .background(
+                        RoundedRectangle(cornerRadius: heroInnerRadius, style: .continuous)
+                            .fill(Color.surface))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(g.name).font(Font.app(18, .bold)).foregroundColor(Color.ink).lineLimit(2)
+                    Text(g.name).font(Font.app(18, .bold)).foregroundColor(Color.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
                     if let label = fm.label {
                         HStack(spacing: 5) {
                             Text(fm.arrow)
@@ -75,17 +79,28 @@ struct GiftDetailView: View {
             }
             HStack(spacing: 6) {
                 Text(formattedCurrency(g.value, code: composition.currencyCode))
-                    .font(Font.app(17, .semibold)).foregroundColor(Color.ink)
+                    .font(Font.app(17, .semibold, rounded: true)).foregroundColor(Color.textPrimary)
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 14)
             .frame(height: 50)
             .frame(maxWidth: .infinity)
-            .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(Color.card))
+            .background(
+                RoundedRectangle(cornerRadius: heroInnerRadius, style: .continuous)
+                    .fill(Color.surface))
         }
-        .padding(16)
+        .padding(heroInset)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(fm.tint))
+        .background(
+            RoundedRectangle(cornerRadius: DesignMetrics.radiusXLarge, style: .continuous)
+                .fill(fm.tint))
+    }
+
+    private let heroInset: CGFloat = 16
+
+    /// Concentric with the hero card's outer corner.
+    private var heroInnerRadius: CGFloat {
+        DesignMetrics.concentric(outer: DesignMetrics.radiusXLarge, inset: heroInset)
     }
 
     // MARK: Details
@@ -115,27 +130,43 @@ struct GiftDetailView: View {
     ) -> some View {
         HStack(spacing: 12) {
             GiftDetailIconView(icon: icon, accent: fm.main, tint: fm.tint)
-            Text(LocalizedStringKey(label)).font(Font.app(16, .regular)).foregroundColor(Color.ink)
-            Spacer(minLength: 8)
-            Text(value).font(Font.app(16, .semibold)).foregroundColor(fm.main).lineLimit(1)
+            Text(LocalizedStringKey(label)).font(Font.app(16, .regular)).foregroundColor(Color.textPrimary)
+                .fixedSize(horizontal: true, vertical: false)
+            Text(value).font(Font.app(16, .semibold)).foregroundColor(fm.main)
+                .multilineTextAlignment(.trailing)
+                .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.horizontal, 14).padding(.vertical, 12)
     }
 
     // MARK: Delete
 
-    /// Quiet text button (no card background) so it doesn't draw the eye — delete
-    /// happens immediately, no confirmation.
+    /// Glass button that asks for confirmation, matching the swipe-to-delete on
+    /// Home and the person gift list.
     private var deleteButton: some View {
         Button(role: .destructive) {
-            composition.deleteGift(id: giftId)
-            dismiss()
+            confirmingDelete = true
         } label: {
             Text("Delete gift")
-                .font(Font.app(16, .regular)).foregroundColor(Color(hex: 0xE5484D))
-                .frame(maxWidth: .infinity).padding(.vertical, 12)
+                .font(Font.app(16, .semibold))
+                .foregroundStyle(Color.destructive)
+                .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.glass)
+        .buttonBorderShape(.capsule)
+        .controlSize(.large)
+        .tint(Color.destructive)
+        .confirmationDialog(
+            "Delete this gift?",
+            isPresented: $confirmingDelete,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                composition.deleteGift(id: giftId)
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 }
 
@@ -153,7 +184,7 @@ private struct GiftDetailIconView: View {
         iconImage
             .foregroundColor(accent)
             .frame(width: 34, height: 34)
-            .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(tint))
+            .background(RoundedRectangle(cornerRadius: DesignMetrics.radiusSmall, style: .continuous).fill(tint))
             .accessibilityHidden(true)
     }
 

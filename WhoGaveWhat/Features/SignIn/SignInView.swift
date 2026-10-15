@@ -4,17 +4,24 @@ struct SignInView: View {
     let composition: AppComposition
 
     var body: some View {
+        ScrollWhenTight {
+            content
+        }
+        .padding(.horizontal, 26)
+    }
+
+    private var content: some View {
         VStack(spacing: 0) {
             Spacer()
             IconMark(size: 96)
-                .shadow(color: Color(hex: 0x10141C, alpha: 0.22), radius: 22, x: 0, y: 16)
+                .softShadow(prominent: true)
 
             Text("Keep your gifts safe")
                 .font(Font.app(27, .bold)).tracking(-0.5)
                 .padding(.top, 26)
             Text("Sign in to back up and sync across devices — or start right now. Everything stays on this phone until you do.")
                 .font(Font.app(16, .semibold))
-                .foregroundColor(Color.muted2)
+                .foregroundColor(Color.textSecondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
                 .frame(maxWidth: 290)
@@ -30,24 +37,24 @@ struct SignInView: View {
                 } label: {
                     Text("Start without an account")
                         .font(Font.app(17, .semibold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Color.onFill)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 17)
-                        .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(Color.give))
-                        .shadow(color: Color.give.opacity(0.32), radius: 13, x: 0, y: 12)
+                        .padding(.vertical, 6)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.glassProminent)
+                .buttonBorderShape(.capsule)
+                .controlSize(.large)
+                .tint(Color.brandFill)
 
                 // Sign-in isn't wired up yet — the rows below are disabled
                 // placeholders so it's clear there's nothing to tap.
                 Text("Sign-in is coming soon")
-                    .font(Font.app(13, .semibold)).foregroundColor(Color.muted3)
+                    .font(Font.app(13, .semibold)).foregroundColor(Color.textSecondary)
                     .padding(.top, 8)
 
                 placeholder(title: "Continue with Apple") { Image(systemName: "apple.logo") }
             }
         }
-        .padding(.horizontal, 26)
         .padding(.top, 64)
         .padding(.bottom, 40)
     }
@@ -63,19 +70,16 @@ struct SignInView: View {
             Text(title)
             Spacer(minLength: 8)
             Text("Soon")
-                .font(Font.app(11, .bold)).foregroundColor(Color.muted2)
+                .font(Font.app(11, .bold)).foregroundColor(Color.textSecondary)
                 .padding(.horizontal, 9).padding(.vertical, 3)
-                .background(Capsule().fill(Color.track))
+                .background(Capsule().fill(Color.fillTrack))
         }
         .font(Font.app(16, .semibold))
-        .foregroundColor(Color.muted3)
+        .foregroundColor(Color.textSecondary)
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16).padding(.horizontal, 16)
-        .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(Color.card))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous)
-                .stroke(Color.border, lineWidth: 1.5)
-        )
+        .background(Capsule().fill(Color.surface))
+        .overlay(Capsule().stroke(Color.separatorLine, lineWidth: 1))
         .opacity(0.5)
         .allowsHitTesting(false)
     }

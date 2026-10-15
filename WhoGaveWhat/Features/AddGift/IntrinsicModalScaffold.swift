@@ -62,7 +62,7 @@ struct IntrinsicModalScaffold<Content: View>: View {
             .layoutPriority(1)
             content
         }
-        .background(Color.bg)
+        .background(Color.appBackground)
     }
 }
 
@@ -200,7 +200,7 @@ private struct IntrinsicModalHeader: View {
     private var titleLabel: some View {
         Text(title)
             .font(.headline)
-            .foregroundStyle(Color.ink)
+            .foregroundStyle(Color.textPrimary)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityAddTraits(.isHeader)
@@ -216,8 +216,8 @@ private struct IntrinsicModalHeader: View {
             Text(title)
                 .font(.body)
         }
-        .buttonStyle(.bordered)
-        .tint(Color.muted2)
+        .buttonStyle(.glass)
+        .buttonBorderShape(.capsule)
         .accessibilityIdentifier(accessibilityIdentifier ?? "")
     }
 }

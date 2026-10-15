@@ -2,14 +2,6 @@
 
 Who Gave What includes software and artwork from the following projects.
 
-## Archivo
-
-Who Gave What uses the Archivo font under the SIL Open Font License, Version 1.1.
-
-The complete license is bundled with the app as `Archivo-OFL.txt` and displayed in Settings.
-
-Source: https://github.com/Omnibus-Type/Archivo
-
 ## Lucide Icons
 
 Who Gave What uses icons from Lucide Icons under the ISC License.

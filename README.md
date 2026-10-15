@@ -31,6 +31,24 @@ xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
 - **Person detail** — per-person stats, by-occasion chart, full history.
 - **Insights** — received vs. given split relative to the person marked as you (a prompt appears until someone is marked), "Who's really paying" card, top people, by occasion.
 
+## Design system
+
+- **Liquid Glass.** Floating controls (Add a gift / Add person, sheet header actions, Save,
+  onboarding and sign-in CTAs) use `.glassProminent` / `.glass` button styles and
+  `glassEffect`; the tab bar keeps `tabBarMinimizeBehavior(.onScrollDown)` and lists use a
+  soft bottom scroll-edge effect.
+- **Adaptive color.** Semantic tokens live in `DesignSystem/Colors.swift`: surfaces and text
+  follow the system palette, so light and dark appearance both work with no forced color
+  scheme. One brand green (`brand` for text and tints, `brandFill` for solid controls with
+  white labels) drives the tab tint, floating actions and primary buttons. Received uses the
+  brand green; given uses neutral primary text.
+- **Typography.** The system font (SF Pro) on Dynamic Type text styles via `Font.app`, with
+  the rounded design for amounts and large numerals. It renders Latin and Cyrillic alike, so
+  no font files are bundled.
+- **Shape.** Continuous corners from the `DesignMetrics` scale (12/16/20/28); nested shapes
+  use concentric radii. People are always circular `AvatarView`s from one small size scale;
+  gifts are squircle tiles. Long English or Russian names wrap instead of truncating.
+
 ## On-device icon inference
 
 The icon next to the gift name is picked from the gift text. A keyword heuristic
@@ -74,14 +92,14 @@ value models rather than SwiftData records.
 | `WhoGaveWhat/Infrastructure/` | SwiftData container and private persistence records |
 | `WhoGaveWhat/DesignSystem/` | Colors, theme tokens, reusable components and layouts |
 | `WhoGaveWhat/Helpers/` | Small cross-feature formatting extensions |
-| `WhoGaveWhat/Resources/` | Assets, fonts and localization catalogs |
+| `WhoGaveWhat/Resources/` | Assets and localization catalogs |
 | `WhoGaveWhatTests/` | Swift Testing coverage for use cases, router and gateway-backed integration |
 | `fastlane/` | Receipt-based TestFlight release, preflight, status and notes lanes |
 | `.github/workflows/tests.yml` | CI — runs the native test suite on app changes to `master` and PRs |
 
 ### Testing entry points
 Launch env vars jump straight to a state (used for verification / previews):
-`KS_START=app|signin`, `KS_TAB=home|people|insights`, `KS_SHEET=1`.
+`KS_START=app|signin`, `KS_TAB=home|people|insights`, `KS_SHEET=1`, `KS_APPEARANCE=dark|light`.
 
 ```bash
 SIMCTL_CHILD_KS_START=app SIMCTL_CHILD_KS_TAB=insights \
@@ -122,7 +140,7 @@ and [TestFlight operations](docs/testflight.md).
 ## License
 
 Who Gave What is available under the [MIT License](LICENSE). Bundled third-party
-fonts and icons remain subject to the licenses listed in
+icons remain subject to the licenses listed in
 [`WhoGaveWhat/Resources/THIRD_PARTY_NOTICES.md`](WhoGaveWhat/Resources/THIRD_PARTY_NOTICES.md).
 
 ## Development checks and PR media

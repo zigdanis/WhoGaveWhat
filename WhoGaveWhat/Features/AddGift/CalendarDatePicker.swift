@@ -14,7 +14,7 @@ struct CalendarDatePicker: UIViewRepresentable {
         calendarView.calendar = .autoupdatingCurrent
         calendarView.locale = .autoupdatingCurrent
         calendarView.timeZone = .autoupdatingCurrent
-        calendarView.tintColor = UIColor(Color.recv)
+        calendarView.tintColor = UIColor.brand
 
         let selection = UICalendarSelectionSingleDate(delegate: context.coordinator)
         calendarView.selectionBehavior = selection
