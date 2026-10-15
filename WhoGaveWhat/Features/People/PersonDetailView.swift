@@ -54,6 +54,15 @@ struct PersonDetailView: View {
                 .padding(.top, 6)
                 .accessibilityIdentifier("person-detail.hero")
 
+                Card {
+                    Toggle("This is me", isOn: selfBinding)
+                        .font(Font.app(16, .regular)).foregroundColor(Color.ink)
+                        .tint(Color.recv)
+                        .padding(.horizontal, 14).frame(minHeight: 50)
+                        .accessibilityIdentifier("person-detail.is-me")
+                }
+                .padding(.top, 18)
+
                 HStack(spacing: 10) {
                     statCard(
                         arrow: "↙", label: "Received", color: Color.recv,
@@ -142,6 +151,13 @@ struct PersonDetailView: View {
         .sheet(isPresented: $renaming) {
             renameSheet(name: name, count: giftsCount)
         }
+    }
+
+    /// Exactly one person can be the viewpoint; switching this one on moves it from anyone else.
+    private var selfBinding: Binding<Bool> {
+        Binding(
+            get: { composition.data.isSelf(entityId) },
+            set: { composition.markSelf($0, personID: entityId) })
     }
 
     /// Drives the per-gift delete dialog off the optional pending gift.

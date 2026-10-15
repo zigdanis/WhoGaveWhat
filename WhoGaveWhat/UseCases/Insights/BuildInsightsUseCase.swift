@@ -10,6 +10,7 @@ struct GiftInsights: Equatable {
     let received: [Gift]
     let given: [Gift]
     let paidByYou: [Gift]
+    let circulatedValue: Double
     let topGivers: [RankedPerson]
     let topReceivers: [RankedPerson]
 
@@ -18,23 +19,30 @@ struct GiftInsights: Equatable {
 }
 
 struct BuildInsightsUseCase {
-    func execute(gifts: [Gift], people: [Person]) -> GiftInsights {
-        let received = gifts.filter { $0.direction == .received }
-        let given = gifts.filter { $0.direction == .given }
+    /// Received and given gifts are relative to `selfPersonID`; without a viewpoint they are empty.
+    func execute(gifts: [Gift], people: [Person], selfPersonID: String?) -> GiftInsights {
+        let received = gifts.filter { $0.direction(relativeTo: selfPersonID) == .received }
+        let given = gifts.filter { $0.direction(relativeTo: selfPersonID) == .given }
         return GiftInsights(
             received: received,
             given: given,
             paidByYou: gifts.filter(\.paidByYou),
-            topGivers: ranking(direction: .received, gifts: gifts, people: people),
-            topReceivers: ranking(direction: .given, gifts: gifts, people: people)
+            circulatedValue: gifts.totalValue,
+            topGivers: ranking(direction: .received, gifts: gifts, people: people, selfPersonID: selfPersonID),
+            topReceivers: ranking(direction: .given, gifts: gifts, people: people, selfPersonID: selfPersonID)
         )
     }
 
-    private func ranking(direction: GiftDirection, gifts: [Gift], people: [Person]) -> [RankedPerson] {
+    private func ranking(
+        direction: GiftDirection,
+        gifts: [Gift],
+        people: [Person],
+        selfPersonID: String?
+    ) -> [RankedPerson] {
         people
             .map { person in
                 let matching = gifts.filter { gift in
-                    guard gift.direction == direction else { return false }
+                    guard gift.direction(relativeTo: selfPersonID) == direction else { return false }
                     return direction == .received
                         ? gift.giverID == person.id
                         : gift.recipientID == person.id

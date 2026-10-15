@@ -6,8 +6,10 @@ struct InsightsView: View {
     var body: some View {
         let insights = composition.buildInsights.execute(
             gifts: composition.data.gifts,
-            people: composition.data.contacts
+            people: composition.data.people,
+            selfPersonID: composition.data.selfPersonID
         )
+        let hasViewpoint = composition.data.selfPersonID != nil
         let rv = insights.receivedValue
         let gv = insights.givenValue
         let tot = max(rv + gv, 1)
@@ -19,46 +21,63 @@ struct InsightsView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Circulated in 2026")
                         .font(Font.app(13, .regular)).foregroundColor(Color.muted)
-                    Text(formattedCurrency(rv + gv, code: composition.currencyCode))
+                    Text(formattedCurrency(insights.circulatedValue, code: composition.currencyCode))
                         .font(Font.app(32, .bold)).tracking(-0.6).foregroundColor(Color.ink)
                         .padding(.top, 7)
 
-                    Text(verbatim: "\(LocalizedCount.gifts(composition.data.gifts.count)) · \(LocalizedCount.people(composition.data.contacts.count))")
+                    Text(verbatim: "\(LocalizedCount.gifts(composition.data.gifts.count)) · \(LocalizedCount.people(composition.data.people.count))")
                         .font(Font.app(14, .regular)).foregroundColor(Color.muted).padding(.top, 4)
 
-                    // Stacked received/given bar
-                    GeometryReader { geo in
-                        HStack(spacing: 0) {
-                            Rectangle().fill(Color.recv).frame(width: geo.size.width * CGFloat(rv / tot))
-                            Rectangle().fill(Color.ink).frame(width: geo.size.width * CGFloat(gv / tot))
+                    if hasViewpoint {
+                        // Stacked received/given bar
+                        GeometryReader { geo in
+                            HStack(spacing: 0) {
+                                Rectangle().fill(Color.recv).frame(width: geo.size.width * CGFloat(rv / tot))
+                                Rectangle().fill(Color.ink).frame(width: geo.size.width * CGFloat(gv / tot))
+                            }
                         }
-                    }
-                    .frame(height: 13)
-                    .background(Color.track)
-                    .clipShape(Capsule())
-                    .padding(.top, 18)
+                        .frame(height: 13)
+                        .background(Color.track)
+                        .clipShape(Capsule())
+                        .padding(.top, 18)
 
-                    HStack(spacing: 18) {
-                        legend(color: Color.recv, label: "Received", value: formattedCurrency(rv, code: composition.currencyCode))
-                        legend(color: Color.ink, label: "Given", value: formattedCurrency(gv, code: composition.currencyCode))
+                        HStack(spacing: 18) {
+                            legend(color: Color.recv, label: "Received", value: formattedCurrency(rv, code: composition.currencyCode))
+                            legend(color: Color.ink, label: "Given", value: formattedCurrency(gv, code: composition.currencyCode))
+                        }
+                        .padding(.top, 12)
                     }
-                    .padding(.top, 12)
                 }
                 .padding(20)
             }
 
-            spotlightCard(received: rv, given: gv)
-                .padding(.top, 14)
+            if hasViewpoint {
+                spotlightCard(received: rv, given: gv)
+                    .padding(.top, 14)
 
-            // Top givers
-            SectionHeader(text: "Top givers").padding(.top, 22).padding(.bottom, 7)
-            rankCard(insights.topGivers)
+                // Top givers
+                SectionHeader(text: "Top givers").padding(.top, 22).padding(.bottom, 7)
+                rankCard(insights.topGivers)
 
-            // Top receivers
-            SectionHeader(text: "Top receivers").padding(.top, 22).padding(.bottom, 7)
-            rankCard(insights.topReceivers)
+                // Top receivers
+                SectionHeader(text: "Top receivers").padding(.top, 22).padding(.bottom, 7)
+                rankCard(insights.topReceivers)
+            } else {
+                viewpointPrompt.padding(.top, 14)
+            }
         }
         .padding(.horizontal, 16)
+    }
+
+    private var viewpointPrompt: some View {
+        Card {
+            Text("Mark yourself in People to see your balance")
+                .font(Font.app(15, .regular)).foregroundColor(Color.muted)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20)
+        }
+        .accessibilityIdentifier("insights.viewpoint-prompt")
     }
 
     private func spotlightCard(received: Double, given: Double) -> some View {

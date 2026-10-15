@@ -4,7 +4,6 @@ struct Gift: Identifiable, Hashable {
     let id: String
     var emoji: String
     var name: String
-    var direction: GiftDirection
     var giverID: String
     var recipientID: String
     var paidByYou: Bool
@@ -12,6 +11,16 @@ struct Gift: Identifiable, Hashable {
     var date: Date
     var value: Double
     let createdAt: Date
+
+    /// Direction as seen by the viewpoint person, or nil without a viewpoint or when it isn't an endpoint.
+    func direction(relativeTo personID: String?) -> GiftDirection? {
+        guard let personID else { return nil }
+        return GiftDirectionResolver.resolve(
+            giverID: giverID,
+            recipientID: recipientID,
+            relativeTo: personID
+        )
+    }
 
     /// Newest date first, then newest creation order within the same day.
     static func newestFirst(_ lhs: Gift, _ rhs: Gift) -> Bool {

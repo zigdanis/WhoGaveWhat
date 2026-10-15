@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Everyone you track, as a native `List` so a person can be swiped away.
+/// Everyone you track as one flat alphabetical list, as a native `List` so a person can be swiped away.
 /// Deleting a person is irreversible and also wipes every gift they gave or
 /// received, so it's gated behind a big, hard-to-miss warning.
 struct PeopleView: View {
@@ -11,12 +11,9 @@ struct PeopleView: View {
 
     var body: some View {
         List {
-            section(
-                header: "Your family",
-                entities: composition.data.householdMembers.map { ($0.id, $0.name, $0.color) })
-            section(
-                header: "Friends & relatives",
-                entities: composition.data.contacts.map { ($0.id, $0.name, $0.color) })
+            ForEach(sortedPeople) { person in
+                personRow(person)
+            }
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
@@ -33,7 +30,7 @@ struct PeopleView: View {
                 showsPhoto: false,
                 onCancel: { isAddingPerson = false },
                 onSave: { name, _ in
-                    guard composition.createPerson(name: name, isFamily: false) != nil else {
+                    guard composition.createPerson(name: name) != nil else {
                         throw CocoaError(.validationMissingMandatoryProperty)
                     }
                     isAddingPerson = false
@@ -62,34 +59,30 @@ struct PeopleView: View {
         }
     }
 
-    @ViewBuilder
-    private func section(header: String, entities: [(String, String, Color)]) -> some View {
-        if !entities.isEmpty {
-            Section {
-                ForEach(entities, id: \.0) { e in
-                    NavigationLink(value: e.0) {
-                        PersonRow(
-                            entityId: e.0, name: e.1, color: e.2,
-                            imageData: composition.data.entityImageData(e.0),
-                            gifts: gifts(for: e.0),
-                            currencyCode: composition.currencyCode)
-                    }
-                    .listRowInsets(EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 12))
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        if composition.deletePersonUseCase.canDelete(id: e.0) {
-                            Button(role: .destructive) {
-                                pendingDelete = e.0
-                            } label: {
-                                Image(systemName: "trash")
-                            }
-                            .accessibilityLabel("Delete")
-                        }
-                    }
+    private var sortedPeople: [Person] {
+        composition.data.people.sorted {
+            $0.name.localizedStandardCompare($1.name) == .orderedAscending
+        }
+    }
+
+    private func personRow(_ person: Person) -> some View {
+        NavigationLink(value: person.id) {
+            PersonRow(
+                entityId: person.id, name: person.name, color: person.color,
+                imageData: person.imageData,
+                isSelf: composition.data.isSelf(person.id),
+                gifts: gifts(for: person.id),
+                currencyCode: composition.currencyCode)
+        }
+        .listRowInsets(EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 12))
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            if composition.deletePersonUseCase.canDelete(id: person.id) {
+                Button(role: .destructive) {
+                    pendingDelete = person.id
+                } label: {
+                    Image(systemName: "trash")
                 }
-            } header: {
-                Text(LocalizedStringKey(header))
-                    .font(Font.app(13, .regular)).foregroundColor(Color.muted)
-                    .textCase(nil)
+                .accessibilityLabel("Delete")
             }
         }
     }
@@ -157,6 +150,7 @@ struct PersonRow: View {
     let name: String
     let color: Color
     let imageData: Data?
+    let isSelf: Bool
     let gifts: [Gift]
     let currencyCode: String
 
@@ -179,7 +173,16 @@ struct PersonRow: View {
         HStack(spacing: 12) {
             AvatarView(initials: name.initials, color: color, size: 42, imageData: imageData)
             VStack(alignment: .leading, spacing: 2) {
-                Text(name).font(Font.app(16, .semibold)).foregroundColor(Color.ink)
+                HStack(spacing: 6) {
+                    Text(name).font(Font.app(16, .semibold)).foregroundColor(Color.ink)
+                    if isSelf {
+                        Text("You")
+                            .font(Font.app(11, .semibold)).foregroundColor(Color.recv)
+                            .padding(.horizontal, 7).padding(.vertical, 2)
+                            .background(Capsule().fill(Color.recvTint))
+                            .accessibilityIdentifier("people.you-badge")
+                    }
+                }
                 Text("\(r) received · \(gv) given")
                     .font(Font.app(13, .regular)).foregroundColor(Color.muted3)
             }

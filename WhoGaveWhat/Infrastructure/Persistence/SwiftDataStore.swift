@@ -6,6 +6,9 @@ final class SwiftDataStore {
     /// A new, explicit namespace for this app's SwiftData schema.
     static let storeName = "WhoGaveWhatSwiftData"
 
+    /// The seeded person who represents the user's own viewpoint.
+    static let seedSelfPersonID = "anton"
+
     static let shared: SwiftDataStore = {
         do {
             return try SwiftDataStore()
@@ -51,13 +54,11 @@ final class SwiftDataStore {
             String(localized: String.LocalizationValue(value))
         }
 
-        let household: [(String, String, Int64)] = [
+        let people: [(String, String, Int64)] = [
             ("anton", "Anton", 0x12161C),
             ("marina", "Marina", 0x12805C),
             ("sofia", "Sofia", 0x5B6573),
-            ("alisa", "Alisa", 0x2F6FAE)
-        ]
-        let contacts: [(String, String, Int64)] = [
+            ("alisa", "Alisa", 0x2F6FAE),
             ("maria", "Aunt Maria", 0x12161C),
             ("pavel", "Grandpa Pavel", 0x12805C),
             ("igor", "Igor", 0x2F6FAE),
@@ -67,23 +68,11 @@ final class SwiftDataStore {
         ]
 
         var peopleByID: [String: StoredPerson] = [:]
-        for (index, person) in household.enumerated() {
+        for (index, person) in people.enumerated() {
             let storedPerson = StoredPerson(
                 id: person.0,
                 name: localized(person.1),
                 colorHex: person.2,
-                roleRawValue: PersonRole.household.rawValue,
-                sortIndex: index
-            )
-            context.insert(storedPerson)
-            peopleByID[person.0] = storedPerson
-        }
-        for (index, person) in contacts.enumerated() {
-            let storedPerson = StoredPerson(
-                id: person.0,
-                name: localized(person.1),
-                colorHex: person.2,
-                roleRawValue: PersonRole.contact.rawValue,
                 sortIndex: index
             )
             context.insert(storedPerson)

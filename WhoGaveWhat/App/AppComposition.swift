@@ -59,6 +59,7 @@ final class AppComposition {
         deletePersonUseCase = DeletePersonUseCase(peopleGateway: peopleGateway)
         completeOnboarding = CompleteOnboardingUseCase(preferencesGateway: preferences)
 
+        data.setSelfPerson(preferences.selfPersonID)
         reloadData()
     }
 
@@ -68,6 +69,10 @@ final class AppComposition {
         }
         if let people = try? loadPeopleUseCase.execute() {
             data.replacePeople(people)
+            // The viewpoint goes away with its person, including when they were deleted elsewhere.
+            if let selfID = data.selfPersonID, !people.people.contains(where: { $0.id == selfID }) {
+                setSelfPerson(nil)
+            }
         }
     }
 
@@ -78,7 +83,7 @@ final class AppComposition {
     }
 
     func saveGift(_ input: SaveGiftInput) {
-        guard (try? saveGiftUseCase.execute(input, householdIDs: data.householdIDs)) != nil else { return }
+        guard (try? saveGiftUseCase.execute(input)) != nil else { return }
         reloadData()
     }
 
@@ -87,10 +92,9 @@ final class AppComposition {
         reloadData()
     }
 
-    func createPerson(name: String, isFamily: Bool) -> String? {
+    func createPerson(name: String) -> String? {
         let id = try? createPersonUseCase.execute(
             name: name,
-            isFamily: isFamily,
             current: data.peopleSnapshot
         )
         reloadData()
@@ -115,6 +119,21 @@ final class AppComposition {
     func deletePerson(id: String) {
         try? deletePersonUseCase.execute(id: id)
         reloadData()
+    }
+
+    /// Applies the "This is me" choice made on the person screen.
+    func markSelf(_ isSelf: Bool, personID id: String) {
+        if isSelf {
+            setSelfPerson(id)
+        } else if data.isSelf(id) {
+            setSelfPerson(nil)
+        }
+    }
+
+    /// Marks exactly one person as the user's viewpoint, or clears it with nil.
+    func setSelfPerson(_ id: String?) {
+        preferences.setSelfPersonID(id)
+        data.setSelfPerson(id)
     }
 
     func setCurrencyCode(_ currencyCode: String) {

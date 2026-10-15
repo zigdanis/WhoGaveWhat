@@ -27,27 +27,17 @@ struct SaveGiftUseCase {
     let giftGateway: GiftGateway
     let suggestGift: SuggestGiftUseCase
 
-    func direction(for input: SaveGiftInput, householdIDs: Set<String>) -> GiftDirection {
-        GiftDirectionResolver.resolve(
-            giverID: input.fromID ?? "",
-            recipientID: input.toID ?? "",
-            householdIDs: householdIDs
-        )
-    }
-
     @discardableResult
-    func execute(_ input: SaveGiftInput, householdIDs: Set<String>) throws -> Gift? {
+    func execute(_ input: SaveGiftInput) throws -> Gift? {
         guard input.canSave, let fromID = input.fromID, let toID = input.toID else {
             return nil
         }
 
         let suggestion = suggestGift.instantSuggestion(for: input.name)
-        let direction = direction(for: input, householdIDs: householdIDs)
         let gift = Gift(
             id: input.editingGiftID ?? "g\(UUID().uuidString)",
             emoji: input.emoji ?? input.aiEmoji ?? suggestion.emoji,
             name: input.name.trimmingCharacters(in: .whitespaces),
-            direction: direction,
             giverID: fromID,
             recipientID: toID,
             paidByYou: input.paidByYou,

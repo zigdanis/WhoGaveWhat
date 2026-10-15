@@ -6,7 +6,6 @@ final class StoredPerson {
     @Attribute(.unique) var id: String
     var name: String
     var colorHex: Int64
-    var roleRawValue: String
     var sortIndex: Int
     @Attribute(.externalStorage) var imageData: Data?
     @Relationship(deleteRule: .cascade, inverse: \StoredGift.giver)
@@ -14,11 +13,10 @@ final class StoredPerson {
     @Relationship(deleteRule: .cascade, inverse: \StoredGift.recipient)
     var giftsReceived: [StoredGift] = []
 
-    init(id: String, name: String, colorHex: Int64, roleRawValue: String, sortIndex: Int, imageData: Data? = nil) {
+    init(id: String, name: String, colorHex: Int64, sortIndex: Int, imageData: Data? = nil) {
         self.id = id
         self.name = name
         self.colorHex = colorHex
-        self.roleRawValue = roleRawValue
         self.sortIndex = sortIndex
         self.imageData = imageData
     }

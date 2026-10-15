@@ -245,23 +245,6 @@
         }
       }
     },
-    "Add family member" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add family member"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Добавить члена семьи"
-          }
-        }
-      }
-    },
     "Add occasion" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1117,40 +1100,6 @@
         }
       }
     },
-    "Family member" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Family member"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Член семьи"
-          }
-        }
-      }
-    },
-    "Friends & relatives" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Friends & relatives"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Друзья и родные"
-          }
-        }
-      }
-    },
     "From" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1542,6 +1491,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Марина"
+          }
+        }
+      }
+    },
+    "Mark yourself in People to see your balance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark yourself in People to see your balance"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отметьте себя в разделе «Люди», чтобы увидеть свой баланс"
           }
         }
       }
@@ -2332,23 +2298,6 @@
         }
       }
     },
-    "That's %@ from your pocket — the quiet hero of the family." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "That's %@ from your pocket — the quiet hero of the family."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Это %@ из вашего кармана — тихий герой семьи."
-          }
-        }
-      }
-    },
     "That's %@ more than you've given back — you're well loved. Maybe time to return the favour?" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2396,6 +2345,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Это действие нельзя отменить."
+          }
+        }
+      }
+    },
+    "This is me" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This is me"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Это я"
           }
         }
       }
@@ -2940,23 +2906,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вы получили %@"
-          }
-        }
-      }
-    },
-    "Your family" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your family"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ваша семья"
           }
         }
       }

@@ -6,8 +6,7 @@ import Observation
 final class AppData {
     private(set) var gifts: [Gift] = []
     private(set) var people: [Person] = []
-    private(set) var householdMembers: [Person] = []
-    private(set) var contacts: [Person] = []
+    private(set) var selfPersonID: String?
     private(set) var occasions: [Occasion] = AppData.defaultOccasions
 
     static let defaultOccasions = [
@@ -30,8 +29,6 @@ final class AppData {
 
     func replacePeople(_ snapshot: PeopleSnapshot) {
         people = snapshot.people
-        householdMembers = snapshot.householdMembers
-        contacts = snapshot.contacts
     }
 
     func addOccasion(_ occasion: String) {
@@ -48,8 +45,12 @@ final class AppData {
         PeopleSnapshot(people: people)
     }
 
-    var householdIDs: Set<String> {
-        Set(householdMembers.map(\.id))
+    func isSelf(_ id: String) -> Bool {
+        selfPersonID == id
+    }
+
+    func setSelfPerson(_ id: String?) {
+        selfPersonID = id
     }
 
     func entityName(_ id: String) -> String {

@@ -122,10 +122,8 @@ struct AddGiftSheet: View {
 
     /// Tint follows the derived direction for the form's controls.
     private var fm: GiftDirectionAppearance {
-        state.direction(
-            householdIDs: composition.data.householdIDs,
-            saveGift: composition.saveGiftUseCase
-        ).appearance
+        GiftDirectionAppearance.appearance(
+            for: state.direction(relativeTo: composition.data.selfPersonID))
     }
 }
 
@@ -482,7 +480,7 @@ private struct AddGiftPickerSheet: View {
                 selectedID: state.draft.fromID,
                 onProvisionalSelection: state.previewFrom,
                 onSelection: state.selectFrom,
-                onCreatePerson: { composition.createPerson(name: $0, isFamily: false) }
+                onCreatePerson: { composition.createPerson(name: $0) }
             )
         case .to:
             PersonPickerContent(
@@ -490,7 +488,7 @@ private struct AddGiftPickerSheet: View {
                 selectedID: state.draft.toID,
                 onProvisionalSelection: state.previewTo,
                 onSelection: state.selectTo,
-                onCreatePerson: { composition.createPerson(name: $0, isFamily: false) }
+                onCreatePerson: { composition.createPerson(name: $0) }
             )
         case .occasion:
             occasionPicker

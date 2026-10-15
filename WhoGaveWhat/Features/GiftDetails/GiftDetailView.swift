@@ -24,7 +24,8 @@ struct GiftDetailView: View {
 
     @ViewBuilder
     private func content(_ gift: Gift) -> some View {
-        let fm = gift.direction.appearance
+        let fm = GiftDirectionAppearance.appearance(
+            for: gift.direction(relativeTo: composition.data.selfPersonID))
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 heroCard(gift, fm)
@@ -62,11 +63,13 @@ struct GiftDetailView: View {
                     .background(RoundedRectangle(cornerRadius: DesignMetrics.cornerRadius, style: .continuous).fill(.white))
                 VStack(alignment: .leading, spacing: 3) {
                     Text(g.name).font(Font.app(18, .bold)).foregroundColor(Color.ink).lineLimit(2)
-                    HStack(spacing: 5) {
-                        Text(fm.arrow)
-                        Text(fm.label)
+                    if let label = fm.label {
+                        HStack(spacing: 5) {
+                            Text(fm.arrow)
+                            Text(label)
+                        }
+                        .font(Font.app(13, .semibold)).foregroundColor(fm.main)
                     }
-                    .font(Font.app(13, .semibold)).foregroundColor(fm.main)
                 }
                 Spacer(minLength: 8)
             }

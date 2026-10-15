@@ -195,6 +195,63 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attach("person-add-deleted")
     }
 
+    func testMarkingPersonAsMeShowsYouBadgeAndDeletingClearsIt() throws {
+        let personName = "CI me person \(UUID().uuidString.prefix(8))"
+        let prompt = app.staticTexts["Mark yourself in People to see your balance"]
+        let badge = app.staticTexts["people.you-badge"]
+
+        app.tabBars.buttons["Insights"].tap()
+        XCTAssertTrue(prompt.waitForExistence(timeout: timeout))
+
+        app.tabBars.buttons["People"].tap()
+        let addPerson = app.buttons["people.add-person"]
+        XCTAssertTrue(addPerson.waitForExistence(timeout: timeout))
+        XCTAssertFalse(app.staticTexts["Your family"].exists)
+        XCTAssertFalse(app.staticTexts["Friends & relatives"].exists)
+        addPerson.tap()
+        let nameField = app.textFields["person-editor.name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: timeout))
+        nameField.tap()
+        nameField.typeText(personName)
+        app.buttons["person-editor.save"].tap()
+
+        let personRow = app.staticTexts[personName]
+        XCTAssertTrue(personRow.waitForExistence(timeout: timeout))
+        XCTAssertFalse(badge.exists)
+        personRow.tap()
+        XCTAssertTrue(app.navigationBars[personName].waitForExistence(timeout: timeout))
+        let meSwitch = app.switches["person-detail.is-me"]
+        XCTAssertTrue(meSwitch.waitForExistence(timeout: timeout))
+        XCTAssertEqual(meSwitch.value as? String, "0")
+        meSwitch.tap()
+        XCTAssertEqual(meSwitch.value as? String, "1")
+        attach("person-detail-is-me")
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(badge.waitForExistence(timeout: timeout))
+        attach("people-you-badge")
+
+        app.tabBars.buttons["Insights"].tap()
+        XCTAssertTrue(app.navigationBars["Insights"].waitForExistence(timeout: timeout))
+        XCTAssertFalse(prompt.exists)
+
+        app.tabBars.buttons["People"].tap()
+        XCTAssertTrue(personRow.waitForExistence(timeout: timeout))
+        personRow.tap()
+        app.buttons["person-detail.edit"].tap()
+        let delete = app.buttons["person-editor.delete"]
+        XCTAssertTrue(delete.waitForExistence(timeout: timeout))
+        delete.tap()
+        let confirmation = app.alerts.firstMatch
+        XCTAssertTrue(confirmation.waitForExistence(timeout: timeout))
+        confirmation.buttons["Delete"].tap()
+        XCTAssertTrue(app.navigationBars["People"].waitForExistence(timeout: timeout))
+        XCTAssertFalse(badge.exists)
+
+        app.tabBars.buttons["Insights"].tap()
+        XCTAssertTrue(prompt.waitForExistence(timeout: timeout))
+    }
+
     func testPersonEditorTitleUsesRussianLocalization() throws {
         app.terminate()
         app.launchArguments = ["-AppleLanguages", "(ru)", "-AppleLocale", "ru_RU"]

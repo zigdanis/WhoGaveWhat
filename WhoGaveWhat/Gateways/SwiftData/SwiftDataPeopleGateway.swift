@@ -11,7 +11,6 @@ final class SwiftDataPeopleGateway: PeopleGateway {
 
     func loadPeople() throws -> PeopleSnapshot {
         let descriptor = FetchDescriptor<StoredPerson>(sortBy: [
-            SortDescriptor(\StoredPerson.roleRawValue),
             SortDescriptor(\StoredPerson.sortIndex)
         ])
         return PeopleSnapshot(people: try context.fetch(descriptor).map(Person.init))
@@ -21,14 +20,12 @@ final class SwiftDataPeopleGateway: PeopleGateway {
         id: String,
         name: String,
         colorHex: UInt,
-        role: PersonRole,
         sortIndex: Int
     ) throws {
         let person = StoredPerson(
             id: id,
             name: name,
             colorHex: Int64(colorHex),
-            roleRawValue: role.rawValue,
             sortIndex: sortIndex
         )
         context.insert(person)
@@ -91,7 +88,6 @@ private extension Person {
             id: storedPerson.id,
             name: storedPerson.name,
             colorHex: UInt(bitPattern: Int(storedPerson.colorHex)),
-            role: PersonRole(rawValue: storedPerson.roleRawValue) ?? .contact,
             imageData: storedPerson.imageData
         )
     }
