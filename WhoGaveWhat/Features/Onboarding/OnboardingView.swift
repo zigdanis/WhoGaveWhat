@@ -47,6 +47,7 @@ struct OnboardingView: View {
             } label: {
                 Text(step == 2 ? "Get started" : "Continue")
                     .font(Font.app(17, .semibold))
+                    .foregroundStyle(Color.onFill)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
             }

@@ -273,6 +273,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
         XCTAssertTrue(people.waitForExistence(timeout: timeout))
         people.tap()
+        // Names wrap at accessibility sizes, so the row can start below the fold.
+        for _ in 0..<8 where !personRow.exists {
+            app.swipeUp()
+        }
         XCTAssertTrue(personRow.waitForExistence(timeout: timeout))
         personRow.tap()
         app.buttons["person-detail.edit"].tap()

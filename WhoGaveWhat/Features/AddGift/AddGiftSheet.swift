@@ -89,7 +89,7 @@ struct AddGiftSheet: View {
             .accessibilityIdentifier("add-gift.scroll")
             .scrollDismissesKeyboard(.interactively)
             // Empty scroll area below the content also dismisses the keyboard.
-            .background(Color.clear.contentShape(Rectangle()).onTapGesture { focus = nil })
+            .background(Color.appBackground.contentShape(Rectangle()).onTapGesture { focus = nil })
             // Opening a picker must drop keyboard focus so it doesn't bounce back
             // onto the previously-edited text field when the picker sheet closes.
             .onChange(of: state.picker) { _, _ in focus = nil }
@@ -104,7 +104,7 @@ struct AddGiftSheet: View {
         }
         .presentationDetents([.height(sheetHeight)], selection: $selectedDetent)
         .presentationDragIndicator(.visible)
-        .presentationBackground(.regularMaterial)
+        .presentationBackground(Color.appBackground)
         .sheet(item: $state.picker) { kind in
             AddGiftPickerPresentation(kind: kind, state: state, composition: composition)
         }
@@ -142,6 +142,7 @@ private struct GiftSaveButton: View {
         Button(action: onSave) {
             Text("Save")
                 .font(Font.app(17, .semibold))
+                .foregroundStyle(Color.onFill)
                 .frame(maxWidth: .infinity).padding(.vertical, 8)
         }
         .buttonStyle(.glassProminent)
@@ -424,6 +425,7 @@ private struct AddGiftPickerSheet: View {
     var body: some View {
         IntrinsicModalScaffold(title: title) {
             content
+                .background(Color.appBackground)
                 .onGeometryChange(for: CGFloat.self) { geometry in
                     geometry.size.height
                 } action: { contentHeight in
@@ -446,7 +448,7 @@ private struct AddGiftPickerSheet: View {
             selectedDetent = .height(fitted)
         }
         .presentationDragIndicator(.visible)
-        .presentationBackground(.regularMaterial)
+        .presentationBackground(Color.appBackground)
     }
 
     private var detents: Set<PresentationDetent> {

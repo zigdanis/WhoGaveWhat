@@ -11,8 +11,11 @@ struct FloatingActionButton: View {
         Button(action: action) {
             Label(title, systemImage: systemImage)
                 .font(Font.app(16, .semibold))
+                .foregroundStyle(Color.onFill)
+                .lineLimit(1)
                 .padding(.horizontal, 6)
         }
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .buttonStyle(.glassProminent)
         .buttonBorderShape(.capsule)
         .controlSize(.large)

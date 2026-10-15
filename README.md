@@ -35,7 +35,7 @@ xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
 - **Liquid Glass.** Floating controls (Add a gift / Add person, sheet header actions, Save,
   onboarding and sign-in CTAs) use `.glassProminent` / `.glass` button styles and
   `glassEffect`; the tab bar keeps `tabBarMinimizeBehavior(.onScrollDown)` and lists use a
-  soft bottom scroll-edge effect. Add-gift and picker sheets sit on a system material.
+  soft bottom scroll-edge effect.
 - **Adaptive color.** Semantic tokens live in `DesignSystem/Colors.swift`: surfaces and text
   follow the system palette, so light and dark appearance both work with no forced color
   scheme. One brand green (`brand` for text and tints, `brandFill` for solid controls with

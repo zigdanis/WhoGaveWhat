@@ -146,6 +146,7 @@ struct GiftDetailView: View {
         } label: {
             Text("Delete gift")
                 .font(Font.app(16, .semibold))
+                .foregroundStyle(Color.destructive)
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.glass)

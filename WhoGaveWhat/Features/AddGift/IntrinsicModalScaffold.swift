@@ -62,6 +62,7 @@ struct IntrinsicModalScaffold<Content: View>: View {
             .layoutPriority(1)
             content
         }
+        .background(Color.appBackground)
     }
 }
 
