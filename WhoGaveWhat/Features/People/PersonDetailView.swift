@@ -42,6 +42,7 @@ struct PersonDetailView: View {
                 relativeTo: entityId
             ) == .given
         }
+        let isSelf = composition.data.isSelf(entityId)
         let list = filter == "received" ? recv : (filter == "given" ? given : gs)
 
         List {
@@ -55,7 +56,7 @@ struct PersonDetailView: View {
                 .accessibilityIdentifier("person-detail.hero")
 
                 Card {
-                    Toggle("This is me", isOn: selfBinding)
+                    Toggle("This is me", isOn: selfBinding(isSelf))
                         .font(Font.app(16, .regular)).foregroundColor(Color.ink)
                         .tint(Color.recv)
                         .padding(.horizontal, 14).frame(minHeight: 50)
@@ -154,9 +155,9 @@ struct PersonDetailView: View {
     }
 
     /// Exactly one person can be the viewpoint; switching this one on moves it from anyone else.
-    private var selfBinding: Binding<Bool> {
+    private func selfBinding(_ isSelf: Bool) -> Binding<Bool> {
         Binding(
-            get: { composition.data.isSelf(entityId) },
+            get: { isSelf },
             set: { composition.markSelf($0, personID: entityId) })
     }
 

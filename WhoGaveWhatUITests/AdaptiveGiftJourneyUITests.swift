@@ -224,7 +224,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(meSwitch.waitForExistence(timeout: timeout))
         XCTAssertEqual(meSwitch.value as? String, "0")
         // The switch sits at the trailing edge; the label area of a row toggle is not tappable.
-        meSwitch.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+        meSwitch.coordinate(withNormalizedOffset: CGVector(dx: 0.87, dy: 0.5)).tap()
         expectation(for: NSPredicate(format: "value == %@", "1"), evaluatedWith: meSwitch)
         waitForExpectations(timeout: timeout)
         attach("person-detail-is-me")
