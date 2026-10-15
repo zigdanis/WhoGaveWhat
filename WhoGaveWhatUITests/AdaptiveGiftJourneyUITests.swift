@@ -448,6 +448,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     /// Dark-mode checkpoint: relaunches with `KS_APPEARANCE=dark` so the key screens
     /// render with adaptive colors, then relaunches in the system appearance.
     private func verifyDarkAppearance() {
+        continueAfterFailure = false
         app.terminate()
         app.launchEnvironment["KS_APPEARANCE"] = "dark"
         app.launch()
@@ -457,6 +458,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             app.launch()
             XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: timeout))
         }
+        XCTAssertTrue(
+            app.descendants(matching: .any)["appearance.dark"].waitForExistence(timeout: timeout),
+            "App did not report dark appearance"
+        )
         XCTAssertTrue(app.staticTexts[giftName].waitForExistence(timeout: timeout))
         attach("dark-home")
 

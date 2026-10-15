@@ -26,21 +26,6 @@ struct AvatarView: View {
     var imageData: Data?
     @State private var decodedImage: UIImage?
 
-    init(
-        initials: String,
-        color: Color,
-        size: AvatarSize = .regular,
-        selected: Bool = false,
-        imageData: Data? = nil
-    ) {
-        self.initials = initials
-        self.color = color
-        self.size = size
-        self.selected = selected
-        self.imageData = imageData
-        _decodedImage = State(initialValue: imageData.flatMap { UIImage(data: $0) })
-    }
-
     var body: some View {
         Group {
             if let decodedImage {
@@ -61,8 +46,8 @@ struct AvatarView: View {
         .background(color)
         .clipShape(Circle())
         .overlay(Circle().strokeBorder(Color.separatorLine, lineWidth: 0.5))
-        .onChange(of: imageData) { _, newValue in
-            decodedImage = newValue.flatMap { UIImage(data: $0) }
+        .task(id: imageData) {
+            decodedImage = imageData.flatMap { UIImage(data: $0) }
         }
         .overlay {
             if selected {

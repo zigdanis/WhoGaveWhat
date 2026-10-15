@@ -231,7 +231,7 @@ struct PersonPhotoCropView: View {
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(Color.white)
                 .frame(width: 48, height: 48)
-                .background(prominent ? Color.accentColor : Color.white.opacity(0.12), in: Circle())
+                .background(prominent ? Color.brandFill : Color.white.opacity(0.12), in: Circle())
                 .overlay(Circle().stroke(Color.white.opacity(prominent ? 0.45 : 0.2), lineWidth: 1))
         }
         .accessibilityLabel(Text(label))
