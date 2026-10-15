@@ -8,6 +8,10 @@ struct SuggestGiftUseCase {
         intelligenceGateway.isAvailable
     }
 
+    func prewarmIntelligence() {
+        intelligenceGateway.prewarm()
+    }
+
     func instantSuggestion(for name: String) -> GiftSuggestion {
         let normalizedName = name.lowercased()
         return Self.catalog.first { suggestion in

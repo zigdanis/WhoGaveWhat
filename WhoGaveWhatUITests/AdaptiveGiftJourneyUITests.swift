@@ -356,6 +356,9 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(giftNameField.waitForExistence(timeout: timeout))
         giftNameField.tap()
         giftNameField.typeText(name)
+        let emojiSlot = app.buttons["add-gift.emoji"]
+        XCTAssertTrue(emojiSlot.waitForExistence(timeout: timeout))
+        XCTAssertFalse((emojiSlot.value as? String ?? "").isEmpty, "The icon slot shows the inferred emoji")
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
         assertCompactSaveGap(app.buttons["add-gift.save"], keyboard: app.keyboards.firstMatch)
         attach("gift-compact-keyboard")
