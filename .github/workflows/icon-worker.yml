@@ -36,8 +36,6 @@ jobs:
       run:
         working-directory: icon-worker
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       # The production URL compiled into the app (CloudGiftIconGateway.endpoint).
       APP_ENDPOINT: https://whogavewhat-icons.zigdanis.workers.dev
       JEV_MODEL_INPUT: ${{ inputs.jev_model }}
@@ -54,13 +52,21 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npx vitest run
+      # Cloudflare credentials and the Jev key are given only to the steps that need them,
+      # not to the dependency install or the tests.
       - name: Check Cloudflare credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
             echo "::error::Set the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets first."
             exit 1
           fi
       - name: Deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -o pipefail
           set -- deploy
@@ -85,8 +91,9 @@ jobs:
             exit 1
           fi
       - name: Sync the Jev API key
-        # Only this step sees the key, not the dependency install or the tests.
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           JEV_API_KEY: ${{ secrets.JEV_API_KEY }}
         run: |
           if [ -z "$JEV_API_KEY" ]; then
@@ -100,8 +107,12 @@ jobs:
           case "$key" in
             ''|*[[:space:]]*) echo "::error::Set the JEV_API_KEY secret to the key alone."; exit 1 ;;
           esac
+          echo "::add-mask::$key"
           printf '%s' "$key" | npx wrangler secret put JEV_API_KEY
       - name: Check the deployed Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 "$DEPLOYED_URL/health"
           echo
@@ -110,6 +121,9 @@ jobs:
           fi
       - name: Evaluate icons
         if: inputs.run_eval
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -o pipefail
           npx wrangler tail whogavewhat-icons --format json > "$RUNNER_TEMP/tail.jsonl" 2>/dev/null &

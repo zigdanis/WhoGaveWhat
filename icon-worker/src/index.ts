@@ -61,8 +61,8 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
 
   const admission = await limiter.admit({
     cacheKey,
-    installHash: await sha256(`install\n${installID.toLowerCase()}`),
-    ipHash: await sha256(`ip\n${request.headers.get("CF-Connecting-IP") ?? "unknown"}`),
+    installID,
+    ip: request.headers.get("CF-Connecting-IP") ?? "unknown",
     now: deps.now(),
     limits: config.limits,
     reservationMicros: attemptMicros * MAX_ATTEMPTS,
