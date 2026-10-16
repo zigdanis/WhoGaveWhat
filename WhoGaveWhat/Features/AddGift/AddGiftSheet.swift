@@ -54,8 +54,14 @@ struct AddGiftSheet: View {
                     )
                     if state.showsCloudIconConsent {
                         CloudIconConsentCard(
-                            onAllow: { focus = nil; state.allowCloudIcons() },
-                            onDecline: { focus = nil; state.declineCloudIcons() }
+                            onAllow: {
+                                focus = nil
+                                state.allowCloudIcons()
+                            },
+                            onDecline: {
+                                focus = nil
+                                state.declineCloudIcons()
+                            }
                         )
                         .padding(.top, 12)
                     }
@@ -154,10 +160,12 @@ private struct CloudIconConsentCard: View {
                 Text("Smarter gift icons")
                     .font(Font.app(15, .semibold))
                     .foregroundStyle(Color.textPrimary)
-                Text("Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon? Only the name and a random app ID are sent — never people, dates, amounts or notes.")
-                    .font(Font.app(13, .regular))
-                    .foregroundStyle(Color.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                Text(
+                    "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon? Only the name and a random app ID are sent — never people, dates, amounts or notes."
+                )
+                .font(Font.app(13, .regular))
+                .foregroundStyle(Color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 12) {
                     Spacer(minLength: 0)
                     Button("Not now", action: onDecline)
@@ -174,6 +182,8 @@ private struct CloudIconConsentCard: View {
             }
             .padding(14)
         }
+        // A containing element keeps the buttons' own identifiers instead of inheriting this one.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("add-gift.cloud-icons.consent")
     }
 }

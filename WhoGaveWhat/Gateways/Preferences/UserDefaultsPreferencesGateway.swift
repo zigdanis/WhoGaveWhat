@@ -14,8 +14,8 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        cloudIconConsent = defaults.string(forKey: "cloudIconConsent")
-            .flatMap(CloudIconConsent.init(rawValue:)) ?? .undecided
+        let storedConsent = defaults.string(forKey: "cloudIconConsent").flatMap(CloudIconConsent.init(rawValue:))
+        cloudIconConsent = storedConsent ?? .undecided
     }
 
     var installID: String {

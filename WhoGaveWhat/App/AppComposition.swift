@@ -27,8 +27,12 @@ final class AppComposition {
     convenience init(store: SwiftDataStore) {
         let preferences = UserDefaultsPreferencesGateway()
         let environment = ProcessInfo.processInfo.environment
-        let cloud: GiftIntelligenceGateway = environment["KS_CLOUD_ICONS"] == "stub"
-            ? StubCloudGiftIconGateway() : CloudGiftIconGateway(preferences: preferences)
+        let cloud: GiftIntelligenceGateway
+        if environment["KS_CLOUD_ICONS"] == "stub" {
+            cloud = StubCloudGiftIconGateway()
+        } else {
+            cloud = CloudGiftIconGateway(preferences: preferences)
+        }
         self.init(
             store: store,
             preferences: preferences,

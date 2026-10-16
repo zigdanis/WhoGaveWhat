@@ -40,11 +40,13 @@ struct SettingsView: View {
                         .padding(.horizontal, 14).padding(.vertical, 9)
                         .accessibilityIdentifier("settings.cloud-icons")
                     }
-                    Text("Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and notes are never sent. TypeSafe processes requests under its terms.")
-                        .font(Font.app(13, .regular))
-                        .foregroundStyle(Color.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, 14).padding(.top, 8)
+                    Text(
+                        "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and notes are never sent. TypeSafe processes requests under its terms."
+                    )
+                    .font(Font.app(13, .regular))
+                    .foregroundStyle(Color.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 14).padding(.top, 8)
 
                     SectionHeader(text: "About").padding(.top, 24).padding(.bottom, 7)
                     Card {

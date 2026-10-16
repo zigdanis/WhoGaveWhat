@@ -129,6 +129,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         name.typeText("гитара")
 
         let allow = app.buttons["add-gift.cloud-icons.allow"]
+        XCTAssertTrue(element(identifier: "add-gift.cloud-icons.consent").waitForExistence(timeout: timeout))
         XCTAssertTrue(allow.waitForExistence(timeout: timeout))
         let scroll = app.scrollViews["add-gift.scroll"]
         for _ in 0..<4 where !allow.isHittable {
@@ -152,7 +153,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(toggle.waitForExistence(timeout: timeout))
         waitForValue(toggle, expected: "1")
         attach("\(checkpointPrefix)cloud-icons-settings")
-        toggle.tap()
+        // Tap the switch itself; the row's center is its label.
+        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.87, dy: 0.5)).tap()
         waitForValue(toggle, expected: "0")
         app.buttons["Done"].tap()
 
