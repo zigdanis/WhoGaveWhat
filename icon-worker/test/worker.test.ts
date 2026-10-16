@@ -156,10 +156,22 @@ describe("gift icon endpoint", () => {
     expect((await handle(new Request("https://icons.test/health"), testEnv(), deps(jev.fetcher))).status).toBe(200);
   });
 
-  it("fails closed without an API key or a valid token ceiling", async () => {
+  it("fails closed without an API key or with any invalid limit setting", async () => {
     const jev = fakeJev(jevReply("rose"));
-    for (const broken of [{ JEV_API_KEY: undefined }, { JEV_MAX_REQUEST_TOKENS: "" }, { JEV_MAX_REQUEST_TOKENS: "lots" }]) {
-      const response = await handle(request({ name: "розы" }), testEnv(broken), deps(jev.fetcher));
+    const broken: Partial<Env>[] = [
+      { JEV_API_KEY: undefined },
+      { JEV_MAX_REQUEST_TOKENS: "" },
+      { JEV_MAX_REQUEST_TOKENS: "lots" },
+      { JEV_PRICE_PER_MTOK_USD: "0" },
+      { MIN_CONFIDENCE: "high" },
+      { MONTHLY_BUDGET_USD: "" },
+      { DAILY_BUDGET_USD: "-1" },
+      { PER_INSTALL_PER_DAY: "1.5" },
+      { PER_IP_PER_MINUTE: "many" },
+      { GLOBAL_PER_MINUTE: undefined as unknown as string },
+    ];
+    for (const overrides of broken) {
+      const response = await handle(request({ name: "розы" }), testEnv(overrides), deps(jev.fetcher));
       expect(response.status).toBe(503);
       expect(await body(response)).toEqual({ error: "unavailable" });
     }

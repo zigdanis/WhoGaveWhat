@@ -48,15 +48,12 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
   if (!INSTALL_ID.test(installID)) return invalid();
   const name = await readName(request);
   if (name === null) return invalid();
-  // Without a key or a known per-request token ceiling, spending cannot be bounded; fail closed.
-  const maxRequestTokens = Number(env.JEV_MAX_REQUEST_TOKENS);
-  if (!env.JEV_API_KEY || !Number.isInteger(maxRequestTokens) || maxRequestTokens <= 0) {
-    return json({ error: "unavailable" }, 503);
-  }
+  // Without a key or valid limits, spending cannot be bounded; fail closed.
+  const config = readConfig(env);
+  if (!env.JEV_API_KEY || config === null) return json({ error: "unavailable" }, 503);
+  const { maxRequestTokens, pricePerToken, minConfidence } = config;
 
   const limiter = env.LIMITER.get(env.LIMITER.idFromName("global"));
-  const pricePerToken = Number(env.JEV_PRICE_PER_MTOK_USD); // micro-dollars per token
-  const minConfidence = Number(env.MIN_CONFIDENCE);
   const russianHints = env.JEV_RUSSIAN_HINTS === "true";
   const cacheKey = await sha256(`${CATALOG_VERSION}\n${env.JEV_MODEL}\n${russianHints}\n${name.toLowerCase()}`);
   // Every attempt may be billed, so each is reserved at the provider-enforced request ceiling.
@@ -67,7 +64,7 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
     installHash: await sha256(`install\n${installID.toLowerCase()}`),
     ipHash: await sha256(`ip\n${request.headers.get("CF-Connecting-IP") ?? "unknown"}`),
     now: deps.now(),
-    limits: limits(env),
+    limits: config.limits,
     reservationMicros: attemptMicros * MAX_ATTEMPTS,
   });
 
@@ -168,13 +165,60 @@ function iconResponse(key: string | null, confidence: number, minConfidence: num
   return json({ emoji, confidence: Math.round(confidence * 1000) / 1000 });
 }
 
-function limits(env: Env): Limits {
+interface Config {
+  maxRequestTokens: number;
+  /** Micro-dollars per token, numerically equal to USD per million tokens. */
+  pricePerToken: number;
+  minConfidence: number;
+  limits: Limits;
+}
+
+/**
+ * Parses the numeric settings, or returns null when any is missing or invalid. A NaN
+ * limit would make every comparison false and silently disable that limit.
+ */
+function readConfig(env: Env): Config | null {
+  const number = (raw: string | undefined) => (raw === undefined || raw.trim() === "" ? Number.NaN : Number(raw));
+  const count = (raw: string | undefined) => {
+    const value = number(raw);
+    return Number.isInteger(value) && value >= 0 ? value : null;
+  };
+  const amount = (raw: string | undefined) => {
+    const value = number(raw);
+    return Number.isFinite(value) && value >= 0 ? value : null;
+  };
+  const maxRequestTokens = count(env.JEV_MAX_REQUEST_TOKENS);
+  const pricePerToken = amount(env.JEV_PRICE_PER_MTOK_USD);
+  const minConfidence = amount(env.MIN_CONFIDENCE);
+  const monthly = amount(env.MONTHLY_BUDGET_USD);
+  const daily = amount(env.DAILY_BUDGET_USD);
+  const perInstallPerDay = count(env.PER_INSTALL_PER_DAY);
+  const perIpPerMinute = count(env.PER_IP_PER_MINUTE);
+  const globalPerMinute = count(env.GLOBAL_PER_MINUTE);
+  if (
+    !maxRequestTokens ||
+    !pricePerToken ||
+    minConfidence === null ||
+    minConfidence > 1 ||
+    monthly === null ||
+    daily === null ||
+    perInstallPerDay === null ||
+    perIpPerMinute === null ||
+    globalPerMinute === null
+  ) {
+    return null;
+  }
   return {
-    monthlyBudgetMicros: Math.round(Number(env.MONTHLY_BUDGET_USD) * 1_000_000),
-    dailyBudgetMicros: Math.round(Number(env.DAILY_BUDGET_USD) * 1_000_000),
-    perInstallPerDay: Number(env.PER_INSTALL_PER_DAY),
-    perIpPerMinute: Number(env.PER_IP_PER_MINUTE),
-    globalPerMinute: Number(env.GLOBAL_PER_MINUTE),
+    maxRequestTokens,
+    pricePerToken,
+    minConfidence,
+    limits: {
+      monthlyBudgetMicros: Math.round(monthly * 1_000_000),
+      dailyBudgetMicros: Math.round(daily * 1_000_000),
+      perInstallPerDay,
+      perIpPerMinute,
+      globalPerMinute,
+    },
   };
 }
 
