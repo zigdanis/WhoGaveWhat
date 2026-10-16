@@ -575,6 +575,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.tabBars.buttons["People"].tap()
         XCTAssertTrue(app.navigationBars["People"].waitForExistence(timeout: timeout))
         attach("dark-people")
+        app.tabBars.buttons["Insights"].tap()
+        XCTAssertTrue(app.navigationBars["Insights"].waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.descendants(matching: .any)["insights.balances"].waitForExistence(timeout: timeout))
+        attach("dark-insights")
         app.tabBars.buttons["Home"].tap()
 
         app.staticTexts[giftName].tap()
