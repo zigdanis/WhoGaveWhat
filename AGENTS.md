@@ -14,10 +14,14 @@
 
 ## Agent model selection
 
-- Use `gpt-6.1-sol` by default for all work, including implementation and review subagents. This default is authorized by Danis and needs no additional permission.
+- One coordinating thread runs the whole delivery and owns Git, PR, merge and release actions. Don't launch nested orchestrator threads per PR.
+- Implementers: Sonnet 5.5 at high effort by default, each in an isolated worktree.
+- Reviewers: Opus 5.5 at medium effort as the independent reviewer or a bounded advisor (not an open-ended or xhigh implementer), and `gpt-6.1-sol` at high effort as the second reviewer.
+- `gpt-6.1-sol` remains authorized by Danis for any work, including implementation and review, and needs no additional permission.
+- Run one combined fix round per review cycle: reviewer and bot findings go into a single push. When a sibling PR merges, merge master into the other open PRs right away so one CI run validates both.
 - Use Luna only when Danis explicitly requests it.
 - Check the actual provider/model mapping before delegating; role names do not select the model.
-- Keep subagents at or below the primary thread's model rank. If the default exceeds that ceiling or is unavailable, continue in the primary thread and report the limitation instead of silently substituting Luna.
+- Keep subagents at or below the primary thread's model rank. If a chosen model exceeds that ceiling or is unavailable, continue in the primary thread and report the limitation instead of silently substituting Luna.
 - Independent review remains required. If a distinct eligible reviewer is unavailable, finish reviewable preparation and stop before merge or deployment until independent review can be completed.
 
 # Xcode and Simulator execution

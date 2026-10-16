@@ -5,8 +5,8 @@ description: Deliver WhoGaveWhat features, fixes, improvements and new builds th
 
 # Full send
 
-- **Lead:** one agent runs the workflow and handles Git, PR, merge and release actions.
-- **Helpers:** use one implementer and one independent reviewer by default, on the model named in [AGENTS.md](../../../AGENTS.md#agent-model-selection). They handle only their assigned tasks and do not delegate further.
+- **Lead:** one coordinating thread runs the workflow for every PR and handles Git, PR, merge and release actions. No nested orchestrator thread per PR. After a sibling PR merges, sync the other open PRs with master immediately.
+- **Helpers:** a Sonnet 5.5 (high) implementer in an isolated worktree, an Opus 5.5 (medium) independent reviewer and a `gpt-6.1-sol` (high) second reviewer, as in [AGENTS.md](../../../AGENTS.md#agent-model-selection). They handle only their assigned tasks and do not delegate further. Fold reviewer and bot findings into one fix round per review cycle.
 
 ## Authorization and ownership
 
