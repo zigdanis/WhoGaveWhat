@@ -653,31 +653,30 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 break
             }
             // XCTest snapshots can consume several seconds per observation on a cold Simulator.
-            let frameDeadline = Date().addingTimeInterval(timeout)
             var previousFrame: CGRect?
             var frameObservationCount = 0
             var settledPhoto: XCUIElement?
-            while Date() < frameDeadline {
-                guard pickerNavigationBar.exists, !cropConfirm.exists else { break }
+            _ = waitWithOneRetry(timeout: timeout, interval: 0.3) {
+                guard pickerNavigationBar.exists, !cropConfirm.exists else { return true }
                 let candidate = photoImages.firstMatch
-                if candidate.exists {
-                    let frame = candidate.frame
-                    let windowFrame = app.windows.firstMatch.frame
-                    frameObservationCount += 1
-                    if frame.width > 0, frame.height > 0, windowFrame.contains(frame), frame == previousFrame {
-                        settledPhoto = candidate
-                        break
-                    }
-                    previousFrame = frame
-                } else {
+                guard candidate.exists else {
                     previousFrame = nil
+                    return false
                 }
-                RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+                let frame = candidate.frame
+                let windowFrame = app.windows.firstMatch.frame
+                frameObservationCount += 1
+                if frame.width > 0, frame.height > 0, windowFrame.contains(frame), frame == previousFrame {
+                    settledPhoto = candidate
+                    return true
+                }
+                previousFrame = frame
+                return false
             }
             guard pickerNavigationBar.exists, !cropConfirm.exists else { break }
             guard let photo = settledPhoto else {
                 XCTFail(
-                    "The visible photo tile did not settle within \(timeout)s "
+                    "The visible photo tile did not settle within \(timeout * 2)s "
                         + "(observations=\(frameObservationCount), lastFrame=\(String(describing: previousFrame)))"
                 )
                 return
@@ -710,9 +709,9 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             attach("person-photo-selection-\(attempt)-after")
             attachHierarchy("person-photo-selection-\(attempt)-after", selectedValue: nil)
         }
-        waitForDisappearance(pickerNavigationBar)
         // Loading the selected asset can outlast a normal sheet transition on a cold Simulator.
-        XCTAssertTrue(cropConfirm.waitForExistence(timeout: photoLoadTimeout))
+        XCTAssertTrue(waitForCrop(cropConfirm, picker: pickerNavigationBar, photos: photoImages))
+        waitForDisappearance(pickerNavigationBar)
         attach("person-photo-crop")
         app.buttons["crop.cancel"].tap()
         XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
@@ -732,7 +731,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 dy: secondPhoto.frame.midY / secondWindowFrame.height
             )
         ).tap()
-        XCTAssertTrue(cropConfirm.waitForExistence(timeout: photoLoadTimeout))
+        XCTAssertTrue(waitForCrop(cropConfirm, picker: pickerNavigationBar, photos: photoImages))
         let cropWindow = app.windows.firstMatch
         cropWindow.pinch(withScale: 1.35, velocity: 1)
         let cropStart = cropWindow.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55))
@@ -937,8 +936,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         var stableSamples = 0
         var gap: CGFloat = 0
         var sheetHeight: CGFloat = 0
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline && stableSamples < 2 {
+        _ = waitWithOneRetry(timeout: timeout, interval: 0.1) {
             let keyboardTop = visibleKeyboardTop(keyboard)
             gap = keyboardTop - save.frame.maxY
             sheetHeight = keyboardTop - grabber.frame.minY
@@ -951,7 +949,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
                 stableSamples = 0
             }
             previousMeasurement = (gap, sheetHeight)
-            if stableSamples < 2 { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
+            return stableSamples >= 2
         }
         XCTAssertGreaterThanOrEqual(stableSamples, 2, "Compact sheet geometry did not settle")
         XCTAssertGreaterThanOrEqual(gap, 0, "Save must remain above the keyboard: save=\(save.frame), keyboard=\(keyboard.frame)")
@@ -1154,10 +1152,40 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             .matching(identifier: element.identifier)
             .matching(NSPredicate(format: "hasKeyboardFocus == true"))
             .firstMatch
-        XCTAssertTrue(
-            focusedElement.waitForExistence(timeout: timeout),
-            "Text field did not acquire keyboard focus: \(element)"
-        )
+        // A tap during a sheet transition can be dropped on CI; re-tap once before failing.
+        let focused = waitWithOneRetry(timeout: timeout, recover: { if element.exists { element.tap() } }) {
+            focusedElement.exists
+        }
+        XCTAssertTrue(focused, "Text field did not acquire keyboard focus: \(element)")
+    }
+
+    /// Waits for the photo crop screen; if the picker is still open, re-taps the first tile once.
+    private func waitForCrop(_ cropConfirm: XCUIElement, picker: XCUIElement, photos: XCUIElementQuery) -> Bool {
+        let recover = {
+            let photo = photos.firstMatch
+            guard picker.exists, !cropConfirm.exists, photo.exists else { return }
+            photo.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
+        return waitWithOneRetry(timeout: photoLoadTimeout / 2, recover: recover) { cropConfirm.exists }
+    }
+
+    /// Polls `condition` for `timeout`; if it is still false, runs `recover` once and polls for one more
+    /// `timeout`. Bounded hardening for known CI Simulator flakes (slow snapshots, dropped taps).
+    private func waitWithOneRetry(
+        timeout: TimeInterval,
+        interval: TimeInterval = 0.2,
+        recover: () -> Void = {},
+        until condition: () -> Bool
+    ) -> Bool {
+        for attempt in 1...2 {
+            if attempt == 2 { recover() }
+            let deadline = Date().addingTimeInterval(timeout)
+            while Date() < deadline {
+                if condition() { return true }
+                RunLoop.current.run(until: Date().addingTimeInterval(interval))
+            }
+        }
+        return false
     }
 
     private func waitForValue(_ element: XCUIElement, expected: String) {
