@@ -15,6 +15,16 @@
 - **CI/OS problem:** CI, the Simulator or an OS service failed (for example, the Simulator Spotlight catalog). Don't chase it with app changes; move that check to an optional diagnostic or a post-release device check and report it.
 - **Missing evidence / pending review:** required media or review is not ready yet. This is not a code failure; don't push a change for it.
 
+## Known CI flakes
+
+These `AdaptiveGiftJourneyUITests.testAdaptiveGiftJourney` failures have cleared on one rerun without code changes:
+
+- **Photo picker:** `The visible photo tile did not settle within`, or `crop.use` not appearing after a photo tap.
+- **Value focus:** `Text field did not acquire keyboard focus` for `add-gift.value`.
+- **Compact sheet:** `Compact sheet geometry did not settle`.
+
+**Rerun once:** when a failure matches a listed flake and the diff does not touch that flow, run `gh run rerun RUN_ID --failed` once. A second failure, or any other failure, is classified and fixed as above.
+
 ## Reviews
 
 - **Independent review** is required for every change and every follow-up fix.

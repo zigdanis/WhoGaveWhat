@@ -42,6 +42,7 @@
 # Quality and PR evidence
 
 - Follow the [verification policy](.agents/skills/full-send/references/verification-policy.md): batch fixes before each push, reuse the automatic CI run, and classify failures before correcting them.
+- A `Tests` failure matching a [known CI flake](.agents/skills/full-send/references/verification-policy.md#known-ci-flakes) in a flow the diff does not touch gets one `gh run rerun RUN_ID --failed`; anything else is classified and fixed.
 - Spotlight retrieval in the Simulator is an optional diagnostic; app-owned Spotlight metadata and routing tests are required, and Spotlight search is confirmed on Danis's device after TestFlight.
 - For user-visible changes, attach inspected current-head screenshots and video using [PR evidence](docs/pr-evidence.md). Documentation, tooling and other non-UI changes report functional checks instead.
 - Run `scripts/check-formatting.sh`, `scripts/lint-swift.sh` (when a Mac is available; otherwise macOS CI runs it) and the helper tests before pushing. Use `scripts/format-swift.sh` to fix layout; SwiftLint owns source correctness rules.
