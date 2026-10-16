@@ -725,6 +725,22 @@ class EvidenceExportTests(unittest.TestCase):
             self.assertEqual('home-start', metadata['checkpoints'][0]['name'])
             self.assertIn('calendar-4-weeks.png', [item['image'].split('/')[-1] for item in metadata['checkpoints']])
 
+    def test_named_checkpoint_does_not_match_a_longer_prefixed_name(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            attachments = directory / 'attachments'
+            attachments.mkdir()
+            # xcresult lists later attachments first, so the dark capture precedes the light one.
+            exported = []
+            for filename, name in [('dark.png', 'dark-people_0_B.png'), ('light.png', 'people_0_A.png')]:
+                (attachments / filename).write_bytes(filename.encode())
+                exported.append({'exportedFileName': filename, 'suggestedHumanReadableName': name})
+            (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
+            metadata = {'planned_checkpoint_names': ['people', 'dark-people'], 'checkpoints': [], 'evidence_kind': 'diagnostic'}
+            self.assertEqual([], smoke._export_named_checkpoints(directory, metadata))
+            self.assertEqual(b'light.png', (attachments / 'people.png').read_bytes())
+            self.assertEqual(b'dark.png', (attachments / 'dark-people.png').read_bytes())
+
     def test_attachment_export_failure_is_not_hidden(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)

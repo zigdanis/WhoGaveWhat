@@ -355,7 +355,7 @@ def _export_named_checkpoints(directory, metadata):
         metadata["export_error"] = "xcresult attachment manifest.json is missing"
     for planned in metadata["planned_checkpoint_names"]:
         matches = [filename for name, filename in attachment_names.items()
-                   if re.search(re.escape(planned.lower()) + r"(?=$|[^a-z0-9-])", name.lower())]
+                   if re.search(r"(?<![a-z0-9-])" + re.escape(planned.lower()) + r"(?=$|[^a-z0-9-])", name.lower())]
         if matches and (attachments / matches[0]).is_file() and (attachments / matches[0]).stat().st_size:
             stable = f"{planned}.png"
             if matches[0] != stable:
