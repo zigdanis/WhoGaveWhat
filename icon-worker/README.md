@@ -33,8 +33,10 @@ the app holds no secret.
   attempt that may have been billed without reporting usage. Without a valid ceiling
   or API key the Worker fails closed.
   It caches answers for 30 days by a SHA-256 of the normalized name, catalog version,
-  model and hint setting. Raw names, install IDs and IP addresses are not stored, and
-  logs contain only model, token count and latency.
+  model and hint setting. Install IDs and IP addresses are counted under HMACs with a
+  random key per UTC day; each key and its counters are deleted within about two days. Raw names, install IDs
+  and IP addresses are not stored, and logs contain only model, token count and latency.
+  Requests prune expired rows, and an hourly alarm does the same while the Worker is idle.
 
 Limits and prices are `vars` in `wrangler.jsonc`. Keep TypeSafe credits prepaid with
 auto-refill off, so the provider also stops at the purchased balance.
@@ -51,8 +53,9 @@ npx vitest run
 
 Run the **Icon Worker deploy** workflow from GitHub Actions. It needs the
 `CLOUDFLARE_API_TOKEN` (Edit Cloudflare Workers template) and `CLOUDFLARE_ACCOUNT_ID`
-repository secrets. After the first deploy, add `JEV_API_KEY` as a secret on the
-`whogavewhat-icons` Worker in the Cloudflare dashboard; later deploys keep it.
+repository secrets. When the `JEV_API_KEY` repository secret exists, each deploy copies it
+into the Worker's secrets with `wrangler secret put`; to rotate the key, update the
+repository secret and run the workflow again.
 
 With `run_eval`, the workflow runs `eval/cases.json` (Russian, English, mixed, typos,
 brands, other languages and vague names) against the deployed Worker. The job summary

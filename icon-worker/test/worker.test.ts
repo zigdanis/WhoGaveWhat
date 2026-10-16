@@ -1,4 +1,4 @@
-import { env, reset } from "cloudflare:test";
+import { env, reset, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
 import { afterEach, describe, expect, it } from "vitest";
 import { handle, type Env } from "../src/index";
 import { ICON_KEYS, ICONS, criteria } from "../src/icons";
@@ -318,24 +318,110 @@ describe("gift icon endpoint", () => {
 });
 
 describe("limiter", () => {
+  const limits = {
+    monthlyBudgetMicros: 1_000_000,
+    dailyBudgetMicros: 1_000_000,
+    perInstallPerDay: 100,
+    perIpPerMinute: 1,
+    globalPerMinute: 100,
+  };
+  const client = { installID: INSTALL, ip: "203.0.113.7" };
+
+  function limiter() {
+    return env.LIMITER.get(env.LIMITER.idFromName("global"));
+  }
+
+  function rows(stub: ReturnType<typeof limiter>) {
+    return runInDurableObject(stub, async (_instance, state) => ({
+      counters: state.storage.sql.exec<{ scope: string; bucket: string }>("SELECT scope, bucket FROM counters").toArray(),
+      cache: state.storage.sql.exec("SELECT hash FROM cache").toArray().length,
+      reservations: state.storage.sql.exec("SELECT id FROM reservations").toArray().length,
+      keys: state.storage.sql.exec("SELECT day FROM hash_keys").toArray().length,
+      alarm: await state.storage.getAlarm(),
+    }));
+  }
+
   it("keeps newer rate counters when an older request settles late", async () => {
-    const limiter = env.LIMITER.get(env.LIMITER.idFromName("global"));
-    const limits = {
-      monthlyBudgetMicros: 1_000_000,
-      dailyBudgetMicros: 1_000_000,
-      perInstallPerDay: 100,
-      perIpPerMinute: 1,
-      globalPerMinute: 100,
-    };
-    const older = await limiter.admit({ cacheKey: "k1", installHash: "i", ipHash: "ip", now: NOW, limits, reservationMicros: 10 });
+    const stub = limiter();
+    const older = await stub.admit({ cacheKey: "k1", ...client, now: NOW, limits, reservationMicros: 10 });
     const later = NOW + 60_000;
-    const newer = await limiter.admit({ cacheKey: "k2", installHash: "i", ipHash: "ip", now: later, limits, reservationMicros: 10 });
+    const newer = await stub.admit({ cacheKey: "k2", ...client, now: later, limits, reservationMicros: 10 });
     expect(older.kind).toBe("go");
     expect(newer.kind).toBe("go");
     if (older.kind !== "go") return;
-    await limiter.settle({ reservationId: older.reservationId, costMicros: 5, now: NOW });
-    const third = await limiter.admit({ cacheKey: "k3", installHash: "i", ipHash: "ip", now: later, limits, reservationMicros: 10 });
+    await stub.settle({ reservationId: older.reservationId, costMicros: 5, now: NOW });
+    const third = await stub.admit({ cacheKey: "k3", ...client, now: later, limits, reservationMicros: 10 });
     expect(third.kind).toBe("rate_limited");
+  });
+
+  it("stores no raw identifiers and counts them under a different key each day", async () => {
+    const stub = limiter();
+    await stub.admit({ cacheKey: "k1", ...client, now: NOW, limits, reservationMicros: 10 });
+    await stub.admit({ cacheKey: "k2", ...client, now: NOW + 86_400_000, limits, reservationMicros: 10 });
+    const { counters, keys } = await rows(stub);
+    const installs = counters.filter((row) => row.scope.startsWith("install:")).map((row) => row.scope);
+    expect(installs).toHaveLength(2);
+    expect(installs[0]).not.toBe(installs[1]);
+    expect(JSON.stringify(counters)).not.toContain(INSTALL);
+    expect(JSON.stringify(counters)).not.toContain("203.0.113.7");
+    expect(keys).toBe(2);
+  });
+
+  it("keeps check-and-increment atomic for concurrent requests", async () => {
+    const stub = limiter();
+    const results = await Promise.all(
+      Array.from({ length: 10 }, (_, i) =>
+        stub.admit({ cacheKey: `k${i}`, ...client, now: NOW, limits: { ...limits, perIpPerMinute: 3 }, reservationMicros: 10 }),
+      ),
+    );
+    expect(results.filter((result) => result.kind === "go")).toHaveLength(3);
+  });
+
+  it("keeps only today's and yesterday's hash keys and day counters", async () => {
+    const stub = limiter();
+    const day = 86_400_000;
+    await stub.admit({ cacheKey: "k1", ...client, now: NOW, limits, reservationMicros: 10 });
+    await stub.admit({ cacheKey: "k2", ...client, now: NOW + day, limits, reservationMicros: 10 });
+    expect((await rows(stub)).keys).toBe(2);
+    await stub.admit({ cacheKey: "k3", ...client, now: NOW + 2 * day, limits, reservationMicros: 10 });
+    const { counters, keys } = await rows(stub);
+    expect(keys).toBe(2);
+    const days = counters.filter((row) => row.scope.startsWith("install:")).map((row) => row.bucket);
+    expect(days.sort()).toEqual(["2026-10-17", "2026-10-18"]);
+  });
+
+  it("prunes expired data on an alarm without further traffic", async () => {
+    const stub = limiter();
+    // The alarm uses the real clock, so the data is created relative to it.
+    const old = Date.now() - 3 * 86_400_000;
+    const admitted = await stub.admit({ cacheKey: "k1", ...client, now: old, limits, reservationMicros: 10 });
+    if (admitted.kind !== "go") throw new Error("not admitted");
+    await stub.settle({
+      reservationId: admitted.reservationId,
+      costMicros: 5,
+      answer: { cacheKey: "k1", key: "rose", confidence: 0.9 },
+      now: Date.now() - 31 * 86_400_000,
+    });
+    await stub.admit({ cacheKey: "k2", ...client, now: old, limits: { ...limits, perIpPerMinute: 2 }, reservationMicros: 10 });
+    const before = await rows(stub);
+    expect(before.alarm).not.toBeNull();
+    expect(before.keys).toBe(1);
+
+    expect(await runDurableObjectAlarm(stub)).toBe(true);
+    const after = await rows(stub);
+    expect(after.counters.filter((row) => row.scope !== "spend")).toEqual([]);
+    expect([after.cache, after.reservations, after.keys]).toEqual([0, 0, 0]);
+    // Nothing left that expires, so the alarm stops.
+    expect(after.alarm).toBeNull();
+  });
+
+  it("keeps waking while data remains", async () => {
+    const stub = limiter();
+    await stub.admit({ cacheKey: "k1", ...client, now: Date.now(), limits, reservationMicros: 10 });
+    expect(await runDurableObjectAlarm(stub)).toBe(true);
+    const after = await rows(stub);
+    expect(after.keys).toBe(1);
+    expect(after.alarm).not.toBeNull();
   });
 });
 

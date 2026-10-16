@@ -17,8 +17,10 @@ export type Admission =
 
 export interface AdmitInput {
   cacheKey: string;
-  installHash: string;
-  ipHash: string;
+  /** Used only to derive keyed hashes for rate limits; never stored. */
+  installID: string;
+  /** Used only to derive keyed hashes for rate limits; never stored. */
+  ip: string;
   now: number;
   limits: Limits;
   /** Charged up front for the provider call and corrected once its real cost is known. */
@@ -34,14 +36,19 @@ export interface SettleInput {
   now: number;
 }
 
-const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const CACHE_TTL_MS = 30 * DAY_MS;
 const MAX_CACHE_ROWS = 20_000;
+/** While data remains, an alarm prunes at least this often, even without traffic. */
+const PRUNE_INTERVAL_MS = 60 * 60 * 1000;
 
 /**
  * The single global coordinator: exact budget accounting, per-install and per-IP
  * limits, and a cache of answers keyed by a hash of the normalized gift name.
- * Durable Object methods run one at a time, so check-and-increment is atomic.
- * Only hashes are stored; raw gift names, install IDs and IP addresses are not.
+ * Each check-and-increment runs synchronously, so it is atomic.
+ * Raw gift names, install IDs and IP addresses are never stored. Install IDs and IP
+ * addresses are counted under HMACs with a random key per UTC day, and each key is
+ * deleted once the next day ends, along with its counters, so at most about two days later.
  */
 export class IconLimiter extends DurableObject<unknown> {
   private readonly sql: SqlStorage;
@@ -56,10 +63,22 @@ export class IconLimiter extends DurableObject<unknown> {
       CREATE INDEX IF NOT EXISTS cache_created ON cache (created);
       CREATE TABLE IF NOT EXISTS reservations (id INTEGER PRIMARY KEY AUTOINCREMENT, micros INTEGER NOT NULL,
         day TEXT NOT NULL, month TEXT NOT NULL, created INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS hash_keys (day TEXT PRIMARY KEY, key BLOB NOT NULL);
     `);
   }
 
-  admit(input: AdmitInput): Admission {
+  async admit(input: AdmitInput): Promise<Admission> {
+    const key = this.hashKey(dayBucket(input.now));
+    const installHash = await hmac(key, `install\n${input.installID.toLowerCase()}`);
+    const ipHash = await hmac(key, `ip\n${input.ip}`);
+    this.prune(input.now);
+    const admission = this.check(input, installHash, ipHash);
+    await this.scheduleAlarm();
+    return admission;
+  }
+
+  /** Synchronous, so no other request interleaves between a check and its increment. */
+  private check(input: AdmitInput, installHash: string, ipHash: string): Admission {
     const { now, limits } = input;
     const day = dayBucket(now);
     const month = day.slice(0, 7);
@@ -76,13 +95,13 @@ export class IconLimiter extends DurableObject<unknown> {
     }
 
     const retryAfterMinute = 60 - Math.floor((now / 1000) % 60);
-    if (this.get(`ip:${input.ipHash}`, minute) >= limits.perIpPerMinute) {
+    if (this.get(`ip:${ipHash}`, minute) >= limits.perIpPerMinute) {
       return { kind: "rate_limited", retryAfterSeconds: retryAfterMinute };
     }
     if (this.get("global", minute) >= limits.globalPerMinute) {
       return { kind: "rate_limited", retryAfterSeconds: retryAfterMinute };
     }
-    if (this.get(`install:${input.installHash}`, day) >= limits.perInstallPerDay) {
+    if (this.get(`install:${installHash}`, day) >= limits.perInstallPerDay) {
       return { kind: "rate_limited", retryAfterSeconds: secondsUntilNextDay(now) };
     }
     const reserve = input.reservationMicros;
@@ -93,9 +112,9 @@ export class IconLimiter extends DurableObject<unknown> {
       return { kind: "budget_exhausted" };
     }
 
-    this.add(`ip:${input.ipHash}`, minute, 1);
+    this.add(`ip:${ipHash}`, minute, 1);
     this.add("global", minute, 1);
-    this.add(`install:${input.installHash}`, day, 1);
+    this.add(`install:${installHash}`, day, 1);
     this.add("spend", month, reserve);
     this.add("spend", day, reserve);
     const id = this.sql
@@ -110,7 +129,7 @@ export class IconLimiter extends DurableObject<unknown> {
     return { kind: "go", reservationId: id };
   }
 
-  settle(input: SettleInput): void {
+  async settle(input: SettleInput): Promise<void> {
     const reservation = this.sql
       .exec<{ micros: number; day: string; month: string }>(
         "DELETE FROM reservations WHERE id = ? RETURNING micros, day, month",
@@ -132,6 +151,19 @@ export class IconLimiter extends DurableObject<unknown> {
       );
     }
     this.prune(input.now);
+    await this.scheduleAlarm();
+  }
+
+  /** Prunes without traffic, and keeps waking until nothing that expires is left. */
+  async alarm(): Promise<void> {
+    this.prune(Date.now());
+    const remaining = this.sql
+      .exec<{ n: number }>(
+        `SELECT (SELECT COUNT(*) FROM counters WHERE scope != 'spend') + (SELECT COUNT(*) FROM cache)
+           + (SELECT COUNT(*) FROM reservations) + (SELECT COUNT(*) FROM hash_keys) AS n`,
+      )
+      .one().n;
+    if (remaining > 0) await this.ctx.storage.setAlarm(Date.now() + PRUNE_INTERVAL_MS);
   }
 
   /** Spend so far, in micro-dollars, for operational checks. */
@@ -142,6 +174,20 @@ export class IconLimiter extends DurableObject<unknown> {
       dayMicros: this.get("spend", day),
       cachedAnswers: this.sql.exec<{ n: number }>("SELECT COUNT(*) AS n FROM cache").one().n,
     };
+  }
+
+  /** The random HMAC key for a UTC day, created on first use. */
+  private hashKey(day: string): ArrayBuffer {
+    const row = this.sql.exec<{ key: ArrayBuffer }>("SELECT key FROM hash_keys WHERE day = ?", day).toArray()[0];
+    if (row) return row.key;
+    const key = crypto.getRandomValues(new Uint8Array(32));
+    this.sql.exec("INSERT INTO hash_keys (day, key) VALUES (?, ?)", day, key);
+    return key.buffer;
+  }
+
+  /** Requests keep pushing the alarm back; they prune inline, so it only matters when idle. */
+  private async scheduleAlarm(): Promise<void> {
+    await this.ctx.storage.setAlarm(Date.now() + PRUNE_INTERVAL_MS);
   }
 
   private get(scope: string, bucket: string): number {
@@ -172,8 +218,10 @@ export class IconLimiter extends DurableObject<unknown> {
     );
     this.sql.exec(
       "DELETE FROM counters WHERE scope != 'spend' AND length(bucket) = 10 AND bucket < ?",
-      dayBucket(now - 2 * 24 * 60 * 60 * 1000),
+      dayBucket(now - DAY_MS),
     );
+    // Without its key, a counter's hash can no longer be checked against any address.
+    this.sql.exec("DELETE FROM hash_keys WHERE day < ?", dayBucket(now - DAY_MS));
     // Keep this and last month's spend for inspection.
     this.sql.exec("DELETE FROM counters WHERE scope = 'spend' AND substr(bucket, 1, 7) < ?", previousMonth(month));
     // Reservations a crashed request never settled stay charged; just forget them.
@@ -192,6 +240,12 @@ export function dayBucket(now: number): string {
 
 function minuteBucket(now: number): string {
   return new Date(now).toISOString().slice(0, 16);
+}
+
+async function hmac(key: ArrayBuffer, text: string): Promise<string> {
+  const cryptoKey = await crypto.subtle.importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, new TextEncoder().encode(text));
+  return [...new Uint8Array(signature)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function previousMonth(month: string): string {
