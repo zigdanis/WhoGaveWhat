@@ -79,13 +79,12 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
             guard !Task.isCancelled, isAvailable, preferences.installID == installID,
                 let response = response as? HTTPURLResponse
             else { return nil }
-            if response.statusCode == 429 {
+            if response.statusCode == 429 || response.statusCode == 503 {
+                // The server says how long to wait: briefly after a provider hiccup, until tomorrow
+                // for a spent budget. A rate limit is never retried sooner than a minute.
                 let retryAfter = response.value(forHTTPHeaderField: "Retry-After").flatMap(Double.init) ?? 60
-                backoffUntil = now().addingTimeInterval(max(60, retryAfter))
-                return nil
-            }
-            if response.statusCode == 503 {
-                backoffUntil = now().addingTimeInterval(600)
+                let minimum: TimeInterval = response.statusCode == 429 ? 60 : 15
+                backoffUntil = now().addingTimeInterval(min(max(minimum, retryAfter), 86_400))
                 return nil
             }
             guard response.statusCode == 200 else { return nil }

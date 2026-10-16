@@ -118,7 +118,8 @@ struct CloudGiftIconTests {
         transport.status = status
         var clock = Date(timeIntervalSince1970: 1_000)
         let gateway = makeGateway(transport: transport, now: { clock })
-        let delay: TimeInterval = status == 429 ? 60 : 600
+        // Without Retry-After, both wait a minute.
+        let delay: TimeInterval = 60
 
         #expect(await gateway.suggestGift(named: "guitar") == nil)
         transport.status = 200
@@ -145,6 +146,37 @@ struct CloudGiftIconTests {
         #expect(transport.requests.count == 1)
         clock = clock.addingTimeInterval(1)
         #expect(await gateway.suggestGift(named: "guitar") != nil)
+    }
+
+    @Test func unavailableHonorsAShortRetryAfter() async {
+        let transport = IconTransportStub()
+        transport.status = 503
+        transport.headers = ["Retry-After": "30"]
+        var clock = Date(timeIntervalSince1970: 1_000)
+        let gateway = makeGateway(transport: transport, now: { clock })
+        _ = await gateway.suggestGift(named: "guitar")
+        transport.status = 200
+
+        clock = clock.addingTimeInterval(29)
+        #expect(await gateway.suggestGift(named: "guitar") == nil)
+        #expect(transport.requests.count == 1)
+        clock = clock.addingTimeInterval(1)
+        #expect(await gateway.suggestGift(named: "guitar")?.emoji == "🎸")
+    }
+
+    @Test func spentBudgetWaitsAtMostADay() async {
+        let transport = IconTransportStub()
+        transport.status = 503
+        transport.headers = ["Retry-After": "2592000"]
+        var clock = Date(timeIntervalSince1970: 1_000)
+        let gateway = makeGateway(transport: transport, now: { clock })
+        _ = await gateway.suggestGift(named: "guitar")
+        transport.status = 200
+
+        clock = clock.addingTimeInterval(86_399)
+        #expect(await gateway.suggestGift(named: "guitar") == nil)
+        clock = clock.addingTimeInterval(1)
+        #expect(await gateway.suggestGift(named: "guitar")?.emoji == "🎸")
     }
 
     @Test func cacheUsesNormalizedNamesAndCachesNullAnswers() async {
