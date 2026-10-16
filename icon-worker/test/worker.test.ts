@@ -173,6 +173,7 @@ describe("gift icon endpoint", () => {
     for (const overrides of broken) {
       const response = await handle(request({ name: "розы" }), testEnv(overrides), deps(jev.fetcher));
       expect(response.status).toBe(503);
+      expect(response.headers.get("Retry-After")).toBe("300");
       expect(await body(response)).toEqual({ error: "unavailable" });
     }
     expect(jev.calls).toHaveLength(0);
@@ -189,6 +190,8 @@ describe("gift icon endpoint", () => {
     const jev = fakeJev(new Response("bad key", { status: 401 }));
     const response = await handle(request({ name: "торт" }), testEnv(), deps(jev.fetcher));
     expect(response.status).toBe(503);
+    // A rejected key won't fix itself in seconds, so clients wait as for a misconfiguration.
+    expect(response.headers.get("Retry-After")).toBe("300");
     expect(jev.calls).toHaveLength(1);
   });
 
@@ -197,6 +200,8 @@ describe("gift icon endpoint", () => {
     const jev = fakeJev(timeout);
     const response = await handle(request({ name: "торт" }), testEnv(), deps(jev.fetcher));
     expect(response.status).toBe(503);
+    // A provider failure may pass quickly, so clients are asked to wait only briefly.
+    expect(response.headers.get("Retry-After")).toBe("30");
     expect(jev.calls).toHaveLength(2);
   });
 
@@ -245,13 +250,19 @@ describe("gift icon endpoint", () => {
     expect((await usage()).dayMicros).toBe(420);
     // Cached names stay free even when the budget is exhausted.
     expect((await handle(request({ name: "a1" }), tight, deps(jev.fetcher))).status).toBe(200);
+    // A spent daily budget asks clients to wait until the next UTC day.
+    const exhausted = await handle(request({ name: "a7" }), tight, deps(jev.fetcher));
+    expect(exhausted.headers.get("Retry-After")).toBe(String(12 * 3600 - 30));
   });
 
   it("enforces the monthly budget across days", async () => {
     const tight = testEnv({ MONTHLY_BUDGET_USD: usd(2 * attemptMicros("b1") + 50) });
     const jev = fakeJev(jevReply("rose", 0.9, 2_500));
     expect((await handle(request({ name: "b1" }), tight, deps(jev.fetcher))).status).toBe(200);
-    expect((await handle(request({ name: "b2" }), tight, deps(jev.fetcher, NOW + 86_400_000))).status).toBe(503);
+    const exhausted = await handle(request({ name: "b2" }), tight, deps(jev.fetcher, NOW + 86_400_000));
+    expect(exhausted.status).toBe(503);
+    // A spent monthly budget asks clients to wait until the next UTC month.
+    expect(exhausted.headers.get("Retry-After")).toBe(String((Date.UTC(2026, 10, 1) - NOW - 86_400_000) / 1000));
     expect((await handle(request({ name: "b3" }), tight, deps(jev.fetcher, Date.UTC(2026, 10, 1)))).status).toBe(200);
   });
 

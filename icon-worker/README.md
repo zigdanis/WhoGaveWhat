@@ -14,7 +14,9 @@ the app holds no secret.
   or confidence is below `MIN_CONFIDENCE`; the app then keeps its own icon.
 - `400 invalid_request`: missing or malformed install ID, name outside 2–80 characters,
   body over 4 KB, or not JSON.
-- `429 rate_limited` with `Retry-After`, `503 budget_exhausted` or `503 unavailable`.
+- `429 rate_limited`, `503 budget_exhausted` or `503 unavailable`, each with `Retry-After`: until the
+  next minute or day for rate limits, the next UTC day or month for a spent budget, 30 s after a
+  provider failure and 5 minutes while the Worker is misconfigured or its key is rejected.
 
 `GET /health` returns `ok`. No other routes exist, so this is not a general model proxy.
 
