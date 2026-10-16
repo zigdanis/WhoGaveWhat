@@ -30,6 +30,9 @@ export const MIN_NAME_LENGTH = 2;
 export const MAX_NAME_LENGTH = 80;
 const MAX_BODY_BYTES = 4096;
 const MAX_ATTEMPTS = 2;
+/** Every 503 says when to retry, so clients don't wait longer than needed after a passing failure. */
+const PROVIDER_RETRY_AFTER_SECONDS = 30;
+const CONFIG_RETRY_AFTER_SECONDS = 300;
 const INSTALL_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default {
@@ -50,7 +53,7 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
   if (name === null) return invalid();
   // Without a key or valid limits, spending cannot be bounded; fail closed.
   const config = readConfig(env);
-  if (!env.JEV_API_KEY || config === null) return json({ error: "unavailable" }, 503);
+  if (!env.JEV_API_KEY || config === null) return unavailable(CONFIG_RETRY_AFTER_SECONDS);
   const { maxRequestTokens, pricePerToken, minConfidence } = config;
 
   const limiter = env.LIMITER.get(env.LIMITER.idFromName("global"));
@@ -74,7 +77,7 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
     case "rate_limited":
       return json({ error: "rate_limited" }, 429, { "Retry-After": String(admission.retryAfterSeconds) });
     case "budget_exhausted":
-      return json({ error: "budget_exhausted" }, 503);
+      return json({ error: "budget_exhausted" }, 503, { "Retry-After": String(admission.retryAfterSeconds) });
   }
 
   const options: JevOptions = {
@@ -108,7 +111,7 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
     console.log(
       JSON.stringify({ event: "jev_error", reason: error instanceof Error ? error.message : "unknown", ms: deps.now() - started }),
     );
-    return json({ error: "unavailable" }, 503);
+    return unavailable(PROVIDER_RETRY_AFTER_SECONDS);
   }
 }
 
@@ -220,6 +223,10 @@ function readConfig(env: Env): Config | null {
       globalPerMinute,
     },
   };
+}
+
+function unavailable(retryAfterSeconds: number): Response {
+  return json({ error: "unavailable" }, 503, { "Retry-After": String(retryAfterSeconds) });
 }
 
 function invalid(): Response {

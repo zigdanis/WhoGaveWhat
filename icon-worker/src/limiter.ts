@@ -13,7 +13,7 @@ export type Admission =
   | { kind: "cached"; key: string | null; confidence: number }
   | { kind: "go"; reservationId: number }
   | { kind: "rate_limited"; retryAfterSeconds: number }
-  | { kind: "budget_exhausted" };
+  | { kind: "budget_exhausted"; retryAfterSeconds: number };
 
 export interface AdmitInput {
   cacheKey: string;
@@ -105,11 +105,11 @@ export class IconLimiter extends DurableObject<unknown> {
       return { kind: "rate_limited", retryAfterSeconds: secondsUntilNextDay(now) };
     }
     const reserve = input.reservationMicros;
-    if (
-      this.get("spend", month) + reserve > limits.monthlyBudgetMicros ||
-      this.get("spend", day) + reserve > limits.dailyBudgetMicros
-    ) {
-      return { kind: "budget_exhausted" };
+    if (this.get("spend", month) + reserve > limits.monthlyBudgetMicros) {
+      return { kind: "budget_exhausted", retryAfterSeconds: secondsUntilNextMonth(now) };
+    }
+    if (this.get("spend", day) + reserve > limits.dailyBudgetMicros) {
+      return { kind: "budget_exhausted", retryAfterSeconds: secondsUntilNextDay(now) };
     }
 
     this.add(`ip:${ipHash}`, minute, 1);
@@ -252,6 +252,12 @@ function previousMonth(month: string): string {
   const [year, value] = month.split("-").map(Number);
   const date = new Date(Date.UTC(year, value - 2, 1));
   return date.toISOString().slice(0, 7);
+}
+
+function secondsUntilNextMonth(now: number): number {
+  const date = new Date(now);
+  const next = Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1);
+  return Math.max(1, Math.ceil((next - now) / 1000));
 }
 
 function secondsUntilNextDay(now: number): number {
