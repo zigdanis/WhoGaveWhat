@@ -121,11 +121,12 @@ jobs:
             exit 1
           fi
           # One real request proves the key works; an empty or wrong key fails here, not silently in the eval.
-          # The run number keeps the name out of the Worker's cache, so a rotated key is checked too.
+          # The run number and attempt keep the name out of the Worker's cache, so a rotated key is
+          # checked too, even on a re-run.
           status=$(curl --silent --show-error --output "$RUNNER_TEMP/probe.json" --write-out '%{http_code}' \
-            --retry 3 --retry-delay 3 -X POST "$DEPLOYED_URL/v1/gift-icon" \
+            --retry 3 --retry-delay 3 --max-time 30 -X POST "$DEPLOYED_URL/v1/gift-icon" \
             -H 'Content-Type: application/json' -H "X-Install-ID: $(cat /proc/sys/kernel/random/uuid)" \
-            --data "{\"name\":\"guitar $GITHUB_RUN_NUMBER\"}")
+            --data "{\"name\":\"guitar $GITHUB_RUN_NUMBER.$GITHUB_RUN_ATTEMPT\"}") || status=000
           cat "$RUNNER_TEMP/probe.json"
           echo
           if [ "$status" != 200 ]; then
