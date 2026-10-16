@@ -8,13 +8,14 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
     private let onboardingKey = "didOnboard"
     private let currencyCodeKey = "preferredCurrencyCode"
     private let selfPersonKey = "selfPersonID"
-    private let cloudIconConsentKey = "cloudIconConsent"
+    /// Static so the initializer can read it before every stored property is set.
+    private static let cloudIconConsentKey = "cloudIconConsent"
     private let installIDKey = "cloudIconInstallID"
     private(set) var cloudIconConsent: CloudIconConsent
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        let storedConsent = defaults.string(forKey: "cloudIconConsent").flatMap(CloudIconConsent.init(rawValue:))
+        let storedConsent = defaults.string(forKey: Self.cloudIconConsentKey).flatMap(CloudIconConsent.init(rawValue:))
         cloudIconConsent = storedConsent ?? .undecided
     }
 
@@ -32,7 +33,7 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
         if consent == .declined {
             defaults.set(UUID().uuidString, forKey: installIDKey)
         }
-        defaults.set(consent.rawValue, forKey: cloudIconConsentKey)
+        defaults.set(consent.rawValue, forKey: Self.cloudIconConsentKey)
         cloudIconConsent = consent
     }
 
