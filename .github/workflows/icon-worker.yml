@@ -117,7 +117,21 @@ jobs:
           curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 "$DEPLOYED_URL/health"
           echo
           if ! npx wrangler secret list --format json | grep -q '"JEV_API_KEY"'; then
-            echo "::warning::JEV_API_KEY is not set yet. Add it as a repository secret and run this workflow again."
+            echo "::error::The Worker has no JEV_API_KEY. Set the repository secret to the key and run this workflow again."
+            exit 1
+          fi
+          # One real request proves the key works; an empty or wrong key fails here, not silently in the eval.
+          # The run number and attempt keep the name out of the Worker's cache, so a rotated key is
+          # checked too, even on a re-run.
+          status=$(curl --silent --show-error --output "$RUNNER_TEMP/probe.json" --write-out '%{http_code}' \
+            --retry 3 --retry-delay 3 --max-time 30 -X POST "$DEPLOYED_URL/v1/gift-icon" \
+            -H 'Content-Type: application/json' -H "X-Install-ID: $(cat /proc/sys/kernel/random/uuid)" \
+            --data "{\"name\":\"guitar $GITHUB_RUN_NUMBER.$GITHUB_RUN_ATTEMPT\"}") || status=000
+          cat "$RUNNER_TEMP/probe.json"
+          echo
+          if [ "$status" != 200 ]; then
+            echo "::error::The Worker answered HTTP $status. Check that the JEV_API_KEY repository secret holds a valid TypeSafe key."
+            exit 1
           fi
       - name: Evaluate icons
         if: inputs.run_eval
