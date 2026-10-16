@@ -35,8 +35,7 @@ and environment policy before dispatching or importing credentials.
 Release secrets stay in the protected environment. `MATCH_GIT_URL`, `APPLE_TEAM_ID`
 and optional Appfile settings `FASTLANE_USER` and `APP_STORE_CONNECT_TEAM_ID` come
 from the environment. API-key release operations do not require a personal Apple
-ID. See [TestFlight operations](testflight.md) for setup and the preserved receipt
-recovery limits after replacing branch history.
+ID.
 
 ## Preserved work in progress
 
