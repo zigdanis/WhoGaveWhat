@@ -18,7 +18,8 @@ struct AddGiftSheet: View {
             initialValue: AddGiftState(
                 route: route,
                 data: composition.data,
-                suggestGift: composition.suggestGift
+                suggestGift: composition.suggestGift,
+                preferences: composition.preferences
             ))
         let startsExpanded = route.editingGiftID != nil
         _showsDetails = State(initialValue: startsExpanded)
@@ -51,6 +52,13 @@ struct AddGiftSheet: View {
                         onSelectFrom: { state.open(.from) },
                         onSelectTo: { state.open(.to) }
                     )
+                    if state.showsCloudIconConsent {
+                        CloudIconConsentCard(
+                            onAllow: { focus = nil; state.allowCloudIcons() },
+                            onDecline: { focus = nil; state.declineCloudIcons() }
+                        )
+                        .padding(.top, 12)
+                    }
                     GiftDetailsDisclosure(isExpanded: $showsDetails) {
                         focus = nil
                     }
@@ -136,6 +144,40 @@ private enum AddGiftField: Hashable {
     case value
 }
 
+private struct CloudIconConsentCard: View {
+    let onAllow: () -> Void
+    let onDecline: () -> Void
+
+    var body: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Smarter gift icons")
+                    .font(Font.app(15, .semibold))
+                    .foregroundStyle(Color.textPrimary)
+                Text("Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon? Only the name and a random app ID are sent — never people, dates, amounts or notes.")
+                    .font(Font.app(13, .regular))
+                    .foregroundStyle(Color.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 12) {
+                    Spacer(minLength: 0)
+                    Button("Not now", action: onDecline)
+                        .buttonStyle(.glass)
+                        .accessibilityIdentifier("add-gift.cloud-icons.decline")
+                    Button("Allow", action: onAllow)
+                        .buttonStyle(.glassProminent)
+                        .tint(Color.brandFill)
+                        .accessibilityIdentifier("add-gift.cloud-icons.allow")
+                }
+                .font(Font.app(14, .semibold))
+                .buttonBorderShape(.capsule)
+                .controlSize(.regular)
+            }
+            .padding(14)
+        }
+        .accessibilityIdentifier("add-gift.cloud-icons.consent")
+    }
+}
+
 private struct GiftSaveButton: View {
     let isEnabled: Bool
     let onSave: () -> Void
@@ -219,7 +261,7 @@ private struct GiftBasicsSection: View {
             .accessibilityIdentifier("add-gift.name")
     }
 
-    /// The icon the gift will get: the keyword guess at once, the on-device model's
+    /// The icon the gift will get: the keyword guess at once, the selected model's
     /// pick when it arrives. Tapping opens the picker for a manual choice.
     private var emojiSlot: some View {
         Button(action: onSelectEmoji) {

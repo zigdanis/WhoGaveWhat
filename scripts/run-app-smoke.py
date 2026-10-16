@@ -35,6 +35,8 @@ PLANNED_CHECKPOINT_NAMES = (
     "person-editor-photo-removal-persisted",
     "home-summary", "insights-balances", "insights-compare",
     "dark-home", "dark-people", "dark-gift-detail", "dark-add-gift",
+    "cloud-icons-consent", "cloud-icons-suggestion", "cloud-icons-settings",
+    "dark-cloud-icons-consent", "dark-cloud-icons-suggestion", "dark-cloud-icons-settings",
 )
 APP_LANGUAGE_CHECKPOINT_NAMES = (
     "system-settings", "language-region-before", "english-system-russian-secondary",

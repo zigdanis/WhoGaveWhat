@@ -1,14 +1,39 @@
 import Foundation
+import Observation
 
 @MainActor
+@Observable
 final class UserDefaultsPreferencesGateway: PreferencesGateway {
     private let defaults: UserDefaults
     private let onboardingKey = "didOnboard"
     private let currencyCodeKey = "preferredCurrencyCode"
     private let selfPersonKey = "selfPersonID"
+    private let cloudIconConsentKey = "cloudIconConsent"
+    private let installIDKey = "cloudIconInstallID"
+    private(set) var cloudIconConsent: CloudIconConsent
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        cloudIconConsent = defaults.string(forKey: "cloudIconConsent")
+            .flatMap(CloudIconConsent.init(rawValue:)) ?? .undecided
+    }
+
+    var installID: String {
+        if let storedID = defaults.string(forKey: installIDKey), UUID(uuidString: storedID) != nil {
+            return storedID
+        }
+        let id = UUID().uuidString
+        defaults.set(id, forKey: installIDKey)
+        return id
+    }
+
+    func setCloudIconConsent(_ consent: CloudIconConsent) {
+        guard cloudIconConsent != consent else { return }
+        if consent == .declined {
+            defaults.set(UUID().uuidString, forKey: installIDKey)
+        }
+        defaults.set(consent.rawValue, forKey: cloudIconConsentKey)
+        cloudIconConsent = consent
     }
 
     var didCompleteOnboarding: Bool {

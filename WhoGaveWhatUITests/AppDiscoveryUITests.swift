@@ -13,6 +13,8 @@ final class AppDiscoveryUITests: XCTestCase {
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
+        app.launchEnvironment["KS_CLOUD_ICONS"] = "stub"
+        app.launchEnvironment["KS_CLOUD_ICON_CONSENT"] = "declined"
     }
 
     override func tearDown() {

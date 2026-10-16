@@ -25,6 +25,27 @@ struct SettingsView: View {
                         .accessibilityValue(composition.currencyCode)
                     }
 
+                    SectionHeader(text: "Gift icons").padding(.top, 24).padding(.bottom, 7)
+                    Card {
+                        Toggle(
+                            "Cloud icon suggestions",
+                            isOn: Binding(
+                                get: { composition.cloudIconConsent == .allowed },
+                                set: { composition.setCloudIconConsent($0 ? .allowed : .declined) }
+                            )
+                        )
+                        .font(Font.app(16, .regular))
+                        .foregroundStyle(Color.textPrimary)
+                        .tint(Color.brandFill)
+                        .padding(.horizontal, 14).padding(.vertical, 9)
+                        .accessibilityIdentifier("settings.cloud-icons")
+                    }
+                    Text("Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and notes are never sent. TypeSafe processes requests under its terms.")
+                        .font(Font.app(13, .regular))
+                        .foregroundStyle(Color.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 14).padding(.top, 8)
+
                     SectionHeader(text: "About").padding(.top, 24).padding(.bottom, 7)
                     Card {
                         NavigationLink {
