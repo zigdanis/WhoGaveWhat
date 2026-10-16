@@ -56,7 +56,8 @@ struct SettingsView: View {
                             SettingsActionRow(
                                 icon: "hand.raised.fill",
                                 tint: Color.brandFill,
-                                label: "Privacy Policy"
+                                label: "Privacy Policy",
+                                opensInBrowser: true
                             )
                         }
                         .buttonStyle(.plain)
@@ -121,13 +122,19 @@ private struct SettingsActionRow: View {
     let icon: String
     let tint: Color
     let label: LocalizedStringResource
+    var opensInBrowser = false
 
     var body: some View {
         HStack(spacing: 12) {
             SettingsIconTile(name: icon, tint: tint)
             Text(label).font(Font.app(16, .regular)).foregroundColor(Color.textPrimary)
             Spacer(minLength: 8)
-            Chevron()
+            if opensInBrowser {
+                Image(systemName: "arrow.up.forward")
+                    .font(.system(size: 14, weight: .semibold)).foregroundColor(Color.textTertiary)
+            } else {
+                Chevron()
+            }
         }
         .padding(.horizontal, 14).padding(.vertical, 9)
         .contentShape(Rectangle())
