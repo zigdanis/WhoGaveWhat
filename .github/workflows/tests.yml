@@ -9,6 +9,8 @@ on:
       - '.agents/**'
       - '.claude/**'
       - 'docs/**'
+      - 'icon-worker/**'
+      - '.github/workflows/icon-worker.yml'
   pull_request:
     paths-ignore:
       - '*.md'
@@ -16,6 +18,8 @@ on:
       - '.agents/**'
       - '.claude/**'
       - 'docs/**'
+      - 'icon-worker/**'
+      - '.github/workflows/icon-worker.yml'
   workflow_dispatch:
     inputs:
       spotlight_diagnostics:
