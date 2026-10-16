@@ -27,7 +27,7 @@
 # Xcode and Simulator execution
 
 - Use direct Apple tools by default for local and CI native work: `xcodebuild`, `xcrun simctl`, `xcresulttool`, XCTest/XCUITest, and LLDB as appropriate. Discover supported arguments through the installed tools' help.
-- CI uses direct Apple tools through `scripts/run-app-smoke.py`: `xcodebuild` for native tests, `simctl` for Simulator readiness and recording, and `xcresulttool` for screenshot export. Preserve bounded timeouts, failure diagnostics, and current-head screenshot/video evidence.
+- CI uses direct Apple tools through `scripts/run-app-smoke.py`: `xcodebuild` for native tests, `simctl` for Simulator readiness and requested clips, and `xcresulttool` for screenshot export. Preserve bounded timeouts, failure diagnostics, and current-head screenshot evidence.
 - TestFlight release exception: use Fastlane `gym` for the signed Release archive and IPA export, as authorized by Danis.
 - XcodeBuildMCP is optional when a task needs a specific capability it provides. Ordinary build, test, Simulator, and evidence work requires no MCP installation, configuration, or daemon.
 
@@ -48,6 +48,6 @@
 - Follow the [verification policy](.agents/skills/full-send/references/verification-policy.md): batch fixes before each push, reuse the automatic CI run, and classify failures before correcting them.
 - A `Tests` failure matching a [known CI flake](.agents/skills/full-send/references/verification-policy.md#known-ci-flakes) in a flow the diff does not touch gets one `gh run rerun RUN_ID --failed`; anything else is classified and fixed.
 - Spotlight retrieval in the Simulator is an optional diagnostic; app-owned Spotlight metadata and routing tests are required, and Spotlight search is confirmed on Danis's device after TestFlight.
-- For user-visible changes, attach inspected current-head screenshots and video using [PR evidence](docs/pr-evidence.md). Documentation, tooling and other non-UI changes report functional checks instead.
+- For user-visible changes, attach inspected current-head screenshots using [PR evidence](docs/pr-evidence.md); add a video clip only when Danis asks to review the flow manually or motion can't be shown in stills. Documentation, tooling and other non-UI changes report functional checks instead.
 - Run `scripts/check-formatting.sh`, `scripts/lint-swift.sh` (when a Mac is available; otherwise macOS CI runs it) and the helper tests before pushing. Use `scripts/format-swift.sh` to fix layout; SwiftLint owns source correctness rules. Without a Swift toolchain, both install CI's pinned swift-format into the user cache on first run (`scripts/ensure-swift-format.sh`).
 - On Raspberry Pi, use [the CI evidence workflow](docs/pr-evidence.md#raspberry-pi) for native app validation and visual review. A local Mac is optional convenience, not a dependency.

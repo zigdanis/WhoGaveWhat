@@ -145,4 +145,4 @@ icons remain subject to the licenses listed in
 
 ## Development checks and PR media
 
-Run `scripts/check-formatting.sh`, `scripts/lint-swift.sh` and the Python helper tests before pushing. User-visible changes include current-head screenshots and a video; non-UI changes report their checks. See [the evidence workflow](docs/pr-evidence.md) for local checks, macOS CI, publishing and Raspberry Pi review.
+Run `scripts/check-formatting.sh`, `scripts/lint-swift.sh` and the Python helper tests before pushing. User-visible changes include current-head screenshots (a short clip only on request); non-UI changes report their checks. See [the evidence workflow](docs/pr-evidence.md) for local checks, macOS CI, publishing and Raspberry Pi review.

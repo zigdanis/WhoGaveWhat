@@ -90,7 +90,7 @@ class SimulatorIdentityTests(unittest.TestCase):
                         raise smoke.NativeCommandError('invalid built app signature')
                     return subprocess.CompletedProcess(command, 0, output, '')
                 def stop(_directory, _recording):
-                    (directory / 'journeys.mp4').write_bytes(b'mp4')
+                    (directory / 'clip.mp4').write_bytes(b'mp4')
                 with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
                         patch.object(smoke, 'run_command', side_effect=native), \
                         patch.object(smoke, 'start_recording', return_value=(Mock(), Mock())), \
@@ -264,13 +264,13 @@ class FreshCISimulatorTests(unittest.TestCase):
                                  metadata['planned_checkpoint_names'])
                 self.assertEqual(21, len(smoke.APP_DISCOVERY_CHECKPOINT_NAMES))
                 for before, after in (('simulator-create', 'simulator-created-list'),
-                                      ('simulator-created-list', 'prepare-languages'), ('prepare-languages', 'record-start'),
-                                      ('record-stop', 'simulator-created-shutdown'),
+                                      ('simulator-created-list', 'prepare-languages'),
                                       ('app-discovery-index-log', 'simulator-created-shutdown'),
                                       ('spotlight-pipeline-log', 'simulator-created-shutdown'),
                                       ('export-attachments', 'simulator-created-shutdown'),
                                       ('simulator-created-shutdown', 'simulator-created-delete')):
                     self.assertLess(events.index(before), events.index(after))
+                self.assertNotIn('record-start', events, 'video is recorded only for a requested clip')
                 self.assertEqual(metadata_in_flight['simulator_fixture'], fixture)
 
     def test_checkpoint_export_failure_keeps_native_error_and_owned_teardown(self):
@@ -312,7 +312,7 @@ class FreshCISimulatorTests(unittest.TestCase):
                             manifest.write_text(json.dumps([{'attachments': [{
                                 'exportedFileName': 'source.png', 'suggestedHumanReadableName': 'home-start_1.png'}]}]))
                     def stop(_directory, _recording):
-                        (directory / 'journeys.mp4').write_bytes(b'mp4')
+                        (directory / 'clip.mp4').write_bytes(b'mp4')
                     with patch.dict(os.environ, {'GITHUB_ACTIONS': 'true'}), \
                             patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
                             patch.object(smoke, 'run_command', side_effect=native), \
@@ -356,7 +356,7 @@ class FreshCISimulatorTests(unittest.TestCase):
                         raise OSError('metadata disk full')
                     return original_write(path, contents, *args, **kwargs)
                 def stop(_directory, _recording):
-                    (directory / 'journeys.mp4').write_bytes(b'mp4')
+                    (directory / 'clip.mp4').write_bytes(b'mp4')
                 with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
                         patch.object(smoke, 'run_command', side_effect=native), \
                         patch.object(smoke, 'start_recording', return_value=(Mock(), Mock())), \
@@ -592,7 +592,7 @@ class EvidenceExportTests(unittest.TestCase):
             def stop_recording(_directory, recording):
                 real_stop_recording(_directory, recording)
                 if test_number == 1:
-                    (directory / 'journeys.mp4').write_bytes(b'first-run-video')
+                    (directory / 'clip.mp4').write_bytes(b'first-run-video')
 
             def export(_result, attachments, _directory):
                 attachments.mkdir(parents=True, exist_ok=True)
@@ -614,9 +614,10 @@ class EvidenceExportTests(unittest.TestCase):
                 patch.object(smoke, 'stop_recording', side_effect=stop_recording),
                 patch.object(smoke, '_export_xcresult_attachments', side_effect=export),
             )
+            clip_test = 'WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testDarkAppearanceCheckpoints'
             with patches[0], patches[1], patches[2], patches[3], patches[4]:
-                smoke.run(directory)
-                self.assertTrue((directory / 'journeys.mp4').is_file())
+                smoke.run(directory, video_test=clip_test)
+                self.assertTrue((directory / 'clip.mp4').is_file())
                 self.assertTrue((directory / 'attachments/people.png').is_file())
                 (directory / 'index.html').write_text('old successful report')
                 for label in ('app-discovery-index-log', 'spotlight-pipeline-log',
@@ -624,7 +625,7 @@ class EvidenceExportTests(unittest.TestCase):
                     for suffix in ('.log', '-processes.log'):
                         (directory / f'{label}{suffix}').write_text('old-head diagnostics')
                 with self.assertRaisesRegex(smoke.NativeCommandError, 'second native test failed'):
-                    smoke.run(directory)
+                    smoke.run(directory, video_test=clip_test)
 
             metadata = json.loads((directory / 'metadata.json').read_text())
             self.assertEqual([1, 2], generations)
@@ -635,7 +636,7 @@ class EvidenceExportTests(unittest.TestCase):
                 'Native People disclosure and detail navigation plus grouped person editing, photo crop cancel and confirm, and photo persistence and removal',
                 metadata['scenario'],
             )
-            self.assertFalse((directory / 'journeys.mp4').exists())
+            self.assertFalse((directory / 'clip.mp4').exists())
             self.assertFalse((directory / 'index.html').exists())
             for label in ('app-discovery-index-log', 'spotlight-pipeline-log',
                           'simulator-signing-info', 'simulator-signing-display', 'simulator-signing-verify'):
@@ -646,7 +647,7 @@ class EvidenceExportTests(unittest.TestCase):
             self.assertEqual('2', (result / 'generation').read_text())
             self.assertEqual('keep this file', unrelated.read_text())
 
-    def test_failed_native_journey_stops_video_and_preserves_result_and_metadata(self):
+    def test_failed_native_journey_skips_requested_clip_and_preserves_result_and_metadata(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             result = directory / 'Acceptance.xcresult'
@@ -657,7 +658,6 @@ class EvidenceExportTests(unittest.TestCase):
             recorder.poll.return_value = None
             recorder.returncode = -signal.SIGINT
             recording = (recorder, log.open('w'))
-            stop_recording = smoke.stop_recording
             named = [*smoke.PLANNED_CHECKPOINT_NAMES, 'calendar-4-weeks', 'calendar-6-weeks']
 
             def native(directory, label, command, timeout, **kwargs):
@@ -679,24 +679,93 @@ class EvidenceExportTests(unittest.TestCase):
                     exported.append({'exportedFileName': filename, 'suggestedHumanReadableName': name + '_1.png'})
                 (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
 
-            def stop(_directory, active_recording):
-                stop_recording(_directory, active_recording)
-                (directory / 'journeys.mp4').write_bytes(b'mp4')
-
             with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
                     patch.object(smoke, 'run_command', side_effect=native), \
-                    patch.object(smoke, 'start_recording', return_value=recording), \
-                    patch.object(smoke, 'stop_recording', side_effect=stop), \
+                    patch.object(smoke, 'start_recording', return_value=recording) as start, \
                     patch.object(smoke, '_export_xcresult_attachments', side_effect=export):
                 with self.assertRaisesRegex(smoke.NativeCommandError, 'assertion failed'):
-                    smoke.run(directory)
+                    smoke.run(directory, video_test='WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testAddGiftJourney')
+            start.assert_not_called()
             metadata = json.loads(metadata_path.read_text())
             self.assertEqual('failure', metadata['journey_outcome'])
             self.assertIn('assertion failed', metadata['native_test_error'])
             self.assertEqual(len(named), len(metadata['checkpoints']))
             self.assertTrue((result).is_dir())
             self.assertTrue((directory / 'attachments/home-start.png').is_file())
-            self.assertTrue((directory / 'journeys.mp4').is_file())
+            self.assertFalse((directory / 'clip.mp4').exists())
+
+    def test_requested_clip_records_one_built_test_after_the_suite_passes(self):
+        clip_test = 'WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testDarkAppearanceCheckpoints'
+        named = [*smoke.PLANNED_CHECKPOINT_NAMES, 'calendar-4-weeks', 'calendar-6-weeks']
+        for clip_failure in (False, True):
+            with self.subTest(clip_failure=clip_failure), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                events = []
+
+                def native(_directory, label, command, _timeout, **_kwargs):
+                    events.append(label)
+                    if label == 'simulator-list':
+                        return subprocess.CompletedProcess(command, 0, json.dumps({'devices': {
+                            'com.apple.CoreSimulator.SimRuntime.iOS-26-4': [
+                                {'name': 'iPhone 17 Pro', 'udid': 'sim-id', 'state': 'Booted', 'isAvailable': True}]}}), '')
+                    if label == 'xcodebuild-test':
+                        (directory / 'Acceptance.xcresult').mkdir()
+                        self.assertNotIn(f'-only-testing:{clip_test}', command)
+                    if label == 'xcodebuild-clip':
+                        self.assertEqual(['xcodebuild', 'test-without-building'], command[:2])
+                        self.assertIn(f'-only-testing:{clip_test}', command)
+                        self.assertIn(str(directory / 'Clip.xcresult'), command)
+                        if clip_failure:
+                            raise smoke.NativeCommandError('clip test failed')
+                    return subprocess.CompletedProcess(command, 0, signing_fixture(label), '')
+
+                def record(_directory, _simulator_id, video):
+                    self.assertEqual(directory / 'clip.mp4', video)
+                    events.append('record-start')
+                    return Mock(), Mock()
+
+                def stop(_directory, _recording):
+                    events.append('record-stop')
+                    (directory / 'clip.mp4').write_bytes(b'mp4')
+
+                def export(_result, attachments, _directory):
+                    attachments.mkdir(parents=True, exist_ok=True)
+                    exported = []
+                    for index, name in enumerate(named):
+                        (attachments / f'{index}.png').write_bytes(b'png')
+                        exported.append({'exportedFileName': f'{index}.png', 'suggestedHumanReadableName': name + '_1.png'})
+                    (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
+
+                with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
+                        patch.object(smoke, 'run_command', side_effect=native), \
+                        patch.object(smoke, 'start_recording', side_effect=record), \
+                        patch.object(smoke, 'stop_recording', side_effect=stop), \
+                        patch.object(smoke, '_export_xcresult_attachments', side_effect=export):
+                    if clip_failure:
+                        with self.assertRaisesRegex(ValueError, 'clip test failed'):
+                            smoke.run(directory, video_test=clip_test)
+                    else:
+                        smoke.run(directory, video_test=clip_test)
+                metadata = json.loads((directory / 'metadata.json').read_text())
+                self.assertEqual(clip_test, metadata['video_test'])
+                self.assertEqual('success', metadata['journey_outcome'])
+                self.assertEqual('failure' if clip_failure else 'success', metadata['export_outcome'])
+                self.assertEqual(clip_failure, 'video_error' in metadata)
+                self.assertLess(events.index('xcodebuild-test'), events.index('record-start'))
+                self.assertLess(events.index('record-start'), events.index('xcodebuild-clip'))
+                self.assertLess(events.index('xcodebuild-clip'), events.index('record-stop'))
+                self.assertEqual(1, events.count('record-stop'))
+
+    def test_video_test_must_name_one_ui_test_method(self):
+        for video_test, discovery_only in (('WhoGaveWhatUITests', False), ('WhoGaveWhatTests/Foo/testBar', False),
+                                           ('WhoGaveWhatUITests/Foo/testBar -quiet', False),
+                                           ('WhoGaveWhatUITests/Foo/testBar', True)):
+            with self.subTest(video_test=video_test), tempfile.TemporaryDirectory() as temporary, \
+                    patch.object(smoke, 'run_command') as native:
+                with self.assertRaisesRegex(ValueError, '--video-test'):
+                    smoke.run(Path(temporary), verify_app_names=True, discovery_only=discovery_only,
+                              video_test=video_test)
+                native.assert_not_called()
 
     def test_exports_xcresult_and_maps_named_screenshots(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -888,7 +957,7 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                         items.append({'exportedFileName': filename, 'suggestedHumanReadableName': f'{name}_1.png'})
                     (attachments / 'manifest.json').write_text(json.dumps([{'attachments': items}]))
                 def stop(_directory, _recording):
-                    (directory / 'journeys.mp4').write_bytes(b'mp4')
+                    (directory / 'clip.mp4').write_bytes(b'mp4')
                 with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
                         patch.object(smoke, 'run_command', side_effect=native), \
                         patch.object(smoke, 'prepare_disposable_languages'), \
@@ -948,7 +1017,7 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                     exported.append({'exportedFileName': filename, 'suggestedHumanReadableName': f'{name}_1.png'})
                 (attachments / 'manifest.json').write_text(json.dumps([{'attachments': exported}]))
             def stop(_directory, _recording):
-                (directory / 'journeys.mp4').write_bytes(b'mp4')
+                (directory / 'clip.mp4').write_bytes(b'mp4')
             with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
                     patch.object(smoke, 'run_command', side_effect=native), \
                     patch.object(smoke, 'prepare_disposable_languages'), \
@@ -977,6 +1046,10 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         self.assertNotIn('--discovery-only', jobs['test'])
         self.assertIn('name: Unit tests and app smoke', jobs['test'])
         self.assertIn('run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names', jobs['test'])
+        # Video is opt-in: only a manual dispatch can name a clip, passed through the environment.
+        self.assertIn("VIDEO_TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.video_test || '' }}", jobs['test'])
+        self.assertIn('${VIDEO_TEST:+--video-test "$VIDEO_TEST"}', jobs['test'])
+        self.assertNotIn('${{ inputs.video_test }}', workflow)
         diagnostic = jobs['spotlight-diagnostics']
         self.assertIn("if: github.event_name == 'workflow_dispatch' && inputs.spotlight_diagnostics", diagnostic)
         self.assertIn('name: Spotlight diagnostics (non-acceptance)', diagnostic)

@@ -30,8 +30,8 @@ description: Deliver WhoGaveWhat features, fixes, improvements and new builds th
 
 ## Verify and merge
 
-- **Verify:** the `Checks` and `Tests` workflows run automatically on the PR. Retrieve native screenshots and video with `scripts/pr-evidence.sh PR_NUMBER` when needed.
-- **Show:** for user-visible changes, attach inspected current-head screenshots and video with `visual-acceptance`. Non-UI changes report functional checks instead.
+- **Verify:** the `Checks` and `Tests` workflows run automatically on the PR. Retrieve native screenshots with `scripts/pr-evidence.sh PR_NUMBER` when needed.
+- **Show:** for user-visible changes, attach inspected current-head screenshots with `visual-acceptance`; a clip only on request. Non-UI changes report functional checks instead.
 - **Fix:** address real review issues, test the fixes and reply before resolving comments. Batch them into one push.
 - **Watch:** while PR checks or reviews are pending, call T3 Code's `watch_pull_request` and end the turn. Recheck when notified. Don't poll, sleep or run your own watcher.
 - **Merge:** when the current head has green checks, independent review is clean and no actionable comment is open, merge. Then confirm the `Tests` run on the merged master commit passed before TestFlight. If that commit skipped `Tests` (docs or agent files only), dispatch `gh workflow run tests.yml --repo zigdanis/WhoGaveWhat --ref master` once while it is still master's head.

@@ -63,22 +63,24 @@ GENERATED_LOG_LABELS = (
     "bundle-spotlight-name-en", "bundle-spotlight-name-ru",
     "language-shutdown", "language-preferences-before", "language-preferences-languages", "language-preferences-locale",
     "language-preferences-after", "language-boot", "language-bootstatus", "language-device-state",
-    "app-discovery-index-log", "spotlight-pipeline-log",
+    "app-discovery-index-log", "spotlight-pipeline-log", "xcodebuild-clip",
     "simulator-signing-info", "simulator-signing-display", "simulator-signing-verify",
 )
 COLD_BOOT_TIMEOUT_SECONDS = 600
+# One UI test method, as accepted by -only-testing; video is recorded only on request.
+VIDEO_TEST_PATTERN = re.compile(r"WhoGaveWhatUITests/[A-Za-z0-9_]+/test[A-Za-z0-9_]+")
 LANGUAGE_SHUTDOWN_TIMEOUT_SECONDS = 180
 
 
 def clear_previous_outputs(directory):
     """Remove only this runner's fixed-name products before reusing its output folder."""
-    for name in ("Acceptance.xcresult", "DerivedData", "attachments"):
+    for name in ("Acceptance.xcresult", "Clip.xcresult", "DerivedData", "attachments"):
         path = directory / name
         if path.is_symlink() or (path.exists() and not path.is_dir()):
             path.unlink()
         elif path.is_dir():
             shutil.rmtree(path)
-    for name in ("journeys.mp4", "metadata.json", "index.html"):
+    for name in ("journeys.mp4", "clip.mp4", "metadata.json", "index.html"):
         path = directory / name
         if path.is_symlink() or path.exists():
             path.unlink()
@@ -477,10 +479,13 @@ def prepare_disposable_languages(directory, simulator, metadata):
     metadata["language_preparation"]["verified"] = True
 
 
-def run(directory, verify_app_names=False, discovery_only=False, runtime=None, fresh_ci_simulator=False):
+def run(directory, verify_app_names=False, discovery_only=False, runtime=None, fresh_ci_simulator=False,
+        video_test=None):
     """Run the native XCTest journey, preserving diagnostics and real evidence."""
     if discovery_only and not verify_app_names:
         raise ValueError("Discovery-only diagnostics require --verify-app-names")
+    if video_test is not None and (discovery_only or not VIDEO_TEST_PATTERN.fullmatch(video_test)):
+        raise ValueError("--video-test needs one WhoGaveWhatUITests/Class/testMethod and no --discovery-only")
     if fresh_ci_simulator and (os.environ.get("GITHUB_ACTIONS") != "true" or runtime is None):
         raise ValueError("Fresh CI Simulator requires GitHub Actions and an explicit --runtime")
     directory = directory.resolve()
@@ -497,6 +502,8 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
         "checkpoints": [], "native_test": "WhoGaveWhat app-owned unit and UI suite (OS Spotlight diagnostic excluded)",
         "planned_checkpoint_names": list(PLANNED_CHECKPOINT_NAMES),
     }
+    if video_test:
+        metadata["video_test"] = video_test
     if not verify_app_names:
         metadata["native_test"] += "; disposable AppDiscoveryUITests class excluded"
     if verify_app_names:
@@ -536,10 +543,10 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
                 run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
             run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
                         COLD_BOOT_TIMEOUT_SECONDS)
-        recording = start_recording(directory, simulator_id, directory / "journeys.mp4")
-        command = ["xcodebuild", "test", "-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
-                   "-destination", f"platform=iOS Simulator,id={simulator_id}", "-derivedDataPath", str(directory / "DerivedData"),
-                   "-resultBundlePath", str(result_bundle), "-parallel-testing-enabled", "NO",
+        target = ["-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
+                  "-destination", f"platform=iOS Simulator,id={simulator_id}", "-derivedDataPath", str(directory / "DerivedData"),
+                  "-parallel-testing-enabled", "NO"]
+        command = ["xcodebuild", "test", *target, "-resultBundlePath", str(result_bundle),
                    "CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-"]
         if discovery_only:
             command.append(f"-only-testing:{SPOTLIGHT_DIAGNOSTIC_TEST}")
@@ -555,6 +562,17 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
             test_succeeded = True
             if discovery_only:
                 metadata["spotlight_search_outcome"] = "passed-diagnostic"
+            if video_test:
+                # A short clip of one already-built test, recorded only after the full suite passes.
+                try:
+                    recording = start_recording(directory, simulator_id, directory / "clip.mp4")
+                    run_command(directory, "xcodebuild-clip", [
+                        "xcodebuild", "test-without-building", *target,
+                        "-resultBundlePath", str(directory / "Clip.xcresult"), f"-only-testing:{video_test}"], 900)
+                    stop_recording(directory, recording)
+                    recording = None
+                except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
+                    metadata["video_error"] = str(error)
         except (NativeCommandError, OSError) as error:
             metadata["native_test_error"] = str(error)
             raise
@@ -605,9 +623,10 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
                 metadata["missing_checkpoints"] = missing
             if test_succeeded:
                 metadata["journey_outcome"] = "success"
-            video = directory / "journeys.mp4"
+            video = directory / "clip.mp4"
+            video_ready = not video_test or (video.is_file() and video.stat().st_size and not metadata.get("video_error"))
             if (test_succeeded and not missing and not metadata.get("export_error") and not metadata.get("recording_error")
-                    and video.is_file() and video.stat().st_size):
+                    and video_ready):
                 metadata["export_outcome"] = "success"
         finally:
             try:
@@ -621,7 +640,8 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
                 finally:
                     shutil.rmtree(directory / "DerivedData", ignore_errors=True)
     if metadata["export_outcome"] != "success":
-        raise ValueError(metadata.get("simulator_identity_error") or "Native acceptance evidence export is incomplete")
+        raise ValueError(metadata.get("simulator_identity_error") or metadata.get("video_error")
+                         or "Native acceptance evidence export is incomplete")
 
 
 if __name__ == "__main__":
@@ -634,5 +654,8 @@ if __name__ == "__main__":
     parser.add_argument("--runtime", help="Require a canonical runtime such as 'iOS 26.4'; reject conflicting booted iPhones")
     parser.add_argument("--fresh-ci-simulator", action="store_true",
                         help="GitHub Actions only: create a run-owned iPhone 17 Pro on the explicit runtime")
+    parser.add_argument("--video-test", help="After the suite passes, record a clip of this one UI test "
+                        "(WhoGaveWhatUITests/Class/testMethod); no video is recorded otherwise")
     args = parser.parse_args()
-    run(args.directory, args.verify_app_names, args.discovery_only, args.runtime, args.fresh_ci_simulator)
+    run(args.directory, args.verify_app_names, args.discovery_only, args.runtime, args.fresh_ci_simulator,
+        args.video_test or None)

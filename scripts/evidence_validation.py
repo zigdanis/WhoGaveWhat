@@ -9,6 +9,8 @@ END = "<!-- visual-evidence:end -->"
 METADATA_PREFIX = "<!-- visual-evidence:metadata "
 ATTACHMENT = re.compile(r"https://github\.com/user-attachments/assets/[A-Za-z0-9-]+\Z")
 NATIVE_JOB_NAMES = {"Unit tests and app smoke", "Spotlight diagnostics (non-acceptance)"}
+# A manual dispatch on the PR branch runs the same full suite and can add a requested clip.
+ACCEPTANCE_EVENTS = {"pull_request", "workflow_dispatch"}
 
 
 def gh(*arguments):
@@ -21,7 +23,7 @@ def metadata_comment(metadata):
 
 def parse_evidence(body):
     if body.count(START) != 1 or body.count(END) != 1 or body.index(START) > body.index(END):
-        raise ValueError("Publish one complete visual evidence section with screenshots AND video.")
+        raise ValueError("Publish one complete visual evidence section with screenshots.")
     block = body.split(START, 1)[1].split(END, 1)[0]
     matches = re.findall(re.escape(METADATA_PREFIX) + r"(\{[^\n]+\}) -->", block)
     if len(matches) != 1:
@@ -29,11 +31,11 @@ def parse_evidence(body):
     metadata = json.loads(matches[0])
     if metadata.get("evidence_kind") not in {"app-smoke", "feature-acceptance"}:
         raise ValueError("Evidence must label app smoke or feature acceptance.")
-    for key in ["images", "videos"]:
-        links = metadata.get(key)
-        if not isinstance(links, list) or not links or any(not isinstance(url, str) or not ATTACHMENT.fullmatch(url) for url in links):
-            raise ValueError("Both screenshots AND video need native GitHub attachments.")
-    images, videos = metadata["images"], metadata["videos"]
+    images, videos = metadata.get("images"), metadata.setdefault("videos", [])
+    for links, required in ((images, True), (videos, False)):
+        if (not isinstance(links, list) or (required and not links)
+                or any(not isinstance(url, str) or not ATTACHMENT.fullmatch(url) for url in links)):
+            raise ValueError("Screenshots, and any requested clip, need native GitHub attachments.")
     if len(set(images + videos)) != len(images + videos):
         raise ValueError("Screenshots and video must be distinct attachments.")
     for url in images:
@@ -51,13 +53,14 @@ def parse_evidence(body):
 
 def latest_pr_acceptance_run(repo, sha):
     """Keep the newest acceptance authoritative; ignore only proven no-native runs."""
-    runs = json.loads(gh("run", "list", "--repo", repo, "--workflow", "tests.yml", "--event", "pull_request",
+    runs = json.loads(gh("run", "list", "--repo", repo, "--workflow", "tests.yml",
                          "--commit", sha, "--limit", "100", "--json", "databaseId"))
     for candidate in runs:
         run = json.loads(gh("api", f"repos/{repo}/actions/runs/{candidate['databaseId']}"))
-        if (run.get("id") != candidate["databaseId"] or run.get("event") != "pull_request"
-                or run.get("head_sha") != sha):
+        if run.get("id") != candidate["databaseId"] or run.get("head_sha") != sha:
             raise ValueError("PR Tests run identity does not match the requested head.")
+        if run.get("event") not in ACCEPTANCE_EVENTS:
+            continue
         # A rerun may have executed native acceptance on an earlier attempt; retain it.
         if (run.get("status") == "completed" and run.get("conclusion") in {"success", "skipped"}
                 and run.get("run_attempt") == 1):
@@ -82,7 +85,7 @@ def checked_run(repo, sha, metadata):
     if not run or str(run["id"]) != str(metadata["run_id"]):
         raise ValueError("Evidence is not from the latest PR Tests run.")
     if (run["status"] != "completed" or run["conclusion"] != "success"
-            or run.get("event") != "pull_request" or run.get("head_sha") != sha
+            or run.get("event") not in ACCEPTANCE_EVENTS or run.get("head_sha") != sha
             or str(run["run_attempt"]) != str(metadata["run_attempt"])):
         raise ValueError("The current CI attempt must pass and match the reviewed evidence.")
     return run

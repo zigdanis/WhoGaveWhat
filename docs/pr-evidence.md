@@ -1,6 +1,6 @@
 # Project checks and PR evidence
 
-User-visible changes include reviewed screenshots **and** a video in the PR description. Documentation, tooling, CI and other non-UI changes report their functional checks instead.
+User-visible changes include 2–6 reviewed screenshots in the PR description. Add a short clip of one UI test only when Danis asks to review the flow manually or motion can't be shown in stills; never attach a full-suite recording. Documentation, tooling, CI and other non-UI changes report their functional checks instead.
 
 ## CI
 
@@ -47,17 +47,23 @@ Evidence metadata records `spotlight_search_outcome=not-run` and `spotlight_devi
 scripts/pr-evidence.sh PR_NUMBER
 ```
 
-The helper waits for the latest PR `Tests` run for the current head, downloads its current-attempt `ui-*` artifact and verifies head SHA, run ID and attempt. Open `index.html`, inspect the selected PNGs, and review `journeys.mp4`. On Linux, extract frames:
+The helper waits for the latest PR `Tests` run for the current head, downloads its current-attempt `ui-*` artifact and verifies head SHA, run ID and attempt. Open `index.html` and inspect the selected PNGs. CI records no video by default.
+
+### Requested clip
+
+When a clip is needed, dispatch `Tests` on the PR branch with the one UI test to record. It runs the full suite, then records only that already-built test into `clip.mp4`. `scripts/pr-evidence.sh` picks up this run because it is the newest for the head:
 
 ```sh
-ffmpeg -i /tmp/ARTIFACT/journeys.mp4 -vf fps=1/2 /tmp/ARTIFACT/frame-%04d.png
+gh workflow run tests.yml --repo zigdanis/WhoGaveWhat --ref BRANCH \
+  -f video_test=WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testDarkAppearanceCheckpoints
+ffmpeg -i /tmp/ARTIFACT/clip.mp4 -vf fps=1/2 /tmp/ARTIFACT/frame-%04d.png  # review frames on Linux
 ```
 
 `testDarkAppearanceCheckpoints` captures `dark-home`, `dark-people`, `dark-insights`, `dark-gift-detail` and `dark-add-gift` (it launches the app with `KS_APPEARANCE=dark`), so review light and dark for any visual change.
 
 For a UI change, extend the native journey to exercise that change; app smoke alone does not establish feature acceptance.
 
-## Embed screenshots and video
+## Embed screenshots
 
 Use the authenticated user `gh` session; no extra token is needed. Write a short English review outside the repository, then publish:
 
@@ -65,15 +71,14 @@ Use the authenticated user `gh` session; no extra token is needed. Write a short
 python3 scripts/pr-visual-evidence.py PR_NUMBER /tmp/ARTIFACT \
   --summary-file /tmp/visual-review.md \
   --image attachments/home-start.png \
-  --image attachments/gift-compact-keyboard.png \
-  --video journeys.mp4
+  --image attachments/gift-compact-keyboard.png
 python3 scripts/pr-evidence-gate.py PR_NUMBER
 ```
 
-The publisher scales media to fit 320×640, uploads native GitHub attachments, and replaces only the marked evidence section of the PR body. It refuses stale or failed runs.
+Add `--video clip.mp4` only for a requested clip. The publisher scales media to fit 320×640, uploads native GitHub attachments, and replaces only the marked evidence section of the PR body. It refuses stale or failed runs.
 
 The `PR evidence gate` workflow runs only when a PR body edit adds, changes or removes that evidence section. It runs trusted base-branch scripts and posts a `Visual evidence` status for the current head. It never executes PR code.
 
 ## Raspberry Pi
 
-Run formatting and the Python helper tests locally. Native tests, SwiftLint and Simulator capture run in macOS CI. Retrieve the current run with `scripts/pr-evidence.sh`, inspect PNGs and video frames, and publish. A local Mac is optional.
+Run formatting and the Python helper tests locally. Native tests, SwiftLint and Simulator capture run in macOS CI. Retrieve the current run with `scripts/pr-evidence.sh`, inspect the PNGs (and frames of any requested clip), and publish. A local Mac is optional.

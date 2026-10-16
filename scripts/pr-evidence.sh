@@ -46,7 +46,7 @@ require_current_run
 CURRENT_ATTEMPT=$(gh api "repos/$REPO/actions/runs/$RUN_ID" --jq .run_attempt)
 test "$CURRENT_ATTEMPT" = "$RUN_ATTEMPT" || { echo 'CI attempt changed during download; rerun for the new attempt.' >&2; exit 1; }
 trap - EXIT
-echo "Inspect attachments/*.png, metadata.json and journeys.mp4."
-echo "For video review on Linux: ffmpeg -i PATH/journeys.mp4 -vf fps=1/2 PATH/frame-%04d.png"
+echo "Inspect attachments/*.png and metadata.json, plus clip.mp4 when a clip was requested."
+echo "For clip review on Linux: ffmpeg -i PATH/clip.mp4 -vf fps=1/2 PATH/frame-%04d.png"
 echo "Remove $EVIDENCE_DIR after review. CI exit status: $CI_STATUS"
 exit "$CI_STATUS"
