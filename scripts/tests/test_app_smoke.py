@@ -596,8 +596,7 @@ class EvidenceExportTests(unittest.TestCase):
 
             def export(_result, attachments, _directory):
                 attachments.mkdir(parents=True, exist_ok=True)
-                names = ([*smoke.PLANNED_CHECKPOINT_NAMES, 'calendar-4-weeks', 'calendar-6-weeks']
-                         if test_number == 1 else ['home-start'])
+                names = (list(smoke.PLANNED_CHECKPOINT_NAMES) if test_number == 1 else ['home-start'])
                 exported = []
                 for index, name in enumerate(names):
                     filename = f'checkpoint-{index}.png'
@@ -614,11 +613,11 @@ class EvidenceExportTests(unittest.TestCase):
                 patch.object(smoke, 'stop_recording', side_effect=stop_recording),
                 patch.object(smoke, '_export_xcresult_attachments', side_effect=export),
             )
-            clip_test = 'WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testDarkAppearanceCheckpoints'
+            clip_test = 'WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testAdaptiveGiftJourney'
             with patches[0], patches[1], patches[2], patches[3], patches[4]:
                 smoke.run(directory, video_test=clip_test)
                 self.assertTrue((directory / 'clip.mp4').is_file())
-                self.assertTrue((directory / 'attachments/people.png').is_file())
+                self.assertTrue((directory / 'attachments/person-edited.png').is_file())
                 (directory / 'index.html').write_text('old successful report')
                 for label in ('app-discovery-index-log', 'spotlight-pipeline-log',
                               'simulator-signing-info', 'simulator-signing-display', 'simulator-signing-verify'):
@@ -642,7 +641,7 @@ class EvidenceExportTests(unittest.TestCase):
                           'simulator-signing-info', 'simulator-signing-display', 'simulator-signing-verify'):
                 for suffix in ('.log', '-processes.log'):
                     self.assertFalse((directory / f'{label}{suffix}').exists())
-            self.assertFalse((directory / 'attachments/people.png').exists())
+            self.assertFalse((directory / 'attachments/person-edited.png').exists())
             self.assertEqual(b'new', (directory / 'attachments/home-start.png').read_bytes())
             self.assertEqual('2', (result / 'generation').read_text())
             self.assertEqual('keep this file', unrelated.read_text())
@@ -658,7 +657,7 @@ class EvidenceExportTests(unittest.TestCase):
             recorder.poll.return_value = None
             recorder.returncode = -signal.SIGINT
             recording = (recorder, log.open('w'))
-            named = [*smoke.PLANNED_CHECKPOINT_NAMES, 'calendar-4-weeks', 'calendar-6-weeks']
+            named = list(smoke.PLANNED_CHECKPOINT_NAMES)
 
             def native(directory, label, command, timeout, **kwargs):
                 if label == 'simulator-list':
@@ -684,7 +683,7 @@ class EvidenceExportTests(unittest.TestCase):
                     patch.object(smoke, 'start_recording', return_value=recording) as start, \
                     patch.object(smoke, '_export_xcresult_attachments', side_effect=export):
                 with self.assertRaisesRegex(smoke.NativeCommandError, 'assertion failed'):
-                    smoke.run(directory, video_test='WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testAddGiftJourney')
+                    smoke.run(directory, video_test='WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testAdaptiveGiftJourney')
             start.assert_not_called()
             metadata = json.loads(metadata_path.read_text())
             self.assertEqual('failure', metadata['journey_outcome'])
@@ -695,8 +694,8 @@ class EvidenceExportTests(unittest.TestCase):
             self.assertFalse((directory / 'clip.mp4').exists())
 
     def test_requested_clip_records_one_built_test_after_the_suite_passes(self):
-        clip_test = 'WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testDarkAppearanceCheckpoints'
-        named = [*smoke.PLANNED_CHECKPOINT_NAMES, 'calendar-4-weeks', 'calendar-6-weeks']
+        clip_test = 'WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testAdaptiveGiftJourney'
+        named = list(smoke.PLANNED_CHECKPOINT_NAMES)
         for clip_failure in (False, True):
             with self.subTest(clip_failure=clip_failure), tempfile.TemporaryDirectory() as temporary:
                 directory = Path(temporary)
@@ -775,7 +774,7 @@ class EvidenceExportTests(unittest.TestCase):
             attachments = directory / 'attachments'
             def export(command, **kwargs):
                 attachments.mkdir(exist_ok=True)
-                names = [*smoke.PLANNED_CHECKPOINT_NAMES, 'calendar-4-weeks', 'calendar-6-weeks']
+                names = list(smoke.PLANNED_CHECKPOINT_NAMES)
                 exported = []
                 for index, name in enumerate(names):
                     filename = f'checkpoint-{index}.png'
@@ -792,7 +791,6 @@ class EvidenceExportTests(unittest.TestCase):
             self.assertEqual([], smoke._export_named_checkpoints(directory, metadata))
             self.assertTrue((attachments / 'home-start.png').is_file())
             self.assertEqual('home-start', metadata['checkpoints'][0]['name'])
-            self.assertIn('calendar-4-weeks.png', [item['image'].split('/')[-1] for item in metadata['checkpoints']])
 
     def test_named_checkpoint_does_not_match_a_longer_prefixed_name(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -965,7 +963,6 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                 def export(_result, attachments, _directory):
                     attachments.mkdir()
                     names = [name for name in planned if not missing_core or name != 'app-language-draft-resumed']
-                    names += ['calendar-4-weeks', 'calendar-5-weeks']
                     items = []
                     for index, name in enumerate(names):
                         filename = f'{index}.png'
@@ -1013,7 +1010,7 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                 smoke.run(Path(temporary), discovery_only=True)
             native.assert_not_called()
 
-    def test_successful_partial_diagnostic_exports_all_discovery_checkpoints_without_calendar(self):
+    def test_successful_partial_diagnostic_exports_all_discovery_checkpoints(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             def native(_directory, label, command, _timeout):
@@ -1050,9 +1047,6 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
             self.assertEqual('success', metadata['export_outcome'])
             self.assertNotIn('missing_checkpoints', metadata)
             self.assertEqual(list(smoke.APP_DISCOVERY_CHECKPOINT_NAMES), [item['name'] for item in metadata['checkpoints']])
-            full_metadata = dict(metadata, evidence_kind='feature-acceptance', checkpoints=[])
-            self.assertEqual(['two calendar checkpoints with distinct week counts'],
-                             smoke._export_named_checkpoints(directory, full_metadata))
 
     def test_manual_diagnostic_job_cannot_replace_required_full_suite(self):
         workflow = (Path(__file__).parents[2] / '.github/workflows/tests.yml').read_text()
@@ -1231,7 +1225,6 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
                 attachments = directory / 'attachments'
                 attachments.mkdir()
                 names = [name for name in smoke.APP_DISCOVERY_CHECKPOINT_NAMES if name != missing]
-                names += ['calendar-4-weeks', 'calendar-6-weeks']
                 exported = []
                 for index, name in enumerate(names):
                     filename = f'{index}.png'

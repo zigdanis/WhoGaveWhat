@@ -55,13 +55,13 @@ When a clip is needed, dispatch `Tests` on the PR branch with the one UI test to
 
 ```sh
 gh workflow run tests.yml --repo zigdanis/WhoGaveWhat --ref BRANCH \
-  -f video_test=WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testDarkAppearanceCheckpoints
+  -f video_test=WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testAdaptiveGiftJourney
 ffmpeg -i /tmp/ARTIFACT/clip.mp4 -vf fps=1/2 /tmp/ARTIFACT/frame-%04d.png  # review frames on Linux
 ```
 
-`testDarkAppearanceCheckpoints` captures `dark-home`, `dark-people`, `dark-insights`, `dark-gift-detail` and `dark-add-gift` (it launches the app with `KS_APPEARANCE=dark`), so review light and dark for any visual change.
+`testAdaptiveGiftJourney` is the core flow and stays short: a quick gift with an inferred icon, a detailed gift (custom icon, new recipient, value, calendar date, new occasion), adding, editing and deleting a person, and Insights before and after "This is me". Don't extend it for a feature.
 
-For a UI change, extend the native journey to exercise that change; app smoke alone does not establish feature acceptance.
+For a UI change, add a focused test that exercises that change, with its own checkpoints (launch with `KS_APPEARANCE=dark` when dark mode matters), and remove it once the change no longer needs visual review; app smoke alone does not establish feature acceptance.
 
 ## Embed screenshots
 

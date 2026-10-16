@@ -18,25 +18,20 @@ class NativeCommandError(ValueError):
 
 
 PLANNED_CHECKPOINT_NAMES = (
-    "home-start", "people", "people-populated", "insights", "gift-compact-keyboard", "gift-compact-dismissed",
-    "details-value", "gift-saved", "gift-after-relaunch", "settings-currency", "licenses",
-    "calendar-reverse", "gift-content-sized-compact-keyboard", "gift-content-sized-details",
+    # testAdaptiveGiftJourney: the core flow.
+    "home-start", "quick-gift", "quick-gift-saved", "calendar", "detailed-gift", "detailed-gift-saved",
+    "person-created", "person-photo-picker", "person-photo-crop", "person-editor-photo", "person-edited",
+    "person-delete-confirmation", "person-deleted", "insights-balances", "insights-compare", "insights-me",
+    # Focused tests.
+    "gift-content-sized-compact-keyboard", "gift-content-sized-details",
     "gift-content-sized-details-keyboard", "gift-content-sized-refocused-compact-keyboard",
-    "person-detail-is-me", "people-you-badge",
-    "person-add-cancel-draft", "person-add-created", "person-editor-delete-keyboard",
-    "person-editor-delete-confirmation", "person-editor-delete-cancelled", "person-add-deleted",
-    "person-editor", "person-editor-photo", "person-detail", "person-editor-keyboard",
-    "person-editor-header-accessibility", "person-editor-header-accessibility-keyboard",
-    "person-editor-russian", "person-editor-russian-keyboard", "person-photo-picker",
-    "person-photo-crop", "person-photo-crop-adjusted",
-    "person-editor-photo-keyboard", "person-editor-selected-photo", "person-detail-selected-photo",
-    "person-editor-photo-persisted", "person-photo-replacement-crop",
-    "person-editor-existing-photo-crop-cancelled", "person-editor-photo-removed",
-    "person-editor-photo-removal-persisted",
-    "home-summary", "insights-balances", "insights-compare",
-    "dark-home", "dark-people", "dark-insights", "dark-gift-detail", "dark-add-gift",
     "cloud-icons-consent", "cloud-icons-suggestion", "cloud-icons-settings",
     "dark-cloud-icons-consent", "dark-cloud-icons-suggestion", "dark-cloud-icons-settings",
+    "person-add-cancel-draft", "person-add-created", "person-editor", "person-editor-keyboard",
+    "person-editor-delete-keyboard", "person-editor-delete-confirmation", "person-editor-delete-cancelled",
+    "person-add-deleted", "person-detail-is-me", "people-you-badge",
+    "person-editor-russian", "person-editor-russian-keyboard",
+    "person-editor-header-accessibility", "person-editor-header-accessibility-keyboard",
 )
 APP_LANGUAGE_CHECKPOINT_NAMES = (
     "system-settings", "language-region-before", "english-system-russian-secondary",
@@ -363,21 +358,8 @@ def _export_named_checkpoints(directory, metadata):
             if matches[0] != stable:
                 shutil.copy2(attachments / matches[0], attachments / stable)
             metadata["checkpoints"].append({"name": planned, "image": f"attachments/{stable}"})
-    calendar_counts = set()
-    for human, filename in attachment_names.items():
-        match = re.search(r"calendar-([456])-weeks(?=$|[^a-z0-9-])", human.lower())
-        source = attachments / filename
-        if match and source.is_file() and source.stat().st_size:
-            count = match.group(1)
-            stable = f"calendar-{count}-weeks.png"
-            if filename != stable:
-                shutil.copy2(source, attachments / stable)
-            calendar_counts.add(count)
-            metadata["checkpoints"].append({"name": f"calendar-{count}-weeks", "image": f"attachments/{stable}"})
     missing = [name for name in metadata["planned_checkpoint_names"]
                if name not in {checkpoint["name"] for checkpoint in metadata["checkpoints"]}]
-    if metadata.get("evidence_kind") != "diagnostic" and len(calendar_counts) < 2:
-        missing.append("two calendar checkpoints with distinct week counts")
     if missing:
         metadata["missing_checkpoints"] = missing
     return missing

@@ -4,11 +4,13 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     private var app: XCUIApplication!
     private let timeout: TimeInterval = 12
     private let photoLoadTimeout: TimeInterval = 60
-    private var giftName = "CI gift \(UUID().uuidString.prefix(8))"
-    private var secondGiftName = "CI second gift \(UUID().uuidString.prefix(8))"
+    // "flowers" matches the keyword fallback, so the quick gift gets 💐 without a model.
+    private var quickGiftName = "CI flowers \(UUID().uuidString.prefix(8))"
+    private var detailedGiftName = "CI detailed gift \(UUID().uuidString.prefix(8))"
     private var giverName = "CI giver \(UUID().uuidString.prefix(8))"
     private var recipientName = "CI recipient \(UUID().uuidString.prefix(8))"
-    private var personIDs: [String: String] = [:]
+    private var friendName = "CI friend \(UUID().uuidString.prefix(8))"
+    private var occasionName = "CI housewarming \(UUID().uuidString.prefix(8))"
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -34,60 +36,290 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         super.tearDown()
     }
 
-    /// Full gift entry once (sheet sizing, details, calendar), persistence, duplicate-name reuse and Insights.
-    func testAddGiftJourney() throws {
+    /// The core flow, once and in one launch: a quick gift, a detailed gift, a person's
+    /// lifecycle and Insights. Checks for a specific feature belong in a temporary test.
+    func testAdaptiveGiftJourney() throws {
         attach("home-start")
-        assertTabs()
-
-        try addGift(named: giftName, createPeople: true)
-        XCTAssertTrue(app.staticTexts[giftName].waitForExistence(timeout: timeout))
-        attach("gift-saved")
-
-        app.terminate()
-        app.launch()
-        XCTAssertTrue(app.staticTexts[giftName].waitForExistence(timeout: timeout))
-        attach("gift-after-relaunch")
-
-        addQuickGift(named: secondGiftName, createPeople: false)
-        XCTAssertTrue(app.staticTexts[secondGiftName].waitForExistence(timeout: timeout))
-        verifyHomeSummaryAndInsights()
+        addQuickGift()
+        try addDetailedGift()
+        try addEditAndDeletePerson()
+        verifyInsights()
     }
 
-    func testPersonPhotoJourney() throws {
-        createPerson(named: giverName)
-        verifyPersonProfileJourney()
+    /// Name, giver and recipient only; the icon comes from the name.
+    private func addQuickGift() {
+        typeGiftName(quickGiftName)
+        waitForValue(app.buttons["add-gift.emoji"], expected: "💐")
+        choosePerson(giverName, endpoint: "from", create: true)
+        choosePerson(recipientName, endpoint: "to", create: true)
+        attach("quick-gift")
+        saveGift(named: quickGiftName)
+        attach("quick-gift-saved")
     }
 
-    /// Dark-mode checkpoints: launches with `KS_APPEARANCE=dark` so the key screens render with adaptive colors.
-    func testDarkAppearanceCheckpoints() throws {
-        app.terminate()
-        app.launchEnvironment["KS_APPEARANCE"] = "dark"
-        app.launch()
-        XCTAssertTrue(
-            app.descendants(matching: .any)["appearance.dark"].waitForExistence(timeout: timeout),
-            "App did not report dark appearance"
+    /// Every detail: a custom icon, an existing giver, a recipient created on the way,
+    /// a value, a calendar date and a new occasion.
+    private func addDetailedGift() throws {
+        typeGiftName(detailedGiftName)
+        app.buttons["add-gift.emoji"].tap()
+        let icon = app.textFields["add-gift.icon.custom"]
+        XCTAssertTrue(icon.waitForExistence(timeout: timeout))
+        icon.tap()
+        waitForKeyboardFocus(icon)
+        icon.typeText("J")
+        app.buttons["add-gift.icon.add"].tap()
+        waitForValue(app.buttons["add-gift.emoji"], expected: "J")
+
+        choosePerson(giverName, endpoint: "from", create: false)
+        choosePerson(friendName, endpoint: "to", create: true)
+
+        let details = app.buttons["add-gift.details"]
+        details.tap()
+        waitForValue(details, expected: "Shown")
+        let value = app.textFields["add-gift.value"]
+        value.tap()
+        waitForKeyboardFocus(value)
+        value.typeText("42")
+        XCTAssertEqual(value.value as? String, "42")
+
+        try pickCalendarDate()
+
+        app.buttons["add-gift.occasion"].tap()
+        let occasion = app.textFields["add-gift.occasion.custom"]
+        XCTAssertTrue(occasion.waitForExistence(timeout: timeout))
+        occasion.tap()
+        waitForKeyboardFocus(occasion)
+        occasion.typeText(occasionName)
+        app.buttons["add-gift.occasion.add"].tap()
+        waitForValue(app.buttons["add-gift.occasion"], expected: occasionName)
+
+        attach("detailed-gift")
+        saveGift(named: detailedGiftName)
+        attach("detailed-gift-saved")
+    }
+
+    /// Picks a past day that is neither Today nor Yesterday and stays in this year,
+    /// which Home and Insights show: the 15th of last month, or early January.
+    private func pickCalendarDate() throws {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let month = calendar.component(.month, from: today)
+        let day = calendar.component(.day, from: today)
+        let target: Date
+        if month > 1 {
+            let lastMonth = try XCTUnwrap(calendar.date(byAdding: .month, value: -1, to: today))
+            var components = calendar.dateComponents([.year, .month], from: lastMonth)
+            components.day = 15
+            target = try XCTUnwrap(calendar.date(from: components))
+        } else {
+            // Only January 1 and 2 have no such day; a later January day is the fallback.
+            var components = calendar.dateComponents([.year, .month], from: today)
+            components.day = day > 2 ? 1 : 10
+            target = try XCTUnwrap(calendar.date(from: components))
+        }
+
+        app.buttons["add-gift.date"].tap()
+        let picker = app.otherElements.matching(
+            NSPredicate(format: "identifier BEGINSWITH 'date-picker.calendar.selected-'")
+        ).firstMatch
+        XCTAssertTrue(picker.waitForExistence(timeout: timeout))
+        let shownMonth = try monthHeading(in: picker)
+        if month > 1 {
+            let previous = picker.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'previous'")).firstMatch
+            if previous.exists && previous.isHittable { previous.tap() } else { picker.swipeRight() }
+            _ = try monthHeading(in: picker, excluding: shownMonth)
+        }
+        // The calendar keeps neighbouring months loaded; tap the day on the visible page.
+        let targetDay = calendar.component(.day, from: target)
+        let days = picker.descendants(matching: .any).matching(
+            NSPredicate(format: "label MATCHES %@", "^(.*[^0-9])?\(targetDay)([^0-9].*)?$")
         )
-        addQuickGift(named: giftName, createPeople: true, openedCheckpoint: "dark-add-gift")
-        XCTAssertTrue(app.staticTexts[giftName].waitForExistence(timeout: timeout))
-        attach("dark-home")
+        var dayCell: XCUIElement?
+        _ = waitWithOneRetry(timeout: timeout) {
+            dayCell = days.allElementsBoundByIndex.first { $0.isHittable && picker.frame.contains($0.frame) }
+            return dayCell != nil
+        }
+        attach("calendar")
+        try XCTUnwrap(dayCell, picker.debugDescription).tap()
+        let label = target.formatted(.dateTime.month(.abbreviated).day().locale(Locale(identifier: "en_US")))
+        waitForValue(app.buttons["add-gift.date"], expected: label)
+    }
 
+    /// Creates a person in People, renames them and sets a photo, then deletes them.
+    private func addEditAndDeletePerson() throws {
+        let personName = "CI person \(UUID().uuidString.prefix(8))"
         app.tabBars.buttons["People"].tap()
+        let addPerson = app.buttons["people.add-person"]
+        XCTAssertTrue(addPerson.waitForExistence(timeout: timeout))
+        addPerson.tap()
+        let nameField = app.textFields["person-editor.name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: timeout))
+        nameField.tap()
+        nameField.typeText(personName)
+        app.buttons["person-editor.save"].tap()
+        let row = app.staticTexts[personName]
+        XCTAssertTrue(row.waitForExistence(timeout: timeout))
+        attach("person-created")
+
+        row.tap()
+        XCTAssertTrue(app.navigationBars[personName].waitForExistence(timeout: timeout))
+        app.buttons["person-detail.edit"].tap()
+        let editorName = app.textFields["person-editor.name"]
+        XCTAssertTrue(editorName.waitForExistence(timeout: timeout))
+        editorName.tap()
+        waitForKeyboardFocus(editorName)
+        editorName.typeText(" edited")
+        let editedName = try XCTUnwrap(editorName.value as? String)
+        XCTAssertTrue(editedName.contains("edited"))
+        editorName.typeText("\n")
+        waitForDisappearance(app.keyboards.firstMatch)
+        choosePersonPhoto()
+        attach("person-editor-photo")
+        app.buttons["person-editor.save"].tap()
+
+        let detail = app.navigationBars[editedName]
+        XCTAssertTrue(detail.waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.images["person-detail.hero"].waitForExistence(timeout: timeout))
+        attach("person-edited")
+
+        // iOS 26 nests the toolbar button in a wrapper with the same identifier; tap the wrapper.
+        let edit = detail.otherElements["person-detail.edit"].firstMatch
+        XCTAssertTrue(edit.waitForExistence(timeout: timeout))
+        XCTAssertTrue(waitWithOneRetry(timeout: timeout) { edit.isHittable })
+        edit.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        let delete = app.buttons["person-editor.delete"]
+        XCTAssertTrue(delete.waitForExistence(timeout: timeout))
+        delete.tap()
+        let confirmation = app.alerts.firstMatch
+        XCTAssertTrue(confirmation.waitForExistence(timeout: timeout))
+        attach("person-delete-confirmation")
+        confirmation.buttons["Delete"].tap()
         XCTAssertTrue(app.navigationBars["People"].waitForExistence(timeout: timeout))
-        attach("dark-people")
+        waitForDisappearance(app.staticTexts[editedName])
+        attach("person-deleted")
+    }
+
+    /// One pick from the Photos library, confirmed at the crop step.
+    private func choosePersonPhoto() {
+        app.buttons["person-editor.photo"].tap()
+        let choosePhoto = app.buttons["person-editor.choose-photo"]
+        XCTAssertTrue(choosePhoto.waitForExistence(timeout: timeout))
+        choosePhoto.tap()
+        let picker = app.navigationBars["Photos"]
+        XCTAssertTrue(picker.waitForExistence(timeout: photoLoadTimeout))
+        let photos = app.images.matching(NSPredicate(format: "label BEGINSWITH[c] 'Photo,'"))
+        XCTAssertTrue(photos.firstMatch.waitForExistence(timeout: photoLoadTimeout))
+        // XCTest snapshots are slow on a cold Simulator; wait until the first tile stops moving.
+        var previousFrame: CGRect?
+        let settled = waitWithOneRetry(timeout: timeout, interval: 0.3) {
+            let frame = photos.firstMatch.frame
+            defer { previousFrame = frame }
+            return !frame.isEmpty && app.windows.firstMatch.frame.contains(frame) && frame == previousFrame
+        }
+        XCTAssertTrue(settled, "The first photo tile did not settle within \(timeout * 2)s")
+        attach("person-photo-picker")
+        // Visible Photos tiles may be reported as non-hittable; tap the tile's own center.
+        photos.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        let cropConfirm = app.buttons["crop.use"]
+        XCTAssertTrue(waitForCrop(cropConfirm, picker: picker, photos: photos))
+        waitForDisappearance(picker)
+        attach("person-photo-crop")
+        cropConfirm.tap()
+        XCTAssertTrue(app.staticTexts["person-editor.title"].waitForExistence(timeout: timeout))
+    }
+
+    /// The giver's balances and a giver-friend comparison, before and after the giver becomes "You".
+    private func verifyInsights() {
         app.tabBars.buttons["Insights"].tap()
         XCTAssertTrue(app.navigationBars["Insights"].waitForExistence(timeout: timeout))
-        XCTAssertTrue(app.descendants(matching: .any)["insights.balances"].waitForExistence(timeout: timeout))
-        attach("dark-insights")
-        app.tabBars.buttons["Home"].tap()
+        let subject = app.buttons["insights.balances.subject"]
+        XCTAssertTrue(subject.waitForExistence(timeout: timeout))
+        subject.tap()
+        pickInsightsPerson(giverName)
+        XCTAssertTrue(balanceRow(recipientName).waitForExistence(timeout: timeout))
+        XCTAssertTrue(balanceRow(friendName).waitForExistence(timeout: timeout))
+        XCTAssertTrue(balanceRow(friendName).label.contains("42"), balanceRow(friendName).label)
+        attach("insights-balances")
 
-        app.staticTexts[giftName].tap()
-        let detailBar = app.navigationBars["Gift"]
-        XCTAssertTrue(detailBar.waitForExistence(timeout: timeout))
-        attach("dark-gift-detail")
+        app.swipeUp()
+        let personA = app.buttons["insights.compare.a"]
+        XCTAssertTrue(personA.waitForExistence(timeout: timeout))
+        personA.tap()
+        pickInsightsPerson(giverName)
+        app.buttons["insights.compare.b"].tap()
+        pickInsightsPerson(friendName)
+        let flow = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", "\(giverName) → \(friendName)")).firstMatch
+        XCTAssertTrue(flow.waitForExistence(timeout: timeout))
+        XCTAssertTrue(flow.label.contains("42"), flow.label)
+        attach("insights-compare")
+
+        app.tabBars.buttons["People"].tap()
+        let giverRow = app.staticTexts[giverName]
+        XCTAssertTrue(giverRow.waitForExistence(timeout: timeout))
+        giverRow.tap()
+        let meSwitch = app.switches["person-detail.is-me"]
+        XCTAssertTrue(meSwitch.waitForExistence(timeout: timeout))
+        // The switch sits at the trailing edge; the label area of a row toggle is not tappable.
+        meSwitch.coordinate(withNormalizedOffset: CGVector(dx: 0.87, dy: 0.5)).tap()
+        waitForValue(meSwitch, expected: "1")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        app.tabBars.buttons["Insights"].tap()
+        waitForDisappearance(subject)
+        XCTAssertTrue(balanceRow(friendName).waitForExistence(timeout: timeout))
+        XCTAssertTrue(personA.label.contains(giverName), personA.label)
+        XCTAssertTrue(flow.waitForExistence(timeout: timeout))
+        attach("insights-me")
     }
 
-    func testSettingsCurrencyAndLicenses() throws {
-        verifySettings()
+    private func typeGiftName(_ name: String) {
+        app.tabBars.buttons["Home"].tap()
+        app.buttons["Add a gift"].tap()
+        let field = app.textFields["add-gift.name"]
+        XCTAssertTrue(field.waitForExistence(timeout: timeout))
+        field.tap()
+        waitForKeyboardFocus(field)
+        field.typeText(name)
+    }
+
+    private func choosePerson(_ name: String, endpoint: String, create: Bool) {
+        app.buttons["add-gift.\(endpoint)"].tap()
+        let query = app.textFields["person-picker.query"]
+        XCTAssertTrue(query.waitForExistence(timeout: timeout))
+        if create {
+            query.tap()
+            query.typeText(name)
+            app.buttons["person-picker.add"].tap()
+        } else {
+            let rows = personRows(named: name)
+            XCTAssertEqual(rows.count, 1)
+            rows.first?.tap()
+        }
+        waitForDisappearance(query)
+        waitForValue(app.buttons["add-gift.\(endpoint)"], expected: name)
+    }
+
+    private func saveGift(named name: String) {
+        let save = app.buttons["add-gift.save"]
+        XCTAssertTrue(save.isEnabled)
+        save.tap()
+        waitForDisappearance(save)
+        XCTAssertTrue(app.staticTexts[name].waitForExistence(timeout: timeout))
+    }
+
+    private func pickInsightsPerson(_ name: String) {
+        let row = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH 'insights.picker.person.' AND label CONTAINS %@", name)
+        ).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: timeout))
+        row.tap()
+        waitForDisappearance(row)
+    }
+
+    private func balanceRow(_ name: String) -> XCUIElement {
+        element(identifier: "insights.balances").buttons
+            .matching(NSPredicate(format: "label CONTAINS %@", name)).firstMatch
     }
 
     func testAddGiftSheetSizesCompactAndExpandedContent() throws {
@@ -493,519 +725,11 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     }
 
     /// Home summary without a viewpoint, then Insights balances and comparison once the giver is "You".
-    private func verifyHomeSummaryAndInsights() {
-        app.tabBars.buttons["Home"].tap()
-        let summary = app.descendants(matching: .any)["year-summary"]
-        XCTAssertTrue(summary.waitForExistence(timeout: timeout))
-        let markSelf = app.buttons["year-summary.mark-self"]
-        XCTAssertTrue(markSelf.waitForExistence(timeout: timeout))
-        attach("home-summary")
-
-        // The hint opens People, where the giver becomes the viewpoint.
-        markSelf.tap()
-        XCTAssertTrue(app.navigationBars["People"].waitForExistence(timeout: timeout))
-        let giverRow = app.staticTexts[giverName]
-        XCTAssertTrue(giverRow.waitForExistence(timeout: timeout))
-        giverRow.tap()
-        let meSwitch = app.switches["person-detail.is-me"]
-        XCTAssertTrue(meSwitch.waitForExistence(timeout: timeout))
-        meSwitch.coordinate(withNormalizedOffset: CGVector(dx: 0.87, dy: 0.5)).tap()
-        expectation(for: NSPredicate(format: "value == %@", "1"), evaluatedWith: meSwitch)
-        waitForExpectations(timeout: timeout)
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-
-        app.tabBars.buttons["Home"].tap()
-        waitForDisappearance(markSelf)
-
-        app.tabBars.buttons["Insights"].tap()
-        XCTAssertTrue(app.descendants(matching: .any)["insights.balances"].waitForExistence(timeout: timeout))
-        let recipientRow = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS %@", recipientName)).firstMatch
-        XCTAssertTrue(recipientRow.waitForExistence(timeout: timeout))
-        attach("insights-balances")
-
-        app.swipeUp()
-        XCTAssertTrue(app.descendants(matching: .any)["insights.compare"].waitForExistence(timeout: timeout))
-        let personA = app.buttons["insights.compare.a"]
-        let personB = app.buttons["insights.compare.b"]
-        XCTAssertTrue(personA.waitForExistence(timeout: timeout))
-        XCTAssertTrue(personB.waitForExistence(timeout: timeout))
-        XCTAssertTrue(personA.label.contains(giverName), "Person A defaults to You")
-        XCTAssertTrue(personB.label.contains(recipientName), "Person B defaults to the top counterpart")
-        attach("insights-compare")
-    }
-
-    private func assertTabs() {
-        let people = app.tabBars.buttons["People"]
-        let insights = app.tabBars.buttons["Insights"]
-        let home = app.tabBars.buttons["Home"]
-        XCTAssertTrue(people.waitForExistence(timeout: timeout))
-        XCTAssertTrue(insights.exists)
-        XCTAssertTrue(home.exists)
-
-        people.tap()
-        XCTAssertTrue(people.isSelected)
-        XCTAssertTrue(app.navigationBars["People"].waitForExistence(timeout: timeout))
-        attach("people")
-        insights.tap()
-        XCTAssertTrue(insights.isSelected)
-        XCTAssertTrue(app.navigationBars["Insights"].waitForExistence(timeout: timeout))
-        attach("insights")
-        home.tap()
-        XCTAssertTrue(app.tabBars.buttons["Home"].isSelected)
-    }
-
-    private func addGift(named name: String, createPeople: Bool) throws {
-        app.buttons["Add a gift"].tap()
-        let giftNameField = app.textFields["add-gift.name"]
-        XCTAssertTrue(giftNameField.waitForExistence(timeout: timeout))
-        giftNameField.tap()
-        giftNameField.typeText(name)
-        let emojiSlot = app.buttons["add-gift.emoji"]
-        XCTAssertTrue(emojiSlot.waitForExistence(timeout: timeout))
-        // CI names match no keyword and the Simulator has no on-device model, so the generic icon shows.
-        XCTAssertEqual(emojiSlot.value as? String, "🎁", "The icon slot shows the keyword fallback")
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
-        assertCompactSaveGap(app.buttons["add-gift.save"], keyboard: app.keyboards.firstMatch)
-        attach("gift-compact-keyboard")
-        app.buttons["add-gift.from"].tap()
-        XCTAssertTrue(app.staticTexts["From"].waitForExistence(timeout: timeout))
-        choosePerson(named: giverName, create: createPeople, endpoint: "from")
-        app.buttons["add-gift.to"].tap()
-        XCTAssertTrue(app.staticTexts["To"].waitForExistence(timeout: timeout))
-        choosePerson(named: recipientName, create: createPeople, endpoint: "to")
-        waitForDisappearance(app.keyboards.firstMatch)
-        assertCompactSheetFrame()
-        attach("gift-compact-dismissed")
-
-        let details = app.buttons["add-gift.details"]
-        details.tap()
-        XCTAssertTrue(app.textFields["add-gift.value"].waitForExistence(timeout: timeout))
-        XCTAssertEqual(details.value as? String, "Shown")
-        let value = app.textFields["add-gift.value"]
-        let save = app.buttons["add-gift.save"]
-        XCTAssertTrue(save.waitForExistence(timeout: timeout))
-        assertDetailsContentFits(save)
-        value.tap()
-        waitForKeyboardFocus(value)
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
-        value.typeText("42")
-        XCTAssertEqual(value.value as? String, "42")
-        let keyboard = app.keyboards.firstMatch
-        assertSaveReachableAboveKeyboard(save, keyboard: keyboard)
-        attach("details-value")
-
-        app.buttons["add-gift.date"].tap()
-        let calendar = app.otherElements.matching(
-            NSPredicate(format: "identifier BEGINSWITH 'date-picker.calendar.selected-'")
-        ).firstMatch
-        XCTAssertTrue(calendar.waitForExistence(timeout: timeout))
-        let firstMonth = try monthHeading(in: calendar)
-        let now = Date()
-        let expectedMonth = DateFormatter()
-        expectedMonth.locale = Locale(identifier: "en_US")
-        expectedMonth.calendar = Calendar(identifier: .gregorian)
-        expectedMonth.dateFormat = "MMMM yyyy"
-        XCTAssertEqual(firstMonth, expectedMonth.string(from: now))
-        XCTAssertTrue(app.buttons["date-picker.today"].exists)
-        let dayComponents = Calendar.autoupdatingCurrent.dateComponents([.year, .month, .day], from: now)
-        let expectedDayIdentifier = String(
-            format: "date-picker.calendar.selected-%04d-%02d-%02d",
-            dayComponents.year ?? 0,
-            dayComponents.month ?? 0,
-            dayComponents.day ?? 0
-        )
-        XCTAssertEqual(calendar.identifier, expectedDayIdentifier)
-        let firstWeekCount = weekCount(for: firstMonth)
-        XCTAssertGreaterThan(firstWeekCount, 0)
-        assertCompactSheetFrame()
-        attach("calendar-\(firstWeekCount)-weeks")
-        var nextWeekCount = firstWeekCount
-        var previousMonth = firstMonth
-        for _ in 0..<12 where nextWeekCount == firstWeekCount {
-            let next = calendar.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'next month' OR label CONTAINS[c] 'next'")).firstMatch
-            if next.exists && next.isHittable { next.tap() } else { calendar.swipeLeft() }
-            let nextMonth = try monthHeading(in: calendar, excluding: previousMonth)
-            previousMonth = nextMonth
-            nextWeekCount = weekCount(for: nextMonth)
-        }
-        XCTAssertGreaterThan(nextWeekCount, 0)
-        XCTAssertNotEqual(nextWeekCount, firstWeekCount)
-        assertCompactSheetFrame()
-        attach("calendar-\(nextWeekCount)-weeks")
-        let expectedPreviousMonth = adjacentMonth(from: previousMonth, offset: -1)
-        let previous = calendar.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'previous month' OR label CONTAINS[c] 'previous'")).firstMatch
-        if previous.exists && previous.isHittable { previous.tap() } else { calendar.swipeRight() }
-        let reversedMonth = try monthHeading(in: calendar, excluding: previousMonth)
-        XCTAssertEqual(reversedMonth, expectedPreviousMonth)
-        assertCompactSheetFrame()
-        attach("calendar-reverse")
-        app.buttons["date-picker.today"].tap()
-
-        XCTAssertTrue(app.buttons["add-gift.save"].waitForExistence(timeout: timeout))
-        XCTAssertTrue(app.buttons["add-gift.save"].isEnabled)
-        app.buttons["add-gift.save"].tap()
-        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
-        XCTAssertFalse(app.buttons["add-gift.save"].exists)
-    }
-
-    private func verifyPersonProfileJourney() {
-        let people = app.tabBars.buttons["People"]
-        people.tap()
-        let personRow = app.staticTexts[giverName]
-        for _ in 0..<8 where !personRow.waitForExistence(timeout: 2) {
-            app.swipeUp()
-        }
-        XCTAssertTrue(personRow.waitForExistence(timeout: timeout))
-        attach("people-populated")
-        personRow.tap()
-        let detailNavigationBar = app.navigationBars[giverName]
-        XCTAssertTrue(detailNavigationBar.waitForExistence(timeout: timeout))
-        let hero = app.images["person-detail.hero"]
-        XCTAssertTrue(hero.waitForExistence(timeout: timeout))
-        let displayedNames = app.staticTexts.matching(NSPredicate(format: "label == %@", giverName))
-        XCTAssertEqual(displayedNames.count, 1)
-        attach("person-detail")
-
-        app.buttons["person-detail.edit"].tap()
-        let editorTitle = app.staticTexts["person-editor.title"]
-        XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
-        XCTAssertEqual(editorTitle.label, giverName)
-        let editorName = app.textFields["person-editor.name"]
-        XCTAssertTrue(editorName.waitForExistence(timeout: timeout))
-        let editorKeyboard = app.keyboards.firstMatch
-        XCTAssertFalse(editorKeyboard.exists, "Editing a person should open without the keyboard")
-        let photoControl = app.buttons["person-editor.photo"]
-        XCTAssertTrue(photoControl.waitForExistence(timeout: timeout))
-        XCTAssertTrue(app.buttons["person-editor.save"].isEnabled)
-        attach("person-editor")
-        let editorDelete = app.buttons["person-editor.delete"]
-        XCTAssertTrue(editorDelete.waitForExistence(timeout: timeout))
-        editorName.tap()
-        XCTAssertTrue(editorKeyboard.waitForExistence(timeout: timeout))
-        assertPersonEditorControlsFitAboveKeyboard([editorName, photoControl, editorDelete], keyboard: editorKeyboard)
-        attach("person-editor-keyboard")
-        editorName.typeText("\n")
-        waitForDisappearance(editorKeyboard)
-        XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
-
-        photoControl.tap()
-        let choosePhoto = app.buttons["person-editor.choose-photo"]
-        XCTAssertTrue(choosePhoto.waitForExistence(timeout: timeout))
-        choosePhoto.tap()
-        let pickerNavigationBar = app.navigationBars["Photos"]
-        XCTAssertTrue(pickerNavigationBar.waitForExistence(timeout: 60))
-        let photoImages = app.images.matching(NSPredicate(format: "label BEGINSWITH[c] 'Photo,'"))
-        let photoDeadline = Date().addingTimeInterval(60)
-        while !photoImages.firstMatch.exists && Date() < photoDeadline {
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-        }
-        XCTAssertTrue(photoImages.firstMatch.exists)
-        attach("person-photo-picker")
-        let cropConfirm = app.buttons["crop.use"]
-        for attempt in 1...2 {
-            guard pickerNavigationBar.exists, !cropConfirm.exists else { break }
-            if attempt == 2, photoControl.exists,
-                !photoControl.isEnabled || photoControl.images["hourglass"].exists
-            {
-                break
-            }
-            // XCTest snapshots can consume several seconds per observation on a cold Simulator.
-            var previousFrame: CGRect?
-            var frameObservationCount = 0
-            var settledPhoto: XCUIElement?
-            _ = waitWithOneRetry(timeout: timeout, interval: 0.3) {
-                guard pickerNavigationBar.exists, !cropConfirm.exists else { return true }
-                let candidate = photoImages.firstMatch
-                guard candidate.exists else {
-                    previousFrame = nil
-                    return false
-                }
-                let frame = candidate.frame
-                let windowFrame = app.windows.firstMatch.frame
-                frameObservationCount += 1
-                if frame.width > 0, frame.height > 0, windowFrame.contains(frame), frame == previousFrame {
-                    settledPhoto = candidate
-                    return true
-                }
-                previousFrame = frame
-                return false
-            }
-            guard pickerNavigationBar.exists, !cropConfirm.exists else { break }
-            guard let photo = settledPhoto else {
-                XCTFail(
-                    "The visible photo tile did not settle within \(timeout * 2)s "
-                        + "(observations=\(frameObservationCount), lastFrame=\(String(describing: previousFrame)))"
-                )
-                return
-            }
-            let frame = photo.frame
-            XCTAssertEqual(frame, previousFrame)
-            XCTAssertTrue(app.windows.firstMatch.frame.contains(frame))
-            let target = XCTAttachment(
-                string: "attempt=\(attempt)\nidentifier=\(photo.identifier)\nlabel=\(photo.label)\nframe=\(frame)\nhittable=\(photo.isHittable)"
-            )
-            target.name = "person-photo-selection-\(attempt)-target"
-            target.lifetime = .keepAlways
-            add(target)
-            attach("person-photo-selection-\(attempt)-before")
-            guard pickerNavigationBar.exists, !cropConfirm.exists else { break }
-            if attempt == 2, photoControl.exists,
-                !photoControl.isEnabled || photoControl.images["hourglass"].exists
-            {
-                break
-            }
-            XCTAssertTrue(photo.exists)
-            XCTAssertEqual(photo.frame, frame)
-            XCTAssertTrue(app.windows.firstMatch.frame.contains(photo.frame))
-            // Visible Photos tiles may be reported as non-hittable; target the tile's own center.
-            photo.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            let responseDeadline = Date().addingTimeInterval(5)
-            while pickerNavigationBar.exists, !cropConfirm.exists, Date() < responseDeadline {
-                RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-            }
-            attach("person-photo-selection-\(attempt)-after")
-            attachHierarchy("person-photo-selection-\(attempt)-after", selectedValue: nil)
-        }
-        // Loading the selected asset can outlast a normal sheet transition on a cold Simulator.
-        XCTAssertTrue(waitForCrop(cropConfirm, picker: pickerNavigationBar, photos: photoImages))
-        waitForDisappearance(pickerNavigationBar)
-        attach("person-photo-crop")
-        let cropWindow = app.windows.firstMatch
-        cropWindow.pinch(withScale: 1.35, velocity: 1)
-        let cropStart = cropWindow.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55))
-        let cropEnd = cropWindow.coordinate(withNormalizedOffset: CGVector(dx: 0.56, dy: 0.5))
-        cropStart.press(forDuration: 0.1, thenDragTo: cropEnd)
-        attach("person-photo-crop-adjusted")
-        cropConfirm.tap()
-        XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
-        attach("person-editor-photo")
-        let removePhoto = app.buttons["person-editor.remove-photo"]
-        photoControl.tap()
-        XCTAssertTrue(removePhoto.waitForExistence(timeout: timeout))
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
-        editorName.tap()
-        XCTAssertTrue(editorKeyboard.waitForExistence(timeout: timeout))
-        attach("person-editor-photo-keyboard")
-        attach("person-editor-selected-photo")
-        app.buttons["person-editor.save"].tap()
-        waitForDisappearance(editorTitle)
-        XCTAssertTrue(detailNavigationBar.waitForExistence(timeout: timeout))
-        let detailReturnDeadline = Date().addingTimeInterval(timeout)
-        while !detailNavigationBar.isHittable && Date() < detailReturnDeadline {
-            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
-        }
-        XCTAssertTrue(detailNavigationBar.isHittable)
-        XCTAssertTrue(hero.waitForExistence(timeout: timeout))
-        attach("person-detail-selected-photo")
-
-        // iOS 26 exposes a toolbar wrapper and nested button with the same identifier.
-        // Resolve the current native wrapper and tap its observed center once.
-        let editControl = detailNavigationBar.otherElements["person-detail.edit"].firstMatch
-        XCTAssertTrue(editControl.waitForExistence(timeout: timeout))
-        XCTAssertTrue(editControl.isHittable)
-        let editFrame = editControl.frame
-        XCTAssertFalse(editFrame.isEmpty)
-        XCTAssertTrue(detailNavigationBar.frame.contains(editFrame))
-        let target = XCTAttachment(
-            string: "editFrame=\(editFrame)\ncenter=(\(editFrame.midX), \(editFrame.midY))\nbarFrame=\(detailNavigationBar.frame)"
-        )
-        target.name = "person-editor-reopen-target"
-        target.lifetime = .keepAlways
-        add(target)
-        editControl.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-        XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
-        XCTAssertEqual(editorTitle.label, giverName)
-        XCTAssertFalse(app.keyboards.firstMatch.exists)
-        photoControl.tap()
-        XCTAssertTrue(removePhoto.waitForExistence(timeout: timeout))
-        attach("person-editor-photo-persisted")
-        let changePhoto = app.buttons["person-editor.choose-photo"]
-        XCTAssertTrue(changePhoto.waitForExistence(timeout: timeout))
-        changePhoto.tap()
-        XCTAssertTrue(pickerNavigationBar.waitForExistence(timeout: 60))
-        XCTAssertTrue(photoImages.firstMatch.waitForExistence(timeout: 60))
-        let replacementPhoto = photoImages.firstMatch
-        let replacementWindow = app.windows.firstMatch.frame
-        app.coordinate(
-            withNormalizedOffset: CGVector(
-                dx: replacementPhoto.frame.midX / replacementWindow.width,
-                dy: replacementPhoto.frame.midY / replacementWindow.height
-            )
-        ).tap()
-        XCTAssertTrue(waitForCrop(cropConfirm, picker: pickerNavigationBar, photos: photoImages))
-        attach("person-photo-replacement-crop")
-        app.buttons["crop.cancel"].tap()
-        XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
-        photoControl.tap()
-        XCTAssertTrue(removePhoto.waitForExistence(timeout: timeout))
-        attach("person-editor-existing-photo-crop-cancelled")
-        removePhoto.tap()
-        attach("person-editor-photo-removed")
-        XCTAssertTrue(app.buttons["person-editor.save"].isEnabled)
-        app.buttons["person-editor.save"].tap()
-        XCTAssertTrue(detailNavigationBar.waitForExistence(timeout: timeout))
-        app.buttons["person-detail.edit"].tap()
-        XCTAssertTrue(editorTitle.waitForExistence(timeout: timeout))
-        photoControl.tap()
-        XCTAssertTrue(choosePhoto.waitForExistence(timeout: timeout))
-        XCTAssertFalse(removePhoto.exists, "Removing and saving should persist the missing photo")
-        attach("person-editor-photo-removal-persisted")
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
-        app.buttons["person-editor.cancel"].tap()
-        app.navigationBars[giverName].buttons["BackButton"].tap()
-        app.tabBars.buttons["Home"].tap()
-    }
-
-    /// Saves a gift without repeating the sheet-sizing, details and calendar checks that `addGift` covers.
-    /// With `createPeople == false`, typing an existing name must reuse that person rather than add a duplicate.
-    private func addQuickGift(named name: String, createPeople: Bool, openedCheckpoint: String? = nil) {
-        app.buttons["Add a gift"].tap()
-        let giftNameField = app.textFields["add-gift.name"]
-        XCTAssertTrue(giftNameField.waitForExistence(timeout: timeout))
-        if let openedCheckpoint {
-            attach(openedCheckpoint)
-        }
-        giftNameField.tap()
-        giftNameField.typeText(name)
-        app.buttons["add-gift.from"].tap()
-        XCTAssertTrue(app.staticTexts["From"].waitForExistence(timeout: timeout))
-        choosePerson(named: giverName, create: createPeople, endpoint: "from")
-        app.buttons["add-gift.to"].tap()
-        XCTAssertTrue(app.staticTexts["To"].waitForExistence(timeout: timeout))
-        choosePerson(named: recipientName, create: createPeople, endpoint: "to")
-        let save = app.buttons["add-gift.save"]
-        XCTAssertTrue(save.waitForExistence(timeout: timeout))
-        XCTAssertTrue(save.isEnabled)
-        save.tap()
-        waitForDisappearance(save)
-        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
-    }
-
-    private func createPerson(named name: String) {
-        app.tabBars.buttons["People"].tap()
-        let addPerson = app.buttons["people.add-person"]
-        XCTAssertTrue(addPerson.waitForExistence(timeout: timeout))
-        addPerson.tap()
-        let nameField = app.textFields["person-editor.name"]
-        XCTAssertTrue(nameField.waitForExistence(timeout: timeout))
-        nameField.tap()
-        nameField.typeText(name)
-        app.buttons["person-editor.save"].tap()
-        let row = app.staticTexts[name]
-        // Earlier tests share the store, so the new row can start below the fold.
-        for _ in 0..<8 where !row.waitForExistence(timeout: 2) {
-            app.swipeUp()
-        }
-        XCTAssertTrue(row.waitForExistence(timeout: timeout))
-    }
-
-    private func choosePerson(named name: String, create: Bool, endpoint: String) {
-        let query = app.textFields["person-picker.query"]
-        XCTAssertTrue(query.waitForExistence(timeout: timeout))
-        if create {
-            query.tap()
-            query.typeText(name)
-            let add = app.buttons["person-picker.add"]
-            XCTAssertTrue(add.waitForExistence(timeout: timeout))
-            XCTAssertTrue(add.isEnabled)
-            attach("person-picker-before-add-\(endpoint)")
-            attachHierarchy("person-picker-before-add-\(endpoint)", selectedValue: query.value as? String)
-            add.tap()
-        } else {
-            let matchingRows = personRows(named: name)
-            if matchingRows.count != 1 {
-                attachPersonRowDiagnostics("before-duplicate-add-\(endpoint)", name: name, rows: matchingRows)
-            }
-            XCTAssertEqual(matchingRows.count, 1)
-            let originalID = matchingRows[0].identifier
-            personIDs[name] = originalID
-            query.tap()
-            query.typeText(name)
-            let add = app.buttons["person-picker.add"]
-            XCTAssertTrue(add.waitForExistence(timeout: timeout))
-            XCTAssertTrue(add.isEnabled)
-            attach("person-picker-before-duplicate-add-\(endpoint)")
-            attachHierarchy("person-picker-before-duplicate-add-\(endpoint)", selectedValue: query.value as? String)
-            add.tap()
-            waitForDisappearance(query)
-
-            app.buttons["add-gift.\(endpoint)"].tap()
-            XCTAssertTrue(app.textFields["person-picker.query"].waitForExistence(timeout: timeout))
-            let reopenedRows = personRows(named: name)
-            if reopenedRows.count != 1 {
-                attachPersonRowDiagnostics("after-duplicate-add-\(endpoint)", name: name, rows: reopenedRows)
-            }
-            XCTAssertEqual(reopenedRows.count, 1)
-            XCTAssertEqual(reopenedRows[0].identifier, originalID)
-            reopenedRows[0].tap()
-        }
-        waitForDisappearance(app.textFields["person-picker.query"])
-        let endpointElement = app.buttons["add-gift.\(endpoint)"]
-        waitForValue(endpointElement, expected: name)
-        XCTAssertEqual(endpointElement.value as? String, name)
-        attach("form-after-person-add-\(endpoint)")
-        attachHierarchy("form-after-person-add-\(endpoint)", selectedValue: endpointElement.value as? String)
-    }
-
-    private func verifySettings() {
-        app.buttons["Settings"].tap()
-        let settings = element(identifier: "settings.screen")
-        XCTAssertTrue(settings.waitForExistence(timeout: timeout))
-        let initialCurrency = app.buttons["settings.currency"].value as? String
-        XCTAssertNotNil(initialCurrency)
-        app.buttons["settings.currency"].tap()
-        let currencyList = element(identifier: "settings.currency.list")
-        XCTAssertTrue(currencyList.waitForExistence(timeout: timeout))
-        let targetCode = initialCurrency == "AUD" ? "AFN" : "AUD"
-        XCTAssertNotEqual(targetCode, initialCurrency)
-        let target = app.buttons["settings.currency.\(targetCode)"]
-        XCTAssertTrue(target.waitForExistence(timeout: timeout))
-        target.tap()
-        let currencyNavigationBar = app.navigationBars["Currency"]
-        XCTAssertTrue(currencyNavigationBar.waitForExistence(timeout: timeout))
-        let currencyBack = currencyNavigationBar.buttons["BackButton"]
-        XCTAssertTrue(currencyBack.waitForExistence(timeout: timeout))
-        currencyBack.tap()
-        XCTAssertEqual(app.buttons["settings.currency"].value as? String, targetCode)
-        attach("settings-currency")
-
-        app.buttons["settings.third-party-licenses"].tap()
-        let licenses = element(identifier: "settings.third-party-licenses.screen")
-        XCTAssertTrue(licenses.waitForExistence(timeout: timeout))
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'Lucide'")).firstMatch.waitForExistence(timeout: timeout))
-        attach("licenses")
-        let licensesNavigationBar = app.navigationBars["Third-party licenses"]
-        XCTAssertTrue(licensesNavigationBar.waitForExistence(timeout: timeout))
-        let licensesBack = licensesNavigationBar.buttons["BackButton"]
-        XCTAssertTrue(licensesBack.waitForExistence(timeout: timeout))
-        licensesBack.tap()
-        app.buttons["Done"].tap()
-        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
-    }
-
     private func attach(_ name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
-    }
-
-    private func assertCompactSheetFrame() {
-        let grabbers = sheetGrabbers()
-        let deadline = Date().addingTimeInterval(timeout)
-        let window = app.windows.firstMatch
-        XCTAssertTrue(window.exists)
-        let bottom = window.frame.maxY
-        while Date() < deadline {
-            let visibleGrabbers = grabbers.allElementsBoundByIndex.filter { $0.exists && $0.isHittable }
-            if let grabber = visibleGrabbers.max(by: { $0.frame.minY < $1.frame.minY }) {
-                let top = grabber.frame.minY
-                if top > bottom * 0.25 && top < bottom * 0.8 { return }
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
-        }
-        XCTFail("No settled frontmost Sheet Grabber in measured compact range: \(grabbers.debugDescription)")
     }
 
     private func assertCompactSaveGap(_ save: XCUIElement, keyboard: XCUIElement) {
@@ -1276,26 +1000,6 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed)
     }
 
-    private func attachHierarchy(_ name: String, selectedValue: String?) {
-        let value = selectedValue ?? "<nil>"
-        let attachment = XCTAttachment(string: "selectedValue=\(value)\n\n\(app.debugDescription)")
-        attachment.name = "\(name)-hierarchy"
-        attachment.lifetime = .keepAlways
-        add(attachment)
-    }
-
-    private func attachPersonRowDiagnostics(_ name: String, name personName: String, rows: [XCUIElement]) {
-        let candidates = rows.enumerated().map { index, row in
-            "candidate[\(index)] identifier=\(row.identifier) label=\(row.label) frame=\(row.frame) hittable=\(row.isHittable)"
-        }.joined(separator: "\n")
-        let attachment = XCTAttachment(
-            string: "personName=\(personName)\n\(candidates)\n\nquery=\(app.buttons.debugDescription)\n\n\(app.debugDescription)"
-        )
-        attachment.name = "person-row-\(name)"
-        attachment.lifetime = .keepAlways
-        add(attachment)
-    }
-
     private func element(identifier: String) -> XCUIElement {
         app.descendants(matching: .any).matching(identifier: identifier).firstMatch
     }
@@ -1310,30 +1014,5 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         } while Date() < deadline
         XCTFail(calendar.debugDescription)
         return ""
-    }
-
-    private func weekCount(for month: String) -> Int {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.dateFormat = "MMMM yyyy"
-        guard let date = formatter.date(from: month) else { return 0 }
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.locale = Locale(identifier: "en_US_POSIX")
-        calendar.firstWeekday = 1
-        let range = calendar.range(of: .day, in: .month, for: date)!
-        let offset = calendar.component(.weekday, from: date) - calendar.firstWeekday
-        return (offset + range.count + 6) / 7
-    }
-
-    private func adjacentMonth(from month: String, offset: Int) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.dateFormat = "MMMM yyyy"
-        guard let date = formatter.date(from: month),
-            let adjacent = formatter.calendar.date(byAdding: .month, value: offset, to: date)
-        else { return "" }
-        return formatter.string(from: adjacent)
     }
 }

@@ -17,9 +17,9 @@
 
 ## Known CI flakes
 
-These `AdaptiveGiftJourneyUITests` failures (photo: `testPersonPhotoJourney`; gift sheet: `testAddGiftJourney`, `testAddGiftSheetSizesCompactAndExpandedContent`) have cleared on one rerun without code changes:
+These `AdaptiveGiftJourneyUITests` failures (photo and value focus: `testAdaptiveGiftJourney`; compact sheet: `testAddGiftSheetSizesCompactAndExpandedContent`) have cleared on one rerun without code changes:
 
-- **Photo picker:** `The visible photo tile did not settle within`, or `crop.use` not appearing after a photo tap.
+- **Photo picker:** `The first photo tile did not settle within`, or `crop.use` not appearing after a photo tap.
 - **Value focus:** `Text field did not acquire keyboard focus` for `add-gift.value`.
 - **Compact sheet:** `Compact sheet geometry did not settle`.
 
