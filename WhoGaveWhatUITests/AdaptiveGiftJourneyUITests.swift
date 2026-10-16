@@ -254,7 +254,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(flow.label.contains("42"), flow.label)
         attach("insights-compare")
 
-        app.tabBars.buttons["People"].tap()
+        selectTab("People")
         let giverRow = app.staticTexts[giverName]
         XCTAssertTrue(giverRow.waitForExistence(timeout: timeout))
         giverRow.tap()
@@ -271,6 +271,15 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(personA.label.contains(giverName), personA.label)
         XCTAssertTrue(flow.waitForExistence(timeout: timeout))
         attach("insights-me")
+    }
+
+    /// While scrolled down, the tab bar collapses to the current tab; scroll back up to expand it.
+    private func selectTab(_ name: String) {
+        let tab = app.tabBars.buttons[name]
+        for _ in 0..<3 where !tab.waitForExistence(timeout: 2) {
+            app.swipeDown()
+        }
+        tab.tap()
     }
 
     private func typeGiftName(_ name: String) {
