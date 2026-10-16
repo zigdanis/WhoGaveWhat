@@ -52,28 +52,30 @@ struct SettingsView: View {
 
                     SectionHeader(text: "About").padding(.top, 24).padding(.bottom, 7)
                     Card {
-                        Link(destination: Self.privacyPolicyURL) {
-                            SettingsActionRow(
-                                icon: "hand.raised.fill",
-                                tint: Color.brandFill,
-                                label: "Privacy Policy",
-                                opensInBrowser: true
-                            )
+                        VStack(spacing: 0) {
+                            Link(destination: Self.privacyPolicyURL) {
+                                SettingsActionRow(
+                                    icon: "hand.raised.fill",
+                                    tint: Color.brandFill,
+                                    label: "Privacy Policy",
+                                    opensInBrowser: true
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("settings.privacy-policy")
+                            RowDivider().padding(.leading, 56)
+                            NavigationLink {
+                                ThirdPartyLicensesView()
+                            } label: {
+                                SettingsActionRow(
+                                    icon: "doc.text.fill",
+                                    tint: Color.brandFill,
+                                    label: "Third-party licenses"
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("settings.third-party-licenses")
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityIdentifier("settings.privacy-policy")
-                        RowDivider().padding(.leading, 56)
-                        NavigationLink {
-                            ThirdPartyLicensesView()
-                        } label: {
-                            SettingsActionRow(
-                                icon: "doc.text.fill",
-                                tint: Color.brandFill,
-                                label: "Third-party licenses"
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityIdentifier("settings.third-party-licenses")
                     }
                 }
                 .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 30)
