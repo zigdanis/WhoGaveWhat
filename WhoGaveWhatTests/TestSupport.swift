@@ -1,10 +1,20 @@
+import Foundation
+import Observation
+
 @testable import WhoGaveWhat
 
 @MainActor
+@Observable
 final class TestPreferencesGateway: PreferencesGateway {
     var didCompleteOnboarding = false
     var currencyCode = "USD"
     var selfPersonID: String?
+    var cloudIconConsent: CloudIconConsent = .undecided
+    var installID = UUID().uuidString
+    func setCloudIconConsent(_ consent: CloudIconConsent) {
+        if cloudIconConsent != consent, consent == .declined { installID = UUID().uuidString }
+        cloudIconConsent = consent
+    }
     func setDidCompleteOnboarding(_ completed: Bool) {
         didCompleteOnboarding = completed
     }

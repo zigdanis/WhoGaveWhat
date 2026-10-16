@@ -1,0 +1,162 @@
+name: Icon Worker deploy
+
+# Deploys the gift icon Worker to Cloudflare and optionally runs the icon evaluation
+# against it. It needs a Workers-scoped Cloudflare API token and the account ID. When the
+# JEV_API_KEY repository secret exists, it is copied into the Worker's secrets; the key is
+# never part of the code or the app.
+on:
+  workflow_dispatch:
+    inputs:
+      jev_model:
+        description: Jev model ID for this deployment (the default comes from wrangler.jsonc)
+        type: string
+        default: ''
+      russian_hints:
+        description: Override Russian hints in icon descriptions (true/false; empty keeps wrangler.jsonc)
+        type: string
+        default: ''
+      run_eval:
+        description: Run the multilingual icon evaluation after deploying
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: icon-worker-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy and evaluate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: icon-worker
+    env:
+      # The production URL compiled into the app (CloudGiftIconGateway.endpoint).
+      APP_ENDPOINT: https://whogavewhat-icons.zigdanis.workers.dev
+      JEV_MODEL_INPUT: ${{ inputs.jev_model }}
+      RUSSIAN_HINTS_INPUT: ${{ inputs.russian_hints }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: icon-worker/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+      # Cloudflare credentials and the Jev key are given only to the steps that need them,
+      # not to the dependency install or the tests.
+      - name: Check Cloudflare credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Set the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets first."
+            exit 1
+          fi
+      - name: Deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -o pipefail
+          set -- deploy
+          if [ -n "$JEV_MODEL_INPUT" ]; then
+            case "$JEV_MODEL_INPUT" in jev-[a-z0-9.-]*) ;; *) echo "::error::Unexpected model ID"; exit 1 ;; esac
+            set -- "$@" --var "JEV_MODEL:$JEV_MODEL_INPUT"
+          fi
+          case "$RUSSIAN_HINTS_INPUT" in
+            '') ;;
+            true|false) set -- "$@" --var "JEV_RUSSIAN_HINTS:$RUSSIAN_HINTS_INPUT" ;;
+            *) echo "::error::russian_hints must be true, false or empty"; exit 1 ;;
+          esac
+          npx wrangler "$@" | tee "$RUNNER_TEMP/deploy.log"
+          deployed_url=$(grep -oE 'https://whogavewhat-icons\.[a-z0-9-]+\.workers\.dev' "$RUNNER_TEMP/deploy.log" | head -n 1)
+          if [ -z "$deployed_url" ]; then
+            echo "::error::Could not find the deployed workers.dev URL in the Wrangler output."
+            exit 1
+          fi
+          echo "DEPLOYED_URL=$deployed_url" >> "$GITHUB_ENV"
+          if [ "$deployed_url" != "$APP_ENDPOINT" ]; then
+            echo "::error::Deployed to $deployed_url, but the app calls $APP_ENDPOINT. Check CLOUDFLARE_ACCOUNT_ID."
+            exit 1
+          fi
+      - name: Sync the Jev API key
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          JEV_API_KEY: ${{ secrets.JEV_API_KEY }}
+        run: |
+          if [ -z "$JEV_API_KEY" ]; then
+            echo "No JEV_API_KEY repository secret; the Worker keeps its current key."
+            exit 0
+          fi
+          # Drop surrounding whitespace, such as a trailing newline from a piped secret.
+          key="$JEV_API_KEY"
+          key="${key#"${key%%[![:space:]]*}"}"
+          key="${key%"${key##*[![:space:]]}"}"
+          case "$key" in
+            ''|*[[:space:]]*) echo "::error::Set the JEV_API_KEY secret to the key alone."; exit 1 ;;
+          esac
+          echo "::add-mask::$key"
+          printf '%s' "$key" | npx wrangler secret put JEV_API_KEY
+      - name: Check the deployed Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 "$DEPLOYED_URL/health"
+          echo
+          if ! npx wrangler secret list --format json | grep -q '"JEV_API_KEY"'; then
+            echo "::error::The Worker has no JEV_API_KEY. Set the repository secret to the key and run this workflow again."
+            exit 1
+          fi
+          # One real request proves the key works; an empty or wrong key fails here, not silently in the eval.
+          # The run number and attempt keep the name out of the Worker's cache, so a rotated key is
+          # checked too, even on a re-run.
+          status=$(curl --silent --show-error --output "$RUNNER_TEMP/probe.json" --write-out '%{http_code}' \
+            --retry 3 --retry-delay 3 --max-time 30 -X POST "$DEPLOYED_URL/v1/gift-icon" \
+            -H 'Content-Type: application/json' -H "X-Install-ID: $(cat /proc/sys/kernel/random/uuid)" \
+            --data "{\"name\":\"guitar $GITHUB_RUN_NUMBER.$GITHUB_RUN_ATTEMPT\"}") || status=000
+          cat "$RUNNER_TEMP/probe.json"
+          echo
+          if [ "$status" != 200 ]; then
+            echo "::error::The Worker answered HTTP $status. Check that the JEV_API_KEY repository secret holds a valid TypeSafe key."
+            exit 1
+          fi
+      - name: Evaluate icons
+        if: inputs.run_eval
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -o pipefail
+          npx wrangler tail whogavewhat-icons --format json > "$RUNNER_TEMP/tail.jsonl" 2>/dev/null &
+          tail_pid=$!
+          sleep 8
+          node --experimental-strip-types eval/run.ts "$DEPLOYED_URL" --out "$RUNNER_TEMP/eval.json" | tee "$RUNNER_TEMP/eval.txt"
+          sleep 8
+          kill "$tail_pid" || true
+          # Only the aggregate summary is kept; the raw tail can include other clients' request metadata.
+          node --experimental-strip-types eval/run.ts --summarize "$RUNNER_TEMP/eval.json" --tail "$RUNNER_TEMP/tail.jsonl" \
+            | tee "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          rm -f "$RUNNER_TEMP/tail.jsonl"
+      - name: Upload evaluation
+        if: inputs.run_eval && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: icon-eval
+          path: |
+            ${{ runner.temp }}/eval.json
+            ${{ runner.temp }}/eval.txt
+            ${{ runner.temp }}/summary.md
+          if-no-files-found: ignore

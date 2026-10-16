@@ -8,7 +8,7 @@ final class AppComposition {
     let appDiscovery = AppDiscoveryIndexer()
     let data = AppData()
     private(set) var currencyCode: String
-    private let preferences: PreferencesGateway
+    let preferences: PreferencesGateway
     private let peopleGateway: PeopleGateway
 
     let loadGiftsUseCase: LoadGiftsUseCase
@@ -25,10 +25,23 @@ final class AppComposition {
     let completeOnboarding: CompleteOnboardingUseCase
 
     convenience init(store: SwiftDataStore) {
+        let preferences = UserDefaultsPreferencesGateway()
+        let environment = ProcessInfo.processInfo.environment
+        let cloud: GiftIntelligenceGateway
+        if environment["KS_CLOUD_ICONS"] == "stub" {
+            cloud = StubCloudGiftIconGateway()
+        } else {
+            cloud = CloudGiftIconGateway(preferences: preferences)
+        }
         self.init(
             store: store,
-            preferences: UserDefaultsPreferencesGateway(),
-            intelligence: FoundationModelsGiftIntelligenceGateway()
+            preferences: preferences,
+            intelligence: PreferredGiftIntelligenceGateway(
+                preferences: preferences,
+                cloud: cloud,
+                onDevice: FoundationModelsGiftIntelligenceGateway()
+            ),
+            launchEnvironment: environment
         )
     }
 
@@ -44,6 +57,11 @@ final class AppComposition {
         let createPerson = CreatePersonUseCase(gateway: peopleGateway)
 
         self.preferences = preferences
+        if let rawConsent = launchEnvironment["KS_CLOUD_ICON_CONSENT"],
+            let consent = CloudIconConsent(rawValue: rawConsent)
+        {
+            preferences.setCloudIconConsent(consent)
+        }
         self.peopleGateway = peopleGateway
         currencyCode = preferences.currencyCode
         router = AppRouter(didCompleteOnboarding: preferences.didCompleteOnboarding)
@@ -149,5 +167,11 @@ final class AppComposition {
         guard self.currencyCode != currencyCode else { return }
         preferences.setCurrencyCode(currencyCode)
         self.currencyCode = currencyCode
+    }
+
+    var cloudIconConsent: CloudIconConsent { preferences.cloudIconConsent }
+
+    func setCloudIconConsent(_ consent: CloudIconConsent) {
+        preferences.setCloudIconConsent(consent)
     }
 }
