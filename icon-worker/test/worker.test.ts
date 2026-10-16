@@ -2,7 +2,7 @@ import { env, reset } from "cloudflare:test";
 import { afterEach, describe, expect, it } from "vitest";
 import { handle, type Env } from "../src/index";
 import { ICON_KEYS, ICONS, criteria } from "../src/icons";
-import { JEV_URL, maxInputTokens, parseAnswer } from "../src/jev";
+import { JEV_URL, parseAnswer } from "../src/jev";
 
 const INSTALL = "3f2b8c1e-4d5a-4e6f-8a9b-0c1d2e3f4a5b";
 const NOW = Date.UTC(2026, 9, 16, 12, 0, 30);
@@ -54,8 +54,9 @@ function testEnv(overrides: Partial<Env> = {}): Env {
   return { ...env, ...overrides };
 }
 
-function attemptMicros(name: string) {
-  return Math.ceil(maxInputTokens(name, "jev-1.13.0", true) * 0.042);
+/** One attempt reserved at the 65,536-token request ceiling: 2,753 micro-dollars. */
+function attemptMicros(_name?: string) {
+  return Math.ceil(65_536 * 0.042);
 }
 
 function usd(micros: number) {
@@ -155,10 +156,14 @@ describe("gift icon endpoint", () => {
     expect((await handle(new Request("https://icons.test/health"), testEnv(), deps(jev.fetcher))).status).toBe(200);
   });
 
-  it("reports unavailable when the API key is not configured", async () => {
-    const response = await handle(request({ name: "розы" }), testEnv({ JEV_API_KEY: undefined }), deps(fakeJev(jevReply("rose")).fetcher));
-    expect(response.status).toBe(503);
-    expect(await body(response)).toEqual({ error: "unavailable" });
+  it("fails closed without an API key or a valid token ceiling", async () => {
+    const jev = fakeJev(jevReply("rose"));
+    for (const broken of [{ JEV_API_KEY: undefined }, { JEV_MAX_REQUEST_TOKENS: "" }, { JEV_MAX_REQUEST_TOKENS: "lots" }]) {
+      const response = await handle(request({ name: "розы" }), testEnv(broken), deps(jev.fetcher));
+      expect(response.status).toBe(503);
+      expect(await body(response)).toEqual({ error: "unavailable" });
+    }
+    expect(jev.calls).toHaveLength(0);
   });
 
   it("retries one overload, then succeeds", async () => {

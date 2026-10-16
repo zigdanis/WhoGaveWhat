@@ -51,11 +51,6 @@ export function jevRequestBody(name: string, model: string, russianHints: boolea
   };
 }
 
-/** A safe upper bound on input tokens: a token is at least one UTF-8 byte, plus provider overhead. */
-export function maxInputTokens(name: string, model: string, russianHints: boolean): number {
-  return new TextEncoder().encode(JSON.stringify(jevRequestBody(name, model, russianHints))).byteLength + 1_000;
-}
-
 /**
  * Asks Jev to choose an icon for the gift name. Retries throttling, overload, server
  * errors and timeouts (including while reading the body) with a short jittered backoff;

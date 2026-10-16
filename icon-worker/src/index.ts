@@ -1,5 +1,5 @@
 import { CATALOG_VERSION, GENERIC_KEY, ICONS } from "./icons";
-import { chooseIcon, JevError, maxInputTokens, type JevOptions } from "./jev";
+import { chooseIcon, JevError, type JevOptions } from "./jev";
 import type { IconLimiter, Limits } from "./limiter";
 
 export { IconLimiter } from "./limiter";
@@ -8,6 +8,7 @@ export interface Env {
   LIMITER: DurableObjectNamespace<IconLimiter>;
   JEV_API_KEY?: string;
   JEV_MODEL: string;
+  JEV_MAX_REQUEST_TOKENS: string;
   JEV_PRICE_PER_MTOK_USD: string;
   JEV_RUSSIAN_HINTS: string;
   MIN_CONFIDENCE: string;
@@ -47,15 +48,19 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
   if (!INSTALL_ID.test(installID)) return invalid();
   const name = await readName(request);
   if (name === null) return invalid();
-  if (!env.JEV_API_KEY) return json({ error: "unavailable" }, 503);
+  // Without a key or a known per-request token ceiling, spending cannot be bounded; fail closed.
+  const maxRequestTokens = Number(env.JEV_MAX_REQUEST_TOKENS);
+  if (!env.JEV_API_KEY || !Number.isInteger(maxRequestTokens) || maxRequestTokens <= 0) {
+    return json({ error: "unavailable" }, 503);
+  }
 
   const limiter = env.LIMITER.get(env.LIMITER.idFromName("global"));
   const pricePerToken = Number(env.JEV_PRICE_PER_MTOK_USD); // micro-dollars per token
   const minConfidence = Number(env.MIN_CONFIDENCE);
   const russianHints = env.JEV_RUSSIAN_HINTS === "true";
   const cacheKey = await sha256(`${CATALOG_VERSION}\n${env.JEV_MODEL}\n${russianHints}\n${name.toLowerCase()}`);
-  // Every attempt may be billed, so each one is reserved at its upper bound up front.
-  const attemptMicros = Math.ceil(maxInputTokens(name, env.JEV_MODEL, russianHints) * pricePerToken);
+  // Every attempt may be billed, so each is reserved at the provider-enforced request ceiling.
+  const attemptMicros = Math.ceil(maxRequestTokens * pricePerToken);
 
   const admission = await limiter.admit({
     cacheKey,
