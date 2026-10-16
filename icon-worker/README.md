@@ -1,0 +1,58 @@
+# Gift icon Worker
+
+A small Cloudflare Worker that picks an emoji for a gift name with
+[TypeSafe Jev](https://docs.typesafe.ai/primitives/choice). The app calls it only
+after the user opts in to cloud icon suggestions. The Jev API key stays in Cloudflare;
+the app holds no secret.
+
+## API
+
+`POST /v1/gift-icon` with `Content-Type: application/json`, an `X-Install-ID` header
+(a random per-install UUID) and `{"name": "<gift name>"}`.
+
+- `200 {"emoji": "🎸", "confidence": 0.82}`. `emoji` is `null` when no specific icon fits
+  or confidence is below `MIN_CONFIDENCE`; the app then keeps its own icon.
+- `400 invalid_request`: missing or malformed install ID, name outside 2–80 characters,
+  body over 4 KB, or not JSON.
+- `429 rate_limited` with `Retry-After`, `503 budget_exhausted` or `503 unavailable`.
+
+`GET /health` returns `ok`. No other routes exist, so this is not a general model proxy.
+
+## How it works
+
+- `src/icons.ts` is the curated catalog: one Jev Choice option per icon (at most 255),
+  with an English description and optional Russian hints (`JEV_RUSSIAN_HINTS`).
+- `src/jev.ts` sends only the normalized gift name as the Jev `state`. Each attempt times
+  out after 3 s; throttling, overload, server errors and timeouts get one retry. The
+  answer must name a catalog option.
+- `src/limiter.ts` is one SQLite-backed Durable Object that admits each provider call:
+  per-IP per minute, global per minute, per-install per day, and daily and monthly
+  budgets. Every call reserves a conservative cost up front and is corrected with the
+  real `usage.input_tokens` afterwards. Failed calls stay charged at the reservation.
+  It caches answers for 30 days by a SHA-256 of the normalized name, catalog version,
+  model and hint setting. Raw names, install IDs and IP addresses are not stored, and
+  logs contain only model, token count and latency.
+
+Limits and prices are `vars` in `wrangler.jsonc`. Keep TypeSafe credits prepaid with
+auto-refill off, so the provider also stops at the purchased balance.
+
+## Develop
+
+```sh
+npm ci
+npx tsc --noEmit
+npx vitest run
+```
+
+## Deploy and evaluate
+
+Run the **Icon Worker deploy** workflow from GitHub Actions. It needs the
+`CLOUDFLARE_API_TOKEN` (Edit Cloudflare Workers template) and `CLOUDFLARE_ACCOUNT_ID`
+repository secrets. After the first deploy, add `JEV_API_KEY` as a secret on the
+`whogavewhat-icons` Worker in the Cloudflare dashboard; later deploys keep it.
+
+With `run_eval`, the workflow runs `eval/cases.json` (Russian, English, mixed, typos,
+brands, other languages and vague names) against the deployed Worker. The job summary
+shows accuracy, latency and mean Jev input tokens from `wrangler tail`. The `jev_model`
+and `russian_hints` inputs override the configured values for that deployment, so
+variants can be compared; the next plain deploy restores `wrangler.jsonc`.
