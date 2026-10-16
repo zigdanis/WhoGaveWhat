@@ -364,6 +364,40 @@
         }
       }
     },
+    "Allow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешить"
+          }
+        }
+      }
+    },
+    "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon? Only the name and a random app ID are sent — never people, dates, amounts or occasions." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon? Only the name and a random app ID are sent — never people, dates, amounts or occasions."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешить WhoGaveWhat отправлять введённое название подарка в TypeSafe AI, чтобы подобрать значок? Отправляются только название и случайный ID приложения — без имён людей, дат, сумм и поводов."
+          }
+        }
+      }
+    },
     "Anniversary" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -683,6 +717,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать"
+          }
+        }
+      }
+    },
+    "Cloud icon suggestions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cloud icon suggestions"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подбор значков в облаке"
           }
         }
       }
@@ -1365,6 +1416,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подарок"
+          }
+        }
+      }
+    },
+    "Gift icons" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gift icons"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Значки подарков"
           }
         }
       }
@@ -2308,6 +2376,23 @@
         }
       }
     },
+    "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для подбора значка через сервер WhoGaveWhat в TypeSafe AI (Jev) отправляются только название подарка и случайный ID приложения для ограничения числа запросов. Имена людей, даты, суммы и поводы не отправляются. TypeSafe обрабатывает запросы на своих условиях."
+          }
+        }
+      }
+    },
     "Settings" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2321,6 +2406,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Настройки"
+          }
+        }
+      }
+    },
+    "Privacy Policy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy Policy"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Политика конфиденциальности"
           }
         }
       }
@@ -2427,6 +2529,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пропустить"
+          }
+        }
+      }
+    },
+    "Smarter gift icons" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smarter gift icons"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подходящие значки подарков"
           }
         }
       }
@@ -2920,6 +3039,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вчера"
+          }
+        }
+      }
+    },
+    "Not now" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not now"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не сейчас"
           }
         }
       }

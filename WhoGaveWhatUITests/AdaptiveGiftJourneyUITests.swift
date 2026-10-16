@@ -17,6 +17,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.launchEnvironment["KS_START"] = "app"
         // The store survives between tests; never inherit a viewpoint from an earlier journey.
         app.launchEnvironment["KS_RESET_SELF"] = "1"
+        app.launchEnvironment["KS_CLOUD_ICONS"] = "stub"
+        app.launchEnvironment["KS_CLOUD_ICON_CONSENT"] = "declined"
         app.launch()
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: timeout))
     }
@@ -104,6 +106,67 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
         app.buttons["Cancel"].tap()
         XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
+    }
+
+    func testCloudIconConsentAndSettings() {
+        verifyCloudIconConsentAndSettings(appearance: "light", checkpointPrefix: "")
+        verifyCloudIconConsentAndSettings(appearance: "dark", checkpointPrefix: "dark-")
+    }
+
+    private func verifyCloudIconConsentAndSettings(appearance: String, checkpointPrefix: String) {
+        app.terminate()
+        app.launchEnvironment["KS_APPEARANCE"] = appearance
+        app.launchEnvironment["KS_CLOUD_ICON_CONSENT"] = "undecided"
+        app.launch()
+        XCTAssertTrue(element(identifier: "appearance.\(appearance)").waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.buttons["Add a gift"].waitForExistence(timeout: timeout))
+        app.buttons["Add a gift"].tap()
+
+        let name = app.textFields["add-gift.name"]
+        XCTAssertTrue(name.waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
+        waitForKeyboardFocus(name)
+        name.typeText("гитара")
+
+        let allow = app.buttons["add-gift.cloud-icons.allow"]
+        XCTAssertTrue(element(identifier: "add-gift.cloud-icons.consent").waitForExistence(timeout: timeout))
+        XCTAssertTrue(allow.waitForExistence(timeout: timeout))
+        let scroll = app.scrollViews["add-gift.scroll"]
+        for _ in 0..<4 where !allow.isHittable {
+            if !scrollUpWithinVisibleArea(scroll, aboveKeyboard: app.keyboards.firstMatch) { break }
+        }
+        XCTAssertTrue(allow.isHittable)
+        attach("\(checkpointPrefix)cloud-icons-consent")
+        allow.tap()
+        waitForDisappearance(allow)
+        waitForDisappearance(app.keyboards.firstMatch)
+
+        let emoji = app.buttons["add-gift.emoji"]
+        waitForValue(emoji, expected: "🎸")
+        XCTAssertEqual(name.value as? String, "гитара")
+        attach("\(checkpointPrefix)cloud-icons-suggestion")
+
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: timeout))
+        app.buttons["Settings"].tap()
+        let toggle = app.switches["settings.cloud-icons"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: timeout))
+        waitForValue(toggle, expected: "1")
+        XCTAssertTrue(element(identifier: "settings.privacy-policy").exists)
+        attach("\(checkpointPrefix)cloud-icons-settings")
+        // Tap the switch itself; the row's center is its label.
+        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.87, dy: 0.5)).tap()
+        waitForValue(toggle, expected: "0")
+        app.buttons["Done"].tap()
+
+        // Declining in Settings suppresses future in-sheet prompts.
+        app.buttons["Add a gift"].tap()
+        XCTAssertTrue(name.waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
+        waitForKeyboardFocus(name)
+        name.typeText("гитара")
+        XCTAssertFalse(allow.waitForExistence(timeout: 1))
+        app.buttons["Cancel"].tap()
     }
 
     func testAddPersonCreateCancelAndDeleteConfirmation() throws {

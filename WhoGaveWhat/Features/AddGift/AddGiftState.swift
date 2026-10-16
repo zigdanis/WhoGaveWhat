@@ -11,6 +11,8 @@ final class AddGiftState {
     private(set) var editingGiftID: String?
     private let suggestGift: SuggestGiftUseCase
     private let debounce: Duration
+    private let preferences: PreferencesGateway?
+    private var hasEditedName = false
     private(set) var suggestionTask: Task<Void, Never>?
     /// The automatically chosen emoji a gift being edited already has; kept until a rename yields a better guess.
     private var storedEmoji: String?
@@ -19,9 +21,11 @@ final class AddGiftState {
         route: GiftSheetRoute,
         data: AppData,
         suggestGift: SuggestGiftUseCase,
+        preferences: PreferencesGateway? = nil,
         debounce: Duration = .milliseconds(500)
     ) {
         self.suggestGift = suggestGift
+        self.preferences = preferences
         self.debounce = debounce
         editingGiftID = route.editingGiftID
 
@@ -46,7 +50,7 @@ final class AddGiftState {
         }
     }
 
-    /// Loads the on-device model while the sheet opens so the first inference is fast.
+    /// Loads the selected model while the sheet opens so the first inference is fast.
     func prewarm() {
         guard suggestGift.isIntelligenceAvailable else { return }
         suggestGift.prewarmIntelligence()
@@ -71,6 +75,22 @@ final class AddGiftState {
 
     var effectiveEmoji: String {
         draft.emoji ?? draft.aiEmoji ?? suggestGift.instantSuggestion(for: draft.name).emoji
+    }
+
+    var showsCloudIconConsent: Bool {
+        hasEditedName && preferences?.cloudIconConsent == .undecided && draft.emoji == nil
+            && draft.name.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2
+    }
+
+    func allowCloudIcons() {
+        preferences?.setCloudIconConsent(.allowed)
+        scheduleSuggestion(after: .zero)
+    }
+
+    func declineCloudIcons() {
+        preferences?.setCloudIconConsent(.declined)
+        // Any in-flight inference belongs to the old routing choice.
+        scheduleSuggestion(after: debounce)
     }
 
     var name: String {
@@ -100,21 +120,26 @@ final class AddGiftState {
     }
 
     /// Updates the name, shows the keyword heuristic right away and, after a short
-    /// pause in typing, asks the on-device model for a better emoji.
+    /// pause in typing, asks the selected model for a better emoji.
     func setName(_ name: String) {
         guard name != draft.name else { return }
         draft.name = name
+        hasEditedName = true
         // Without a specific keyword match, keep the emoji the gift already had instead of the generic one.
         draft.aiEmoji = suggestGift.keywordSuggestion(for: name) == nil ? storedEmoji : nil
+        scheduleSuggestion(after: debounce)
+    }
+
+    private func scheduleSuggestion(after delay: Duration) {
         suggestionTask?.cancel()
         suggestionTask = nil
         aiLoading = false
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard draft.emoji == nil, trimmed.count >= 2, suggestGift.isIntelligenceAvailable else {
             return
         }
         suggestionTask = Task {
-            try? await Task.sleep(for: debounce)
+            try? await Task.sleep(for: delay)
             guard !isStale(trimmed) else { return }
             aiLoading = true
             let result = await suggestGift.intelligentSuggestion(for: trimmed)

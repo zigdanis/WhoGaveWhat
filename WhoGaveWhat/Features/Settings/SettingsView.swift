@@ -2,6 +2,8 @@ import SwiftUI
 
 /// Settings contains only destinations backed by working app behavior.
 struct SettingsView: View {
+    static let privacyPolicyURL = URL(string: "https://ziganshin.pro/whogavewhat/privacy-policy")!
+
     let composition: AppComposition
 
     var body: some View {
@@ -25,19 +27,55 @@ struct SettingsView: View {
                         .accessibilityValue(composition.currencyCode)
                     }
 
+                    SectionHeader(text: "Gift icons").padding(.top, 24).padding(.bottom, 7)
+                    Card {
+                        Toggle(
+                            "Cloud icon suggestions",
+                            isOn: Binding(
+                                get: { composition.cloudIconConsent == .allowed },
+                                set: { composition.setCloudIconConsent($0 ? .allowed : .declined) }
+                            )
+                        )
+                        .font(Font.app(16, .regular))
+                        .foregroundStyle(Color.textPrimary)
+                        .tint(Color.brandFill)
+                        .padding(.horizontal, 14).padding(.vertical, 9)
+                        .accessibilityIdentifier("settings.cloud-icons")
+                    }
+                    Text(
+                        "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms."
+                    )
+                    .font(Font.app(13, .regular))
+                    .foregroundStyle(Color.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 14).padding(.top, 8)
+
                     SectionHeader(text: "About").padding(.top, 24).padding(.bottom, 7)
                     Card {
-                        NavigationLink {
-                            ThirdPartyLicensesView()
-                        } label: {
-                            SettingsActionRow(
-                                icon: "doc.text.fill",
-                                tint: Color.brandFill,
-                                label: "Third-party licenses"
-                            )
+                        VStack(spacing: 0) {
+                            Link(destination: Self.privacyPolicyURL) {
+                                SettingsActionRow(
+                                    icon: "hand.raised.fill",
+                                    tint: Color.brandFill,
+                                    label: "Privacy Policy",
+                                    opensInBrowser: true
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("settings.privacy-policy")
+                            RowDivider().padding(.leading, 56)
+                            NavigationLink {
+                                ThirdPartyLicensesView()
+                            } label: {
+                                SettingsActionRow(
+                                    icon: "doc.text.fill",
+                                    tint: Color.brandFill,
+                                    label: "Third-party licenses"
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("settings.third-party-licenses")
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityIdentifier("settings.third-party-licenses")
                     }
                 }
                 .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 30)
@@ -86,13 +124,19 @@ private struct SettingsActionRow: View {
     let icon: String
     let tint: Color
     let label: LocalizedStringResource
+    var opensInBrowser = false
 
     var body: some View {
         HStack(spacing: 12) {
             SettingsIconTile(name: icon, tint: tint)
             Text(label).font(Font.app(16, .regular)).foregroundColor(Color.textPrimary)
             Spacer(minLength: 8)
-            Chevron()
+            if opensInBrowser {
+                Image(systemName: "arrow.up.forward")
+                    .font(.system(size: 14, weight: .semibold)).foregroundColor(Color.textTertiary)
+            } else {
+                Chevron()
+            }
         }
         .padding(.horizontal, 14).padding(.vertical, 9)
         .contentShape(Rectangle())
