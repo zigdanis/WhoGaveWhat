@@ -17,10 +17,10 @@ class EnsureSwiftFormatPathTest(unittest.TestCase):
                      XDG_CACHE_HOME='/cache')
         self.assertEqual(result.stdout.strip(), '/cache/whogavewhat/swift-format/6.3.3')
         result = run('--print-url', SWIFT_FORMAT_OS='Linux', SWIFT_FORMAT_ARCH='aarch64')
-        self.assertEqual(result.stdout.strip(), 'https://download.swift.org/swift-6.3.3-release/ubuntu2404-aarch64/'
-                         'swift-6.3.3-RELEASE/swift-6.3.3-RELEASE-ubuntu24.04-aarch64.tar.gz')
+        self.assertEqual(result.stdout.strip(), 'https://download.swift.org/swift-6.3.3-release/debian12-aarch64/'
+                         'swift-6.3.3-RELEASE/swift-6.3.3-RELEASE-debian12-aarch64.tar.gz')
         result = run('--print-url', SWIFT_FORMAT_OS='Linux', SWIFT_FORMAT_ARCH='x86_64')
-        self.assertTrue(result.stdout.strip().endswith('/ubuntu2404/swift-6.3.3-RELEASE/swift-6.3.3-RELEASE-ubuntu24.04.tar.gz'))
+        self.assertTrue(result.stdout.strip().endswith('/debian12/swift-6.3.3-RELEASE/swift-6.3.3-RELEASE-debian12.tar.gz'))
 
     def test_defaults_to_platform_cache_directories(self):
         self.assertEqual(run('--print-install-dir', SWIFT_FORMAT_OS='Linux', SWIFT_FORMAT_ARCH='x86_64').stdout.strip(),

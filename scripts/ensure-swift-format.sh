@@ -24,17 +24,18 @@ case "$os" in
 esac
 install_dir=$cache_root/whogavewhat/swift-format/$SWIFT_VERSION
 
-# The Ubuntu 24.04 toolchains also run on newer Ubuntu and Debian releases.
+# The Debian 12 toolchains need only glibc 2.36, so they also run on Raspberry Pi OS
+# (bookworm) and newer Debian and Ubuntu releases.
 case "$os/$arch" in
   Linux/x86_64)
-    archive=$RELEASE-ubuntu24.04.tar.gz
-    url=$BASE_URL/ubuntu2404/$RELEASE/$archive
-    sha256=da8272a5fddccd65b1529ed0e52e04526e2eadd4237d58d6220efeb973c6cd19
+    archive=$RELEASE-debian12.tar.gz
+    url=$BASE_URL/debian12/$RELEASE/$archive
+    sha256=19e0c78cad5418ad48bfa87aa20c53ac9ac9996d1695d04dd94f7c7ea4eb133f
     ;;
   Linux/aarch64 | Linux/arm64)
-    archive=$RELEASE-ubuntu24.04-aarch64.tar.gz
-    url=$BASE_URL/ubuntu2404-aarch64/$RELEASE/$archive
-    sha256=47126395429653fa768d370655876ec1b68f6a95c7884f5e4f179700141c9b7f
+    archive=$RELEASE-debian12-aarch64.tar.gz
+    url=$BASE_URL/debian12-aarch64/$RELEASE/$archive
+    sha256=ecba8ef87b54a5048d466af500f3169c939a6b8a2cb7c600f76b5184457f293a
     ;;
   Darwin/*)
     archive=$RELEASE-osx.pkg

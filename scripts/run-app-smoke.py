@@ -480,7 +480,7 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
         "head_sha": head_sha, "checkout_sha": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         "run_id": os.environ.get("GITHUB_RUN_ID", "local"), "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "1"),
         "evidence_kind": "feature-acceptance",
-        "scenario": "Native People disclosure and detail navigation plus grouped person editing, photo crop cancel and confirm, and photo persistence and removal",
+        "scenario": "Core journey: quick gift with an inferred icon, detailed gift, person add, edit, photo and delete, and Insights before and after This is me",
         "journey_outcome": "failure", "export_outcome": "failure", "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"),
         "requested_runtime": runtime,
         "checkpoints": [], "native_test": "WhoGaveWhat app-owned unit and UI suite (OS Spotlight diagnostic excluded)",
