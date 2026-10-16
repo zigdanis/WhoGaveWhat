@@ -10,5 +10,6 @@ if command -v swift-format >/dev/null 2>&1; then
   exec swift-format "$@"
 fi
 
-echo "error: swift-format is unavailable; install a Swift toolchain or select one in Xcode" >&2
-exit 1
+# Without a toolchain (for example on Raspberry Pi), use the pinned release CI's Xcode ships.
+binary=$("$(dirname "$0")/ensure-swift-format.sh")
+exec "$binary" "$@"
