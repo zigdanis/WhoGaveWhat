@@ -111,7 +111,9 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
     console.log(
       JSON.stringify({ event: "jev_error", reason: error instanceof Error ? error.message : "unknown", ms: deps.now() - started }),
     );
-    return unavailable(PROVIDER_RETRY_AFTER_SECONDS);
+    // A rejected key is a configuration problem that won't pass in seconds.
+    const rejected = error instanceof JevError && (error.status === 401 || error.status === 403);
+    return unavailable(rejected ? CONFIG_RETRY_AFTER_SECONDS : PROVIDER_RETRY_AFTER_SECONDS);
   }
 }
 

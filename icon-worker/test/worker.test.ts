@@ -190,8 +190,8 @@ describe("gift icon endpoint", () => {
     const jev = fakeJev(new Response("bad key", { status: 401 }));
     const response = await handle(request({ name: "торт" }), testEnv(), deps(jev.fetcher));
     expect(response.status).toBe(503);
-    // A provider failure may pass quickly, so clients are asked to wait only briefly.
-    expect(response.headers.get("Retry-After")).toBe("30");
+    // A rejected key won't fix itself in seconds, so clients wait as for a misconfiguration.
+    expect(response.headers.get("Retry-After")).toBe("300");
     expect(jev.calls).toHaveLength(1);
   });
 
@@ -200,6 +200,8 @@ describe("gift icon endpoint", () => {
     const jev = fakeJev(timeout);
     const response = await handle(request({ name: "торт" }), testEnv(), deps(jev.fetcher));
     expect(response.status).toBe(503);
+    // A provider failure may pass quickly, so clients are asked to wait only briefly.
+    expect(response.headers.get("Retry-After")).toBe("30");
     expect(jev.calls).toHaveLength(2);
   });
 
