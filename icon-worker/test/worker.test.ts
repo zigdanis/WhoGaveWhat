@@ -2,7 +2,7 @@ import { env, reset } from "cloudflare:test";
 import { afterEach, describe, expect, it } from "vitest";
 import { handle, type Env } from "../src/index";
 import { ICON_KEYS, ICONS, criteria } from "../src/icons";
-import { JEV_URL, parseAnswer } from "../src/jev";
+import { JEV_URL, maxInputTokens, parseAnswer } from "../src/jev";
 
 const INSTALL = "3f2b8c1e-4d5a-4e6f-8a9b-0c1d2e3f4a5b";
 const NOW = Date.UTC(2026, 9, 16, 12, 0, 30);
@@ -52,6 +52,18 @@ function deps(fetcher: typeof fetch, now = NOW) {
 
 function testEnv(overrides: Partial<Env> = {}): Env {
   return { ...env, ...overrides };
+}
+
+function attemptMicros(name: string) {
+  return Math.ceil(maxInputTokens(name, "jev-1.13.0", true) * 0.042);
+}
+
+function usd(micros: number) {
+  return String(micros / 1_000_000);
+}
+
+async function usage() {
+  return env.LIMITER.get(env.LIMITER.idFromName("global")).usage(NOW);
 }
 
 async function body(response: Response) {
@@ -203,37 +215,110 @@ describe("gift icon endpoint", () => {
   });
 
   it("stops calling Jev once the daily budget is spent, using real token usage", async () => {
-    // 0.0005 USD a day; each call reserves 168 micro-dollars and really costs 2,500 × 0.042 = 105.
-    const tight = testEnv({ DAILY_BUDGET_USD: "0.0005" });
+    // Each call reserves two attempts at their upper bound and really costs 2,500 × 0.042 = 105.
+    const reserve = 2 * attemptMicros("a1");
+    const tight = testEnv({ DAILY_BUDGET_USD: usd(105 * 3 + reserve) });
     const jev = fakeJev(jevReply("rose", 0.9, 2_500));
     const statuses: number[] = [];
     for (const name of ["a1", "a2", "a3", "a4", "a5", "a6"]) {
       statuses.push((await handle(request({ name }), tight, deps(jev.fetcher))).status);
     }
-    // 105 × 4 = 420 spent; a fifth reservation (420 + 168) would exceed 500.
     expect(statuses).toEqual([200, 200, 200, 200, 503, 503]);
     expect(jev.calls).toHaveLength(4);
+    expect((await usage()).dayMicros).toBe(420);
     // Cached names stay free even when the budget is exhausted.
     expect((await handle(request({ name: "a1" }), tight, deps(jev.fetcher))).status).toBe(200);
   });
 
   it("enforces the monthly budget across days", async () => {
-    const tight = testEnv({ MONTHLY_BUDGET_USD: "0.0002" });
+    const tight = testEnv({ MONTHLY_BUDGET_USD: usd(2 * attemptMicros("b1") + 50) });
     const jev = fakeJev(jevReply("rose", 0.9, 2_500));
     expect((await handle(request({ name: "b1" }), tight, deps(jev.fetcher))).status).toBe(200);
     expect((await handle(request({ name: "b2" }), tight, deps(jev.fetcher, NOW + 86_400_000))).status).toBe(503);
     expect((await handle(request({ name: "b3" }), tight, deps(jev.fetcher, Date.UTC(2026, 10, 1)))).status).toBe(200);
   });
 
-  it("keeps failed calls charged at the reservation", async () => {
-    const tight = testEnv({ DAILY_BUDGET_USD: "0.0004" });
-    const failing = fakeJev(new Response("busy", { status: 500 }));
+  it("charges failed attempts that may have been billed at their upper bound", async () => {
+    const reserve = 2 * attemptMicros("c1");
+    const tight = testEnv({ DAILY_BUDGET_USD: usd(3 * reserve - 1) });
+    const failing = fakeJev(new Response("boom", { status: 500 }));
     expect((await handle(request({ name: "c1" }), tight, deps(failing.fetcher))).status).toBe(503);
     expect((await handle(request({ name: "c2" }), tight, deps(failing.fetcher))).status).toBe(503);
-    // Two reservations (336) are charged; a third would exceed 400.
+    expect((await usage()).dayMicros).toBe(2 * reserve);
     const ok = fakeJev(jevReply("rose"));
     expect(await body(await handle(request({ name: "c3" }), tight, deps(ok.fetcher)))).toEqual({ error: "budget_exhausted" });
     expect(ok.calls).toHaveLength(0);
+  });
+
+  it("charges a timed-out attempt in addition to the successful retry", async () => {
+    const timeout = Object.assign(new Error("timed out"), { name: "TimeoutError" });
+    const jev = fakeJev(timeout, jevReply("rose", 0.9, 2_500));
+    expect((await handle(request({ name: "d1" }), testEnv(), deps(jev.fetcher))).status).toBe(200);
+    expect((await usage()).dayMicros).toBe(105 + attemptMicros("d1"));
+  });
+
+  it("does not charge rejected overload or client errors", async () => {
+    const overloaded = fakeJev(new Response("busy", { status: 529 }), jevReply("rose", 0.9, 2_500));
+    expect((await handle(request({ name: "e1" }), testEnv(), deps(overloaded.fetcher))).status).toBe(200);
+    const rejected = fakeJev(new Response("bad key", { status: 401 }));
+    expect((await handle(request({ name: "e2" }), testEnv(), deps(rejected.fetcher))).status).toBe(503);
+    expect((await usage()).dayMicros).toBe(105);
+  });
+
+  it("retries when the reply body times out", async () => {
+    const stalled = new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.error(Object.assign(new Error("timed out"), { name: "TimeoutError" }));
+        },
+      }),
+      { status: 200 },
+    );
+    const jev = fakeJev(stalled, jevReply("rose"));
+    expect(await body(await handle(request({ name: "f1" }), testEnv(), deps(jev.fetcher)))).toEqual({ emoji: "🌹", confidence: 0.9 });
+    expect(jev.calls).toHaveLength(2);
+  });
+
+  it("rejects an oversized streamed body without a declared length", async () => {
+    const chunk = new TextEncoder().encode("x".repeat(1_024));
+    let pulled = 0;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled += 1;
+        if (pulled > 64) controller.close();
+        else controller.enqueue(chunk);
+      },
+    });
+    const streamed = new Request("https://icons.test/v1/gift-icon", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Install-ID": INSTALL },
+      body: stream,
+    });
+    expect(streamed.headers.get("Content-Length")).toBeNull();
+    expect((await handle(streamed, testEnv(), deps(fakeJev(jevReply("rose")).fetcher))).status).toBe(400);
+    expect(pulled).toBeLessThan(10);
+  });
+});
+
+describe("limiter", () => {
+  it("keeps newer rate counters when an older request settles late", async () => {
+    const limiter = env.LIMITER.get(env.LIMITER.idFromName("global"));
+    const limits = {
+      monthlyBudgetMicros: 1_000_000,
+      dailyBudgetMicros: 1_000_000,
+      perInstallPerDay: 100,
+      perIpPerMinute: 1,
+      globalPerMinute: 100,
+    };
+    const older = await limiter.admit({ cacheKey: "k1", installHash: "i", ipHash: "ip", now: NOW, limits, reservationMicros: 10 });
+    const later = NOW + 60_000;
+    const newer = await limiter.admit({ cacheKey: "k2", installHash: "i", ipHash: "ip", now: later, limits, reservationMicros: 10 });
+    expect(older.kind).toBe("go");
+    expect(newer.kind).toBe("go");
+    if (older.kind !== "go") return;
+    await limiter.settle({ reservationId: older.reservationId, costMicros: 5, now: NOW });
+    const third = await limiter.admit({ cacheKey: "k3", installHash: "i", ipHash: "ip", now: later, limits, reservationMicros: 10 });
+    expect(third.kind).toBe("rate_limited");
   });
 });
 

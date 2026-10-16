@@ -14,8 +14,16 @@ export interface JevAnswer {
   model: string;
 }
 
+/** The answer plus earlier failed attempts that may still have been billed (usage unknown). */
+export interface JevOutcome {
+  answer: JevAnswer;
+  unknownUsageAttempts: number;
+}
+
 export class JevError extends Error {
   readonly status?: number;
+  /** Attempts that may have been billed although no usage was reported. */
+  unknownUsageAttempts = 0;
 
   constructor(message: string, status?: number) {
     super(message);
@@ -43,19 +51,27 @@ export function jevRequestBody(name: string, model: string, russianHints: boolea
   };
 }
 
+/** A safe upper bound on input tokens: a token is at least one UTF-8 byte, plus provider overhead. */
+export function maxInputTokens(name: string, model: string, russianHints: boolean): number {
+  return new TextEncoder().encode(JSON.stringify(jevRequestBody(name, model, russianHints))).byteLength + 1_000;
+}
+
 /**
- * Asks Jev to choose an icon for the gift name. Retries only throttling, overload,
- * server errors and timeouts, with a short jittered backoff; every attempt is bounded.
+ * Asks Jev to choose an icon for the gift name. Retries throttling, overload, server
+ * errors and timeouts (including while reading the body) with a short jittered backoff;
+ * every attempt is bounded. Malformed answers and client errors are not retried.
  */
-export async function chooseIcon(name: string, options: JevOptions): Promise<JevAnswer> {
+export async function chooseIcon(name: string, options: JevOptions): Promise<JevOutcome> {
   const fetcher = options.fetcher ?? fetch;
   const sleep = options.sleep ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
   const body = JSON.stringify(jevRequestBody(name, options.model, options.russianHints));
   let lastError: JevError = new JevError("no attempt made");
+  let unknownUsageAttempts = 0;
 
   for (let attempt = 1; attempt <= options.maxAttempts; attempt++) {
     if (attempt > 1) await sleep(200 * attempt + Math.floor(Math.random() * 200));
     let response: Response;
+    let json: unknown;
     try {
       response = await fetcher(JEV_URL, {
         method: "POST",
@@ -63,16 +79,35 @@ export async function chooseIcon(name: string, options: JevOptions): Promise<Jev
         body,
         signal: AbortSignal.timeout(options.attemptTimeoutMs),
       });
+      if (!response.ok) {
+        // Drain the body so the connection can be reused; its content is not needed.
+        await response.body?.cancel();
+        lastError = new JevError(`status ${response.status}`, response.status);
+        // Overload and throttling are rejected before any work; other server errors may have been billed.
+        if (response.status >= 500 && response.status !== 529) unknownUsageAttempts += 1;
+        if (!isRetryable(response.status)) break;
+        continue;
+      }
+      json = await response.json();
     } catch (error) {
+      // The provider may have processed (and billed) a request whose reply never arrived.
+      unknownUsageAttempts += 1;
+      if (error instanceof SyntaxError) {
+        lastError = new JevError("malformed reply");
+        break;
+      }
       lastError = new JevError(error instanceof Error && error.name === "TimeoutError" ? "timeout" : "network");
       continue;
     }
-    if (response.ok) return parseAnswer(await response.json().catch(() => null));
-    // Drain the body so the connection can be reused; its content is not needed.
-    await response.body?.cancel();
-    lastError = new JevError(`status ${response.status}`, response.status);
-    if (!isRetryable(response.status)) break;
+    try {
+      return { answer: parseAnswer(json), unknownUsageAttempts };
+    } catch (error) {
+      unknownUsageAttempts += 1;
+      lastError = error instanceof JevError ? error : new JevError("invalid answer");
+      break;
+    }
   }
+  lastError.unknownUsageAttempts = unknownUsageAttempts;
   throw lastError;
 }
 

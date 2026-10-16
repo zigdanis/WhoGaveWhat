@@ -27,8 +27,9 @@ the app holds no secret.
   answer must name a catalog option.
 - `src/limiter.ts` is one SQLite-backed Durable Object that admits each provider call:
   per-IP per minute, global per minute, per-install per day, and daily and monthly
-  budgets. Every call reserves a conservative cost up front and is corrected with the
-  real `usage.input_tokens` afterwards. Failed calls stay charged at the reservation.
+  budgets. Each call reserves both attempts at an upper bound (request bytes plus
+  provider overhead) and is then charged the real `usage.input_tokens`, plus the upper
+  bound for any attempt that may have been billed without reporting usage.
   It caches answers for 30 days by a SHA-256 of the normalized name, catalog version,
   model and hint setting. Raw names, install IDs and IP addresses are not stored, and
   logs contain only model, token count and latency.

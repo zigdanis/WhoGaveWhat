@@ -7,8 +7,6 @@ export interface Limits {
   perInstallPerDay: number;
   perIpPerMinute: number;
   globalPerMinute: number;
-  /** Charged up front for each provider call and corrected once real usage is known. */
-  reservationMicros: number;
 }
 
 export type Admission =
@@ -23,12 +21,14 @@ export interface AdmitInput {
   ipHash: string;
   now: number;
   limits: Limits;
+  /** Charged up front for the provider call and corrected once its real cost is known. */
+  reservationMicros: number;
 }
 
 export interface SettleInput {
   reservationId: number;
-  /** Actual cost, or null to keep the reservation (usage unknown). */
-  costMicros: number | null;
+  /** The call's actual (or conservatively estimated) cost, replacing the reservation. */
+  costMicros: number;
   /** Present only when the provider answered; undefined leaves the cache untouched. */
   answer?: { cacheKey: string; key: string | null; confidence: number };
   now: number;
@@ -85,7 +85,7 @@ export class IconLimiter extends DurableObject<unknown> {
     if (this.get(`install:${input.installHash}`, day) >= limits.perInstallPerDay) {
       return { kind: "rate_limited", retryAfterSeconds: secondsUntilNextDay(now) };
     }
-    const reserve = limits.reservationMicros;
+    const reserve = input.reservationMicros;
     if (
       this.get("spend", month) + reserve > limits.monthlyBudgetMicros ||
       this.get("spend", day) + reserve > limits.dailyBudgetMicros
@@ -117,7 +117,7 @@ export class IconLimiter extends DurableObject<unknown> {
         input.reservationId,
       )
       .toArray()[0];
-    if (reservation && input.costMicros !== null) {
+    if (reservation) {
       const delta = input.costMicros - reservation.micros;
       this.add("spend", reservation.month, delta);
       this.add("spend", reservation.day, delta);
@@ -163,13 +163,16 @@ export class IconLimiter extends DurableObject<unknown> {
 
   /** Drops expired counters, stale reservations and old or excess cache rows. */
   private prune(now: number): void {
-    const day = dayBucket(now);
-    const month = day.slice(0, 7);
-    // Minute and day buckets for anything but spend are only needed while current.
+    const month = dayBucket(now).slice(0, 7);
+    // Rate counters are only read for the current minute or day. Callers' clocks can differ
+    // slightly, so only buckets well in the past are dropped, never a newer one.
     this.sql.exec(
-      "DELETE FROM counters WHERE scope != 'spend' AND bucket != ? AND bucket != ?",
-      minuteBucket(now),
-      day,
+      "DELETE FROM counters WHERE scope != 'spend' AND length(bucket) = 16 AND bucket < ?",
+      minuteBucket(now - 5 * 60 * 1000),
+    );
+    this.sql.exec(
+      "DELETE FROM counters WHERE scope != 'spend' AND length(bucket) = 10 AND bucket < ?",
+      dayBucket(now - 2 * 24 * 60 * 60 * 1000),
     );
     // Keep this and last month's spend for inspection.
     this.sql.exec("DELETE FROM counters WHERE scope = 'spend' AND substr(bucket, 1, 7) < ?", previousMonth(month));

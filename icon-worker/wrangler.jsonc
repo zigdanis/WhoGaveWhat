@@ -22,5 +22,6 @@
     "bindings": [{ "name": "LIMITER", "class_name": "IconLimiter" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["IconLimiter"] }],
-  "observability": { "enabled": true, "head_sampling_rate": 1 }
+  // Only the Worker's own metric lines are kept; per-request invocation logs (URLs, headers) are off.
+  "observability": { "enabled": true, "head_sampling_rate": 1, "logs": { "invocation_logs": false } }
 }
