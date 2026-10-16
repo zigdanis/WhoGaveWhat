@@ -96,10 +96,20 @@ class PublicationTests(unittest.TestCase):
         self.pr["body"] = json.loads(Path(args[args.index("--input") + 1]).read_text())["body"]
         return json.dumps(self.pr)
 
-    def publish(self, summary="Inspected the save and relaunch journey."):
+    def publish(self, summary="Inspected the save and relaunch journey.", videos=("demo.mp4",)):
         (self.directory / "metadata.json").write_text(json.dumps(self.metadata))
         with patch.object(MODULE, "gh", side_effect=self.gh), patch.object(evidence_validation, "gh", side_effect=self.gh):
-            MODULE.publish(42, self.directory, summary, ["checkpoint.png"], ["demo.mp4"])
+            MODULE.publish(42, self.directory, summary, ["checkpoint.png"], list(videos))
+
+    def test_screenshots_publish_without_a_clip_and_pass_validation(self):
+        self.publish(videos=())
+        body = self.pr["body"]
+        self.assertIn("user-attachments/assets/checkpoint-png", body)
+        self.assertNotIn(".mp4", body)
+        self.assertEqual([], evidence_validation.parse_evidence(body)["videos"])
+        with self.assertRaisesRegex(ValueError, "at least one PNG screenshot"), \
+                patch.object(MODULE, "gh", side_effect=self.gh):
+            MODULE.publish(42, self.directory, "Clip only.", [], ["demo.mp4"])
 
     def test_publication_embeds_media_and_preserves_other_sections_on_repeat(self):
         self.pr["body"] = f"Original\n\n{MODULE.START}\nOld evidence\n{MODULE.END}\n\nReviewer notes\n"

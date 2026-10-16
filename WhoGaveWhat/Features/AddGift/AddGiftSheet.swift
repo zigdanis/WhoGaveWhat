@@ -589,7 +589,7 @@ private struct AddGiftPickerSheet: View {
         ScrollView {
             VStack(spacing: 16) {
                 // Manual-entry first — add a new option from the top of the sheet.
-                addRow(placeholder: "Add occasion") { occasion in
+                addRow(placeholder: "Add occasion", accessibilityPrefix: "add-gift.occasion") { occasion in
                     composition.data.addOccasion(occasion)
                     state.selectOccasion(occasion)
                 }
@@ -665,6 +665,7 @@ private struct AddGiftPickerSheet: View {
                     .background(RoundedRectangle(cornerRadius: DesignMetrics.radiusSmall, style: .continuous).fill(Color.fillTrack))
                 TextField("Type any icon or letter", text: $customText)
                     .font(Font.app(16, .regular)).tint(Color.brand)
+                    .accessibilityIdentifier("add-gift.icon.custom")
                 Button {
                     state.useCustomEmoji(customText); customText = ""
                 } label: {
@@ -674,6 +675,7 @@ private struct AddGiftPickerSheet: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(addDisabled)
+                .accessibilityIdentifier("add-gift.icon.add")
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
         }
@@ -742,11 +744,16 @@ private struct AddGiftPickerSheet: View {
             .foregroundColor(Color.brand)
     }
 
-    private func addRow(placeholder: String, add: @escaping (String) -> Void) -> some View {
+    private func addRow(
+        placeholder: String,
+        accessibilityPrefix: String,
+        add: @escaping (String) -> Void
+    ) -> some View {
         Card {
             HStack(spacing: 10) {
                 TextField(LocalizedStringKey(placeholder), text: $customText)
                     .font(Font.app(16, .regular)).tint(Color.brand)
+                    .accessibilityIdentifier("\(accessibilityPrefix).custom")
                 Button {
                     add(customText); customText = ""
                 } label: {
@@ -756,6 +763,7 @@ private struct AddGiftPickerSheet: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(addDisabled)
+                .accessibilityIdentifier("\(accessibilityPrefix).add")
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
         }

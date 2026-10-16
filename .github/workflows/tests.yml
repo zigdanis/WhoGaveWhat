@@ -26,6 +26,10 @@ on:
         description: Run optional OS Spotlight diagnostic (app-owned acceptance still runs)
         type: boolean
         default: false
+      video_test:
+        description: Optional UI test to record as a short clip after the suite passes (WhoGaveWhatUITests/Class/testMethod)
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -55,8 +59,10 @@ jobs:
           xcrun simctl help create
           xcrun simctl help delete
           xcrun xcresulttool version
-      - name: Test and record app smoke
-        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names --runtime 'iOS 26.4' --fresh-ci-simulator
+      - name: Test app smoke and record any requested clip
+        env:
+          VIDEO_TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.video_test || '' }}
+        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names --runtime 'iOS 26.4' --fresh-ci-simulator ${VIDEO_TEST:+--video-test "$VIDEO_TEST"}
       - name: Render evidence report
         if: always()
         run: |

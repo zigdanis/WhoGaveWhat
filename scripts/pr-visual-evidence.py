@@ -125,8 +125,8 @@ def publish(number, directory, summary, images, videos):
         raise ValueError("Describe the behavior inspected and any limits in the summary file.")
     if START in summary or END in summary or "<!-- visual-evidence:metadata" in summary:
         raise ValueError("Summary must not contain visual evidence markers.")
-    if not images or not videos:
-        raise ValueError("Visual evidence needs at least one PNG screenshot AND one MP4 video.")
+    if not images:
+        raise ValueError("Visual evidence needs at least one PNG screenshot; a requested MP4 clip is optional.")
     sources = [media_file(directory, name, ".png") for name in images]
     sources += [media_file(directory, name, ".mp4") for name in videos]
     if not 1 <= len(sources) <= 50 or len(set(sources)) != len(sources):
@@ -212,7 +212,8 @@ def main():
     parser.add_argument("directory", type=Path, help="one ui-* artifact directory with metadata.json")
     parser.add_argument("--summary-file", type=Path, required=True, help="agent's visual review in Markdown")
     parser.add_argument("--image", action="append", default=[], help="PNG path relative to the artifact directory")
-    parser.add_argument("--video", action="append", default=[], help="short MP4 path relative to the artifact directory")
+    parser.add_argument("--video", action="append", default=[],
+                        help="requested clip (clip.mp4) relative to the artifact directory; omit unless asked for video")
     args = parser.parse_args()
     try:
         publish(args.pr, args.directory, args.summary_file.read_text(), args.image, args.video)

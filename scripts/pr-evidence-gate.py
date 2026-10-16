@@ -35,7 +35,7 @@ def check(repo, number, publish_status=False):
         error = "PR changed during validation; evaluate the current description again."
     if publish_status:
         update_status(repo, sha, "failure" if error else "success",
-                      error or "Current-head screenshots and video reviewed from passing CI", pr["html_url"])
+                      error or "Current-head screenshots reviewed from passing CI", pr["html_url"])
     print(f"PR #{number}: {error or 'visual evidence passes'}")
     return error is None
 

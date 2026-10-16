@@ -34,14 +34,20 @@ class EvidenceTests(unittest.TestCase):
         return (evidence.START + '\n' + evidence.metadata_comment(self.metadata) + '\n'
                 + f'![Home]({self.image})\n\n{self.video}\n' + evidence.END)
 
-    def test_both_media_kinds_are_required_and_embedded(self):
+    def test_screenshots_are_required_and_a_requested_clip_is_optional_but_embedded(self):
         self.assertEqual(evidence.parse_evidence(self.body()), self.metadata)
-        for key in ['images', 'videos']:
-            original = self.metadata[key]
-            self.metadata[key] = []
-            with self.subTest(key=key), self.assertRaises(ValueError):
-                evidence.parse_evidence(self.body())
-            self.metadata[key] = original
+        self.metadata['images'] = []
+        with self.assertRaises(ValueError):
+            evidence.parse_evidence(self.body())
+        self.metadata['images'] = [self.image]
+        for videos in ([], None):
+            self.metadata['videos'] = videos
+            if videos is None:
+                del self.metadata['videos']
+            with self.subTest(videos=videos):
+                body = self.body().replace(f'{self.video}\n', '')
+                self.assertEqual([], evidence.parse_evidence(body)['videos'])
+        self.metadata['videos'] = [self.video]
         with self.assertRaises(ValueError):
             evidence.parse_evidence(self.body().replace(f'![Home]({self.image})', 'Screenshot omitted'))
         with self.assertRaises(ValueError):
@@ -83,6 +89,19 @@ class EvidenceTests(unittest.TestCase):
             return json.dumps([{'databaseId': 124}]) if args[0] == 'run' else json.dumps(dict(run, id=124))
         with patch.object(evidence, 'gh', side_effect=newer), self.assertRaises(ValueError):
             evidence.checked_run('owner/repo', self.sha, self.metadata)
+
+    def test_manual_clip_dispatch_for_the_head_is_accepted_and_push_runs_are_ignored(self):
+        accepted = dict(id=123, status='completed', conclusion='success', event='pull_request',
+                        head_sha=self.sha, run_attempt=2)
+        for event, expected in (('workflow_dispatch', 124), ('push', 123)):
+            newer = dict(accepted, id=124, event=event, run_attempt=1)
+            def mocked(*args):
+                if args[:2] == ('run', 'list'):
+                    self.assertNotIn('--event', args)
+                    return json.dumps([{'databaseId': 124}, {'databaseId': 123}])
+                return json.dumps(newer if args[1].endswith('/124') else accepted)
+            with self.subTest(event=event), patch.object(evidence, 'gh', side_effect=mocked):
+                self.assertEqual(expected, evidence.latest_pr_acceptance_run('owner/repo', self.sha)['id'])
 
     def test_later_verified_entirely_skipped_native_run_does_not_displace_acceptance(self):
         accepted = dict(id=123, status='completed', conclusion='success', event='pull_request',

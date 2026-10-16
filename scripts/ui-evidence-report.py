@@ -45,9 +45,9 @@ def render(directory):
             '<p>App-owned language, metadata, routing and lifecycle checks only. '
             'OS Spotlight search was not run; real-device Spotlight verification is pending.</p>',
         ]
-    video = directory / "journeys.mp4"
+    video = directory / "clip.mp4"
     if video.exists():
-        parts += ['<h2>Journey recording</h2>', f'<video controls preload="metadata" src="{link(video)}"></video>']
+        parts += ['<h2>Requested test clip</h2>', f'<video controls preload="metadata" src="{link(video)}"></video>']
     parts += ['<h2>Screenshots and visual differences</h2><div class="images">']
     images = sorted(attachments.glob("*.png"))
     for path in images:
