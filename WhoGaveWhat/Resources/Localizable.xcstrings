@@ -381,19 +381,19 @@
         }
       }
     },
-    "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon? Only the name and a random app ID are sent — never people, dates, amounts or notes." : {
+    "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon? Only the name and a random app ID are sent — never people, dates, amounts or occasions." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon? Only the name and a random app ID are sent — never people, dates, amounts or notes."
+            "value" : "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon? Only the name and a random app ID are sent — never people, dates, amounts or occasions."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Разрешить WhoGaveWhat отправлять введённое название подарка в TypeSafe AI, чтобы подобрать значок? Отправляются только название и случайный ID приложения — без имён людей, дат, сумм и заметок."
+            "value" : "Разрешить WhoGaveWhat отправлять введённое название подарка в TypeSafe AI, чтобы подобрать значок? Отправляются только название и случайный ID приложения — без имён людей, дат, сумм и поводов."
           }
         }
       }
@@ -2376,19 +2376,19 @@
         }
       }
     },
-    "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and notes are never sent. TypeSafe processes requests under its terms." : {
+    "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and notes are never sent. TypeSafe processes requests under its terms."
+            "value" : "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Для подбора значка через сервер WhoGaveWhat в TypeSafe AI (Jev) отправляются только название подарка и случайный ID приложения для ограничения числа запросов. Имена людей, даты, суммы и заметки не отправляются. TypeSafe обрабатывает запросы на своих условиях."
+            "value" : "Для подбора значка через сервер WhoGaveWhat в TypeSafe AI (Jev) отправляются только название подарка и случайный ID приложения для ограничения числа запросов. Имена людей, даты, суммы и поводы не отправляются. TypeSafe обрабатывает запросы на своих условиях."
           }
         }
       }
@@ -2406,6 +2406,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Настройки"
+          }
+        }
+      }
+    },
+    "Privacy Policy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy Policy"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Политика конфиденциальности"
           }
         }
       }

@@ -152,6 +152,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         let toggle = app.switches["settings.cloud-icons"]
         XCTAssertTrue(toggle.waitForExistence(timeout: timeout))
         waitForValue(toggle, expected: "1")
+        XCTAssertTrue(element(identifier: "settings.privacy-policy").exists)
         attach("\(checkpointPrefix)cloud-icons-settings")
         // Tap the switch itself; the row's center is its label.
         toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.87, dy: 0.5)).tap()

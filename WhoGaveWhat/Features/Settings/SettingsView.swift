@@ -2,6 +2,8 @@ import SwiftUI
 
 /// Settings contains only destinations backed by working app behavior.
 struct SettingsView: View {
+    static let privacyPolicyURL = URL(string: "https://ziganshin.pro/whogavewhat/privacy-policy")!
+
     let composition: AppComposition
 
     var body: some View {
@@ -41,7 +43,7 @@ struct SettingsView: View {
                         .accessibilityIdentifier("settings.cloud-icons")
                     }
                     Text(
-                        "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and notes are never sent. TypeSafe processes requests under its terms."
+                        "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms."
                     )
                     .font(Font.app(13, .regular))
                     .foregroundStyle(Color.textSecondary)
@@ -50,6 +52,16 @@ struct SettingsView: View {
 
                     SectionHeader(text: "About").padding(.top, 24).padding(.bottom, 7)
                     Card {
+                        Link(destination: Self.privacyPolicyURL) {
+                            SettingsActionRow(
+                                icon: "hand.raised.fill",
+                                tint: Color.brandFill,
+                                label: "Privacy Policy"
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("settings.privacy-policy")
+                        RowDivider().padding(.leading, 56)
                         NavigationLink {
                             ThirdPartyLicensesView()
                         } label: {
