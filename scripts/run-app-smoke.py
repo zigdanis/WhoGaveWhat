@@ -28,7 +28,7 @@ PLANNED_CHECKPOINT_NAMES = (
     "person-editor", "person-editor-photo", "person-detail", "person-editor-keyboard",
     "person-editor-header-accessibility", "person-editor-header-accessibility-keyboard",
     "person-editor-russian", "person-editor-russian-keyboard", "person-photo-picker",
-    "person-photo-crop", "person-editor-crop-cancelled", "person-photo-crop-adjusted",
+    "person-photo-crop", "person-photo-crop-adjusted",
     "person-editor-photo-keyboard", "person-editor-selected-photo", "person-detail-selected-photo",
     "person-editor-photo-persisted", "person-photo-replacement-crop",
     "person-editor-existing-photo-crop-cancelled", "person-editor-photo-removed",

@@ -53,7 +53,7 @@ The helper waits for the latest PR `Tests` run for the current head, downloads i
 ffmpeg -i /tmp/ARTIFACT/journeys.mp4 -vf fps=1/2 /tmp/ARTIFACT/frame-%04d.png
 ```
 
-The native journey also captures `dark-home`, `dark-people`, `dark-insights`, `dark-gift-detail` and `dark-add-gift` in dark appearance (the test relaunches the app with `KS_APPEARANCE=dark` and then returns to the system appearance), so review light and dark for any visual change.
+`testDarkAppearanceCheckpoints` captures `dark-home`, `dark-people`, `dark-insights`, `dark-gift-detail` and `dark-add-gift` (it launches the app with `KS_APPEARANCE=dark`), so review light and dark for any visual change.
 
 For a UI change, extend the native journey to exercise that change; app smoke alone does not establish feature acceptance.
 
