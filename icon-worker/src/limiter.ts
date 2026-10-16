@@ -48,7 +48,7 @@ const PRUNE_INTERVAL_MS = 60 * 60 * 1000;
  * Each check-and-increment runs synchronously, so it is atomic.
  * Raw gift names, install IDs and IP addresses are never stored. Install IDs and IP
  * addresses are counted under HMACs with a random key per UTC day, and each key is
- * deleted after two days, so older counters cannot be linked back to an address.
+ * deleted once the next day ends, along with its counters, so at most about two days later.
  */
 export class IconLimiter extends DurableObject<unknown> {
   private readonly sql: SqlStorage;
@@ -218,10 +218,10 @@ export class IconLimiter extends DurableObject<unknown> {
     );
     this.sql.exec(
       "DELETE FROM counters WHERE scope != 'spend' AND length(bucket) = 10 AND bucket < ?",
-      dayBucket(now - 2 * DAY_MS),
+      dayBucket(now - DAY_MS),
     );
     // Without its key, a counter's hash can no longer be checked against any address.
-    this.sql.exec("DELETE FROM hash_keys WHERE day < ?", dayBucket(now - 2 * DAY_MS));
+    this.sql.exec("DELETE FROM hash_keys WHERE day < ?", dayBucket(now - DAY_MS));
     // Keep this and last month's spend for inspection.
     this.sql.exec("DELETE FROM counters WHERE scope = 'spend' AND substr(bucket, 1, 7) < ?", previousMonth(month));
     // Reservations a crashed request never settled stay charged; just forget them.

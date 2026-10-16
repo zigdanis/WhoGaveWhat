@@ -367,6 +367,29 @@ describe("limiter", () => {
     expect(keys).toBe(2);
   });
 
+  it("keeps check-and-increment atomic for concurrent requests", async () => {
+    const stub = limiter();
+    const results = await Promise.all(
+      Array.from({ length: 10 }, (_, i) =>
+        stub.admit({ cacheKey: `k${i}`, ...client, now: NOW, limits: { ...limits, perIpPerMinute: 3 }, reservationMicros: 10 }),
+      ),
+    );
+    expect(results.filter((result) => result.kind === "go")).toHaveLength(3);
+  });
+
+  it("keeps only today's and yesterday's hash keys and day counters", async () => {
+    const stub = limiter();
+    const day = 86_400_000;
+    await stub.admit({ cacheKey: "k1", ...client, now: NOW, limits, reservationMicros: 10 });
+    await stub.admit({ cacheKey: "k2", ...client, now: NOW + day, limits, reservationMicros: 10 });
+    expect((await rows(stub)).keys).toBe(2);
+    await stub.admit({ cacheKey: "k3", ...client, now: NOW + 2 * day, limits, reservationMicros: 10 });
+    const { counters, keys } = await rows(stub);
+    expect(keys).toBe(2);
+    const days = counters.filter((row) => row.scope.startsWith("install:")).map((row) => row.bucket);
+    expect(days.sort()).toEqual(["2026-10-17", "2026-10-18"]);
+  });
+
   it("prunes expired data on an alarm without further traffic", async () => {
     const stub = limiter();
     // The alarm uses the real clock, so the data is created relative to it.

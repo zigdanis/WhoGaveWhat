@@ -34,7 +34,7 @@ the app holds no secret.
   or API key the Worker fails closed.
   It caches answers for 30 days by a SHA-256 of the normalized name, catalog version,
   model and hint setting. Install IDs and IP addresses are counted under HMACs with a
-  random key per UTC day, and each key is deleted after two days. Raw names, install IDs
+  random key per UTC day; each key and its counters are deleted within about two days. Raw names, install IDs
   and IP addresses are not stored, and logs contain only model, token count and latency.
   Requests prune expired rows, and an hourly alarm does the same while the Worker is idle.
 
