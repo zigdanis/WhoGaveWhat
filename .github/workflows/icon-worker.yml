@@ -1,8 +1,9 @@
 name: Icon Worker deploy
 
 # Deploys the gift icon Worker to Cloudflare and optionally runs the icon evaluation
-# against it. The Jev API key is a Worker secret set in the Cloudflare dashboard; this
-# workflow only needs a Workers-scoped Cloudflare API token and the account ID.
+# against it. It needs a Workers-scoped Cloudflare API token and the account ID. When the
+# JEV_API_KEY repository secret exists, it is copied into the Worker's secrets; the key is
+# never part of the code or the app.
 on:
   workflow_dispatch:
     inputs:
@@ -83,12 +84,29 @@ jobs:
             echo "::error::Deployed to $deployed_url, but the app calls $APP_ENDPOINT. Check CLOUDFLARE_ACCOUNT_ID."
             exit 1
           fi
+      - name: Sync the Jev API key
+        # Only this step sees the key, not the dependency install or the tests.
+        env:
+          JEV_API_KEY: ${{ secrets.JEV_API_KEY }}
+        run: |
+          if [ -z "$JEV_API_KEY" ]; then
+            echo "No JEV_API_KEY repository secret; the Worker keeps its current key."
+            exit 0
+          fi
+          # Drop surrounding whitespace, such as a trailing newline from a piped secret.
+          key="$JEV_API_KEY"
+          key="${key#"${key%%[![:space:]]*}"}"
+          key="${key%"${key##*[![:space:]]}"}"
+          case "$key" in
+            ''|*[[:space:]]*) echo "::error::Set the JEV_API_KEY secret to the key alone."; exit 1 ;;
+          esac
+          printf '%s' "$key" | npx wrangler secret put JEV_API_KEY
       - name: Check the deployed Worker
         run: |
           curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 "$DEPLOYED_URL/health"
           echo
           if ! npx wrangler secret list --format json | grep -q '"JEV_API_KEY"'; then
-            echo "::warning::JEV_API_KEY is not set yet. Add it as a secret on the whogavewhat-icons Worker in the Cloudflare dashboard."
+            echo "::warning::JEV_API_KEY is not set yet. Add it as a repository secret and run this workflow again."
           fi
       - name: Evaluate icons
         if: inputs.run_eval

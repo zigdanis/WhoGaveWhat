@@ -51,8 +51,9 @@ npx vitest run
 
 Run the **Icon Worker deploy** workflow from GitHub Actions. It needs the
 `CLOUDFLARE_API_TOKEN` (Edit Cloudflare Workers template) and `CLOUDFLARE_ACCOUNT_ID`
-repository secrets. After the first deploy, add `JEV_API_KEY` as a secret on the
-`whogavewhat-icons` Worker in the Cloudflare dashboard; later deploys keep it.
+repository secrets. When the `JEV_API_KEY` repository secret exists, each deploy copies it
+into the Worker's secrets with `wrangler secret put`; to rotate the key, update the
+repository secret and run the workflow again.
 
 With `run_eval`, the workflow runs `eval/cases.json` (Russian, English, mixed, typos,
 brands, other languages and vague names) against the deployed Worker. The job summary
