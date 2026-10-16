@@ -466,6 +466,57 @@
         }
       }
     },
+    "Balances for" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Balances for"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Чей баланс"
+          }
+        }
+      }
+    },
+    "No gifts with %@ in %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No gifts with %@ in %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет подарков с %@ в %@ году"
+          }
+        }
+      }
+    },
+    "No gifts of yours in %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No gifts of yours in %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет ваших подарков в %@ году"
+          }
+        }
+      }
+    },
     "Balance with each person" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1087,7 +1138,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Баланс для %@"
+            "value" : "Баланс — %@"
           }
         }
       }

@@ -28,7 +28,7 @@ struct NetBadge: View {
     }
 
     private var tint: Color {
-        appearance.tint
+        net.rounded() == 0 ? Color.fillTrack : appearance.tint
     }
 
     private var appearance: GiftDirectionAppearance {

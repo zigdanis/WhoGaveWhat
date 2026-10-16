@@ -22,7 +22,7 @@ struct InsightsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             YearSummaryCard(
-                summary: useCase.summary(gifts: data.gifts, relativeTo: data.selfPersonID, year: year),
+                summary: useCase.summary(gifts: data.gifts, relativeTo: selfPerson?.id, year: year),
                 hasViewpoint: selfPerson != nil,
                 currencyCode: composition.currencyCode,
                 years: useCase.availableYears(gifts: data.gifts),
@@ -33,7 +33,7 @@ struct InsightsView: View {
         .padding(.horizontal, 16)
         .sheet(item: $picker) { slot in
             InsightsPersonPicker(
-                title: slot == .compareB ? "Person B" : "Person A",
+                title: pickerTitle(for: slot),
                 people: useCase.alphabetical(data.people),
                 selectedID: selectedID(for: slot),
                 onSelect: { id in
@@ -64,7 +64,15 @@ struct InsightsView: View {
     }
 
     private var selfPerson: Person? {
-        person(id: data.selfPersonID)
+        data.selfPerson
+    }
+
+    private func pickerTitle(for slot: InsightsPicker) -> LocalizedStringResource {
+        switch slot {
+        case .subject: "Balances for"
+        case .compareA: "Person A"
+        case .compareB: "Person B"
+        }
     }
 
     /// Whose balances are listed: you, or the person picked as "Person A".
@@ -113,7 +121,7 @@ struct InsightsView: View {
             SectionHeader(text: "Balance with each person")
             if selfPerson == nil {
                 if let subject {
-                    personButton(subject, caption: "Person A", slot: .subject)
+                    personButton(subject, caption: "Balances for", slot: .subject)
                         .accessibilityIdentifier("insights.balances.subject")
                 }
                 Text("Mark yourself in People to see your balance")
@@ -135,7 +143,7 @@ struct InsightsView: View {
             } ?? []
         Card {
             if balances.isEmpty {
-                Text("No gifts in \(String(year))")
+                emptyBalancesText
                     .font(Font.app(15, .regular)).foregroundColor(Color.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(16)
@@ -151,6 +159,13 @@ struct InsightsView: View {
                 }
             }
         }
+    }
+
+    private var emptyBalancesText: Text {
+        guard let subject else { return Text("No gifts in \(String(year))") }
+        return selfPerson == nil
+            ? Text("No gifts with \(subject.name) in \(String(year))")
+            : Text("No gifts of yours in \(String(year))")
     }
 
     // MARK: Comparison
@@ -186,13 +201,17 @@ struct InsightsView: View {
 
     private func comparisonDetails(_ comparison: PersonComparison) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            flowRow(from: comparison.a, to: comparison.b, value: comparison.aToBValue, count: comparison.aToBCount)
-            flowRow(from: comparison.b, to: comparison.a, value: comparison.bToAValue, count: comparison.bToACount)
+            flowRow(
+                from: comparison.a, to: comparison.b, value: comparison.aToBValue, count: comparison.aToBCount,
+                color: Color.given)
+            flowRow(
+                from: comparison.b, to: comparison.a, value: comparison.bToAValue, count: comparison.bToACount,
+                color: Color.received)
             PairBar(
                 first: comparison.aToBValue,
                 second: comparison.bToAValue,
-                firstColor: comparison.a.color,
-                secondColor: comparison.b.color)
+                firstColor: Color.given,
+                secondColor: Color.received)
             RowDivider()
             HStack {
                 Text("Net for \(comparison.a.name)")
@@ -203,9 +222,10 @@ struct InsightsView: View {
         }
     }
 
-    private func flowRow(from giver: Person, to recipient: Person, value: Double, count: Int) -> some View {
+    /// `color` is the direction as seen by Person A, shared with the bar: given by A, then received by A.
+    private func flowRow(from giver: Person, to recipient: Person, value: Double, count: Int, color: Color) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Circle().fill(giver.color).frame(width: 10, height: 10)
+            Circle().fill(color).frame(width: 10, height: 10)
             Text(verbatim: "\(giver.name) → \(recipient.name)")
                 .font(Font.app(15, .regular)).foregroundColor(Color.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)

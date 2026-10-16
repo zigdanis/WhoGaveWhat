@@ -109,9 +109,9 @@ struct HomeView: View {
                 YearSummaryCard(
                     summary: composition.buildInsights.summary(
                         gifts: composition.data.gifts,
-                        relativeTo: composition.data.selfPersonID,
+                        relativeTo: composition.data.selfPerson?.id,
                         year: year),
-                    hasViewpoint: composition.data.selfPersonID != nil,
+                    hasViewpoint: composition.data.selfPerson != nil,
                     currencyCode: composition.currencyCode,
                     years: composition.buildInsights.availableYears(gifts: composition.data.gifts),
                     selectedYear: yearBinding,
@@ -159,7 +159,7 @@ struct HomeView: View {
         composition.buildTimeline.execute(
             gifts: composition.buildInsights.gifts(composition.data.gifts, in: year),
             filter: "all",
-            relativeTo: composition.data.selfPersonID,
+            relativeTo: composition.data.selfPerson?.id,
             displayYear: year)
     }
 }

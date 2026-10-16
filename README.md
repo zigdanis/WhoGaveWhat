@@ -29,7 +29,7 @@ xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
   to SwiftData and updates the timeline.
 - **People** — one flat alphabetical list of equal people with running totals. Optionally mark one person as "This is me" (shown with a You badge) to set your viewpoint.
 - **Person detail** — per-person stats, by-occasion chart, full history.
-- **Insights** — the same year menu and summary, then **Balance with each person**: for the person marked as you, one row per person you exchanged gifts with (received, given and a signed net, largest absolute net first; tap to open them). Without a viewpoint a "Person A" picker chooses whose balances to list. **Compare two people** takes any two people through modal pickers and shows both directions' totals and counts, the net from A's side and a two-segment bar. Calculations live in `BuildInsightsUseCase`.
+- **Insights** — the same year menu and summary, then **Balance with each person**: for the person marked as you, one row per person you exchanged gifts with (received, given and a signed net, largest absolute net first; tap to open them). Without a viewpoint a "Balances for" picker chooses whose balances to list. **Compare two people** takes any two people through modal pickers and shows both directions' totals and counts, the net from A's side and a two-segment bar. Calculations live in `BuildInsightsUseCase`.
 
 ## Design system
 

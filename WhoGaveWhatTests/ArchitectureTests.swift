@@ -27,6 +27,7 @@ struct SeededDataTests {
         #expect(summary.net == 7_400)
         #expect(summary.circulatedValue == 31_100)
         #expect(summary.giftCount == 12)
+        #expect(composition.data.selfPerson?.id == "anton")
         #expect([Gift]().totalValue == 0)
     }
 
