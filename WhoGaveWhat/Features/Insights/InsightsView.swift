@@ -1,166 +1,339 @@
 import SwiftUI
 
+/// Which person a picker sheet is choosing.
+private enum InsightsPicker: Identifiable {
+    case subject
+    case compareA
+    case compareB
+
+    var id: Self { self }
+}
+
+/// Year summary, the balance with each person, and a two-person comparison.
 struct InsightsView: View {
     let composition: AppComposition
+    @State private var selectedYear: Int?
+    /// Person whose balances are listed when no one is marked as "You".
+    @State private var subjectID: String?
+    @State private var compareAID: String?
+    @State private var compareBID: String?
+    @State private var picker: InsightsPicker?
 
     var body: some View {
-        let insights = composition.buildInsights.execute(
-            gifts: composition.data.gifts,
-            people: composition.data.people,
-            selfPersonID: composition.data.selfPersonID
-        )
-        let hasViewpoint = composition.data.selfPersonID != nil
-        let rv = insights.receivedValue
-        let gv = insights.givenValue
-        let tot = max(rv + gv, 1)
-
-        VStack(alignment: .leading, spacing: 0) {
-            // Circulated total — shown openly (per-person amounts below are the
-            // ones hidden behind spoilers instead).
-            Card {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("Circulated in 2026")
-                        .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
-                    Text(formattedCurrency(insights.circulatedValue, code: composition.currencyCode))
-                        .font(Font.app(32, .bold, rounded: true)).tracking(-0.6).foregroundColor(Color.textPrimary)
-                        .padding(.top, 7)
-
-                    Text(verbatim: "\(LocalizedCount.gifts(composition.data.gifts.count)) · \(LocalizedCount.people(composition.data.people.count))")
-                        .font(Font.app(14, .regular)).foregroundColor(Color.textSecondary).padding(.top, 4)
-
-                    if hasViewpoint {
-                        // Stacked received/given bar
-                        GeometryReader { geo in
-                            HStack(spacing: 0) {
-                                Rectangle().fill(Color.received).frame(width: geo.size.width * CGFloat(rv / tot))
-                                Rectangle().fill(Color.given).frame(width: geo.size.width * CGFloat(gv / tot))
-                            }
-                        }
-                        .frame(height: 13)
-                        .background(Color.fillTrack)
-                        .clipShape(Capsule())
-                        .padding(.top, 18)
-
-                        HStack(spacing: 18) {
-                            legend(color: Color.received, label: "Received", value: formattedCurrency(rv, code: composition.currencyCode))
-                            legend(color: Color.given, label: "Given", value: formattedCurrency(gv, code: composition.currencyCode))
-                        }
-                        .padding(.top, 12)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(20)
-            }
-
-            if hasViewpoint {
-                spotlightCard(received: rv, given: gv)
-                    .padding(.top, 14)
-
-                // Top givers
-                SectionHeader(text: "Top givers").padding(.top, 22).padding(.bottom, 7)
-                rankCard(insights.topGivers)
-
-                // Top receivers
-                SectionHeader(text: "Top receivers").padding(.top, 22).padding(.bottom, 7)
-                rankCard(insights.topReceivers)
-            } else {
-                viewpointPrompt.padding(.top, 14)
-            }
+        VStack(alignment: .leading, spacing: 24) {
+            YearSummaryCard(
+                summary: useCase.summary(gifts: data.gifts, relativeTo: selfPerson?.id, year: year),
+                hasViewpoint: selfPerson != nil,
+                currencyCode: composition.currencyCode,
+                years: useCase.availableYears(gifts: data.gifts),
+                selectedYear: yearBinding)
+            balancesSection
+            compareSection
         }
         .padding(.horizontal, 16)
-    }
-
-    private var viewpointPrompt: some View {
-        Card {
-            Text("Mark yourself in People to see your balance")
-                .font(Font.app(15, .regular)).foregroundColor(Color.textSecondary)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(20)
+        .sheet(item: $picker) { slot in
+            InsightsPersonPicker(
+                title: pickerTitle(for: slot),
+                people: useCase.alphabetical(data.people),
+                selectedID: selectedID(for: slot),
+                onSelect: { id in
+                    select(id, for: slot)
+                    picker = nil
+                })
         }
     }
 
-    private func spotlightCard(received: Double, given: Double) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if received > given {
-                Text("Received gifts lead")
-                    .font(Font.app(13, .semibold)).foregroundColor(Color.onFill)
-                Text("Received total \(formattedCurrency(received, code: composition.currencyCode))")
-                    .font(Font.app(24, .bold, rounded: true)).tracking(-0.4).foregroundColor(Color.onFill).padding(.top, 10)
-                Text("\(formattedCurrency(received - given, code: composition.currencyCode)) more is recorded as received than given.")
-                    .font(Font.app(15, .regular)).foregroundColor(Color.onFill).padding(.top, 4)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                Text("Given gifts lead")
-                    .font(Font.app(13, .semibold)).foregroundColor(Color.onFill)
-                Text("Given total \(formattedCurrency(given, code: composition.currencyCode))")
-                    .font(Font.app(24, .bold, rounded: true)).tracking(-0.4).foregroundColor(Color.onFill).padding(.top, 10)
-                Text("\(formattedCurrency(given - received, code: composition.currencyCode)) more is recorded as given than received.")
-                    .font(Font.app(15, .regular)).foregroundColor(Color.onFill).padding(.top, 4)
-                    .fixedSize(horizontal: false, vertical: true)
+    // MARK: State
+
+    private var data: AppData { composition.data }
+    private var useCase: BuildInsightsUseCase { composition.buildInsights }
+
+    private var year: Int {
+        useCase.resolvedYear(selected: selectedYear, gifts: data.gifts)
+    }
+
+    private var yearBinding: Binding<Int> {
+        Binding(
+            get: { year },
+            set: { selectedYear = $0 })
+    }
+
+    private func person(id: String?) -> Person? {
+        guard let id else { return nil }
+        return data.people.first { $0.id == id }
+    }
+
+    private var selfPerson: Person? {
+        data.selfPerson
+    }
+
+    private func pickerTitle(for slot: InsightsPicker) -> LocalizedStringResource {
+        switch slot {
+        case .subject: "Balances for"
+        case .compareA: "Person A"
+        case .compareB: "Person B"
+        }
+    }
+
+    /// Whose balances are listed: you, or the person picked as "Person A".
+    private var subject: Person? {
+        selfPerson ?? person(id: subjectID) ?? useCase.focusPerson(people: data.people, selfPersonID: nil)
+    }
+
+    private var compareA: Person? {
+        person(id: compareAID) ?? useCase.focusPerson(people: data.people, selfPersonID: data.selfPersonID)
+    }
+
+    private var compareB: Person? {
+        guard let compareA else { return nil }
+        if let explicit = person(id: compareBID), explicit.id != compareA.id { return explicit }
+        return useCase.defaultCounterpart(gifts: data.gifts, people: data.people, for: compareA, year: year)
+    }
+
+    private func selectedID(for slot: InsightsPicker) -> String? {
+        switch slot {
+        case .subject: subject?.id
+        case .compareA: compareA?.id
+        case .compareB: compareB?.id
+        }
+    }
+
+    /// Choosing the person already on the other side swaps the two.
+    private func select(_ id: String, for slot: InsightsPicker) {
+        switch slot {
+        case .subject:
+            subjectID = id
+        case .compareA:
+            let previous = compareA?.id
+            if id == compareB?.id { compareBID = previous }
+            compareAID = id
+        case .compareB:
+            let previous = compareB?.id
+            if id == compareA?.id { compareAID = previous }
+            compareBID = id
+        }
+    }
+
+    // MARK: Balances
+
+    private var balancesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionHeader(text: "Balance with each person")
+            if selfPerson == nil {
+                if let subject {
+                    personButton(subject, caption: "Balances for", slot: .subject)
+                        .accessibilityIdentifier("insights.balances.subject")
+                }
+                Text("Mark yourself in People to see your balance")
+                    .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
+                    .padding(.horizontal, 4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
+            balancesCard
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: DesignMetrics.radiusLarge, style: .continuous).fill(Color.brandFill))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("insights.balances")
     }
 
     @ViewBuilder
-    private func rankCard(_ rankings: [RankedPerson]) -> some View {
+    private var balancesCard: some View {
+        let balances =
+            subject.map {
+                useCase.balances(gifts: data.gifts, people: data.people, relativeTo: $0.id, year: year)
+            } ?? []
         Card {
-            VStack(spacing: 0) {
-                let maxV = rankings.first?.value ?? 1
-                ForEach(Array(rankings.enumerated()), id: \.element.id) { idx, item in
-                    NavigationLink(value: item.person.id) {
-                        RankRow(
-                            person: item.person,
-                            value: item.value,
-                            count: item.count,
-                            maxValue: maxV,
-                            currencyCode: composition.currencyCode
-                        )
+            if balances.isEmpty {
+                emptyBalancesText
+                    .font(Font.app(15, .regular)).foregroundColor(Color.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(balances) { balance in
+                        NavigationLink(value: balance.person.id) {
+                            BalanceRow(balance: balance, currencyCode: composition.currencyCode)
+                        }
+                        .buttonStyle(.plain)
+                        if balance.id != balances.last?.id { RowDivider().padding(.leading, 14) }
                     }
-                    .buttonStyle(.plain)
-                    if idx < rankings.count - 1 { RowDivider().padding(.leading, 14) }
                 }
             }
         }
     }
 
-    private func legend(color: Color, label: String, value: String) -> some View {
-        HStack(spacing: 7) {
-            RoundedRectangle(cornerRadius: 3).fill(color).frame(width: 10, height: 10)
-            Text(LocalizedStringKey(label)).font(Font.app(13, .semibold)).foregroundColor(Color.textPrimary)
-            Text(value).font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
+    private var emptyBalancesText: Text {
+        guard let subject else { return Text("No gifts in \(String(year))") }
+        return selfPerson == nil
+            ? Text("No gifts with \(subject.name) in \(String(year))")
+            : Text("No gifts of yours in \(String(year))")
+    }
+
+    // MARK: Comparison
+
+    private var compareSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionHeader(text: "Compare two people")
+            Card {
+                VStack(alignment: .leading, spacing: 16) {
+                    if let a = compareA, let b = compareB {
+                        HStack(spacing: 8) {
+                            personButton(a, caption: "Person A", slot: .compareA)
+                                .accessibilityIdentifier("insights.compare.a")
+                            Image(systemName: "arrow.left.arrow.right")
+                                .font(.system(size: 14, weight: .semibold)).foregroundColor(Color.textTertiary)
+                                .accessibilityHidden(true)
+                            personButton(b, caption: "Person B", slot: .compareB)
+                                .accessibilityIdentifier("insights.compare.b")
+                        }
+                        comparisonDetails(useCase.comparison(gifts: data.gifts, a: a, b: b, year: year))
+                    } else {
+                        Text("Add two people to compare them")
+                            .font(Font.app(15, .regular)).foregroundColor(Color.textSecondary)
+                    }
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("insights.compare")
+    }
+
+    private func comparisonDetails(_ comparison: PersonComparison) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            flowRow(
+                from: comparison.a, to: comparison.b, value: comparison.aToBValue, count: comparison.aToBCount,
+                color: Color.given)
+            flowRow(
+                from: comparison.b, to: comparison.a, value: comparison.bToAValue, count: comparison.bToACount,
+                color: Color.received)
+            PairBar(
+                first: comparison.aToBValue,
+                second: comparison.bToAValue,
+                firstColor: Color.given,
+                secondColor: Color.received)
+            RowDivider()
+            HStack {
+                Text("Net for \(comparison.a.name)")
+                    .font(Font.app(15, .semibold)).foregroundColor(Color.textPrimary)
+                Spacer(minLength: 8)
+                NetBadge(net: comparison.net, currencyCode: composition.currencyCode)
+            }
         }
     }
 
+    /// `color` is the direction as seen by Person A, shared with the bar: given by A, then received by A.
+    private func flowRow(from giver: Person, to recipient: Person, value: Double, count: Int, color: Color) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Circle().fill(color).frame(width: 10, height: 10)
+            Text(verbatim: "\(giver.name) → \(recipient.name)")
+                .font(Font.app(15, .regular)).foregroundColor(Color.textPrimary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(formattedCurrency(value, code: composition.currencyCode))
+                    .font(Font.app(15, .semibold, rounded: true)).foregroundColor(Color.textPrimary)
+                Text(verbatim: LocalizedCount.gifts(count))
+                    .font(Font.app(12, .regular)).foregroundColor(Color.textSecondary)
+            }
+            .fixedSize(horizontal: true, vertical: false)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func personButton(_ person: Person, caption: LocalizedStringKey, slot: InsightsPicker) -> some View {
+        Button {
+            picker = slot
+        } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(caption)
+                    .font(Font.app(12, .regular)).foregroundColor(Color.textSecondary)
+                HStack(spacing: 8) {
+                    AvatarView(
+                        initials: person.name.initials, color: person.color, size: .compact, imageData: person.imageData)
+                    Text(person.name)
+                        .font(Font.app(15, .semibold)).foregroundColor(Color.textPrimary)
+                        .lineLimit(2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 11, weight: .semibold)).foregroundColor(Color.textTertiary)
+                }
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                Color.fillTrack,
+                in: RoundedRectangle(cornerRadius: DesignMetrics.radiusMedium, style: .continuous)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
 }
 
-private struct RankRow: View {
-    let person: Person
-    let value: Double
-    let count: Int
-    let maxValue: Double
+private struct BalanceRow: View {
+    let balance: PersonBalance
     let currencyCode: String
 
     var body: some View {
         HStack(spacing: 12) {
-            AvatarView(initials: person.name.initials, color: person.color, size: .compact, imageData: person.imageData)
-            VStack(alignment: .leading, spacing: 9) {
-                HStack(alignment: .firstTextBaseline, spacing: 5) {
-                    Text(person.name).font(Font.app(15, .semibold)).foregroundColor(Color.textPrimary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(verbatim: "\(LocalizedCount.gifts(count)) · \(formattedCurrency(value, code: currencyCode))")
-                        .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
-                        .multilineTextAlignment(.trailing)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .layoutPriority(1)
-                }
-                BarView(pct: value / maxValue * 100, color: person.color, height: 7)
+            AvatarView(
+                initials: balance.person.name.initials, color: balance.person.color, size: .compact,
+                imageData: balance.person.imageData)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(balance.person.name)
+                    .font(Font.app(16, .semibold)).foregroundColor(Color.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(
+                    "Received \(formattedCurrency(balance.receivedValue, code: currencyCode)) · Given \(formattedCurrency(balance.givenValue, code: currencyCode))"
+                )
+                .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            NetBadge(net: balance.net, currencyCode: currencyCode)
         }
-        .padding(.horizontal, 14).padding(.vertical, 13)
+        .padding(.horizontal, 14).padding(.vertical, 12)
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Modal list for choosing one person, in the style of the Add gift pickers.
+private struct InsightsPersonPicker: View {
+    let title: LocalizedStringResource
+    let people: [Person]
+    let selectedID: String?
+    let onSelect: (String) -> Void
+
+    var body: some View {
+        IntrinsicModalScaffold(title: title) {
+            ScrollView {
+                Card {
+                    VStack(spacing: 0) {
+                        ForEach(people) { person in
+                            let isSelected = person.id == selectedID
+                            Button {
+                                onSelect(person.id)
+                            } label: {
+                                PersonPickerRow(
+                                    name: person.name,
+                                    color: person.color,
+                                    imageData: person.imageData,
+                                    isSelected: isSelected)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("insights.picker.person.\(person.id)")
+                            .accessibilityAddTraits(isSelected ? .isSelected : [])
+                            if person.id != people.last?.id { RowDivider().padding(.leading, 14) }
+                        }
+                    }
+                }
+                .padding(16)
+            }
+            .scrollIndicators(.hidden)
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .presentationBackground(Color.appBackground)
     }
 }

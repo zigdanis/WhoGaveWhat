@@ -14,35 +14,42 @@ struct SeededDataTests {
         #expect(!composition.data.isSelf("marina"))
     }
 
-    @Test func insightsSplitAndSumGifts() throws {
+    @Test func yearSummarySplitsAndSumsTheSeededYear() throws {
         let composition = try makeTestComposition()
-        let insights = composition.buildInsights.execute(
-            gifts: composition.data.gifts,
-            people: composition.data.people,
-            selfPersonID: composition.data.selfPersonID
-        )
-        #expect(insights.received.count == 3)
-        #expect(insights.given.count == 3)
-        #expect(insights.receivedValue == 13_200)
-        #expect(insights.givenValue == 5_800)
-        #expect(insights.circulatedValue == 31_100)
-        #expect(insights.topGivers.first?.person.id == "pavel")
-        #expect(insights.topReceivers.first?.person.id == "dmitri")
+        let useCase = composition.buildInsights
+        let year = try #require(useCase.availableYears(gifts: composition.data.gifts).first)
+        let summary = useCase.summary(gifts: composition.data.gifts, relativeTo: composition.data.selfPersonID, year: year)
+        #expect(summary.year == year)
+        #expect(summary.receivedCount == 3)
+        #expect(summary.givenCount == 3)
+        #expect(summary.receivedValue == 13_200)
+        #expect(summary.givenValue == 5_800)
+        #expect(summary.net == 7_400)
+        #expect(summary.circulatedValue == 31_100)
+        #expect(summary.giftCount == 12)
+        #expect(composition.data.selfPerson?.id == "anton")
         #expect([Gift]().totalValue == 0)
     }
 
-    @Test func insightsWithoutViewpointHaveNoBalance() throws {
+    @Test func yearSummaryWithoutViewpointHasNoBalance() throws {
         let composition = try makeTestComposition(selfPersonID: nil)
-        let insights = composition.buildInsights.execute(
-            gifts: composition.data.gifts,
-            people: composition.data.people,
-            selfPersonID: composition.data.selfPersonID
-        )
-        #expect(insights.received.isEmpty)
-        #expect(insights.given.isEmpty)
-        #expect(insights.topGivers.isEmpty)
-        #expect(insights.topReceivers.isEmpty)
-        #expect(insights.circulatedValue == 31_100)
+        let useCase = composition.buildInsights
+        let year = try #require(useCase.availableYears(gifts: composition.data.gifts).first)
+        let summary = useCase.summary(gifts: composition.data.gifts, relativeTo: composition.data.selfPersonID, year: year)
+        #expect(summary.receivedCount == 0)
+        #expect(summary.givenCount == 0)
+        #expect(summary.net == 0)
+        #expect(summary.circulatedValue == 31_100)
+    }
+
+    @Test func balancesRankTheSeededCounterpartsByAbsoluteNet() throws {
+        let composition = try makeTestComposition()
+        let useCase = composition.buildInsights
+        let balances = useCase.balances(
+            gifts: composition.data.gifts, people: composition.data.people, relativeTo: "anton", year: nil)
+        #expect(balances.first?.person.id == "pavel")
+        #expect(balances.first?.net == 9_500)
+        #expect(balances.map(\.person.id).contains("anton") == false)
     }
 }
 
@@ -100,6 +107,26 @@ struct GiftViewpointTests {
         #expect(ids("received", nil).isEmpty)
     }
 
+    @Test func timelineSectionsCarryTheirMonthTotal() {
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: Date()) - 3
+        func gift(_ id: String, month: Int, value: Double) -> Gift {
+            var result = makeGift(id: id, giverID: "maria", recipientID: "igor")
+            result.date = calendar.date(from: DateComponents(year: year, month: month, day: 10, hour: 12))!
+            result.value = value
+            return result
+        }
+        let sections = BuildGiftTimelineUseCase().execute(
+            gifts: [gift("a", month: 3, value: 10), gift("b", month: 3, value: 5), gift("c", month: 4, value: 7)],
+            filter: "all",
+            relativeTo: nil,
+            displayYear: year,
+            locale: Locale(identifier: "en_US")
+        )
+        #expect(sections.map(\.label) == ["April", "March"])
+        #expect(sections.map(\.total) == [7, 15])
+    }
+
     private func makeGift(id: String = "g", giverID: String, recipientID: String) -> Gift {
         Gift(
             id: id, emoji: "🎁", name: id, giverID: giverID, recipientID: recipientID,
@@ -129,6 +156,28 @@ struct SelfPersonTests {
         #expect(composition.data.selfPersonID == "igor")
         composition.markSelf(false, personID: "igor")
         #expect(composition.data.selfPersonID == nil)
+        #expect(preferences.selfPersonID == nil)
+    }
+
+    @Test func resetSelfLaunchFlagClearsOnlyWhenSet() throws {
+        let preferences = TestPreferencesGateway()
+        preferences.selfPersonID = "anton"
+        let kept = AppComposition(
+            store: try SwiftDataStore(inMemory: true, seed: true),
+            preferences: preferences,
+            intelligence: TestIntelligenceGateway(),
+            launchEnvironment: [:]
+        )
+        #expect(kept.data.selfPersonID == "anton")
+        #expect(preferences.selfPersonID == "anton")
+
+        let reset = AppComposition(
+            store: try SwiftDataStore(inMemory: true, seed: true),
+            preferences: preferences,
+            intelligence: TestIntelligenceGateway(),
+            launchEnvironment: ["KS_RESET_SELF": "1"]
+        )
+        #expect(reset.data.selfPersonID == nil)
         #expect(preferences.selfPersonID == nil)
     }
 

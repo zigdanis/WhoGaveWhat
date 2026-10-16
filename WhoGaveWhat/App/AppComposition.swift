@@ -35,7 +35,8 @@ final class AppComposition {
     init(
         store: SwiftDataStore,
         preferences: PreferencesGateway,
-        intelligence: GiftIntelligenceGateway
+        intelligence: GiftIntelligenceGateway,
+        launchEnvironment: [String: String] = ProcessInfo.processInfo.environment
     ) {
         let giftGateway = SwiftDataGiftGateway(context: store.context)
         let peopleGateway = SwiftDataPeopleGateway(context: store.context)
@@ -59,6 +60,10 @@ final class AppComposition {
         deletePersonUseCase = DeletePersonUseCase(peopleGateway: peopleGateway)
         completeOnboarding = CompleteOnboardingUseCase(preferencesGateway: preferences)
 
+        // Verification launches can start without a viewpoint left over from an earlier run.
+        if launchEnvironment["KS_RESET_SELF"] == "1" {
+            preferences.setSelfPersonID(nil)
+        }
         data.setSelfPerson(preferences.selfPersonID)
         reloadData()
     }
@@ -117,7 +122,11 @@ final class AppComposition {
     }
 
     func deletePerson(id: String) {
-        try? deletePersonUseCase.execute(id: id)
+        let deleted = (try? deletePersonUseCase.execute(id: id)) != nil
+        // Clear the viewpoint before reloading so a failing reload cannot leave it pointing at a deleted person.
+        if deleted, data.isSelf(id) {
+            setSelfPerson(nil)
+        }
         reloadData()
     }
 

@@ -45,6 +45,12 @@ final class AppData {
         PeopleSnapshot(people: people)
     }
 
+    /// The viewpoint person when one is set and still exists.
+    var selfPerson: Person? {
+        guard let selfPersonID else { return nil }
+        return people.first { $0.id == selfPersonID }
+    }
+
     func isSelf(_ id: String) -> Bool {
         selfPersonID == id
     }

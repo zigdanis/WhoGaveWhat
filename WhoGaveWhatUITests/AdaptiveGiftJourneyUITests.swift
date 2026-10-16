@@ -15,6 +15,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app = XCUIApplication()
         app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launchEnvironment["KS_START"] = "app"
+        // The store survives between tests; never inherit a viewpoint from an earlier journey.
+        app.launchEnvironment["KS_RESET_SELF"] = "1"
         app.launch()
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: timeout))
     }
@@ -49,6 +51,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts[secondGiftName].waitForExistence(timeout: timeout))
         verifySettings()
         assertTabs()
+        verifyHomeSummaryAndInsights()
     }
 
     func testAddGiftSheetSizesCompactAndExpandedContent() throws {
@@ -390,6 +393,49 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertLessThanOrEqual(delete.frame.maxY, visibleKeyboardTop(keyboard))
         attach("person-editor-header-accessibility-keyboard")
         app.buttons["person-editor.cancel"].tap()
+    }
+
+    /// Home summary without a viewpoint, then Insights balances and comparison once the giver is "You".
+    private func verifyHomeSummaryAndInsights() {
+        app.tabBars.buttons["Home"].tap()
+        let summary = app.descendants(matching: .any)["year-summary"]
+        XCTAssertTrue(summary.waitForExistence(timeout: timeout))
+        let markSelf = app.buttons["year-summary.mark-self"]
+        XCTAssertTrue(markSelf.waitForExistence(timeout: timeout))
+        attach("home-summary")
+
+        // The hint opens People, where the giver becomes the viewpoint.
+        markSelf.tap()
+        XCTAssertTrue(app.navigationBars["People"].waitForExistence(timeout: timeout))
+        let giverRow = app.staticTexts[giverName]
+        XCTAssertTrue(giverRow.waitForExistence(timeout: timeout))
+        giverRow.tap()
+        let meSwitch = app.switches["person-detail.is-me"]
+        XCTAssertTrue(meSwitch.waitForExistence(timeout: timeout))
+        meSwitch.coordinate(withNormalizedOffset: CGVector(dx: 0.87, dy: 0.5)).tap()
+        expectation(for: NSPredicate(format: "value == %@", "1"), evaluatedWith: meSwitch)
+        waitForExpectations(timeout: timeout)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        app.tabBars.buttons["Home"].tap()
+        waitForDisappearance(markSelf)
+
+        app.tabBars.buttons["Insights"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["insights.balances"].waitForExistence(timeout: timeout))
+        let recipientRow = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", recipientName)).firstMatch
+        XCTAssertTrue(recipientRow.waitForExistence(timeout: timeout))
+        attach("insights-balances")
+
+        app.swipeUp()
+        XCTAssertTrue(app.descendants(matching: .any)["insights.compare"].waitForExistence(timeout: timeout))
+        let personA = app.buttons["insights.compare.a"]
+        let personB = app.buttons["insights.compare.b"]
+        XCTAssertTrue(personA.waitForExistence(timeout: timeout))
+        XCTAssertTrue(personB.waitForExistence(timeout: timeout))
+        XCTAssertTrue(personA.label.contains(giverName), "Person A defaults to You")
+        XCTAssertTrue(personB.label.contains(recipientName), "Person B defaults to the top counterpart")
+        attach("insights-compare")
     }
 
     private func assertTabs() {

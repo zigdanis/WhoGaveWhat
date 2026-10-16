@@ -67,6 +67,18 @@ func formattedCurrency(
     )
 }
 
+/// Amount with an explicit sign: "+" and the typographic minus for non-zero values, plain at zero.
+func formattedSignedCurrency(
+    _ value: Double,
+    code: String,
+    locale: Locale = .autoupdatingCurrent
+) -> String {
+    let magnitude = formattedCurrency(abs(value), code: code, locale: locale)
+    if value.rounded() > 0 { return "+\(magnitude)" }
+    if value.rounded() < 0 { return "\u{2212}\(magnitude)" }
+    return magnitude
+}
+
 private enum CurrencySymbolCache {
     static let values = NSCache<NSString, NSString>()
 }

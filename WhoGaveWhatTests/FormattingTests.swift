@@ -42,4 +42,13 @@ struct FormattingTests {
         #expect(formattedCurrency(1_234, code: "USD", locale: locale) == "$1,234")
         #expect(currencySymbol(code: "EUR", locale: locale) == "€")
     }
+
+    @Test func signedCurrencyShowsThePlusAndTypographicMinus() {
+        let locale = Locale(identifier: "en_US")
+
+        #expect(formattedSignedCurrency(40, code: "USD", locale: locale) == "+$40")
+        #expect(formattedSignedCurrency(-40, code: "USD", locale: locale) == "\u{2212}$40")
+        #expect(formattedSignedCurrency(0, code: "USD", locale: locale) == "$0")
+        #expect(formattedSignedCurrency(0.4, code: "USD", locale: locale) == "$0")
+    }
 }
