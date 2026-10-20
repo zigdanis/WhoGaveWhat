@@ -2,23 +2,16 @@ import SwiftUI
 
 /// Home timeline as a native `List` — so swipe-to-delete and tap-to-open are the
 /// system's own gestures (smooth, reliable) rather than a hand-rolled drag.
-/// A title and the year summary sit above the month sections.
+/// Shows the full timeline across all years, grouped by month; past years carry
+/// their year in month headers and dates. The year summary lives in Insights.
 struct HomeView: View {
     let composition: AppComposition
     /// Gift awaiting delete confirmation (set by the swipe action).
     @State private var pendingDelete: Gift?
-    /// Year chosen in the menu; nil follows the default (current year, else the latest with gifts).
-    @State private var selectedYear: Int?
 
     var body: some View {
-        let year = displayedYear
+        let year = currentYear
         List {
-            Section {
-                header(year: year)
-                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-            }
             if composition.data.gifts.isEmpty {
                 Section {
                     emptyState
@@ -27,7 +20,7 @@ struct HomeView: View {
                         .listRowSeparator(.hidden)
                 }
             } else {
-                ForEach(timeline(year: year)) { group in
+                ForEach(timeline) { group in
                     Section {
                         ForEach(group.gifts) { gift in
                             NavigationLink(value: gift) {
@@ -58,16 +51,6 @@ struct HomeView: View {
         .scrollEdgeEffectStyle(.soft, for: .bottom)
         .background(Color.appBackground)
         .floatingAddButton(composition: composition)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    composition.router.presentSettings()
-                } label: {
-                    Image(systemName: "gearshape.fill")
-                }
-                .accessibilityLabel("Settings")
-            }
-        }
         .confirmationDialog(
             "Delete this gift?",
             isPresented: deleteConfirmBinding,
@@ -89,35 +72,9 @@ struct HomeView: View {
             set: { if !$0 { pendingDelete = nil } })
     }
 
-    private var displayedYear: Int {
-        composition.buildInsights.resolvedYear(selected: selectedYear, gifts: composition.data.gifts)
-    }
-
-    private var yearBinding: Binding<Int> {
-        Binding(
-            get: { displayedYear },
-            set: { selectedYear = $0 })
-    }
-
-    private func header(year: Int) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Who gave what")
-                .font(Font.app(28, .bold)).foregroundColor(Color.textPrimary)
-                .accessibilityAddTraits(.isHeader)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            if !composition.data.gifts.isEmpty {
-                YearSummaryCard(
-                    summary: composition.buildInsights.summary(
-                        gifts: composition.data.gifts,
-                        relativeTo: composition.data.selfPerson?.id,
-                        year: year),
-                    hasViewpoint: composition.data.selfPerson != nil,
-                    currencyCode: composition.currencyCode,
-                    years: composition.buildInsights.availableYears(gifts: composition.data.gifts),
-                    selectedYear: yearBinding,
-                    onMarkSelf: { composition.router.selectTab(.people) })
-            }
-        }
+    /// Months and dates omit the year only for the current calendar year.
+    private var currentYear: Int {
+        Calendar.current.component(.year, from: Date())
     }
 
     /// Month name with that month's total.
@@ -155,11 +112,11 @@ struct HomeView: View {
         }
     }
 
-    private func timeline(year: Int) -> [GiftTimelineSection] {
+    private var timeline: [GiftTimelineSection] {
         composition.buildTimeline.execute(
-            gifts: composition.buildInsights.gifts(composition.data.gifts, in: year),
+            gifts: composition.data.gifts,
             filter: "all",
             relativeTo: composition.data.selfPerson?.id,
-            displayYear: year)
+            displayYear: currentYear)
     }
 }
