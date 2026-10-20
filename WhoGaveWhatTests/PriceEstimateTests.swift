@@ -252,6 +252,31 @@ struct PriceEstimateStateTests {
         #expect(state.aiLoading == false)
     }
 
+    @Test func typingAValueAfterPickingAnEmojiCancelsThePendingRequest() async throws {
+        let gateway = ScriptedIntelligenceGateway()
+        gateway.results["гитара"] = guitar()
+        let composition = try makeTestComposition()
+        let preferences = TestPreferencesGateway()
+        preferences.setCurrencyCode("RUB")
+        let state = AddGiftState(
+            route: .create,
+            data: composition.data,
+            suggestGift: SuggestGiftUseCase(intelligenceGateway: gateway),
+            preferences: preferences,
+            debounce: .seconds(5)
+        )
+        state.setName("гитара")
+        state.selectEmoji("🎻")
+        let task = try #require(state.suggestionTask)
+
+        state.valueText = "3000"
+        await task.value
+
+        #expect(state.suggestionTask == nil)
+        #expect(gateway.requests.isEmpty)
+        #expect(state.effectiveValue == 3_000)
+    }
+
     @Test func aHandPickedEmojiAndATypedValueNeedNoRequest() async throws {
         let gateway = ScriptedIntelligenceGateway()
         gateway.results["гитара"] = guitar()

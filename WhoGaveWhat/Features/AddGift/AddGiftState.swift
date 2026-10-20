@@ -115,6 +115,12 @@ final class AddGiftState {
             let digits = newValue.filter(\.isNumber)
             draft.value = digits.isEmpty ? nil : Int(digits)
             draft.valueTouched = true
+            // With a hand-picked emoji too, nothing an answer brings could still be used.
+            if draft.emoji != nil {
+                suggestionTask?.cancel()
+                suggestionTask = nil
+                aiLoading = false
+            }
         }
     }
 

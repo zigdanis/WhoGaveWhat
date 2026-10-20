@@ -487,6 +487,12 @@ describe("explicit amounts", () => {
     ["10 000 000", 10_000_000],
     // "к" before more letters is a unit, not the thousands multiplier.
     ["5 кг", 5],
+    // A year-like number counts only with a currency mark; round amounts are never years.
+    ["Деньги 1897р", 1_897],
+    ["$2026", 2_026],
+    ["1950 рублей", 1_950],
+    ["Деньги 2000", 2_000],
+    ["сертификат на 1500", 1_500],
   ])("reads %j as %i", (name, amount) => {
     expect(explicitAmount(name)).toBe(amount);
   });
@@ -500,6 +506,9 @@ describe("explicit amounts", () => {
     ["0", "zero"],
     ["0к", "zero"],
     ["2.5", "not a whole amount"],
+    ["золотая монета 1897", "a year"],
+    ["конверт 2026", "a year"],
+    ["купюра 1961 года", "a year"],
   ])("ignores %j (%s)", (name) => {
     expect(explicitAmount(name)).toBeNull();
   });

@@ -61,14 +61,31 @@ const AMOUNT = /(\d{1,3}(?:[\s  .,]\d{3})+|\d+(?:[.,]\d+)?)(?:\s*(к|k|тыс
  * or one above 10,000,000. The currency is ignored: amounts are not converted.
  */
 export function explicitAmount(name: string): number | null {
-  const matches = [...name.toLowerCase().matchAll(AMOUNT)];
+  const text = name.toLowerCase();
+  const matches = [...text.matchAll(AMOUNT)];
   if (matches.length !== 1) return null;
   const [whole, digits, suffix] = matches[0];
   const grouped = /^\d{1,3}([\s  .,]\d{3})+$/.test(digits);
   const number = Number(grouped ? digits.replace(/[\s  .,]/g, "") : digits.replace(",", "."));
   const thousands = suffix !== undefined || /тысяч?\p{L}*$/u.test(whole);
   const value = thousands ? number * 1_000 : number;
+  if (!thousands && looksLikeYear(value) && !hasCurrencyMark(text, matches[0].index!, whole.length)) return null;
   return Number.isInteger(value) && value > 0 && value <= MAX_EXPLICIT_AMOUNT ? value : null;
+}
+
+/** "монета 1897", "конверт 2026": a bare year, not an amount. Round ones like 2000 still read as amounts. */
+function looksLikeYear(value: number): boolean {
+  return value >= 1_800 && value <= 2_099 && value % 100 !== 0;
+}
+
+/** A currency symbol or word right before or after the number ("$1897", "1897 р", "1897 руб"). */
+function hasCurrencyMark(text: string, start: number, length: number): boolean {
+  const before = text.slice(0, start);
+  const after = text.slice(start + length);
+  return (
+    /[$€₽]\s*$/u.test(before) ||
+    /^\s*(?:[$€₽]|(?:р|руб|rub|usd|eur|евро|долл)(?!\p{L})|(?:рубл|доллар|dollar)\p{L}*)/u.test(after)
+  );
 }
 
 /**
