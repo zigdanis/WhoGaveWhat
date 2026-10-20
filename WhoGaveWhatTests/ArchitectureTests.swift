@@ -391,10 +391,24 @@ struct CurrencyPreferenceTests {
             intelligence: TestIntelligenceGateway()
         )
 
+        composition.setCurrencyCode("RUB")
+
+        #expect(composition.currencyCode == "RUB")
+        #expect(preferences.currencyCode == "RUB")
+    }
+
+    @Test func compositionIgnoresUnsupportedCurrencies() throws {
+        let preferences = TestPreferencesGateway()
+        let composition = AppComposition(
+            store: try SwiftDataStore(inMemory: true),
+            preferences: preferences,
+            intelligence: TestIntelligenceGateway()
+        )
+
         composition.setCurrencyCode("EUR")
 
-        #expect(composition.currencyCode == "EUR")
-        #expect(preferences.currencyCode == "EUR")
+        #expect(composition.currencyCode == "USD")
+        #expect(preferences.currencyCode == "USD")
     }
 
     @Test func userDefaultsGatewayPersistsSelectedCurrency() {
@@ -403,9 +417,44 @@ struct CurrencyPreferenceTests {
         defer { defaults.removePersistentDomain(forName: suiteName) }
         let gateway = UserDefaultsPreferencesGateway(defaults: defaults)
 
+        gateway.setCurrencyCode("RUB")
+
+        #expect(UserDefaultsPreferencesGateway(defaults: defaults).currencyCode == "RUB")
+    }
+
+    @Test func userDefaultsGatewayIgnoresUnsupportedCurrencies() {
+        let suiteName = "CurrencyPreferenceTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let gateway = UserDefaultsPreferencesGateway(defaults: defaults)
+        gateway.setCurrencyCode("RUB")
+
         gateway.setCurrencyCode("JPY")
 
-        #expect(UserDefaultsPreferencesGateway(defaults: defaults).currencyCode == "JPY")
+        #expect(gateway.currencyCode == "RUB")
+        #expect(defaults.string(forKey: "preferredCurrencyCode") == "RUB")
+    }
+
+    @Test func storedUnsupportedCurrencyBecomesDollarsAndStaysThere() {
+        let suiteName = "CurrencyPreferenceTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set("EUR", forKey: "preferredCurrencyCode")
+        let gateway = UserDefaultsPreferencesGateway(defaults: defaults)
+
+        #expect(gateway.currencyCode == "USD")
+        #expect(defaults.string(forKey: "preferredCurrencyCode") == "USD")
+    }
+
+    @Test func missingStoredCurrencyFollowsTheLocaleAndIsPersisted() {
+        let suiteName = "CurrencyPreferenceTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let gateway = UserDefaultsPreferencesGateway(defaults: defaults)
+        let expected = SupportedCurrency.resolve(stored: nil, localeCurrency: Locale.current.currency?.identifier).code
+
+        #expect(gateway.currencyCode == expected)
+        #expect(defaults.string(forKey: "preferredCurrencyCode") == expected)
     }
 }
 

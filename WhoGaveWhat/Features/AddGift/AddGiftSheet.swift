@@ -26,6 +26,16 @@ struct AddGiftSheet: View {
         _selectedDetent = State(initialValue: .height(420))
     }
 
+    /// The value the gift would be saved with, shown while Details is collapsed so an
+    /// estimate is never saved unseen. Nil when there is no positive value.
+    private var valueSummary: GiftDetailsValueSummary? {
+        guard let value = state.effectiveValue, value > 0 else { return nil }
+        return GiftDetailsValueSummary(
+            amount: formattedCurrency(Double(value), code: composition.currencyCode),
+            isEstimate: state.showsEstimate
+        )
+    }
+
     var body: some View {
         @Bindable var state = state
 
@@ -65,7 +75,10 @@ struct AddGiftSheet: View {
                         )
                         .padding(.top, 12)
                     }
-                    GiftDetailsDisclosure(isExpanded: $showsDetails) {
+                    GiftDetailsDisclosure(
+                        isExpanded: $showsDetails,
+                        valueSummary: showsDetails ? nil : valueSummary
+                    ) {
                         focus = nil
                     }
                     .padding(.top, 16)
@@ -78,6 +91,7 @@ struct AddGiftSheet: View {
                             accent: fm.main,
                             tint: fm.tint,
                             currencyCode: composition.currencyCode,
+                            showsEstimate: state.showsEstimate,
                             onSelectDate: { state.open(.date) },
                             onSelectOccasion: { state.open(.occasion) }
                         )
@@ -298,8 +312,18 @@ private struct GiftBasicsSection: View {
     }
 }
 
+private struct GiftDetailsValueSummary {
+    let amount: String
+    let isEstimate: Bool
+
+    /// "≈ 5 000 ₽" for an estimate, "5 000 ₽" for a value the user entered.
+    var text: String { isEstimate ? "≈ \(amount)" : amount }
+}
+
 private struct GiftDetailsDisclosure: View {
     @Binding var isExpanded: Bool
+    /// Shown before the chevron while collapsed.
+    let valueSummary: GiftDetailsValueSummary?
     let onCollapse: () -> Void
 
     var body: some View {
@@ -324,6 +348,18 @@ private struct GiftDetailsDisclosure: View {
         .buttonStyle(.plain)
         .accessibilityValue(isExpanded ? "Shown" : "Hidden")
         .accessibilityIdentifier("add-gift.details")
+        // An overlay, not part of the button's label, so the amount stays its own accessibility
+        // element and the button keeps its identifier and value. It sits before the chevron.
+        .overlay(alignment: .trailing) {
+            if let valueSummary {
+                Text(verbatim: valueSummary.text)
+                    .font(Font.app(15, .semibold))
+                    .foregroundColor(valueSummary.isEstimate ? Color.textSecondary : Color.textPrimary)
+                    .padding(.trailing, 4 + 14 + 8)
+                    .allowsHitTesting(false)
+                    .accessibilityIdentifier("add-gift.details.value")
+            }
+        }
     }
 }
 
@@ -335,6 +371,7 @@ private struct GiftDetailsSection: View {
     let accent: Color
     let tint: Color
     let currencyCode: String
+    let showsEstimate: Bool
     let onSelectDate: () -> Void
     let onSelectOccasion: () -> Void
 
@@ -366,7 +403,8 @@ private struct GiftDetailsSection: View {
                     focus: $focus,
                     accent: accent,
                     tint: tint,
-                    currencyCode: currencyCode
+                    currencyCode: currencyCode,
+                    showsEstimate: showsEstimate
                 )
             }
         }
@@ -443,6 +481,8 @@ private struct ApproximateValueRow: View {
     let accent: Color
     let tint: Color
     let currencyCode: String
+    /// The shown number is a suggestion from the name, not something the user entered.
+    let showsEstimate: Bool
 
     var body: some View {
         HStack(spacing: 12) {
@@ -451,8 +491,17 @@ private struct ApproximateValueRow: View {
                 .foregroundColor(accent)
                 .frame(width: 34, height: 34)
                 .background(RoundedRectangle(cornerRadius: DesignMetrics.radiusSmall, style: .continuous).fill(tint))
-            Text("Approx. value").font(Font.app(16, .regular)).foregroundColor(Color.textPrimary)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Approx. value").font(Font.app(16, .regular)).foregroundColor(Color.textPrimary)
+                if showsEstimate {
+                    Text("Suggested").font(Font.app(12, .regular)).foregroundColor(Color.textSecondary)
+                }
+            }
             Spacer(minLength: 8)
+            if showsEstimate {
+                Text(verbatim: "≈").font(Font.app(16, .semibold)).foregroundColor(Color.textSecondary)
+                    .accessibilityHidden(true)
+            }
             TextField("0", text: $value)
                 .font(Font.app(16, .semibold)).foregroundColor(Color.textPrimary)
                 .keyboardType(.numberPad)
@@ -460,6 +509,7 @@ private struct ApproximateValueRow: View {
                 .focused($focus, equals: .value)
                 .multilineTextAlignment(.trailing)
                 .frame(minWidth: 60, maxWidth: 110)
+                .accessibilityValue(showsEstimate ? String(localized: "Estimated \(value)") : value)
                 .accessibilityIdentifier("add-gift.value")
             Text(currencySymbol(code: currencyCode))
                 .font(Font.app(16, .semibold)).foregroundColor(Color.textSecondary)

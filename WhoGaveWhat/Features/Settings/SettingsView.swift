@@ -209,7 +209,8 @@ private struct CurrencyOption: Identifiable {
 
     static let all: [CurrencyOption] = {
         let locale = Locale.autoupdatingCurrent
-        return Locale.commonISOCurrencyCodes
+        // Only the currencies the app supports; the icon Worker has price buckets for just these.
+        return SupportedCurrency.allCases.map(\.code)
             .map { code in
                 CurrencyOption(
                     code: code,

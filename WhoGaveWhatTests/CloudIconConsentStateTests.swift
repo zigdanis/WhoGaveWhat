@@ -40,7 +40,7 @@ struct CloudIconConsentStateTests {
         let composition = try makeTestComposition()
         let preferences = TestPreferencesGateway()
         let cloud = ScriptedIntelligenceGateway()
-        cloud.results["гитара"] = GiftIntelligenceResult(emoji: "🎸", value: 0)
+        cloud.results["гитара"] = GiftIntelligenceResult(emoji: "🎸", value: nil)
         let state = makeState(preferences: preferences, cloud: cloud, data: composition.data)
         state.setName("гитара")
         #expect(state.suggestionTask == nil)
@@ -83,7 +83,7 @@ struct CloudIconConsentStateTests {
         preferences.setCloudIconConsent(.allowed)
         let cloud = ScriptedIntelligenceGateway()
         cloud.holdsRequests = true
-        cloud.results["гитара"] = GiftIntelligenceResult(emoji: "🎸", value: 0)
+        cloud.results["гитара"] = GiftIntelligenceResult(emoji: "🎸", value: nil)
         let state = makeState(preferences: preferences, cloud: cloud, data: composition.data)
         state.setName("гитара")
         await cloud.waitForRequests(1)
@@ -105,8 +105,8 @@ struct CloudIconConsentStateTests {
         preferences.setCloudIconConsent(.allowed)
         let cloud = ScriptedIntelligenceGateway()
         cloud.holdsRequests = true
-        cloud.results["гитара"] = GiftIntelligenceResult(emoji: "🎸", value: 0)
-        cloud.results["кроссовки"] = GiftIntelligenceResult(emoji: "👟", value: 0)
+        cloud.results["гитара"] = GiftIntelligenceResult(emoji: "🎸", value: nil)
+        cloud.results["кроссовки"] = GiftIntelligenceResult(emoji: "👟", value: nil)
         let state = makeState(preferences: preferences, cloud: cloud, data: composition.data)
         state.setName("гитара")
         await cloud.waitForRequests(1)

@@ -8,13 +8,15 @@ final class ScriptedIntelligenceGateway: GiftIntelligenceGateway {
     var holdsRequests = false
     var results: [String: GiftIntelligenceResult] = [:]
     private(set) var requests: [String] = []
+    private(set) var currencies: [SupportedCurrency] = []
     private(set) var prewarmCount = 0
     private var pending: [CheckedContinuation<Void, Never>] = []
 
     func prewarm() { prewarmCount += 1 }
 
-    func suggestGift(named name: String) async -> GiftIntelligenceResult? {
+    func suggestGift(named name: String, currency: SupportedCurrency) async -> GiftIntelligenceResult? {
         requests.append(name)
+        currencies.append(currency)
         if holdsRequests {
             await withCheckedContinuation { pending.append($0) }
         }

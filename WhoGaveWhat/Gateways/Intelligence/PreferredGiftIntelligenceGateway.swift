@@ -17,11 +17,11 @@ final class PreferredGiftIntelligenceGateway: GiftIntelligenceGateway {
     var isAvailable: Bool { selected.isAvailable }
     func prewarm() { selected.prewarm() }
 
-    func suggestGift(named name: String) async -> GiftIntelligenceResult? {
+    func suggestGift(named name: String, currency: SupportedCurrency) async -> GiftIntelligenceResult? {
         let consent = preferences.cloudIconConsent
         let gateway = selected
         guard gateway.isAvailable else { return nil }
-        let result = await gateway.suggestGift(named: name)
+        let result = await gateway.suggestGift(named: name, currency: currency)
         guard !Task.isCancelled, preferences.cloudIconConsent == consent else { return nil }
         return result
     }
@@ -33,13 +33,15 @@ final class StubCloudGiftIconGateway: GiftIntelligenceGateway {
     var isAvailable: Bool { true }
     func prewarm() {}
 
-    func suggestGift(named name: String) async -> GiftIntelligenceResult? {
-        let emoji: String? =
+    func suggestGift(named name: String, currency: SupportedCurrency) async -> GiftIntelligenceResult? {
+        let guess: (emoji: String, rub: Int, usd: Int)? =
             switch CloudGiftIconGateway.normalizedName(name).lowercased() {
-            case "гитара", "guitar": "🎸"
-            case "кроссовки", "running shoes": "👟"
+            case "гитара", "guitar": ("🎸", 10_000, 150)
+            case "кроссовки", "running shoes": ("👟", 5_000, 100)
             default: nil
             }
-        return emoji.map { GiftIntelligenceResult(emoji: $0, value: 0) }
+        return guess.map {
+            GiftIntelligenceResult(emoji: $0.emoji, value: currency == .rub ? $0.rub : $0.usd)
+        }
     }
 }
