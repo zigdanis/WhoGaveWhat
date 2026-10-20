@@ -1,8 +1,10 @@
 import { env, reset, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
 import { afterEach, describe, expect, it } from "vitest";
+import { IconLimiter } from "../src/limiter";
 import { handle, type Env } from "../src/index";
 import { ICON_KEYS, ICONS, criteria } from "../src/icons";
 import { JEV_URL, parseAnswer } from "../src/jev";
+import { PRICE_BUCKETS, explicitAmount, priceCriteria } from "../src/prices";
 
 const INSTALL = "3f2b8c1e-4d5a-4e6f-8a9b-0c1d2e3f4a5b";
 const NOW = Date.UTC(2026, 9, 16, 12, 0, 30);
@@ -31,6 +33,21 @@ function jevReply(choice: string, confidence = 0.9, inputTokens = 2_500, status 
       usage: { input_tokens: inputTokens, output_tokens: 10 },
     }),
     { status, headers: { "Content-Type": "application/json" } },
+  );
+}
+
+/** A reply to a request with the price question; `price` undefined leaves the price answer out. */
+function pricedReply(choice: string, price?: { choice: unknown; confidence: unknown }, confidence = 0.9) {
+  return new Response(
+    JSON.stringify({
+      model: "jev-1.13.0",
+      answers: {
+        icon: { type: "choice", choice, confidence, probabilities: {} },
+        ...(price && { price: { type: "choice", ...price, probabilities: {} } }),
+      },
+      usage: { input_tokens: 2_700, output_tokens: 20 },
+    }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
   );
 }
 
@@ -108,6 +125,18 @@ describe("gift icon endpoint", () => {
     expect(JSON.stringify(sent)).not.toContain(INSTALL);
   });
 
+  it("keeps the request to Jev and the response exactly as before when no currency is sent", async () => {
+    const jev = fakeJev(jevReply("guitar", 0.82));
+    const response = await handle(request({ name: "гитара" }), testEnv(), deps(jev.fetcher));
+
+    const text = await response.text();
+    expect(text).toBe('{"emoji":"🎸","confidence":0.82}');
+    const sent = JSON.parse(jev.calls[0].init.body as string);
+    expect(Object.keys(sent)).toEqual(["state", "model", "questions"]);
+    expect(Object.keys(sent.questions)).toEqual(["icon"]);
+    expect(Object.keys(sent.questions.icon)).toEqual(["type", "instructions", "criteria"]);
+  });
+
   it("returns no emoji for the generic option or a low-confidence answer", async () => {
     const generic = await handle(request({ name: "что-то" }), testEnv(), deps(fakeJev(jevReply("generic_gift")).fetcher));
     expect(await body(generic)).toEqual({ emoji: null, confidence: 0.9 });
@@ -123,6 +152,16 @@ describe("gift icon endpoint", () => {
 
     expect(await body(second)).toEqual({ emoji: "🌹", confidence: 0.9 });
     expect(jev.calls).toHaveLength(1);
+  });
+
+  it("rejects an unsupported or malformed currency before spending anything", async () => {
+    const jev = fakeJev(pricedReply("rose"));
+    for (const currency of ["EUR", "rub", "", null, 643, ["RUB"], {}]) {
+      const response = await handle(request({ name: "розы", currency }), testEnv(), deps(jev.fetcher));
+      expect(response.status).toBe(400);
+      expect(await body(response)).toEqual({ error: "invalid_request" });
+    }
+    expect(jev.calls).toHaveLength(0);
   });
 
   it("rejects malformed requests before spending anything", async () => {
@@ -164,6 +203,8 @@ describe("gift icon endpoint", () => {
       { JEV_MAX_REQUEST_TOKENS: "lots" },
       { JEV_PRICE_PER_MTOK_USD: "0" },
       { MIN_CONFIDENCE: "high" },
+      { MIN_PRICE_CONFIDENCE: "" },
+      { MIN_PRICE_CONFIDENCE: "1.5" },
       { MONTHLY_BUDGET_USD: "" },
       { DAILY_BUDGET_USD: "-1" },
       { PER_INSTALL_PER_DAY: "1.5" },
@@ -328,6 +369,137 @@ describe("gift icon endpoint", () => {
   });
 });
 
+describe("gift price estimate", () => {
+  it("asks both questions with the currency's options and maps the chosen bucket", async () => {
+    for (const [currency, choice, price] of [
+      ["RUB", "rub_5000", 5_000],
+      ["USD", "usd_150", 150],
+    ] as const) {
+      const jev = fakeJev(pricedReply("guitar", { choice, confidence: 0.55 }));
+      const response = await handle(request({ name: `гитара ${currency}`, currency }), testEnv(), deps(jev.fetcher));
+
+      expect(await body(response)).toEqual({ emoji: "🎸", confidence: 0.9, price, priceConfidence: 0.55 });
+      const sent = JSON.parse(jev.calls[0].init.body as string);
+      expect(Object.keys(sent.questions)).toEqual(["icon", "price"]);
+      expect(Object.keys(sent.questions.icon.criteria)).toEqual(ICON_KEYS);
+      expect(sent.questions.price.type).toBe("choice");
+      expect(Object.keys(sent.questions.price.criteria)).toEqual(PRICE_BUCKETS[currency].map((bucket) => `${currency.toLowerCase()}_${bucket}`));
+      expect(sent.questions.price.instructions).toContain(currency === "RUB" ? "Russian rubles" : "US dollars");
+    }
+    expect(priceCriteria("RUB").rub_5000).toBe("About 5,000 Russian rubles");
+    expect(priceCriteria("USD").usd_150).toBe("About 150 US dollars");
+  });
+
+  it("returns a null price below the confidence threshold", async () => {
+    const jev = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.19 }));
+    const response = await handle(request({ name: "гитара", currency: "RUB" }), testEnv(), deps(jev.fetcher));
+    expect(await body(response)).toEqual({ emoji: "🎸", confidence: 0.9, price: null, priceConfidence: 0.19 });
+
+    const atThreshold = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.2 }));
+    const edge = await handle(request({ name: "гитара 2", currency: "RUB" }), testEnv(), deps(atThreshold.fetcher));
+    expect((await body(edge)).price).toBe(5_000);
+  });
+
+  it("uses an amount written in a money-like name instead of the bucket, whatever the price confidence", async () => {
+    const jev = fakeJev(pricedReply("money", { choice: "rub_10000", confidence: 0.05 }));
+    const response = await handle(request({ name: "Деньги 5000р", currency: "RUB" }), testEnv(), deps(jev.fetcher));
+    expect(await body(response)).toEqual({ emoji: "💸", confidence: 0.9, price: 5_000, priceConfidence: 0.05 });
+
+    // Only money-like icons take the amount from the name.
+    const lego = fakeJev(pricedReply("building_blocks", { choice: "rub_3000", confidence: 0.6 }));
+    const other = await handle(request({ name: "Конструктор 1000 деталей", currency: "RUB" }), testEnv(), deps(lego.fetcher));
+    expect((await body(other)).price).toBe(3_000);
+
+    // The amount stays unsnapped and the currency symbol is ignored.
+    const dollars = fakeJev(pricedReply("gift_card", { choice: "usd_100", confidence: 0.5 }));
+    const card = await handle(request({ name: "сертификат на $120", currency: "USD" }), testEnv(), deps(dollars.fetcher));
+    expect((await body(card)).price).toBe(120);
+  });
+
+  it("returns the icon with a null price when Jev's price answer is missing or invalid", async () => {
+    for (const [index, price] of [undefined, { choice: "usd_100", confidence: 0.9 }, { choice: "rub_5000", confidence: 7 }, { choice: 5, confidence: 0.5 }].entries()) {
+      const jev = fakeJev(pricedReply("guitar", price));
+      const response = await handle(request({ name: `гитара ${index}`, currency: "RUB" }), testEnv(), deps(jev.fetcher));
+      expect(response.status).toBe(200);
+      expect(await body(response)).toEqual({ emoji: "🎸", confidence: 0.9, price: null, priceConfidence: 0 });
+    }
+  });
+
+  it("serves the same price from the cache without calling Jev again", async () => {
+    const jev = fakeJev(pricedReply("money", { choice: "rub_10000", confidence: 0.4 }), pricedReply("rose", { choice: "rub_300", confidence: 0.9 }));
+    const first = await body(await handle(request({ name: "Деньги 5000р", currency: "RUB" }), testEnv(), deps(jev.fetcher)));
+    const second = await body(
+      await handle(request({ name: "деньги 5000Р", currency: "RUB" }, { install: "11111111-2222-4333-8444-555555555555" }), testEnv(), deps(jev.fetcher)),
+    );
+    expect(second).toEqual(first);
+    expect(jev.calls).toHaveLength(1);
+
+    // The threshold applies to cached answers too.
+    const plain = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.3 }));
+    const fresh = await body(await handle(request({ name: "гитара", currency: "RUB" }), testEnv(), deps(plain.fetcher)));
+    const strict = testEnv({ MIN_PRICE_CONFIDENCE: "0.5" });
+    const cached = await body(await handle(request({ name: "гитара", currency: "RUB" }), strict, deps(plain.fetcher)));
+    expect(fresh.price).toBe(5_000);
+    expect(cached.price).toBeNull();
+    expect(plain.calls).toHaveLength(1);
+  });
+
+  it("caches each currency separately, apart from icon-only answers", async () => {
+    const jev = fakeJev(
+      pricedReply("guitar", { choice: "rub_10000", confidence: 0.5 }),
+      pricedReply("guitar", { choice: "usd_150", confidence: 0.5 }),
+      jevReply("guitar"),
+    );
+    const rub = await body(await handle(request({ name: "гитара", currency: "RUB" }), testEnv(), deps(jev.fetcher)));
+    const usd = await body(await handle(request({ name: "гитара", currency: "USD" }), testEnv(), deps(jev.fetcher)));
+    const legacy = await body(await handle(request({ name: "гитара" }), testEnv(), deps(jev.fetcher)));
+    expect([rub.price, usd.price]).toEqual([10_000, 150]);
+    expect(legacy).toEqual({ emoji: "🎸", confidence: 0.9 });
+    expect(jev.calls).toHaveLength(3);
+    expect((await usage()).cachedAnswers).toBe(3);
+
+    expect(await body(await handle(request({ name: "гитара", currency: "USD" }), testEnv(), deps(jev.fetcher)))).toEqual(usd);
+    expect(jev.calls).toHaveLength(3);
+  });
+});
+
+describe("explicit amounts", () => {
+  it.each([
+    ["Деньги 5000р", 5_000],
+    ["5 000 ₽", 5_000],
+    ["5\u00a0000₽", 5_000],
+    ["сертификат на 3000", 3_000],
+    ["$100", 100],
+    ["5к", 5_000],
+    ["5К на подарок", 5_000],
+    ["5k", 5_000],
+    ["10 тыс", 10_000],
+    ["10 тыс.", 10_000],
+    ["10 тысяч рублей", 10_000],
+    ["1.5к", 1_500],
+    ["1,000", 1_000],
+    ["1 000 000", 1_000_000],
+    ["10 000 000", 10_000_000],
+    // "к" before more letters is a unit, not the thousands multiplier.
+    ["5 кг", 5],
+  ])("reads %j as %i", (name, amount) => {
+    expect(explicitAmount(name)).toBe(amount);
+  });
+
+  it.each([
+    ["Деньги", "no number"],
+    ["500 или 1000", "several numbers"],
+    ["5000 + 3000", "several numbers"],
+    ["12 345 678", "above 10 000 000"],
+    ["20000000 ₽", "above 10 000 000"],
+    ["0", "zero"],
+    ["0к", "zero"],
+    ["2.5", "not a whole amount"],
+  ])("ignores %j (%s)", (name) => {
+    expect(explicitAmount(name)).toBeNull();
+  });
+});
+
 describe("limiter", () => {
   const limits = {
     monthlyBudgetMicros: 1_000_000,
@@ -351,6 +523,43 @@ describe("limiter", () => {
       alarm: await state.storage.getAlarm(),
     }));
   }
+
+  it("adds the price columns to a cache table created before them", async () => {
+    const stub = limiter();
+    // The production table, as it was before prices.
+    const columns = await runInDurableObject(stub, async (_instance, state) => {
+      const sql = state.storage.sql;
+      sql.exec("DROP TABLE cache");
+      sql.exec("CREATE TABLE cache (hash TEXT PRIMARY KEY, icon TEXT, confidence REAL NOT NULL, created INTEGER NOT NULL)");
+      sql.exec("INSERT INTO cache (hash, icon, confidence, created) VALUES ('old', 'rose', 0.8, ?)", NOW);
+      return sql.exec<{ name: string }>("PRAGMA table_info(cache)").toArray().map((column) => column.name);
+    });
+    expect(columns).toEqual(["hash", "icon", "confidence", "created"]);
+
+    // A fresh instance over the same storage runs the constructor again; twice must be harmless.
+    const migrated = await runInDurableObject(stub, async (_instance, state) => {
+      const instance = new IconLimiter(state, env);
+      new IconLimiter(state, env);
+      const names = state.storage.sql.exec<{ name: string }>("PRAGMA table_info(cache)").toArray().map((column) => column.name);
+      return { names, cached: await instance.admit({ cacheKey: "old", ...client, now: NOW, limits, reservationMicros: 10 }) };
+    });
+    expect(migrated.names).toEqual(["hash", "icon", "confidence", "created", "price", "price_confidence"]);
+    expect(migrated.cached).toEqual({ kind: "cached", key: "rose", confidence: 0.8, price: null, priceConfidence: null });
+  });
+
+  it("returns the cached price and its confidence", async () => {
+    const stub = limiter();
+    const admitted = await stub.admit({ cacheKey: "k1", ...client, now: NOW, limits, reservationMicros: 10 });
+    if (admitted.kind !== "go") throw new Error("not admitted");
+    await stub.settle({
+      reservationId: admitted.reservationId,
+      costMicros: 5,
+      answer: { cacheKey: "k1", key: "guitar", confidence: 0.9, price: 5_000, priceConfidence: 0.4 },
+      now: NOW,
+    });
+    const again = await stub.admit({ cacheKey: "k1", ...client, now: NOW, limits, reservationMicros: 10 });
+    expect(again).toEqual({ kind: "cached", key: "guitar", confidence: 0.9, price: 5_000, priceConfidence: 0.4 });
+  });
 
   it("keeps newer rate counters when an older request settles late", async () => {
     const stub = limiter();
@@ -410,7 +619,7 @@ describe("limiter", () => {
     await stub.settle({
       reservationId: admitted.reservationId,
       costMicros: 5,
-      answer: { cacheKey: "k1", key: "rose", confidence: 0.9 },
+      answer: { cacheKey: "k1", key: "rose", confidence: 0.9, price: null, priceConfidence: null },
       now: Date.now() - 31 * 86_400_000,
     });
     await stub.admit({ cacheKey: "k2", ...client, now: old, limits: { ...limits, perIpPerMinute: 2 }, reservationMicros: 10 });
@@ -457,6 +666,21 @@ describe("Jev answer validation", () => {
 });
 
 describe("evaluation cases", () => {
+  it("give price ranges inside the bucket lists for at least thirty cases", async () => {
+    const cases = (await import("../eval/cases.json")).default as Array<{ name: string; rub?: number[]; usd?: number[] }>;
+    const priced = cases.filter((item) => item.rub || item.usd);
+    expect(priced.length).toBeGreaterThanOrEqual(30);
+    for (const item of priced) {
+      for (const [range, buckets] of [[item.rub, PRICE_BUCKETS.RUB], [item.usd, PRICE_BUCKETS.USD]] as const) {
+        expect(range, item.name).toHaveLength(2);
+        const [min, max] = range!;
+        expect(min, item.name).toBeLessThanOrEqual(max);
+        // Explicit amounts are not snapped, so only the ends of the range must be in sensible bounds.
+        expect(min, item.name).toBeGreaterThanOrEqual(buckets[0] / 10);
+      }
+    }
+  });
+
   it("only expect icons the catalog can return", async () => {
     const cases = (await import("../eval/cases.json")).default as Array<{ accept: Array<string | null> }>;
     const emoji = new Set(Object.values(ICONS).map((icon) => icon.emoji));

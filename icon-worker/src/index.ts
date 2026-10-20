@@ -1,5 +1,6 @@
 import { CATALOG_VERSION, GENERIC_KEY, ICONS } from "./icons";
 import { chooseIcon, JevError, type JevOptions } from "./jev";
+import { CURRENCIES, PRICE_VERSION, priceFor, type Currency } from "./prices";
 import type { IconLimiter, Limits } from "./limiter";
 
 export { IconLimiter } from "./limiter";
@@ -12,6 +13,7 @@ export interface Env {
   JEV_PRICE_PER_MTOK_USD: string;
   JEV_RUSSIAN_HINTS: string;
   MIN_CONFIDENCE: string;
+  MIN_PRICE_CONFIDENCE: string;
   MONTHLY_BUDGET_USD: string;
   DAILY_BUDGET_USD: string;
   PER_INSTALL_PER_DAY: string;
@@ -49,16 +51,22 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
 
   const installID = request.headers.get("X-Install-ID") ?? "";
   if (!INSTALL_ID.test(installID)) return invalid();
-  const name = await readName(request);
-  if (name === null) return invalid();
+  const parsed = await readRequest(request);
+  if (parsed === null) return invalid();
+  const { name, currency } = parsed;
   // Without a key or valid limits, spending cannot be bounded; fail closed.
   const config = readConfig(env);
   if (!env.JEV_API_KEY || config === null) return unavailable(CONFIG_RETRY_AFTER_SECONDS);
-  const { maxRequestTokens, pricePerToken, minConfidence } = config;
+  const { maxRequestTokens, pricePerToken, minConfidence, minPriceConfidence } = config;
 
   const limiter = env.LIMITER.get(env.LIMITER.idFromName("global"));
   const russianHints = env.JEV_RUSSIAN_HINTS === "true";
-  const cacheKey = await sha256(`${CATALOG_VERSION}\n${env.JEV_MODEL}\n${russianHints}\n${name.toLowerCase()}`);
+  // Requests without a currency keep the key they always had, so their cached answers stay valid.
+  const cacheKey = await sha256(
+    currency === null
+      ? `${CATALOG_VERSION}\n${env.JEV_MODEL}\n${russianHints}\n${name.toLowerCase()}`
+      : `${CATALOG_VERSION}\n${PRICE_VERSION}\n${env.JEV_MODEL}\n${russianHints}\n${currency}\n${name.toLowerCase()}`,
+  );
   // Every attempt may be billed, so each is reserved at the provider-enforced request ceiling.
   const attemptMicros = Math.ceil(maxRequestTokens * pricePerToken);
 
@@ -73,7 +81,16 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
 
   switch (admission.kind) {
     case "cached":
-      return iconResponse(admission.key, admission.confidence, minConfidence);
+      return answerResponse({
+        key: admission.key,
+        confidence: admission.confidence,
+        name,
+        currency,
+        bucket: admission.price,
+        priceConfidence: admission.priceConfidence ?? 0,
+        minConfidence,
+        minPriceConfidence,
+      });
     case "rate_limited":
       return json({ error: "rate_limited" }, 429, { "Retry-After": String(admission.retryAfterSeconds) });
     case "budget_exhausted":
@@ -84,6 +101,7 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
     apiKey: env.JEV_API_KEY,
     model: env.JEV_MODEL,
     russianHints,
+    currency: currency ?? undefined,
     attemptTimeoutMs: 3_000,
     maxAttempts: MAX_ATTEMPTS,
     fetcher: deps.fetcher,
@@ -96,14 +114,30 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
     await limiter.settle({
       reservationId: admission.reservationId,
       costMicros: Math.ceil(answer.inputTokens * pricePerToken) + unknownUsageAttempts * attemptMicros,
-      answer: { cacheKey, key, confidence: answer.confidence },
+      // Without a usable price answer the bucket is null and its confidence 0, like a low-confidence price.
+      answer: {
+        cacheKey,
+        key,
+        confidence: answer.confidence,
+        price: currency === null ? null : (answer.price?.bucket ?? null),
+        priceConfidence: currency === null ? null : (answer.price?.confidence ?? 0),
+      },
       now: deps.now(),
     });
     // Operational metrics only; the gift name is never logged.
     console.log(
       JSON.stringify({ event: "jev", model: answer.model, tokens: answer.inputTokens, ms: deps.now() - started }),
     );
-    return iconResponse(key, answer.confidence, minConfidence);
+    return answerResponse({
+      key,
+      confidence: answer.confidence,
+      name,
+      currency,
+      bucket: answer.price?.bucket ?? null,
+      priceConfidence: answer.price?.confidence ?? 0,
+      minConfidence,
+      minPriceConfidence,
+    });
   } catch (error) {
     // Attempts that may have been billed without reporting usage are charged at their upper bound.
     const unknown = error instanceof JevError ? error.unknownUsageAttempts : MAX_ATTEMPTS;
@@ -117,11 +151,18 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
   }
 }
 
+interface GiftRequest {
+  name: string;
+  /** Null for older clients, which get the icon-only answer. */
+  currency: Currency | null;
+}
+
 /**
- * The trimmed, NFC-normalized name with collapsed whitespace, or null when the body is invalid.
- * Length counts user-perceived characters, matching Swift's `String.count` in the app.
+ * The trimmed, NFC-normalized name with collapsed whitespace and the optional currency, or null
+ * when the body is invalid. Length counts user-perceived characters, matching Swift's
+ * `String.count` in the app.
  */
-async function readName(request: Request): Promise<string | null> {
+async function readRequest(request: Request): Promise<GiftRequest | null> {
   if (!(request.headers.get("Content-Type") ?? "").toLowerCase().startsWith("application/json")) return null;
   const bytes = await readAtMost(request, MAX_BODY_BYTES);
   if (bytes === null) return null;
@@ -131,12 +172,20 @@ async function readName(request: Request): Promise<string | null> {
   } catch {
     return null;
   }
-  const raw = (body as { name?: unknown } | null)?.name;
+  const fields = body as { name?: unknown; currency?: unknown } | null;
+  const raw = fields?.name;
   if (typeof raw !== "string") return null;
+  // Absent means an older client; anything else must be a supported code.
+  let currency: Currency | null = null;
+  if (fields !== null && Object.hasOwn(fields, "currency")) {
+    const code = CURRENCIES.find((supported) => supported === fields.currency);
+    if (code === undefined) return null;
+    currency = code;
+  }
   // Control characters are replaced like whitespace so they never reach the provider.
   const name = raw.normalize("NFC").replace(/[\p{Cc}\p{Z}]+/gu, " ").trim();
   const length = [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(name)].length;
-  return length >= MIN_NAME_LENGTH && length <= MAX_NAME_LENGTH ? name : null;
+  return length >= MIN_NAME_LENGTH && length <= MAX_NAME_LENGTH ? { name, currency } : null;
 }
 
 /** The body bytes, or null as soon as it exceeds `limit`, without buffering the rest. */
@@ -165,9 +214,30 @@ async function readAtMost(request: Request, limit: number): Promise<Uint8Array |
   return bytes;
 }
 
-function iconResponse(key: string | null, confidence: number, minConfidence: number): Response {
+interface Answer {
+  key: string | null;
+  confidence: number;
+  name: string;
+  currency: Currency | null;
+  /** Jev's price bucket, null when it gave none. */
+  bucket: number | null;
+  priceConfidence: number;
+  minConfidence: number;
+  minPriceConfidence: number;
+}
+
+/** Built the same way for fresh and cached answers, so both produce identical responses. */
+function answerResponse(answer: Answer): Response {
+  const { key, confidence, minConfidence } = answer;
   const emoji = key !== null && confidence >= minConfidence ? (ICONS[key]?.emoji ?? null) : null;
-  return json({ emoji, confidence: Math.round(confidence * 1000) / 1000 });
+  const icon = { emoji, confidence: round(confidence) };
+  if (answer.currency === null) return json(icon);
+  const price = priceFor(key, answer.name, answer.bucket, answer.priceConfidence, answer.minPriceConfidence);
+  return json({ ...icon, price, priceConfidence: round(answer.priceConfidence) });
+}
+
+function round(confidence: number): number {
+  return Math.round(confidence * 1000) / 1000;
 }
 
 interface Config {
@@ -175,6 +245,8 @@ interface Config {
   /** Micro-dollars per token, numerically equal to USD per million tokens. */
   pricePerToken: number;
   minConfidence: number;
+  /** Below this, the price bucket is reported as null. */
+  minPriceConfidence: number;
   limits: Limits;
 }
 
@@ -195,6 +267,7 @@ function readConfig(env: Env): Config | null {
   const maxRequestTokens = count(env.JEV_MAX_REQUEST_TOKENS);
   const pricePerToken = amount(env.JEV_PRICE_PER_MTOK_USD);
   const minConfidence = amount(env.MIN_CONFIDENCE);
+  const minPriceConfidence = amount(env.MIN_PRICE_CONFIDENCE);
   const monthly = amount(env.MONTHLY_BUDGET_USD);
   const daily = amount(env.DAILY_BUDGET_USD);
   const perInstallPerDay = count(env.PER_INSTALL_PER_DAY);
@@ -205,6 +278,8 @@ function readConfig(env: Env): Config | null {
     !pricePerToken ||
     minConfidence === null ||
     minConfidence > 1 ||
+    minPriceConfidence === null ||
+    minPriceConfidence > 1 ||
     monthly === null ||
     daily === null ||
     perInstallPerDay === null ||
@@ -217,6 +292,7 @@ function readConfig(env: Env): Config | null {
     maxRequestTokens,
     pricePerToken,
     minConfidence,
+    minPriceConfidence,
     limits: {
       monthlyBudgetMicros: Math.round(monthly * 1_000_000),
       dailyBudgetMicros: Math.round(daily * 1_000_000),

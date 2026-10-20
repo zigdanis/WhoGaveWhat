@@ -16,7 +16,7 @@ on:
         type: string
         default: ''
       run_eval:
-        description: Run the multilingual icon evaluation after deploying
+        description: Run the multilingual icon and price evaluation after deploying
         type: boolean
         default: false
 
@@ -31,7 +31,8 @@ jobs:
   deploy:
     name: Deploy and evaluate
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Priced cases are asked once per currency (about 200 paced requests, around 10 minutes), plus deploy and probe.
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: icon-worker
