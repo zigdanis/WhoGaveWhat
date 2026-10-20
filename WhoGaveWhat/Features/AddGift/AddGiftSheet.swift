@@ -560,16 +560,18 @@ private struct AddGiftPickerSheet: View {
         switch kind {
         case .from:
             PersonPickerContent(
-                people: composition.data.people,
+                people: composition.rankedPeople(for: .giver),
                 selectedID: state.draft.fromID,
+                counterpartID: state.draft.toID,
                 onProvisionalSelection: state.previewFrom,
                 onSelection: state.selectFrom,
                 onCreatePerson: { composition.createPerson(name: $0) }
             )
         case .to:
             PersonPickerContent(
-                people: composition.data.people,
+                people: composition.rankedPeople(for: .recipient),
                 selectedID: state.draft.toID,
+                counterpartID: state.draft.fromID,
                 onProvisionalSelection: state.previewTo,
                 onSelection: state.selectTo,
                 onCreatePerson: { composition.createPerson(name: $0) }
@@ -586,7 +588,8 @@ private struct AddGiftPickerSheet: View {
     // MARK: Occasion
 
     private var occasionPicker: some View {
-        ScrollView {
+        let occasions = composition.rankedOccasions
+        return ScrollView {
             VStack(spacing: 16) {
                 // Manual-entry first — add a new option from the top of the sheet.
                 addRow(placeholder: "Add occasion", accessibilityPrefix: "add-gift.occasion") { occasion in
@@ -595,7 +598,7 @@ private struct AddGiftPickerSheet: View {
                 }
                 Card {
                     VStack(spacing: 0) {
-                        ForEach(Array(composition.data.occasions.enumerated()), id: \.element.id) { idx, occasion in
+                        ForEach(Array(occasions.enumerated()), id: \.element.id) { idx, occasion in
                             Button {
                                 state.selectOccasion(occasion.name)
                             } label: {
@@ -608,7 +611,8 @@ private struct AddGiftPickerSheet: View {
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
-                            if idx < composition.data.occasions.count - 1 { RowDivider().padding(.leading, 14) }
+                            .accessibilityIdentifier("add-gift.occasion.option.\(occasion.name)")
+                            if idx < occasions.count - 1 { RowDivider().padding(.leading, 14) }
                         }
                     }
                 }
@@ -791,6 +795,7 @@ private struct PersonPickerContent: View {
     init(
         people: [Person],
         selectedID: String?,
+        counterpartID: String?,
         onProvisionalSelection: @escaping (String?) -> Void,
         onSelection: @escaping (String) -> Void,
         onCreatePerson: @escaping (String) -> String?
@@ -801,7 +806,8 @@ private struct PersonPickerContent: View {
         _pickerState = State(
             initialValue: PersonPickerState(
                 people: people,
-                selectedID: selectedID
+                selectedID: selectedID,
+                counterpartID: counterpartID
             ))
     }
 

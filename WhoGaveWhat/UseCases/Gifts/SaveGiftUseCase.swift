@@ -26,6 +26,8 @@ struct SaveGiftInput: Equatable {
 struct SaveGiftUseCase {
     let giftGateway: GiftGateway
     let suggestGift: SuggestGiftUseCase
+    /// The clock behind `createdAt` of new gifts and `lastSavedAt` of every save.
+    var now: () -> Date = { Date() }
 
     @discardableResult
     func execute(_ input: SaveGiftInput) throws -> Gift? {
@@ -34,6 +36,7 @@ struct SaveGiftUseCase {
         }
 
         let suggestion = suggestGift.instantSuggestion(for: input.name)
+        let savedAt = now()
         let gift = Gift(
             id: input.editingGiftID ?? "g\(UUID().uuidString)",
             emoji: input.emoji ?? input.aiEmoji ?? suggestion.emoji,
@@ -44,8 +47,9 @@ struct SaveGiftUseCase {
             occasion: input.occasion ?? "Just because",
             date: input.date,
             value: input.valueTouched ? Double(input.value ?? 0) : 0,
-            createdAt: input.createdAt ?? Date(),
-            emojiPickedByUser: input.emoji != nil
+            createdAt: input.createdAt ?? savedAt,
+            emojiPickedByUser: input.emoji != nil,
+            lastSavedAt: savedAt
         )
         try giftGateway.save(gift)
         return gift

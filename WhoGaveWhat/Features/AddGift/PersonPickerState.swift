@@ -9,14 +9,22 @@ final class PersonPickerState {
     private(set) var selectedID: String?
 
     private let people: [Person]
+    private let counterpartID: String?
 
-    init(people: [Person], selectedID: String?) {
+    /// `counterpartID` is the person already chosen on the other side of the gift. Automatic
+    /// preselection skips them, but they stay visible and can still be tapped.
+    init(people: [Person], selectedID: String?, counterpartID: String? = nil) {
         self.people = people
+        self.counterpartID = counterpartID
         visiblePeople = people
         self.selectedID =
             selectedID.flatMap { selectedID in
                 people.contains { $0.id == selectedID } ? selectedID : nil
-            } ?? people.first?.id
+            } ?? Self.firstPerson(in: people, excluding: counterpartID)
+    }
+
+    private static func firstPerson(in people: [Person], excluding counterpartID: String?) -> String? {
+        people.first { $0.id != counterpartID }?.id
     }
 
     @discardableResult
@@ -33,7 +41,7 @@ final class PersonPickerState {
             ? people
             : people.filter { $0.name.localizedCaseInsensitiveContains(trimmedQuery) }
 
-        selectedID = visiblePeople.first?.id
+        selectedID = Self.firstPerson(in: visiblePeople, excluding: counterpartID)
         return selectedID
     }
 

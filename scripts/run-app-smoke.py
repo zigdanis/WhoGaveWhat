@@ -32,6 +32,7 @@ PLANNED_CHECKPOINT_NAMES = (
     "person-add-deleted", "person-detail-is-me", "people-you-badge",
     "person-editor-russian", "person-editor-russian-keyboard",
     "person-editor-header-accessibility", "person-editor-header-accessibility-keyboard",
+    "picker-ranking-from", "picker-ranking-to", "picker-ranking-occasion",
 )
 APP_LANGUAGE_CHECKPOINT_NAMES = (
     "system-settings", "language-region-before", "english-system-russian-secondary",
