@@ -13,6 +13,7 @@ struct InsightsTests {
     private let alice = Person(id: "alice", name: "Alice", colorHex: 0x223344)
     private let bob = Person(id: "bob", name: "Bob", colorHex: 0x334455)
     private let carol = Person(id: "carol", name: "Carol", colorHex: 0x445566)
+    private let dave = Person(id: "dave", name: "Dave", colorHex: 0x556677)
     private var people: [Person] { [me, bob, carol, alice] }
 
     private func gift(_ id: String, from giver: Person, to recipient: Person, _ value: Double, year: Int) -> Gift {
@@ -100,6 +101,67 @@ struct InsightsTests {
         let allYears = useCase.balances(gifts: gifts, people: people, relativeTo: me.id, year: nil)
         #expect(allYears.map(\.person.id) == ["carol", "alice", "bob"])
         #expect(allYears.first?.net == 500)
+    }
+
+    @Test func countBalanceIsPositiveWhenTheViewpointReceivedMoreGifts() {
+        let received = [
+            gift("a1", from: alice, to: me, 10, year: year),
+            gift("a2", from: alice, to: me, 10, year: year),
+            gift("a3", from: me, to: alice, 10, year: year)
+        ]
+        let balance = useCase.balances(gifts: received, people: people, relativeTo: me.id, year: year)[0]
+        #expect(balance.countNet == 1)
+        #expect(balance.isCountEven == false)
+        // Seen from Alice's side, the same exchange flips the sign.
+        let fromAlice = useCase.balances(gifts: received, people: people, relativeTo: alice.id, year: year)[0]
+        #expect(fromAlice.countNet == -1)
+    }
+
+    @Test func countBalanceIsNegativeWhenTheViewpointGaveMoreGifts() {
+        let given = [
+            gift("b1", from: me, to: bob, 10, year: year),
+            gift("b2", from: me, to: bob, 10, year: year),
+            gift("b3", from: me, to: bob, 10, year: year),
+            gift("b4", from: bob, to: me, 10, year: year)
+        ]
+        let balance = useCase.balances(gifts: given, people: people, relativeTo: me.id, year: year)[0]
+        #expect(balance.countNet == -2)
+        #expect(balance.isCountEven == false)
+    }
+
+    @Test func countBalanceIsEvenForEqualCountsEvenWhenMoneyDiffers() {
+        let balance = useCase.balances(gifts: gifts, people: people, relativeTo: me.id, year: year)[0]
+        #expect(balance.receivedCount == balance.givenCount)
+        #expect(balance.countNet == 0)
+        #expect(balance.isCountEven)
+        #expect(balance.net != 0)
+    }
+
+    @Test func balancesSortByAbsoluteCountBalanceThenMoneyThenName() {
+        let mixed = [
+            // Alice: even count, large money gap.
+            gift("a-in", from: alice, to: me, 1_000, year: year),
+            gift("a-out", from: me, to: alice, 2_500, year: year),
+            // Bob: two gifts given, tiny money.
+            gift("b-out-1", from: me, to: bob, 5, year: year),
+            gift("b-out-2", from: me, to: bob, 5, year: year),
+            // Carol: one gift received, big money.
+            gift("c-in", from: carol, to: me, 9_000, year: year),
+            // Dave: one gift given, small money; ties with Carol on count, loses on money.
+            gift("d-out", from: me, to: dave, 50, year: year)
+        ]
+        let balances = useCase.balances(gifts: mixed, people: people + [dave], relativeTo: me.id, year: year)
+        #expect(balances.map(\.person.id) == ["bob", "carol", "dave", "alice"])
+        #expect(balances.map(\.countNet) == [-2, 1, -1, 0])
+    }
+
+    @Test func balancesWithEqualCountAndMoneySortByName() {
+        let tied = [
+            gift("b-in", from: bob, to: me, 10, year: year),
+            gift("a-in", from: alice, to: me, 10, year: year)
+        ]
+        let balances = useCase.balances(gifts: tied, people: people, relativeTo: me.id, year: year)
+        #expect(balances.map(\.person.id) == ["alice", "bob"])
     }
 
     @Test func balancesExcludeTheViewpointAndGiftsBetweenOthers() {

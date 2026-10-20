@@ -5,6 +5,8 @@ struct AddGiftDraft {
     var emoji: String?
     var value: Int?
     var valueTouched = false
+    /// The approximate price inferred from the name; it applies only while the value is untouched.
+    var estimatedValue: Int?
     var fromID: String?
     var toID: String?
     var paidByYou = false

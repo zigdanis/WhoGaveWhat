@@ -174,7 +174,7 @@ final class AppComposition {
     }
 
     func setCurrencyCode(_ currencyCode: String) {
-        guard self.currencyCode != currencyCode else { return }
+        guard SupportedCurrency(rawValue: currencyCode) != nil, self.currencyCode != currencyCode else { return }
         preferences.setCurrencyCode(currencyCode)
         self.currencyCode = currencyCode
     }

@@ -51,4 +51,10 @@ struct FormattingTests {
         #expect(formattedSignedCurrency(0, code: "USD", locale: locale) == "$0")
         #expect(formattedSignedCurrency(0.4, code: "USD", locale: locale) == "$0")
     }
+
+    @Test func signedCountShowsThePlusAndTypographicMinus() {
+        #expect(formattedSignedCount(2) == "+2")
+        #expect(formattedSignedCount(-3) == "\u{2212}3")
+        #expect(formattedSignedCount(0) == "0")
+    }
 }

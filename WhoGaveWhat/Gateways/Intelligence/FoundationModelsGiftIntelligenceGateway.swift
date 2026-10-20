@@ -5,7 +5,7 @@ import Foundation
 #endif
 
 /// Best-effort on-device enrichment of a gift name → representative emoji + a
-/// rough ruble estimate. Uses Apple's on-device language model (iOS 26+, Apple
+/// rough price estimate in the app's currency. Uses Apple's on-device language model (iOS 26+, Apple
 /// Intelligence) when available; works in any language, including Russian.
 ///
 /// Callers keep the synchronous keyword heuristic (`SuggestGiftUseCase`) for
@@ -41,9 +41,9 @@ final class FoundationModelsGiftIntelligenceGateway: GiftIntelligenceGateway {
         #endif
     }
 
-    /// Returns nil when the on-device model can't be used or its answer is not a
-    /// single emoji, so callers fall back to the keyword heuristic.
-    func suggestGift(named name: String) async -> GiftIntelligenceResult? {
+    /// Returns nil when the on-device model can't be used or gives neither a single emoji
+    /// nor a price, so callers fall back to the keyword heuristic.
+    func suggestGift(named name: String, currency: SupportedCurrency) async -> GiftIntelligenceResult? {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.count >= 2 else { return nil }
         #if canImport(FoundationModels)
@@ -52,7 +52,7 @@ final class FoundationModelsGiftIntelligenceGateway: GiftIntelligenceGateway {
                 let session = (warmSession as? LanguageModelSession) ?? Self.makeSession()
                 warmSession = nil
                 defer { prewarm() }
-                return try? await respond(to: trimmed, using: session)
+                return try? await respond(to: trimmed, currency: currency, using: session)
             }
         #endif
         return nil
@@ -65,17 +65,20 @@ final class FoundationModelsGiftIntelligenceGateway: GiftIntelligenceGateway {
         }
 
         @available(iOS 26.0, *)
-        private func respond(to text: String, using session: LanguageModelSession) async throws
-            -> GiftIntelligenceResult?
+        private func respond(to text: String, currency: SupportedCurrency, using session: LanguageModelSession)
+            async throws -> GiftIntelligenceResult?
         {
             let response = try await session.respond(
-                to: "Gift: \(text)",
+                to: "Gift: \(text)\nCurrency: \(currency.code)",
                 generating: AIGift.self,
                 options: GenerationOptions(temperature: 0.2)
             )
             let gift = response.content
-            guard let emoji = GiftEmoji.validated(gift.emoji) else { return nil }
-            return GiftIntelligenceResult(emoji: emoji, value: max(0, gift.rubleValue).rounded())
+            // A price is still useful when the emoji is not valid, and the other way round.
+            let emoji = GiftEmoji.validated(gift.emoji)
+            let value = GiftPriceBuckets.snap(gift.price, currency: currency)
+            guard emoji != nil || value != nil else { return nil }
+            return GiftIntelligenceResult(emoji: emoji, value: value)
         }
 
         private static let instructions = """
@@ -85,19 +88,22 @@ final class FoundationModelsGiftIntelligenceGateway: GiftIntelligenceGateway {
             - emoji: exactly ONE emoji character, no words and no spaces. Choose the most \
             specific and recognisable emoji for the item itself, not a generic gift box. \
             Use 🎁 only when nothing fits.
-            - rubleValue: a realistic present-day retail price in Russian rubles for a \
-            typical version of the item, as one positive number.
+            - price: a realistic present-day retail price for a typical version of the \
+            item, as one positive number in the currency named in the prompt (RUB or USD).
 
             Examples:
-            Gift: букет роз -> emoji 💐, rubleValue 3000
-            Gift: духи Chanel -> emoji 🌸, rubleValue 9000
-            Gift: шоколадка Алёнка -> emoji 🍫, rubleValue 120
-            Gift: конструктор Лего -> emoji 🧱, rubleValue 4000
-            Gift: AirPods Pro -> emoji 🎧, rubleValue 25000
-            Gift: билеты в театр -> emoji 🎭, rubleValue 6000
-            Gift: красное вино -> emoji 🍷, rubleValue 1500
-            Gift: running shoes -> emoji 👟, rubleValue 8000
-            Gift: плюшевый мишка -> emoji 🧸, rubleValue 1500
+            Gift: букет роз, Currency: RUB -> emoji 💐, price 3000
+            Gift: духи Chanel, Currency: RUB -> emoji 🌸, price 9000
+            Gift: шоколадка Алёнка, Currency: RUB -> emoji 🍫, price 120
+            Gift: AirPods Pro, Currency: RUB -> emoji 🎧, price 25000
+            Gift: билеты в театр, Currency: RUB -> emoji 🎭, price 6000
+            Gift: плюшевый мишка, Currency: RUB -> emoji 🧸, price 1500
+            Gift: bouquet of roses, Currency: USD -> emoji 💐, price 50
+            Gift: Chanel perfume, Currency: USD -> emoji 🌸, price 120
+            Gift: chocolate bar, Currency: USD -> emoji 🍫, price 3
+            Gift: AirPods Pro, Currency: USD -> emoji 🎧, price 250
+            Gift: running shoes, Currency: USD -> emoji 👟, price 100
+            Gift: теплый плед, Currency: USD -> emoji 🛏️, price 40
             """
     #endif
 }
@@ -108,7 +114,7 @@ final class FoundationModelsGiftIntelligenceGateway: GiftIntelligenceGateway {
     struct AIGift {
         @Guide(description: "Exactly one emoji character for the gift, with no text or whitespace")
         var emoji: String
-        @Guide(description: "Typical retail price of this gift in Russian rubles (RUB), a positive number with no symbols")
-        var rubleValue: Double
+        @Guide(description: "Typical retail price of this gift in the currency named in the prompt, a positive number with no symbols")
+        var price: Double
     }
 #endif

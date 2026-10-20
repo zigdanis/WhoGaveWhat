@@ -7,6 +7,7 @@ struct SaveGiftInput: Equatable {
     var aiEmoji: String?
     var value: Int?
     var valueTouched: Bool
+    var estimatedValue: Int?
     var fromID: String?
     var toID: String?
     var paidByYou: Bool
@@ -46,7 +47,9 @@ struct SaveGiftUseCase {
             paidByYou: input.paidByYou,
             occasion: input.occasion ?? "Just because",
             date: input.date,
-            value: input.valueTouched ? Double(input.value ?? 0) : 0,
+            // By design an untouched estimate is saved as the gift's value, so gifts get approximate
+            // amounts instead of 0. Once the user edits the field, their value (even empty = 0) wins.
+            value: Double(input.valueTouched ? (input.value ?? 0) : (input.estimatedValue ?? 0)),
             createdAt: input.createdAt ?? savedAt,
             emojiPickedByUser: input.emoji != nil,
             lastSavedAt: savedAt

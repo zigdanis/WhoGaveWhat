@@ -42,12 +42,12 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
     }
 
     var currencyCode: String {
-        if let storedCode = defaults.string(forKey: currencyCodeKey), !storedCode.isEmpty {
-            return storedCode
-        }
-        let inferredCode = Locale.current.currency?.identifier ?? "USD"
-        defaults.set(inferredCode, forKey: currencyCodeKey)
-        return inferredCode
+        let storedCode = defaults.string(forKey: currencyCodeKey)
+        let currency = SupportedCurrency.resolve(
+            stored: storedCode, localeCurrency: Locale.current.currency?.identifier)
+        // Persists the locale default and rewrites an unsupported stored code, so the choice stays stable.
+        if storedCode != currency.code { defaults.set(currency.code, forKey: currencyCodeKey) }
+        return currency.code
     }
 
     var selfPersonID: String? {
@@ -60,7 +60,8 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
     }
 
     func setCurrencyCode(_ currencyCode: String) {
-        defaults.set(currencyCode, forKey: currencyCodeKey)
+        guard let currency = SupportedCurrency(rawValue: currencyCode) else { return }
+        defaults.set(currency.code, forKey: currencyCodeKey)
     }
 
     func setSelfPersonID(_ id: String?) {

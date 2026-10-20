@@ -1,6 +1,6 @@
 import Foundation
 
-/// Best-effort, opt-in icon inference. The gift name is the only request-body field.
+/// Best-effort, opt-in icon and price inference. The request body is the gift name and the currency.
 @MainActor
 final class CloudGiftIconGateway: GiftIntelligenceGateway {
     nonisolated static let endpoint = URL(string: "https://whogavewhat-icons.zigdanis.workers.dev")!
@@ -8,7 +8,20 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
 
     private struct IconResponse: Decodable {
         let emoji: String?
+        let price: Double?
+
+        enum CodingKeys: String, CodingKey { case emoji, price }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            emoji = try container.decodeIfPresent(String.self, forKey: .emoji)
+            // A malformed price must not discard a good icon.
+            price = try? container.decodeIfPresent(Double.self, forKey: .price)
+        }
     }
+
+    /// The largest amount the app accepts as an estimate; the server never returns more.
+    private static let maximumPrice = 10_000_000.0
 
     private struct CacheEntry {
         let result: GiftIntelligenceResult?
@@ -55,7 +68,7 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    func suggestGift(named name: String) async -> GiftIntelligenceResult? {
+    func suggestGift(named name: String, currency: SupportedCurrency) async -> GiftIntelligenceResult? {
         let normalized = Self.normalizedName(name)
         guard isAvailable, !Task.isCancelled, normalized.count >= 2 else { return nil }
         let installID = preferences.installID
@@ -64,14 +77,16 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
             cacheOrder.removeAll()
             cacheInstallID = installID
         }
-        if let entry = cache[normalized] { return entry.result }
+        // The estimate is in the requested currency, so each currency has its own entry.
+        let cacheKey = "\(currency.code)\n\(normalized)"
+        if let entry = cache[cacheKey] { return entry.result }
         guard now() >= backoffUntil else { return nil }
 
         var request = URLRequest(url: baseURL.appendingPathComponent("v1/gift-icon"), timeoutInterval: 8)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(installID, forHTTPHeaderField: "X-Install-ID")
-        request.httpBody = try? JSONEncoder().encode(["name": normalized])
+        request.httpBody = try? JSONEncoder().encode(["name": normalized, "currency": currency.code])
 
         do {
             let (data, response) = try await transport(request)
@@ -89,11 +104,13 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
             }
             guard response.statusCode == 200 else { return nil }
             let decoded = try JSONDecoder().decode(IconResponse.self, from: data)
-            // The server applies the confidence threshold and returns no emoji below it.
-            let result = decoded.emoji.flatMap(GiftEmoji.validated)
-                .map { GiftIntelligenceResult(emoji: $0, value: 0) }
-            cache[normalized] = CacheEntry(result: result)
-            cacheOrder.append(normalized)
+            // The server applies the confidence thresholds and returns no emoji or price below them.
+            // The price is not snapped: for money it can be an amount written in the name.
+            let emoji = decoded.emoji.flatMap(GiftEmoji.validated)
+            let value = decoded.price.flatMap(Self.validatedPrice)
+            let result = emoji == nil && value == nil ? nil : GiftIntelligenceResult(emoji: emoji, value: value)
+            cache[cacheKey] = CacheEntry(result: result)
+            cacheOrder.append(cacheKey)
             if cacheOrder.count > 100 {
                 cache.removeValue(forKey: cacheOrder.removeFirst())
             }
@@ -101,5 +118,11 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
         } catch {
             return nil
         }
+    }
+
+    private static func validatedPrice(_ price: Double) -> Int? {
+        guard price.isFinite, price > 0, price <= maximumPrice else { return nil }
+        let rounded = Int(price.rounded())
+        return rounded > 0 ? rounded : nil
     }
 }

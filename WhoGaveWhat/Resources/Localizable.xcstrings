@@ -381,19 +381,19 @@
         }
       }
     },
-    "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon? Only the name and a random app ID are sent — never people, dates, amounts or occasions." : {
+    "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon and an approximate price? Only the name, your currency and a random app ID are sent — never people, dates, amounts or occasions." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon? Only the name and a random app ID are sent — never people, dates, amounts or occasions."
+            "value" : "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon and an approximate price? Only the name, your currency and a random app ID are sent — never people, dates, amounts or occasions."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Разрешить WhoGaveWhat отправлять введённое название подарка в TypeSafe AI, чтобы подобрать значок? Отправляются только название и случайный ID приложения — без имён людей, дат, сумм и поводов."
+            "value" : "Разрешить «Кто че подарил» отправлять введённое название подарка в TypeSafe AI, чтобы подобрать значок и примерную стоимость? Отправляются только название, валюта и случайный ID приложения — без имён людей, дат, сумм и поводов."
           }
         }
       }
@@ -513,6 +513,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Чей баланс"
+          }
+        }
+      }
+    },
+    "Estimated %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estimated %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Примерно %@"
           }
         }
       }
@@ -1160,6 +1177,23 @@
         }
       }
     },
+    "Even 🤝" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Even 🤝"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поровну 🤝"
+          }
+        }
+      }
+    },
     "Gifts in %@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1265,6 +1299,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Получено %@ · Подарено %@"
+          }
+        }
+      }
+    },
+    "Suggested" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suggested"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "По названию"
           }
         }
       }
@@ -2376,19 +2427,19 @@
         }
       }
     },
-    "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms." : {
+    "Sends only the gift name and your currency, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon and an approximate price. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms."
+            "value" : "Sends only the gift name and your currency, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon and an approximate price. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Для подбора значка через сервер WhoGaveWhat в TypeSafe AI (Jev) отправляются только название подарка и случайный ID приложения для ограничения числа запросов. Имена людей, даты, суммы и поводы не отправляются. TypeSafe обрабатывает запросы на своих условиях."
+            "value" : "Для подбора значка и примерной стоимости через сервер WhoGaveWhat в TypeSafe AI (Jev) отправляются только название подарка, валюта и случайный ID приложения для ограничения числа запросов. Имена людей, даты, суммы и поводы не отправляются. TypeSafe обрабатывает запросы на своих условиях."
           }
         }
       }
@@ -2834,7 +2885,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Опишите подарок — Who Gave What подберёт иконку. Укажите стоимость, только если это нужно."
+            "value" : "Опишите подарок — «Кто че подарил» подберёт иконку. Укажите стоимость, только если это нужно."
           }
         }
       }
@@ -2936,7 +2987,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Кто Че Подарил"
+            "value" : "Кто че подарил"
           }
         }
       }
@@ -2953,7 +3004,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Кто что подарил"
+            "value" : "Кто че подарил"
           }
         }
       }
