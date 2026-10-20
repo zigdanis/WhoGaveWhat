@@ -1160,6 +1160,23 @@
         }
       }
     },
+    "Even 🤝" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Even 🤝"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поровну 🤝"
+          }
+        }
+      }
+    },
     "Gifts in %@" : {
       "extractionState" : "manual",
       "localizations" : {

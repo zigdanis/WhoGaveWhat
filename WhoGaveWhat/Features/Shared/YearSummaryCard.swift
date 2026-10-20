@@ -10,13 +10,18 @@ struct YearSummaryCard: View {
     @Binding var selectedYear: Int
     /// Shows the "mark yourself" hint when there is no viewpoint; nil leaves it out.
     var onMarkSelf: (() -> Void)?
+    /// Whose summary this is; shown next to the year when there is a viewpoint. nil keeps the plain header.
+    var owner: Person?
 
     var body: some View {
         Card {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .center) {
-                    Text("Gifts in \(String(summary.year))")
-                        .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
+                    if let owner, hasViewpoint {
+                        ownerIdentity(owner)
+                    } else {
+                        yearCaption
+                    }
                     Spacer(minLength: 8)
                     YearMenu(years: years, selection: $selectedYear)
                 }
@@ -30,6 +35,26 @@ struct YearSummaryCard: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("year-summary")
+    }
+
+    private var yearCaption: some View {
+        Text("Gifts in \(String(summary.year))")
+            .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
+    }
+
+    private func ownerIdentity(_ owner: Person) -> some View {
+        HStack(spacing: 10) {
+            AvatarView(
+                initials: owner.name.initials, color: owner.color, size: .compact, imageData: owner.imageData)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(owner.name)
+                    .font(Font.app(15, .semibold)).foregroundColor(Color.textPrimary)
+                    .lineLimit(1)
+                yearCaption
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("year-summary.owner")
     }
 
     private var viewpointContent: some View {
