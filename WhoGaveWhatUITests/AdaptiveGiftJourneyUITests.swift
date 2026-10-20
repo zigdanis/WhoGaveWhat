@@ -813,11 +813,16 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         if let swipedCheckpoint { attach(swipedCheckpoint) }
         trash.tap()
         XCTAssertTrue(title.waitForExistence(timeout: timeout))
-        // The popover element, else its title and confirm button plus padding and arrow.
+        // The popover element, else its title and confirm button (never the row's own trash).
         let popover = app.popovers.firstMatch
-        let confirm = app.buttons.matching(identifier: "Удалить").allElementsBoundByIndex.last
+        let confirm = app.buttons.matching(identifier: "Удалить").allElementsBoundByIndex
+            .last { !$0.frame.intersects(rowFrame) }
         let dialogFrame = popover.exists ? popover.frame : title.frame.union(confirm?.frame ?? title.frame)
         let tolerance: CGFloat = popover.exists ? 40 : 70
+        // A popover sits beside its source without covering it; a list-anchored one covers the row.
+        let above = dialogFrame.maxY <= rowFrame.minY + 8
+        let below = dialogFrame.minY >= rowFrame.maxY - 8
+        XCTAssertTrue(above || below, "Dialog \(dialogFrame) covers the swiped row \(rowFrame)")
         let gap = max(rowFrame.minY - dialogFrame.maxY, dialogFrame.minY - rowFrame.maxY, 0)
         XCTAssertLessThanOrEqual(
             gap, tolerance, "Dialog \(dialogFrame) must sit next to the swiped row \(rowFrame)")
