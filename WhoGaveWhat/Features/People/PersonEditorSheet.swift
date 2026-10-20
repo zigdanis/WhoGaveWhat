@@ -58,7 +58,7 @@ struct PersonEditorSheet: View {
                 VStack(spacing: 20) {
                     PersonEditorNameField(name: $name, isFocused: $nameIsFocused)
                     if showsPhoto {
-                        PersonEditorPhotoMenu(
+                        PersonEditorPhotoControl(
                             imageData: imageData,
                             isLoading: isLoadingPhoto,
                             isPickerPresented: $isPhotoPickerPresented,
@@ -268,61 +268,63 @@ private struct PersonEditorNameField: View {
     }
 }
 
-private struct PersonEditorPhotoMenu: View {
+private struct PersonEditorPhotoControl: View {
     let imageData: Data?
     let isLoading: Bool
     @Binding var isPickerPresented: Bool
     let onRemove: () -> Void
+    @State private var isShowingOptions = false
 
     var body: some View {
-        Menu {
-            Button {
-                isPickerPresented = true
-            } label: {
-                Label {
-                    if imageData == nil {
-                        Text("Choose photo")
-                    } else {
-                        Text("Change photo")
-                    }
-                } icon: {
-                    Image(systemName: "photo")
-                }
-            }
-            .accessibilityIdentifier("person-editor.choose-photo")
+        VStack(spacing: 10) {
+            avatarButton
+            Text("Photo")
+                .font(.body.weight(.medium))
+                .foregroundStyle(Color.textSecondary)
+                .accessibilityHidden(true)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .background(
+            Color.surface,
+            in: RoundedRectangle(cornerRadius: DesignMetrics.radiusXLarge, style: .continuous)
+        )
+        .onChange(of: imageData == nil) { _, isEmpty in
+            if isEmpty { isShowingOptions = false }
+        }
+    }
 
-            if imageData != nil {
-                Button(role: .destructive, action: onRemove) {
-                    Label("Remove photo", systemImage: "trash")
-                }
-                .accessibilityIdentifier("person-editor.remove-photo")
+    private var avatarButton: some View {
+        Button {
+            if imageData == nil {
+                isPickerPresented = true
+            } else {
+                isShowingOptions = true
             }
         } label: {
-            VStack(spacing: 10) {
-                ZStack(alignment: .bottomTrailing) {
-                    AvatarView(initials: "", color: Color.avatarPlaceholder, size: .hero, imageData: imageData)
-                    Image(systemName: isLoading ? "hourglass" : "plus")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(Color.onFill)
-                        .frame(width: 28, height: 28)
-                        .background(Color.brandFill, in: Circle())
-                        .overlay(Circle().stroke(Color.surface, lineWidth: 2))
-                }
-                Text("Photo")
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(Color.textSecondary)
+            ZStack(alignment: .bottomTrailing) {
+                AvatarView(initials: "", color: Color.avatarPlaceholder, size: .hero, imageData: imageData)
+                Image(systemName: isLoading ? "hourglass" : "plus")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(Color.onFill)
+                    .frame(width: 28, height: 28)
+                    .background(Color.brandFill, in: Circle())
+                    .overlay(Circle().stroke(Color.surface, lineWidth: 2))
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 20)
-            .background(
-                Color.surface,
-                in: RoundedRectangle(cornerRadius: DesignMetrics.radiusXLarge, style: .continuous)
-            )
-            .contentShape(RoundedRectangle(cornerRadius: DesignMetrics.radiusXLarge, style: .continuous))
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
         .disabled(isLoading)
         .accessibilityLabel(imageData == nil ? Text("Choose photo") : Text("Change photo"))
+        .accessibilityHint(imageData == nil ? Text(verbatim: "") : Text("Shows options to change or remove the photo."))
         .accessibilityIdentifier("person-editor.photo")
+        .confirmationDialog("Photo", isPresented: $isShowingOptions, titleVisibility: .hidden) {
+            Button("Change photo") { isPickerPresented = true }
+                .accessibilityIdentifier("person-editor.choose-photo")
+            Button("Remove photo", role: .destructive, action: onRemove)
+                .accessibilityIdentifier("person-editor.remove-photo")
+            Button("Cancel", role: .cancel) {}
+        }
     }
 }
 

@@ -201,12 +201,15 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
     /// One pick from the Photos library, confirmed at the crop step.
     private func choosePersonPhoto() {
-        app.buttons["person-editor.photo"].tap()
-        let choosePhoto = app.buttons["person-editor.choose-photo"]
-        XCTAssertTrue(choosePhoto.waitForExistence(timeout: timeout))
-        choosePhoto.tap()
+        // With an empty avatar a single tap opens the system picker directly.
+        let avatar = app.buttons["person-editor.photo"]
+        avatar.tap()
         let picker = app.navigationBars["Photos"]
-        XCTAssertTrue(picker.waitForExistence(timeout: photoLoadTimeout))
+        let opened = waitWithOneRetry(
+            timeout: photoLoadTimeout / 2,
+            recover: { if !picker.exists, avatar.isHittable { avatar.tap() } }
+        ) { picker.exists }
+        XCTAssertTrue(opened, "The photo picker did not open after tapping the empty avatar")
         let photos = app.images.matching(NSPredicate(format: "label BEGINSWITH[c] 'Photo,'"))
         XCTAssertTrue(photos.firstMatch.waitForExistence(timeout: photoLoadTimeout))
         // XCTest snapshots are slow on a cold Simulator; wait until the first tile stops moving.
