@@ -105,6 +105,8 @@ final class AddGiftState {
     /// The value the gift would be saved with, if any: the user's, or else the estimate.
     var effectiveValue: Int? { draft.valueTouched ? draft.value : draft.estimatedValue }
 
+    static let maxValueDigits = 9
+
     var valueText: String {
         get {
             if showsEstimate { return draft.estimatedValue.map(String.init) ?? "" }
@@ -112,7 +114,8 @@ final class AddGiftState {
             return draft.value.map(String.init) ?? ""
         }
         set {
-            let digits = newValue.filter(\.isNumber)
+            // Nine digits are plenty for a gift and keep the field within its row (and within `Int`).
+            let digits = String(newValue.filter(\.isNumber).prefix(Self.maxValueDigits))
             draft.value = digits.isEmpty ? nil : Int(digits)
             draft.valueTouched = true
             // With a hand-picked emoji too, nothing an answer brings could still be used.

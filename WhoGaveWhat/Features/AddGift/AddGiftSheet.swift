@@ -498,7 +498,8 @@ private struct ApproximateValueRow: View {
                 }
             }
             Spacer(minLength: 8)
-            // The field hugs its digits so the "≈" sits right next to the estimate.
+            // The field hugs its digits so the "≈" sits right next to the estimate; the state caps
+            // the digit count, so the value stays within this frame.
             HStack(spacing: 4) {
                 if showsEstimate {
                     Text(verbatim: "≈").font(Font.app(16, .semibold)).foregroundColor(Color.textSecondary)
