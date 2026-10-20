@@ -171,7 +171,7 @@ struct PriceEstimateStateTests {
 
         state.valueText = ""
 
-        #expect(state.valueText == "")
+        #expect(state.valueText.isEmpty)
         #expect(state.effectiveValue == nil)
         #expect(state.input.valueTouched)
     }
@@ -279,7 +279,7 @@ struct PriceEstimateStateTests {
 
         #expect(state.draft.estimatedValue == nil)
         #expect(state.showsEstimate == false)
-        #expect(state.valueText == "")
+        #expect(state.valueText.isEmpty)
     }
 
     @Test func anAnswerWithoutAnEmojiStillGivesThePrice() async throws {
