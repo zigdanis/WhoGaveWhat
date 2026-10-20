@@ -5,8 +5,6 @@ import SwiftUI
 /// received, so it's gated behind a big, hard-to-miss warning.
 struct PeopleView: View {
     let composition: AppComposition
-    /// Person id awaiting the irreversible delete warning (set by the swipe).
-    @State private var pendingDelete: String?
     @State private var isAddingPerson = false
 
     var body: some View {
@@ -38,26 +36,6 @@ struct PeopleView: View {
                 }
             )
         }
-        .confirmationDialog(
-            personDeleteTitle,
-            isPresented: deleteBinding,
-            titleVisibility: .visible,
-            presenting: pendingDelete
-        ) { id in
-            Button(
-                deletePersonActionLabel(giftsCount(involving: id)),
-                role: .destructive
-            ) {
-                composition.deletePerson(id: id)
-                pendingDelete = nil
-            }
-            Button("Cancel", role: .cancel) { pendingDelete = nil }
-        } message: { id in
-            Text(
-                personDeleteMessage(
-                    composition.data.entityName(id),
-                    count: giftsCount(involving: id)))
-        }
     }
 
     private var sortedPeople: [Person] {
@@ -67,7 +45,8 @@ struct PeopleView: View {
     }
 
     private func personRow(_ person: Person) -> some View {
-        NavigationLink(value: person.id) {
+        let count = giftsCount(involving: person.id)
+        return NavigationLink(value: person.id) {
             PersonRow(
                 entityId: person.id, name: person.name, color: person.color,
                 imageData: person.imageData,
@@ -76,27 +55,15 @@ struct PeopleView: View {
                 currencyCode: composition.currencyCode)
         }
         .listRowInsets(EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 12))
-        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            if composition.deletePersonUseCase.canDelete(id: person.id) {
-                Button(role: .destructive) {
-                    pendingDelete = person.id
-                } label: {
-                    Image(systemName: "trash")
-                }
-                .accessibilityLabel("Delete")
-            }
+        .swipeToDelete(
+            title: Text(verbatim: String(format: NSLocalizedString("Delete %@?", comment: ""), person.name)),
+            confirmLabel: Text(verbatim: deletePersonActionLabel(count)),
+            message: Text(verbatim: personDeleteMessage(person.name, count: count)),
+            allowsFullSwipe: false,
+            isEnabled: composition.deletePersonUseCase.canDelete(id: person.id)
+        ) {
+            composition.deletePerson(id: person.id)
         }
-    }
-
-    private var deleteBinding: Binding<Bool> {
-        Binding(
-            get: { pendingDelete != nil },
-            set: { if !$0 { pendingDelete = nil } })
-    }
-
-    private var personDeleteTitle: String {
-        guard let id = pendingDelete else { return "" }
-        return String(format: NSLocalizedString("Delete %@?", comment: ""), composition.data.entityName(id))
     }
 
     private func personDeleteMessage(_ name: String, count: Int) -> String {
