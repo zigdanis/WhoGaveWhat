@@ -26,7 +26,9 @@ struct InsightsView: View {
                 hasViewpoint: selfPerson != nil,
                 currencyCode: composition.currencyCode,
                 years: useCase.availableYears(gifts: data.gifts),
-                selectedYear: yearBinding)
+                selectedYear: yearBinding,
+                onMarkSelf: selfPerson == nil ? { composition.router.selectTab(.people) } : nil,
+                owner: selfPerson)
             balancesSection
             compareSection
         }
@@ -124,10 +126,6 @@ struct InsightsView: View {
                     personButton(subject, caption: "Balances for", slot: .subject)
                         .accessibilityIdentifier("insights.balances.subject")
                 }
-                Text("Mark yourself in People to see your balance")
-                    .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
-                    .padding(.horizontal, 4)
-                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             balancesCard
         }
@@ -284,13 +282,19 @@ private struct BalanceRow: View {
                     .font(Font.app(16, .semibold)).foregroundColor(Color.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(
-                    "Received \(formattedCurrency(balance.receivedValue, code: currencyCode)) · Given \(formattedCurrency(balance.givenValue, code: currencyCode))"
+                    "Received \(LocalizedCount.gifts(balance.receivedCount)) · Given \(LocalizedCount.gifts(balance.givenCount))"
                 )
                 .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            NetBadge(net: balance.net, currencyCode: currencyCode)
+            VStack(alignment: .trailing, spacing: 3) {
+                CountBalanceBadge(net: balance.countNet)
+                Text(verbatim: formattedSignedCurrency(balance.net, code: currencyCode))
+                    .font(Font.app(12, .regular, rounded: true)).foregroundColor(Color.textSecondary)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
         }
         .padding(.horizontal, 14).padding(.vertical, 12)
         .contentShape(Rectangle())
