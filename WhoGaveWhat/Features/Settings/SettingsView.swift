@@ -42,7 +42,7 @@ struct SettingsView: View {
                     .accessibilityIdentifier("settings.cloud-icons")
                 }
                 Text(
-                    "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms."
+                    "Sends only the gift name and your currency, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon and an approximate price. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms."
                 )
                 .font(Font.app(13, .regular))
                 .foregroundStyle(Color.textSecondary)
@@ -202,7 +202,8 @@ private struct CurrencyOption: Identifiable {
 
     static let all: [CurrencyOption] = {
         let locale = Locale.autoupdatingCurrent
-        return Locale.commonISOCurrencyCodes
+        // Only the currencies the app supports; the icon Worker has price buckets for just these.
+        return SupportedCurrency.allCases.map(\.code)
             .map { code in
                 CurrencyOption(
                     code: code,

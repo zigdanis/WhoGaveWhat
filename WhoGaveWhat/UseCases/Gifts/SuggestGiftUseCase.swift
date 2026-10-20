@@ -24,8 +24,8 @@ struct SuggestGiftUseCase {
         }
     }
 
-    func intelligentSuggestion(for name: String) async -> GiftIntelligenceResult? {
-        await intelligenceGateway.suggestGift(named: name)
+    func intelligentSuggestion(for name: String, currency: SupportedCurrency) async -> GiftIntelligenceResult? {
+        await intelligenceGateway.suggestGift(named: name, currency: currency)
     }
 
     private static let catalog: [GiftSuggestion] = [

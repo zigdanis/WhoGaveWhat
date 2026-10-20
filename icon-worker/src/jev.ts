@@ -1,4 +1,5 @@
 import { ICONS, criteria } from "./icons.ts";
+import { bucketFromKey, priceCriteria, priceInstructions, type Currency } from "./prices.ts";
 
 export const JEV_URL = "https://api.typesafe.ai/v1/systemone";
 
@@ -12,6 +13,8 @@ export interface JevAnswer {
   confidence: number;
   inputTokens: number;
   model: string;
+  /** Only when a currency was asked for; null when the price answer is missing or invalid. */
+  price?: { bucket: number; confidence: number } | null;
 }
 
 /** The answer plus earlier failed attempts that may still have been billed (usage unknown). */
@@ -35,18 +38,23 @@ export interface JevOptions {
   apiKey: string;
   model: string;
   russianHints: boolean;
+  /** Adds the price question in this currency. */
+  currency?: Currency;
   attemptTimeoutMs: number;
   maxAttempts: number;
   fetcher?: typeof fetch;
   sleep?: (ms: number) => Promise<void>;
 }
 
-export function jevRequestBody(name: string, model: string, russianHints: boolean) {
+export function jevRequestBody(name: string, model: string, russianHints: boolean, currency?: Currency) {
   return {
     state: name,
     model,
     questions: {
       icon: { type: "choice", instructions: INSTRUCTIONS, criteria: criteria(russianHints) },
+      ...(currency && {
+        price: { type: "choice", instructions: priceInstructions(currency), criteria: priceCriteria(currency) },
+      }),
     },
   };
 }
@@ -59,7 +67,7 @@ export function jevRequestBody(name: string, model: string, russianHints: boolea
 export async function chooseIcon(name: string, options: JevOptions): Promise<JevOutcome> {
   const fetcher = options.fetcher ?? fetch;
   const sleep = options.sleep ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
-  const body = JSON.stringify(jevRequestBody(name, options.model, options.russianHints));
+  const body = JSON.stringify(jevRequestBody(name, options.model, options.russianHints, options.currency));
   let lastError: JevError = new JevError("no attempt made");
   let unknownUsageAttempts = 0;
 
@@ -95,7 +103,7 @@ export async function chooseIcon(name: string, options: JevOptions): Promise<Jev
       continue;
     }
     try {
-      return { answer: parseAnswer(json), unknownUsageAttempts };
+      return { answer: parseAnswer(json, options.currency), unknownUsageAttempts };
     } catch (error) {
       unknownUsageAttempts += 1;
       lastError = error instanceof JevError ? error : new JevError("invalid answer");
@@ -110,11 +118,14 @@ function isRetryable(status: number): boolean {
   return status === 429 || status === 529 || status >= 500;
 }
 
-/** Validates Jev's reply instead of trusting it: the choice must be one of our keys. */
-export function parseAnswer(json: unknown): JevAnswer {
+/**
+ * Validates Jev's reply instead of trusting it: the choice must be one of our keys. A bad
+ * price answer only drops the price; the icon is still usable.
+ */
+export function parseAnswer(json: unknown, currency?: Currency): JevAnswer {
   const root = json as {
     model?: unknown;
-    answers?: { icon?: { choice?: unknown; confidence?: unknown } };
+    answers?: { icon?: { choice?: unknown; confidence?: unknown }; price?: { choice?: unknown; confidence?: unknown } };
     usage?: { input_tokens?: unknown };
   } | null;
   const answer = root?.answers?.icon;
@@ -126,5 +137,13 @@ export function parseAnswer(json: unknown): JevAnswer {
   if (typeof inputTokens !== "number" || !Number.isInteger(inputTokens) || inputTokens < 0) {
     throw new JevError("bad usage");
   }
-  return { key, confidence, inputTokens, model: typeof root?.model === "string" ? root.model : "unknown" };
+  const result = { key, confidence, inputTokens, model: typeof root?.model === "string" ? root.model : "unknown" };
+  if (currency === undefined) return result;
+  const price = root?.answers?.price;
+  const bucket = bucketFromKey(currency, price?.choice);
+  const priceConfidence = price?.confidence;
+  if (bucket === null || typeof priceConfidence !== "number" || !(priceConfidence >= 0 && priceConfidence <= 1)) {
+    return { ...result, price: null };
+  }
+  return { ...result, price: { bucket, confidence: priceConfidence } };
 }

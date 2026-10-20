@@ -47,14 +47,14 @@ struct CloudGiftIconTests {
         return CloudGiftIconGateway(preferences: preferences, now: now, transport: { try await transport.send($0) })
     }
 
-    @Test func sendsOnlyNormalizedNameAndInstallHeader() async throws {
+    @Test func sendsOnlyNormalizedNameCurrencyAndInstallHeader() async throws {
         let transport = IconTransportStub()
         let preferences = TestPreferencesGateway()
         let gateway = makeGateway(transport: transport, preferences: preferences)
 
-        let result = await gateway.suggestGift(named: " \n guitar\t  amp \r\n")
+        let result = await gateway.suggestGift(named: " \n guitar\t  amp \r\n", currency: .usd)
 
-        #expect(result == GiftIntelligenceResult(emoji: "🎸", value: 0))
+        #expect(result == GiftIntelligenceResult(emoji: "🎸", value: nil))
         let request = try #require(transport.requests.first)
         #expect(request.httpMethod == "POST")
         #expect(request.url?.absoluteString == "https://whogavewhat-icons.zigdanis.workers.dev/v1/gift-icon")
@@ -63,7 +63,63 @@ struct CloudGiftIconTests {
         #expect(UUID(uuidString: preferences.installID) != nil)
         #expect(request.timeoutInterval == 8)
         let body = try JSONDecoder().decode([String: String].self, from: #require(request.httpBody))
-        #expect(body == ["name": "guitar amp"])
+        #expect(body == ["name": "guitar amp", "currency": "USD"])
+    }
+
+    @Test func sendsTheRequestedCurrencyAndMapsTheWholePrice() async throws {
+        let transport = IconTransportStub()
+        transport.body = #"{"emoji":"🎸","confidence":0.93,"price":10000,"priceConfidence":0.4}"#
+        let gateway = makeGateway(transport: transport)
+
+        let result = await gateway.suggestGift(named: "guitar", currency: .rub)
+
+        #expect(result == GiftIntelligenceResult(emoji: "🎸", value: 10_000))
+        let request = try #require(transport.requests.first)
+        let body = try JSONDecoder().decode([String: String].self, from: #require(request.httpBody))
+        #expect(body == ["name": "guitar", "currency": "RUB"])
+    }
+
+    @Test func keepsAnExplicitAmountInsteadOfSnappingIt() async {
+        let transport = IconTransportStub()
+        transport.body = #"{"emoji":"💸","confidence":0.9,"price":5123,"priceConfidence":0.1}"#
+        let gateway = makeGateway(transport: transport)
+
+        #expect(await gateway.suggestGift(named: "деньги 5123", currency: .rub)?.value == 5_123)
+    }
+
+    @Test func priceAloneIsEnoughAndFractionsRound() async {
+        let transport = IconTransportStub()
+        transport.body = #"{"emoji":null,"confidence":0.2,"price":1499.6,"priceConfidence":0.5}"#
+        let gateway = makeGateway(transport: transport)
+
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == GiftIntelligenceResult(emoji: nil, value: 1_500))
+    }
+
+    @Test(arguments: ["null", "0", "-5", "0.4", "10000001", #""cheap""#, "1e400"])
+    func unusablePricesAreDropped(_ price: String) async {
+        let transport = IconTransportStub()
+        transport.body = #"{"emoji":"🎸","confidence":0.9,"price":"# + price + "}"
+        let gateway = makeGateway(transport: transport)
+
+        // A bad price never discards a good icon.
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == GiftIntelligenceResult(emoji: "🎸", value: nil))
+        transport.body = #"{"emoji":null,"confidence":0.2,"price":"# + price + "}"
+        #expect(await gateway.suggestGift(named: "guitar two", currency: .usd) == nil)
+    }
+
+    @Test func cacheSeparatesCurrencies() async {
+        let transport = IconTransportStub()
+        transport.body = #"{"emoji":"🎸","confidence":0.9,"price":10000}"#
+        let gateway = makeGateway(transport: transport)
+
+        #expect(await gateway.suggestGift(named: "guitar", currency: .rub)?.value == 10_000)
+        transport.body = #"{"emoji":"🎸","confidence":0.9,"price":150}"#
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd)?.value == 150)
+        #expect(transport.requests.count == 2)
+
+        #expect(await gateway.suggestGift(named: " guitar ", currency: .rub)?.value == 10_000)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd)?.value == 150)
+        #expect(transport.requests.count == 2)
     }
 
     @Test func truncatesAfterCollapsingWhitespace() async throws {
@@ -71,7 +127,7 @@ struct CloudGiftIconTests {
         let gateway = makeGateway(transport: transport)
         let name = " \n" + String(repeating: "я", count: 79) + "   ёжик  "
 
-        _ = await gateway.suggestGift(named: name)
+        _ = await gateway.suggestGift(named: name, currency: .usd)
 
         let request = try #require(transport.requests.first)
         let body = try JSONDecoder().decode([String: String].self, from: #require(request.httpBody))
@@ -91,7 +147,7 @@ struct CloudGiftIconTests {
         transport.body = body
         let gateway = makeGateway(transport: transport)
 
-        #expect(await gateway.suggestGift(named: "guitar") == nil)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
     }
 
     @Test(arguments: [400, 401, 429, 500, 503])
@@ -100,7 +156,7 @@ struct CloudGiftIconTests {
         transport.status = status
         let gateway = makeGateway(transport: transport)
 
-        #expect(await gateway.suggestGift(named: "guitar") == nil)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
     }
 
     @Test func transportErrorsReturnNilWithoutRetrying() async {
@@ -108,7 +164,7 @@ struct CloudGiftIconTests {
         transport.error = URLError(.timedOut)
         let gateway = makeGateway(transport: transport)
 
-        #expect(await gateway.suggestGift(named: "guitar") == nil)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
         #expect(transport.requests.count == 1)
     }
 
@@ -121,14 +177,14 @@ struct CloudGiftIconTests {
         // Without Retry-After, both wait a minute.
         let delay: TimeInterval = 60
 
-        #expect(await gateway.suggestGift(named: "guitar") == nil)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
         transport.status = 200
         clock = clock.addingTimeInterval(delay - 1)
-        #expect(await gateway.suggestGift(named: "running shoes") == nil)
+        #expect(await gateway.suggestGift(named: "running shoes", currency: .usd) == nil)
         #expect(transport.requests.count == 1)
 
         clock = clock.addingTimeInterval(1)
-        #expect(await gateway.suggestGift(named: "guitar")?.emoji == "🎸")
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd)?.emoji == "🎸")
         #expect(transport.requests.count == 2)
     }
 
@@ -138,14 +194,14 @@ struct CloudGiftIconTests {
         transport.headers = ["Retry-After": "120"]
         var clock = Date(timeIntervalSince1970: 1_000)
         let gateway = makeGateway(transport: transport, now: { clock })
-        _ = await gateway.suggestGift(named: "guitar")
+        _ = await gateway.suggestGift(named: "guitar", currency: .usd)
         transport.status = 200
 
         clock = clock.addingTimeInterval(119)
-        #expect(await gateway.suggestGift(named: "guitar") == nil)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
         #expect(transport.requests.count == 1)
         clock = clock.addingTimeInterval(1)
-        #expect(await gateway.suggestGift(named: "guitar") != nil)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) != nil)
     }
 
     @Test func unavailableHonorsAShortRetryAfter() async {
@@ -154,14 +210,14 @@ struct CloudGiftIconTests {
         transport.headers = ["Retry-After": "30"]
         var clock = Date(timeIntervalSince1970: 1_000)
         let gateway = makeGateway(transport: transport, now: { clock })
-        _ = await gateway.suggestGift(named: "guitar")
+        _ = await gateway.suggestGift(named: "guitar", currency: .usd)
         transport.status = 200
 
         clock = clock.addingTimeInterval(29)
-        #expect(await gateway.suggestGift(named: "guitar") == nil)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
         #expect(transport.requests.count == 1)
         clock = clock.addingTimeInterval(1)
-        #expect(await gateway.suggestGift(named: "guitar")?.emoji == "🎸")
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd)?.emoji == "🎸")
     }
 
     @Test func spentBudgetWaitsAtMostADay() async {
@@ -170,26 +226,26 @@ struct CloudGiftIconTests {
         transport.headers = ["Retry-After": "2592000"]
         var clock = Date(timeIntervalSince1970: 1_000)
         let gateway = makeGateway(transport: transport, now: { clock })
-        _ = await gateway.suggestGift(named: "guitar")
+        _ = await gateway.suggestGift(named: "guitar", currency: .usd)
         transport.status = 200
 
         clock = clock.addingTimeInterval(86_399)
-        #expect(await gateway.suggestGift(named: "guitar") == nil)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
         clock = clock.addingTimeInterval(1)
-        #expect(await gateway.suggestGift(named: "guitar")?.emoji == "🎸")
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd)?.emoji == "🎸")
     }
 
     @Test func cacheUsesNormalizedNamesAndCachesNullAnswers() async {
         let transport = IconTransportStub()
         let gateway = makeGateway(transport: transport)
 
-        _ = await gateway.suggestGift(named: " guitar   amp\n")
-        _ = await gateway.suggestGift(named: "guitar amp")
+        _ = await gateway.suggestGift(named: " guitar   amp\n", currency: .usd)
+        _ = await gateway.suggestGift(named: "guitar amp", currency: .usd)
         #expect(transport.requests.count == 1)
 
         transport.body = #"{"emoji":null,"confidence":0.31}"#
-        _ = await gateway.suggestGift(named: "unknown gift")
-        #expect(await gateway.suggestGift(named: "unknown gift") == nil)
+        _ = await gateway.suggestGift(named: "unknown gift", currency: .usd)
+        #expect(await gateway.suggestGift(named: "unknown gift", currency: .usd) == nil)
         #expect(transport.requests.count == 2)
     }
 
@@ -197,11 +253,11 @@ struct CloudGiftIconTests {
         let transport = IconTransportStub()
         let gateway = makeGateway(transport: transport)
         for index in 0..<101 {
-            _ = await gateway.suggestGift(named: "gift \(index)")
+            _ = await gateway.suggestGift(named: "gift \(index)", currency: .usd)
         }
-        _ = await gateway.suggestGift(named: "gift 100")
+        _ = await gateway.suggestGift(named: "gift 100", currency: .usd)
         #expect(transport.requests.count == 101)
-        _ = await gateway.suggestGift(named: "gift 0")
+        _ = await gateway.suggestGift(named: "gift 0", currency: .usd)
         #expect(transport.requests.count == 102)
     }
 
@@ -210,12 +266,12 @@ struct CloudGiftIconTests {
         let preferences = TestPreferencesGateway()
         let gateway = CloudGiftIconGateway(preferences: preferences, transport: { try await transport.send($0) })
         #expect(gateway.isAvailable == false)
-        #expect(await gateway.suggestGift(named: "guitar") == nil)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
         preferences.setCloudIconConsent(.declined)
-        #expect(await gateway.suggestGift(named: "guitar") == nil)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
         preferences.setCloudIconConsent(.allowed)
         #expect(gateway.isAvailable)
-        #expect(await gateway.suggestGift(named: " \nя ") == nil)
+        #expect(await gateway.suggestGift(named: " \nя ", currency: .usd) == nil)
         #expect(transport.requests.isEmpty)
     }
 
@@ -223,14 +279,14 @@ struct CloudGiftIconTests {
         let transport = IconTransportStub()
         transport.holdsRequests = true
         let gateway = makeGateway(transport: transport)
-        let request = Task { await gateway.suggestGift(named: "guitar") }
+        let request = Task { await gateway.suggestGift(named: "guitar", currency: .usd) }
         await transport.waitForRequest()
         request.cancel()
         transport.releaseRequest()
         #expect(await request.value == nil)
 
         transport.holdsRequests = false
-        #expect(await gateway.suggestGift(named: "guitar") != nil)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) != nil)
         #expect(transport.requests.count == 2)
     }
 
@@ -238,9 +294,9 @@ struct CloudGiftIconTests {
         let transport = IconTransportStub()
         let preferences = TestPreferencesGateway()
         let gateway = makeGateway(transport: transport, preferences: preferences)
-        _ = await gateway.suggestGift(named: "cached guitar")
+        _ = await gateway.suggestGift(named: "cached guitar", currency: .usd)
         transport.holdsRequests = true
-        let request = Task { await gateway.suggestGift(named: "guitar") }
+        let request = Task { await gateway.suggestGift(named: "guitar", currency: .usd) }
         // The first request is already cached; wait for the new transport to suspend.
         for _ in 0..<500 where transport.requests.count < 2 {
             try? await Task.sleep(for: .milliseconds(10))
@@ -251,7 +307,7 @@ struct CloudGiftIconTests {
         #expect(await request.value == nil)
 
         transport.holdsRequests = false
-        _ = await gateway.suggestGift(named: "cached guitar")
+        _ = await gateway.suggestGift(named: "cached guitar", currency: .usd)
         #expect(transport.requests.count == 3)
         #expect(transport.requests.first?.value(forHTTPHeaderField: "X-Install-ID") != preferences.installID)
         #expect(transport.requests.last?.value(forHTTPHeaderField: "X-Install-ID") == preferences.installID)
@@ -266,14 +322,15 @@ struct PreferredGiftIntelligenceTests {
         preferences.setCloudIconConsent(consent)
         let cloud = ScriptedIntelligenceGateway()
         let onDevice = ScriptedIntelligenceGateway()
-        cloud.results["guitar"] = GiftIntelligenceResult(emoji: "🎸", value: 0)
+        cloud.results["guitar"] = GiftIntelligenceResult(emoji: "🎸", value: nil)
         onDevice.results["guitar"] = GiftIntelligenceResult(emoji: "🎵", value: 1_000)
         let gateway = PreferredGiftIntelligenceGateway(preferences: preferences, cloud: cloud, onDevice: onDevice)
 
         #expect(gateway.isAvailable)
         gateway.prewarm()
-        let result = await gateway.suggestGift(named: "guitar")
+        let result = await gateway.suggestGift(named: "guitar", currency: .rub)
         #expect(result?.emoji == (consent == .allowed ? "🎸" : "🎵"))
+        #expect((consent == .allowed ? cloud : onDevice).currencies == [.rub])
         #expect(cloud.requests.count == (consent == .allowed ? 1 : 0))
         #expect(onDevice.requests.count == (consent == .allowed ? 0 : 1))
         #expect(cloud.prewarmCount == (consent == .allowed ? 1 : 0))
@@ -288,7 +345,7 @@ struct PreferredGiftIntelligenceTests {
         let gateway = PreferredGiftIntelligenceGateway(preferences: preferences, cloud: cloud, onDevice: onDevice)
 
         #expect(gateway.isAvailable == false)
-        #expect(await gateway.suggestGift(named: "guitar") == nil)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
         preferences.setCloudIconConsent(.declined)
         #expect(gateway.isAvailable == false)
         preferences.setCloudIconConsent(.allowed)
@@ -302,7 +359,7 @@ struct PreferredGiftIntelligenceTests {
         let onDevice = ScriptedIntelligenceGateway()
         let gateway = PreferredGiftIntelligenceGateway(preferences: preferences, cloud: cloud, onDevice: onDevice)
 
-        #expect(await gateway.suggestGift(named: "guitar") == nil)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
         #expect(cloud.requests == ["guitar"])
         #expect(onDevice.requests.isEmpty)
     }
