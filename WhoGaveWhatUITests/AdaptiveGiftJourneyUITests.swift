@@ -540,7 +540,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
     func testMarkingPersonAsMeShowsYouBadgeAndDeletingClearsIt() throws {
         let personName = "CI me person \(UUID().uuidString.prefix(8))"
-        let prompt = app.staticTexts["Mark yourself in People to see your balance"]
+        let prompt = app.buttons["year-summary.mark-self"]
         let badge = app.staticTexts["people.you-badge"]
 
         app.tabBars.buttons["Insights"].tap()
