@@ -798,7 +798,6 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.buttons["person-editor.cancel"].tap()
     }
 
-    /// Home summary without a viewpoint, then Insights balances and comparison once the giver is "You".
     /// Swipes a gift row, taps trash (Russian "Удалить") and returns the dialog title once it appears,
     /// asserting it sits near the swiped row rather than at the top of the screen.
     private func openDeleteConfirmation(
@@ -820,6 +819,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         return title
     }
 
+    /// Home summary without a viewpoint, then Insights balances and comparison once the giver is "You".
     private func attach(_ name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name

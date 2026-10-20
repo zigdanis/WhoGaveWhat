@@ -8,7 +8,9 @@ import SwiftUI
 /// its own `confirming` state for the same reason.
 ///
 /// The trash button sets an explicit red tint because swipe-action buttons inherit the
-/// app-wide brand tint, which would otherwise colour the destructive action green.
+/// app-wide brand tint, which would otherwise colour it green. It has no `.destructive`
+/// role: in a `List` that role starts the row-removal animation on tap, before the user
+/// has confirmed, and this row is the dialog's anchor.
 private struct SwipeToDeleteConfirmation: ViewModifier {
     let title: Text
     let confirmLabel: Text
@@ -22,7 +24,7 @@ private struct SwipeToDeleteConfirmation: ViewModifier {
         content
             .swipeActions(edge: .trailing, allowsFullSwipe: allowsFullSwipe) {
                 if isEnabled {
-                    Button(role: .destructive) {
+                    Button {
                         confirming = true
                     } label: {
                         Image(systemName: "trash")
