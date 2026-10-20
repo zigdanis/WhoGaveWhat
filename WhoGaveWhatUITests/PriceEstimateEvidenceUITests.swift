@@ -9,8 +9,9 @@ final class PriceEstimateEvidenceUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        // English UI with Russian regional formatting, so amounts read like "10 000 ₽".
-        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "ru_RU"]
+        // Russian UI and formatting, as the app is mostly used; amounts read like "10 000 ₽".
+        // (With an English UI the same region formats rubles as "10 000 RUB".)
+        app.launchArguments += ["-AppleLanguages", "(ru)", "-AppleLocale", "ru_RU"]
         // Overrides the stored currency preference for this launch.
         app.launchArguments += ["-preferredCurrencyCode", "RUB"]
         app.launchEnvironment["KS_START"] = "app"
@@ -33,8 +34,8 @@ final class PriceEstimateEvidenceUITests: XCTestCase {
     }
 
     func testEstimateShowsInCollapsedDetailsAndExpandedField() throws {
-        XCTAssertTrue(app.buttons["Add a gift"].waitForExistence(timeout: timeout))
-        app.buttons["Add a gift"].tap()
+        XCTAssertTrue(app.buttons["Добавить подарок"].waitForExistence(timeout: timeout))
+        app.buttons["Добавить подарок"].tap()
         let name = app.textFields["add-gift.name"]
         XCTAssertTrue(name.waitForExistence(timeout: timeout))
         name.tap()
@@ -45,7 +46,7 @@ final class PriceEstimateEvidenceUITests: XCTestCase {
         let summary = element(identifier: "add-gift.details.value")
         XCTAssertTrue(summary.waitForExistence(timeout: timeout))
         waitForNormalizedLabel(summary, expected: "≈ 10 000 ₽")
-        XCTAssertEqual(app.buttons["add-gift.details"].value as? String, "Hidden")
+        XCTAssertFalse(app.textFields["add-gift.value"].exists)
         attach("price-estimate-details-collapsed")
 
         // Expanded: the field shows the number with its "≈" and "Suggested" hint.
@@ -57,8 +58,8 @@ final class PriceEstimateEvidenceUITests: XCTestCase {
     }
 
     func testSettingsOffersOnlyRublesAndDollars() throws {
-        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: timeout))
-        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.buttons["Настройки"].waitForExistence(timeout: timeout))
+        app.buttons["Настройки"].tap()
         let currency = element(identifier: "settings.currency")
         XCTAssertTrue(currency.waitForExistence(timeout: timeout))
         currency.tap()
