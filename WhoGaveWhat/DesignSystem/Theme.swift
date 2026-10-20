@@ -79,6 +79,13 @@ func formattedSignedCurrency(
     return magnitude
 }
 
+/// Count with an explicit sign: "+" and the typographic minus for non-zero values, plain at zero.
+func formattedSignedCount(_ value: Int) -> String {
+    if value > 0 { return "+\(value)" }
+    if value < 0 { return "\u{2212}\(abs(value))" }
+    return "0"
+}
+
 private enum CurrencySymbolCache {
     static let values = NSCache<NSString, NSString>()
 }
