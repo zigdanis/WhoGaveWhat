@@ -69,11 +69,11 @@ export function explicitAmount(name: string): number | null {
   const number = Number(grouped ? digits.replace(/[\s  .,]/g, "") : digits.replace(",", "."));
   const thousands = suffix !== undefined || /тысяч?\p{L}*$/u.test(whole);
   const value = thousands ? number * 1_000 : number;
-  if (!thousands && looksLikeYear(value) && !hasCurrencyMark(text, matches[0].index!, whole.length)) return null;
+  if (!thousands && !grouped && looksLikeYear(value) && !hasCurrencyMark(text, matches[0].index!, whole.length)) return null;
   return Number.isInteger(value) && value > 0 && value <= MAX_EXPLICIT_AMOUNT ? value : null;
 }
 
-/** "монета 1897", "конверт 2026": a bare year, not an amount. Round ones like 2000 still read as amounts. */
+/** "монета 1897", "конверт 2026": a bare year, not an amount. Round ones like 2000, or grouped "1 950", still read as amounts. */
 function looksLikeYear(value: number): boolean {
   return value >= 1_800 && value <= 2_099 && value % 100 !== 0;
 }
@@ -84,7 +84,7 @@ function hasCurrencyMark(text: string, start: number, length: number): boolean {
   const after = text.slice(start + length);
   return (
     /[$€₽]\s*$/u.test(before) ||
-    /^\s*(?:[$€₽]|(?:р|руб|rub|usd|eur|евро|долл)(?!\p{L})|(?:рубл|доллар|dollar)\p{L}*)/u.test(after)
+    /^\s*(?:[$€₽]|(?:р|руб|rub|usd|eur|евро|долл)(?!\p{L})|(?:рубл|доллар|dollar|ruble|rouble|euro)\p{L}*)/u.test(after)
   );
 }
 

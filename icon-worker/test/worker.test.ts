@@ -493,6 +493,9 @@ describe("explicit amounts", () => {
     ["1950 рублей", 1_950],
     ["Деньги 2000", 2_000],
     ["сертификат на 1500", 1_500],
+    ["Деньги 1 950", 1_950],
+    ["1950 rubles", 1_950],
+    ["1950 euros", 1_950],
   ])("reads %j as %i", (name, amount) => {
     expect(explicitAmount(name)).toBe(amount);
   });
