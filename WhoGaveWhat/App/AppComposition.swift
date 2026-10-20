@@ -22,6 +22,7 @@ final class AppComposition {
     let renamePersonUseCase: RenamePersonUseCase
     let deletePersonUseCase: DeletePersonUseCase
     let buildInsights = BuildInsightsUseCase()
+    let rankPickerOptions = RankPickerOptionsUseCase()
     let completeOnboarding: CompleteOnboardingUseCase
 
     convenience init(store: SwiftDataStore) {
@@ -113,6 +114,15 @@ final class AppComposition {
     func deleteGift(id: String) {
         try? deleteGiftUseCase.execute(id: id)
         reloadData()
+    }
+
+    /// People ordered for a picker by recent use in `role`; `data.gifts` is reloaded after every save and delete.
+    func rankedPeople(for role: PersonPickerRole) -> [Person] {
+        rankPickerOptions.rankPeople(data.people, by: role, in: data.gifts)
+    }
+
+    var rankedOccasions: [Occasion] {
+        rankPickerOptions.rankOccasions(data.occasions, in: data.gifts)
     }
 
     func createPerson(name: String) -> String? {

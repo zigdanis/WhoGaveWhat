@@ -13,6 +13,11 @@ struct Gift: Identifiable, Hashable {
     let createdAt: Date
     /// True when the user chose the emoji in the picker rather than inferring it from the name.
     var emojiPickedByUser = false
+    /// When the gift was last saved, including edits. `createdAt` stays fixed and `date` can be backdated.
+    var lastSavedAt: Date?
+
+    /// The latest moment this gift counted as use of its people and occasion.
+    var lastUsedAt: Date { lastSavedAt ?? createdAt }
 
     /// Direction as seen by the viewpoint person, or nil without a viewpoint or when it isn't an endpoint.
     func direction(relativeTo personID: String?) -> GiftDirection? {

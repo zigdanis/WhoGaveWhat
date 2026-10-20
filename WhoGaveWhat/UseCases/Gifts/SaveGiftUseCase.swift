@@ -27,6 +27,8 @@ struct SaveGiftInput: Equatable {
 struct SaveGiftUseCase {
     let giftGateway: GiftGateway
     let suggestGift: SuggestGiftUseCase
+    /// The clock behind `createdAt` of new gifts and `lastSavedAt` of every save.
+    var now: () -> Date = { Date() }
 
     @discardableResult
     func execute(_ input: SaveGiftInput) throws -> Gift? {
@@ -35,6 +37,7 @@ struct SaveGiftUseCase {
         }
 
         let suggestion = suggestGift.instantSuggestion(for: input.name)
+        let savedAt = now()
         let gift = Gift(
             id: input.editingGiftID ?? "g\(UUID().uuidString)",
             emoji: input.emoji ?? input.aiEmoji ?? suggestion.emoji,
@@ -47,8 +50,9 @@ struct SaveGiftUseCase {
             // By design an untouched estimate is saved as the gift's value, so gifts get approximate
             // amounts instead of 0. Once the user edits the field, their value (even empty = 0) wins.
             value: Double(input.valueTouched ? (input.value ?? 0) : (input.estimatedValue ?? 0)),
-            createdAt: input.createdAt ?? Date(),
-            emojiPickedByUser: input.emoji != nil
+            createdAt: input.createdAt ?? savedAt,
+            emojiPickedByUser: input.emoji != nil,
+            lastSavedAt: savedAt
         )
         try giftGateway.save(gift)
         return gift

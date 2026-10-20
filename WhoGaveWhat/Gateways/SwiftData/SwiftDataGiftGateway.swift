@@ -43,7 +43,8 @@ final class SwiftDataGiftGateway: GiftGateway {
                 date: gift.date,
                 value: gift.value,
                 createdAt: gift.createdAt,
-                emojiPickedByUser: gift.emojiPickedByUser
+                emojiPickedByUser: gift.emojiPickedByUser,
+                lastSavedAt: gift.lastSavedAt
             )
             context.insert(storedGift)
         }
@@ -57,6 +58,7 @@ final class SwiftDataGiftGateway: GiftGateway {
         storedGift.value = gift.value
         storedGift.createdAt = gift.createdAt
         storedGift.emojiPickedByUser = gift.emojiPickedByUser
+        storedGift.lastSavedAt = gift.lastSavedAt
         try saveContext()
     }
 
@@ -110,7 +112,8 @@ private extension Gift {
             date: storedGift.date,
             value: storedGift.value,
             createdAt: storedGift.createdAt,
-            emojiPickedByUser: storedGift.emojiPickedByUser
+            emojiPickedByUser: storedGift.emojiPickedByUser,
+            lastSavedAt: storedGift.lastSavedAt
         )
     }
 }

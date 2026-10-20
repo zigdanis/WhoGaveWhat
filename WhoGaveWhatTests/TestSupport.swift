@@ -61,10 +61,12 @@ func makeTestComposition(
 }
 
 @MainActor
-func makeSaveGiftUseCase() -> (SaveGiftUseCase, TestGiftGateway) {
+func makeSaveGiftUseCase(
+    now: @escaping () -> Date = { Date() }
+) -> (SaveGiftUseCase, TestGiftGateway) {
     let gateway = TestGiftGateway()
     let suggestions = SuggestGiftUseCase(intelligenceGateway: TestIntelligenceGateway())
-    return (SaveGiftUseCase(giftGateway: gateway, suggestGift: suggestions), gateway)
+    return (SaveGiftUseCase(giftGateway: gateway, suggestGift: suggestions, now: now), gateway)
 }
 
 func makeGiftInput(
