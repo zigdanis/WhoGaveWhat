@@ -630,6 +630,71 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.buttons["person-editor.cancel"].tap()
     }
 
+    /// Temporary: the gift delete confirmation points at the swiped row, not the top of the screen.
+    /// Remove after visual review.
+    func testGiftDeleteConfirmationAnchorsToSwipedRow() throws {
+        let suffix = UUID().uuidString.prefix(8)
+        let giftName = "CI delete \(suffix)"
+        let giverName = "CI delete giver \(suffix)"
+        let recipientName = "CI delete recipient \(suffix)"
+        app.terminate()
+        app.launchArguments = ["-AppleLanguages", "(ru)", "-AppleLocale", "ru_RU"]
+        app.launch()
+
+        let home = app.tabBars.buttons["Главная"]
+        XCTAssertTrue(home.waitForExistence(timeout: timeout))
+        home.tap()
+        app.buttons["Добавить подарок"].tap()
+        let field = app.textFields["add-gift.name"]
+        XCTAssertTrue(field.waitForExistence(timeout: timeout))
+        field.tap()
+        waitForKeyboardFocus(field)
+        field.typeText(giftName)
+        choosePerson(giverName, endpoint: "from", create: true)
+        choosePerson(recipientName, endpoint: "to", create: true)
+        saveGift(named: giftName)
+
+        // Home: swipe, confirm the trash button, then check the popover sits near the row.
+        let title = app.staticTexts["Удалить этот подарок?"]
+        let homeTitle = openDeleteConfirmation(
+            forGift: giftName, title: title, swipedCheckpoint: "gift-delete-home-swiped")
+        attach("gift-delete-home-dialog")
+
+        // iOS 26 shows the dialog as a popover, which may have no Cancel button: tap outside it.
+        let dismissRegion = app.otherElements["PopoverDismissRegion"]
+        let cancel = app.buttons["Отмена"]
+        if dismissRegion.exists {
+            dismissRegion.tap()
+        } else if cancel.exists {
+            cancel.tap()
+        } else {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.95)).tap()
+        }
+        waitForDisappearance(homeTitle)
+        XCTAssertTrue(app.staticTexts[giftName].firstMatch.waitForExistence(timeout: timeout))
+        attach("gift-delete-home-cancelled")
+
+        // Person detail: the same swipe, anchored well below the avatar header.
+        app.tabBars.buttons["Люди"].tap()
+        let giver = app.staticTexts[giverName]
+        XCTAssertTrue(giver.waitForExistence(timeout: timeout))
+        giver.tap()
+        XCTAssertTrue(app.navigationBars[giverName].waitForExistence(timeout: timeout))
+        let personTitle = openDeleteConfirmation(
+            forGift: giftName, title: title, swipedCheckpoint: nil)
+        attach("gift-delete-person-dialog")
+        let popover = app.popovers.firstMatch
+        let confirm =
+            popover.exists
+            ? popover.buttons["Удалить"].firstMatch
+            : app.buttons.matching(identifier: "Удалить").allElementsBoundByIndex.last ?? app.buttons["Удалить"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: timeout))
+        confirm.tap()
+        waitForDisappearance(personTitle)
+        waitForDisappearance(app.staticTexts[giftName])
+        attach("gift-delete-person-deleted")
+    }
+
     func testPersonEditorHeaderAdaptsToAccessibilityDynamicType() throws {
         let personName = "CI large type person \(UUID().uuidString.prefix(8))"
         app.terminate()
@@ -734,6 +799,27 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     }
 
     /// Home summary without a viewpoint, then Insights balances and comparison once the giver is "You".
+    /// Swipes a gift row, taps trash (Russian "Удалить") and returns the dialog title once it appears,
+    /// asserting it sits near the swiped row rather than at the top of the screen.
+    private func openDeleteConfirmation(
+        forGift giftName: String, title: XCUIElement, swipedCheckpoint: String?
+    ) -> XCUIElement {
+        let cell = app.cells.containing(.staticText, identifier: giftName).firstMatch
+        XCTAssertTrue(cell.waitForExistence(timeout: timeout))
+        let rowFrame = cell.frame
+        cell.swipeLeft()
+        let trash = app.buttons["Удалить"].firstMatch
+        XCTAssertTrue(trash.waitForExistence(timeout: timeout))
+        if let swipedCheckpoint { attach(swipedCheckpoint) }
+        trash.tap()
+        XCTAssertTrue(title.waitForExistence(timeout: timeout))
+        XCTAssertLessThan(abs(title.frame.midY - rowFrame.midY), 300)
+        if rowFrame.minY > 400 {
+            XCTAssertGreaterThan(title.frame.minY, 120)
+        }
+        return title
+    }
+
     private func attach(_ name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name

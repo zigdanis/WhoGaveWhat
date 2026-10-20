@@ -32,6 +32,8 @@ PLANNED_CHECKPOINT_NAMES = (
     "person-add-deleted", "person-detail-is-me", "people-you-badge",
     "person-editor-russian", "person-editor-russian-keyboard",
     "person-editor-header-accessibility", "person-editor-header-accessibility-keyboard",
+    "gift-delete-home-swiped", "gift-delete-home-dialog", "gift-delete-home-cancelled",
+    "gift-delete-person-dialog", "gift-delete-person-deleted",
 )
 APP_LANGUAGE_CHECKPOINT_NAMES = (
     "system-settings", "language-region-before", "english-system-russian-secondary",

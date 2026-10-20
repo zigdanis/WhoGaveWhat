@@ -5,8 +5,6 @@ import SwiftUI
 /// A title and the year summary sit above the month sections.
 struct HomeView: View {
     let composition: AppComposition
-    /// Gift awaiting delete confirmation (set by the swipe action).
-    @State private var pendingDelete: Gift?
     /// Year chosen in the menu; nil follows the default (current year, else the latest with gifts).
     @State private var selectedYear: Int?
 
@@ -38,13 +36,8 @@ struct HomeView: View {
                                     currencyCode: composition.currencyCode)
                             }
                             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
-                                    pendingDelete = gift
-                                } label: {
-                                    Image(systemName: "trash")
-                                }
-                                .accessibilityLabel("Delete")
+                            .swipeToDelete(title: Text("Delete this gift?"), allowsFullSwipe: true) {
+                                composition.deleteGift(id: gift.id)
                             }
                         }
                     } header: {
@@ -68,25 +61,6 @@ struct HomeView: View {
                 .accessibilityLabel("Settings")
             }
         }
-        .confirmationDialog(
-            "Delete this gift?",
-            isPresented: deleteConfirmBinding,
-            titleVisibility: .visible,
-            presenting: pendingDelete
-        ) { gift in
-            Button("Delete", role: .destructive) {
-                composition.deleteGift(id: gift.id)
-                pendingDelete = nil
-            }
-            Button("Cancel", role: .cancel) { pendingDelete = nil }
-        }
-    }
-
-    /// Drives the confirmation dialog off the optional pending gift.
-    private var deleteConfirmBinding: Binding<Bool> {
-        Binding(
-            get: { pendingDelete != nil },
-            set: { if !$0 { pendingDelete = nil } })
     }
 
     private var displayedYear: Int {
