@@ -668,7 +668,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         } else if cancel.exists {
             cancel.tap()
         } else {
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.95)).tap()
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
         }
         waitForDisappearance(homeTitle)
         XCTAssertTrue(app.staticTexts[giftName].firstMatch.waitForExistence(timeout: timeout))
@@ -799,12 +799,13 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     }
 
     /// Swipes a gift row, taps trash (Russian "Удалить") and returns the dialog title once it appears,
-    /// asserting it sits near the swiped row rather than at the top of the screen.
+    /// asserting the popover's nearest edge touches the swiped row, where its arrow points.
     private func openDeleteConfirmation(
         forGift giftName: String, title: XCUIElement, swipedCheckpoint: String?
     ) -> XCUIElement {
         let cell = app.cells.containing(.staticText, identifier: giftName).firstMatch
         XCTAssertTrue(cell.waitForExistence(timeout: timeout))
+        XCTAssertTrue(cell.isHittable, "The gift row must be on screen before swiping")
         let rowFrame = cell.frame
         cell.swipeLeft()
         let trash = app.buttons["Удалить"].firstMatch
@@ -812,10 +813,14 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         if let swipedCheckpoint { attach(swipedCheckpoint) }
         trash.tap()
         XCTAssertTrue(title.waitForExistence(timeout: timeout))
-        XCTAssertLessThan(abs(title.frame.midY - rowFrame.midY), 300)
-        if rowFrame.minY > 400 {
-            XCTAssertGreaterThan(title.frame.minY, 120)
-        }
+        // The popover element, else its title and confirm button plus padding and arrow.
+        let popover = app.popovers.firstMatch
+        let confirm = app.buttons.matching(identifier: "Удалить").allElementsBoundByIndex.last
+        let dialogFrame = popover.exists ? popover.frame : title.frame.union(confirm?.frame ?? title.frame)
+        let tolerance: CGFloat = popover.exists ? 40 : 70
+        let gap = max(rowFrame.minY - dialogFrame.maxY, dialogFrame.minY - rowFrame.maxY, 0)
+        XCTAssertLessThanOrEqual(
+            gap, tolerance, "Dialog \(dialogFrame) must sit next to the swiped row \(rowFrame)")
         return title
     }
 
