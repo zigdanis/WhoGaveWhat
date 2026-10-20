@@ -496,7 +496,8 @@ private struct ApproximateValueRow: View {
                 if showsEstimate {
                     // The "≈" marks the number as an estimate until the user edits it.
                     HStack(spacing: 3) {
-                        Text(verbatim: "≈")
+                        // The field's own accessibility value already says "Estimated".
+                        Text(verbatim: "≈").accessibilityHidden(true)
                         Text("Suggested")
                     }
                     .font(Font.app(12, .regular)).foregroundColor(Color.textSecondary)
