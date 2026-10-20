@@ -5,10 +5,12 @@ import XCTest
 final class InsightsOwnerBalanceEvidenceUITests: XCTestCase {
     private var app: XCUIApplication!
     private let timeout: TimeInterval = 15
-    private let owner = "Данис"
-    private let anna = "Анна"
-    private let boris = "Борис"
-    private let vera = "Вера"
+    /// Run-unique names: the store persists across runs on one simulator (e.g. a `--video-test` rerun).
+    private let suffix = String(UUID().uuidString.prefix(4))
+    private var owner: String { "Данис \(suffix)" }
+    private var anna: String { "Анна \(suffix)" }
+    private var boris: String { "Борис \(suffix)" }
+    private var vera: String { "Вера \(suffix)" }
 
     override func setUpWithError() throws {
         continueAfterFailure = false
