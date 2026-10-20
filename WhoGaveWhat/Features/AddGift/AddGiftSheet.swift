@@ -498,19 +498,23 @@ private struct ApproximateValueRow: View {
                 }
             }
             Spacer(minLength: 8)
-            if showsEstimate {
-                Text(verbatim: "≈").font(Font.app(16, .semibold)).foregroundColor(Color.textSecondary)
-                    .accessibilityHidden(true)
+            // The field hugs its digits so the "≈" sits right next to the estimate.
+            HStack(spacing: 4) {
+                if showsEstimate {
+                    Text(verbatim: "≈").font(Font.app(16, .semibold)).foregroundColor(Color.textSecondary)
+                        .accessibilityHidden(true)
+                }
+                TextField("0", text: $value)
+                    .font(Font.app(16, .semibold)).foregroundColor(Color.textPrimary)
+                    .keyboardType(.numberPad)
+                    .tint(accent)
+                    .focused($focus, equals: .value)
+                    .multilineTextAlignment(.trailing)
+                    .fixedSize()
+                    .accessibilityValue(showsEstimate ? String(localized: "Estimated \(value)") : value)
+                    .accessibilityIdentifier("add-gift.value")
             }
-            TextField("0", text: $value)
-                .font(Font.app(16, .semibold)).foregroundColor(Color.textPrimary)
-                .keyboardType(.numberPad)
-                .tint(accent)
-                .focused($focus, equals: .value)
-                .multilineTextAlignment(.trailing)
-                .frame(minWidth: 60, maxWidth: 110)
-                .accessibilityValue(showsEstimate ? String(localized: "Estimated \(value)") : value)
-                .accessibilityIdentifier("add-gift.value")
+            .frame(minWidth: 60, maxWidth: 110, alignment: .trailing)
             Text(currencySymbol(code: currencyCode))
                 .font(Font.app(16, .semibold)).foregroundColor(Color.textSecondary)
         }
