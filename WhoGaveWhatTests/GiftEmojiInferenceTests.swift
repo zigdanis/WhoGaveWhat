@@ -90,11 +90,13 @@ struct GiftEmojiInferenceTests {
         state.selectEmoji("🐶")
         #expect(state.effectiveEmoji == "🐶")
 
+        gateway.results["bouquet of roses"] = result("🌹")
         state.setName("bouquet of roses")
         await state.suggestionTask?.value
         #expect(state.effectiveEmoji == "🐶")
         #expect(state.input.emoji == "🐶")
-        #expect(gateway.requests == ["bouquet"])
+        // The rename is still asked about for its price, but its emoji is ignored.
+        #expect(gateway.requests == ["bouquet", "bouquet of roses"])
     }
 
     @Test func debounceSendsOnlyTheLatestName() async throws {
@@ -206,6 +208,9 @@ struct GiftEmojiInferenceTests {
         creating.previewFrom(people[0])
         creating.previewTo(people[1])
         creating.selectEmoji("🐶")
+        // Picking an emoji keeps the request that can still bring a price.
+        await creating.suggestionTask?.value
+        #expect(creating.effectiveEmoji == "🐶")
         composition.saveGift(creating.input)
 
         let saved = try #require(composition.data.gifts.first { $0.name == "Bouquet" })
@@ -217,7 +222,8 @@ struct GiftEmojiInferenceTests {
         editing.setName("Bouquet fixed")
         await editing.suggestionTask?.value
         #expect(editing.effectiveEmoji == "🐶")
-        #expect(gateway.requests.isEmpty)
+        // With a picked emoji and a saved value there is nothing left to ask for.
+        #expect(gateway.requests == ["Bouquet"])
     }
 
     @Test func inferredEmojiIsRevisedWhenRenamingAfterReopen() async throws {

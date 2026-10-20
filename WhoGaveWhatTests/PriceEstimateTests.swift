@@ -197,6 +197,76 @@ struct PriceEstimateStateTests {
         #expect(state.draft.estimatedValue == nil)
     }
 
+    @Test func renamingDropsTheEstimateBeforeTheNewAnswerArrives() async throws {
+        let gateway = ScriptedIntelligenceGateway()
+        gateway.results["гитара"] = guitar()
+        gateway.results["носки"] = GiftIntelligenceResult(emoji: "🧦", value: 500)
+        let (state, composition) = try makeState(gateway)
+        let people = composition.data.people.map(\.id)
+        state.previewFrom(people[0])
+        state.previewTo(people[1])
+        state.setName("гитара")
+        await state.suggestionTask?.value
+        #expect(state.input.estimatedValue == 10_000)
+
+        gateway.holdsRequests = true
+        state.setName("носки")
+        #expect(state.input.estimatedValue == nil)
+        #expect(state.showsEstimate == false)
+        composition.saveGift(state.input)
+        #expect(composition.data.gifts.first { $0.name == "носки" }?.value == 0)
+
+        await gateway.waitForRequests(2)
+        gateway.holdsRequests = false
+        gateway.releaseRequests()
+        await state.suggestionTask?.value
+        #expect(state.input.estimatedValue == 500)
+
+        // Trailing whitespace is the same name and keeps its estimate.
+        state.setName("носки ")
+        #expect(state.input.estimatedValue == 500)
+    }
+
+    @Test func aHandPickedEmojiStillGetsAnEstimate() async throws {
+        let gateway = ScriptedIntelligenceGateway()
+        gateway.holdsRequests = true
+        gateway.results["гитара"] = guitar()
+        gateway.results["гитара классическая"] = guitar(20_000)
+        let (state, _) = try makeState(gateway)
+
+        state.setName("гитара")
+        await gateway.waitForRequests(1)
+        state.selectEmoji("🎻")
+        #expect(state.aiLoading == false)
+        gateway.releaseRequests()
+        await state.suggestionTask?.value
+        #expect(state.effectiveEmoji == "🎻")
+        #expect(state.draft.aiEmoji == nil)
+        #expect(state.draft.estimatedValue == 10_000)
+
+        gateway.holdsRequests = false
+        state.setName("гитара классическая")
+        await state.suggestionTask?.value
+        #expect(state.effectiveEmoji == "🎻")
+        #expect(state.draft.estimatedValue == 20_000)
+        #expect(state.aiLoading == false)
+    }
+
+    @Test func aHandPickedEmojiAndATypedValueNeedNoRequest() async throws {
+        let gateway = ScriptedIntelligenceGateway()
+        gateway.results["гитара"] = guitar()
+        let (state, _) = try makeState(gateway)
+        state.selectEmoji("🎻")
+        state.valueText = "3000"
+
+        state.setName("гитара")
+        await state.suggestionTask?.value
+
+        #expect(state.suggestionTask == nil)
+        #expect(gateway.requests.isEmpty)
+        #expect(state.effectiveValue == 3_000)
+    }
+
     @Test func shorteningTheNameBelowTwoCharactersClearsTheEstimate() async throws {
         let gateway = ScriptedIntelligenceGateway()
         gateway.results["гитара"] = guitar()

@@ -131,6 +131,12 @@ final class AddGiftState {
     /// pause in typing, asks the selected model for a better emoji and an approximate price.
     func setName(_ name: String) {
         guard name != draft.name else { return }
+        // An estimate belongs to the name it was made for; it must not be saved under another one.
+        if name.trimmingCharacters(in: .whitespacesAndNewlines)
+            != draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        {
+            draft.estimatedValue = nil
+        }
         draft.name = name
         hasEditedName = true
         // Without a specific keyword match, keep the emoji the gift already had instead of the generic one.
@@ -143,7 +149,9 @@ final class AddGiftState {
         suggestionTask = nil
         aiLoading = false
         let trimmed = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard draft.emoji == nil, trimmed.count >= 2, suggestGift.isIntelligenceAvailable else {
+        // A hand-picked emoji still leaves the price to estimate while the user hasn't entered one.
+        let wantsAnswer = draft.emoji == nil || !draft.valueTouched
+        guard wantsAnswer, trimmed.count >= 2, suggestGift.isIntelligenceAvailable else {
             // No answer is coming for this name, so an estimate for an earlier one would be stale.
             draft.estimatedValue = nil
             return
@@ -151,7 +159,8 @@ final class AddGiftState {
         suggestionTask = Task {
             try? await Task.sleep(for: delay)
             guard !isStale(trimmed) else { return }
-            aiLoading = true
+            // The spinner belongs to the icon, so it stays hidden over a hand-picked emoji.
+            aiLoading = draft.emoji == nil
             let result = await suggestGift.intelligentSuggestion(for: trimmed, currency: currency)
             guard !isStale(trimmed) else { return }
             aiLoading = false
@@ -191,8 +200,11 @@ final class AddGiftState {
     }
     func selectEmoji(_ emoji: String) {
         draft.emoji = emoji
-        suggestionTask?.cancel()
-        suggestionTask = nil
+        // An answer still on its way can bring the price; it never replaces the picked emoji.
+        if draft.valueTouched {
+            suggestionTask?.cancel()
+            suggestionTask = nil
+        }
         aiLoading = false
         picker = nil
     }

@@ -414,6 +414,11 @@ describe("gift price estimate", () => {
     const dollars = fakeJev(pricedReply("gift_card", { choice: "usd_100", confidence: 0.5 }));
     const card = await handle(request({ name: "сертификат на $120", currency: "USD" }), testEnv(), deps(dollars.fetcher));
     expect((await body(card)).price).toBe(120);
+
+    // A money icon too uncertain to be shown doesn't turn a number in the name into a price.
+    const unsure = fakeJev(pricedReply("money", { choice: "rub_3000", confidence: 0.6 }, 0.2));
+    const envelope = await handle(request({ name: "конверт 2026", currency: "RUB" }), testEnv(), deps(unsure.fetcher));
+    expect(await body(envelope)).toEqual({ emoji: null, confidence: 0.2, price: 3_000, priceConfidence: 0.6 });
   });
 
   it("returns the icon with a null price when Jev's price answer is missing or invalid", async () => {

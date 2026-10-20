@@ -232,7 +232,7 @@ function answerResponse(answer: Answer): Response {
   const emoji = key !== null && confidence >= minConfidence ? (ICONS[key]?.emoji ?? null) : null;
   const icon = { emoji, confidence: round(confidence) };
   if (answer.currency === null) return json(icon);
-  const price = priceFor(key, answer.name, answer.bucket, answer.priceConfidence, answer.minPriceConfidence);
+  const price = priceFor({ key, confidence, minConfidence }, answer.name, answer.bucket, answer.priceConfidence, answer.minPriceConfidence);
   return json({ ...icon, price, priceConfidence: round(answer.priceConfidence) });
 }
 

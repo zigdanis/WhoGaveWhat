@@ -71,15 +71,18 @@ export function explicitAmount(name: string): number | null {
   return Number.isInteger(value) && value > 0 && value <= MAX_EXPLICIT_AMOUNT ? value : null;
 }
 
-/** The price to report: an explicit amount for money-like icons, else the bucket when confident enough. */
+/**
+ * The price to report: an explicit amount for a confidently money-like icon, else the bucket
+ * when confident enough. The icon must pass the same threshold that decides whether it is shown.
+ */
 export function priceFor(
-  iconKey: string | null,
+  icon: { key: string | null; confidence: number; minConfidence: number },
   name: string,
   bucket: number | null,
   confidence: number,
   minConfidence: number,
 ): number | null {
-  if (iconKey !== null && MONEY_KEYS.has(iconKey)) {
+  if (icon.key !== null && MONEY_KEYS.has(icon.key) && icon.confidence >= icon.minConfidence) {
     const amount = explicitAmount(name);
     if (amount !== null) return amount;
   }

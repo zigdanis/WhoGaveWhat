@@ -175,7 +175,7 @@ private struct CloudIconConsentCard: View {
                     .font(Font.app(15, .semibold))
                     .foregroundStyle(Color.textPrimary)
                 Text(
-                    "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon? Only the name and a random app ID are sent — never people, dates, amounts or occasions."
+                    "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon and an approximate price? Only the name, your currency and a random app ID are sent — never people, dates, amounts or occasions."
                 )
                 .font(Font.app(13, .regular))
                 .foregroundStyle(Color.textSecondary)

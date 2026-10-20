@@ -43,7 +43,7 @@ struct SettingsView: View {
                         .accessibilityIdentifier("settings.cloud-icons")
                     }
                     Text(
-                        "Sends only the gift name, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms."
+                        "Sends only the gift name and your currency, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon and an approximate price. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms."
                     )
                     .font(Font.app(13, .regular))
                     .foregroundStyle(Color.textSecondary)

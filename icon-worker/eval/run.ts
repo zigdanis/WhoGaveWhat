@@ -118,9 +118,12 @@ for (const result of results) {
   if (result.pass) entry.pass += 1;
   byTag.set(group, entry);
 }
-const answered = results.filter((r) => r.status === 200);
 const priced = results.flatMap((r) => Object.entries(r.prices ?? {}).map(([currency, price]) => ({ ...r, currency, price: price! })));
-const latencies = [...answered.map((r) => r.ms), ...priced.map((r) => r.price.ms)].sort((a, b) => a - b);
+// Each request is counted once: a priced case's first request is also its first price answer.
+const latencies = [
+  ...results.filter((r) => !r.prices && r.status === 200).map((r) => r.ms),
+  ...priced.filter((r) => r.price.status === 200).map((r) => r.price.ms),
+].sort((a, b) => a - b);
 const pct = (p: number) => latencies[Math.min(latencies.length - 1, Math.floor(p * latencies.length))] ?? 0;
 const summary: Record<string, unknown> = {
   total: results.length,
@@ -132,15 +135,19 @@ const summary: Record<string, unknown> = {
 // Price accuracy: the answer lies inside the expected range. A null price counts as a miss and is
 // also reported as `nullRate`, so a conservative threshold shows up apart from wrong buckets.
 const priceSummary: Record<string, unknown> = {};
+// Every attempted currency is reported, even when none of its requests succeeded.
 for (const currency of ["RUB", "USD"] as const) {
-  const rows = priced.filter((r) => r.currency === currency && r.price.status === 200);
-  if (rows.length === 0) continue;
+  const attempted = priced.filter((r) => r.currency === currency);
+  if (attempted.length === 0) continue;
+  const rows = attempted.filter((r) => r.price.status === 200);
+  const share = (count: number) => (rows.length === 0 ? null : Number((count / rows.length).toFixed(3)));
   priceSummary[currency] = {
-    cases: rows.length,
+    cases: attempted.length,
+    answered: rows.length,
     withinRange: rows.filter((r) => r.price.pass).length,
-    accuracy: Number((rows.filter((r) => r.price.pass).length / rows.length).toFixed(3)),
-    nullRate: Number((rows.filter((r) => r.price.price === null).length / rows.length).toFixed(3)),
-    errors: priced.filter((r) => r.currency === currency && r.price.status !== 200).length,
+    accuracy: share(rows.filter((r) => r.price.pass).length),
+    nullRate: share(rows.filter((r) => r.price.price === null).length),
+    errors: attempted.length - rows.length,
   };
 }
 if (Object.keys(priceSummary).length > 0) summary.price = priceSummary;
