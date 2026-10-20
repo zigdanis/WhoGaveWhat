@@ -97,20 +97,18 @@ struct AppDiscoveryTests {
         #expect(composition.router.screen == .signIn)
     }
 
-    @Test(arguments: [AppTab.home, .people, .insights])
+    @Test(arguments: [AppTab.home, .people, .insights, .settings])
     func launchActivityPreservesWarmNavigationAndOpenGift(tab: AppTab) throws {
         let composition = try makeTestComposition()
         let router = composition.router
         router.showMainApp()
         router.selectTab(tab)
         router.presentEditGift(id: "g1")
-        router.presentSettings()
 
         #expect(composition.continueAppDiscovery(launcherActivity()))
         #expect(router.screen == .main)
         #expect(router.tab == tab)
         #expect(router.giftSheet == .edit(giftID: "g1"))
-        #expect(router.showsSettings)
 
         router.presentNewGift()
         #expect(composition.continueAppDiscovery(launcherActivity()))

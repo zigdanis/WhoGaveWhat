@@ -8,8 +8,6 @@ struct PersonDetailView: View {
     let entityId: String
     let composition: AppComposition
     @State private var filter: String = "all"
-    /// Gift awaiting delete confirmation (set by the swipe action).
-    @State private var pendingDelete: Gift?
     /// Rename sheet state.
     @State private var renaming = false
 
@@ -105,13 +103,8 @@ struct PersonDetailView: View {
                                 currencyCode: composition.currencyCode)
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                pendingDelete = gift
-                            } label: {
-                                Image(systemName: "trash")
-                            }
-                            .accessibilityLabel("Delete")
+                        .swipeToDelete(title: Text("Delete this gift?"), allowsFullSwipe: true) {
+                            composition.deleteGift(id: gift.id)
                         }
                     }
                 }
@@ -137,19 +130,6 @@ struct PersonDetailView: View {
                 }
             }
         }
-        // Confirm deleting a single gift from the swipe.
-        .confirmationDialog(
-            "Delete this gift?",
-            isPresented: giftDeleteBinding,
-            titleVisibility: .visible,
-            presenting: pendingDelete
-        ) { gift in
-            Button("Delete", role: .destructive) {
-                composition.deleteGift(id: gift.id)
-                pendingDelete = nil
-            }
-            Button("Cancel", role: .cancel) { pendingDelete = nil }
-        }
         // Rename the person (with a Delete person option at the bottom).
         .sheet(isPresented: $renaming) {
             renameSheet(name: name, count: giftsCount)
@@ -161,13 +141,6 @@ struct PersonDetailView: View {
         Binding(
             get: { isSelf },
             set: { composition.markSelf($0, personID: entityId) })
-    }
-
-    /// Drives the per-gift delete dialog off the optional pending gift.
-    private var giftDeleteBinding: Binding<Bool> {
-        Binding(
-            get: { pendingDelete != nil },
-            set: { if !$0 { pendingDelete = nil } })
     }
 
     // MARK: Rename + delete person
