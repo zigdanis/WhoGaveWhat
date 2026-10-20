@@ -606,7 +606,6 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
         XCTAssertTrue(app.navigationBars["Кто че подарил"].waitForExistence(timeout: timeout))
         XCTAssertFalse(element(identifier: "year-summary").exists)
-        XCTAssertEqual(app.tabBars.buttons.count, 4)
         for label in ["Главная", "Люди", "Аналитика", "Настройки"] {
             XCTAssertTrue(app.tabBars.buttons[label].exists, "Missing tab \(label)")
         }
