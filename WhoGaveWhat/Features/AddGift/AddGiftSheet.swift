@@ -494,28 +494,24 @@ private struct ApproximateValueRow: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text("Approx. value").font(Font.app(16, .regular)).foregroundColor(Color.textPrimary)
                 if showsEstimate {
-                    Text("Suggested").font(Font.app(12, .regular)).foregroundColor(Color.textSecondary)
+                    // The "≈" marks the number as an estimate until the user edits it.
+                    HStack(spacing: 3) {
+                        Text(verbatim: "≈")
+                        Text("Suggested")
+                    }
+                    .font(Font.app(12, .regular)).foregroundColor(Color.textSecondary)
                 }
             }
             Spacer(minLength: 8)
-            // The field hugs its digits so the "≈" sits right next to the estimate; the state caps
-            // the digit count, so the value stays within this frame.
-            HStack(spacing: 4) {
-                if showsEstimate {
-                    Text(verbatim: "≈").font(Font.app(16, .semibold)).foregroundColor(Color.textSecondary)
-                        .accessibilityHidden(true)
-                }
-                TextField("0", text: $value)
-                    .font(Font.app(16, .semibold)).foregroundColor(Color.textPrimary)
-                    .keyboardType(.numberPad)
-                    .tint(accent)
-                    .focused($focus, equals: .value)
-                    .multilineTextAlignment(.trailing)
-                    .fixedSize()
-                    .accessibilityValue(showsEstimate ? String(localized: "Estimated \(value)") : value)
-                    .accessibilityIdentifier("add-gift.value")
-            }
-            .frame(minWidth: 60, maxWidth: 110, alignment: .trailing)
+            TextField("0", text: $value)
+                .font(Font.app(16, .semibold)).foregroundColor(Color.textPrimary)
+                .keyboardType(.numberPad)
+                .tint(accent)
+                .focused($focus, equals: .value)
+                .multilineTextAlignment(.trailing)
+                .frame(minWidth: 60, maxWidth: 110)
+                .accessibilityValue(showsEstimate ? String(localized: "Estimated \(value)") : value)
+                .accessibilityIdentifier("add-gift.value")
             Text(currencySymbol(code: currencyCode))
                 .font(Font.app(16, .semibold)).foregroundColor(Color.textSecondary)
         }

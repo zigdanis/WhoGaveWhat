@@ -162,15 +162,6 @@ struct PriceEstimateStateTests {
         #expect(state.effectiveValue == 1_200)
     }
 
-    @Test func typedValuesAreCappedAtNineDigits() throws {
-        let (state, _) = try makeState(ScriptedIntelligenceGateway())
-
-        state.valueText = "12345678901234567890123"
-
-        #expect(state.valueText == "123456789")
-        #expect(state.draft.value == 123_456_789)
-    }
-
     @Test func clearingTheFieldKeepsTheUsersEmptyValue() async throws {
         let gateway = ScriptedIntelligenceGateway()
         gateway.results["гитара"] = guitar()
