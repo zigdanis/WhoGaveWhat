@@ -30,7 +30,7 @@ final class TestPreferencesGateway: PreferencesGateway {
 final class TestIntelligenceGateway: GiftIntelligenceGateway {
     var isAvailable = false
     func prewarm() {}
-    func suggestGift(named name: String) async -> GiftIntelligenceResult? { nil }
+    func suggestGift(named name: String, currency: SupportedCurrency) async -> GiftIntelligenceResult? { nil }
 }
 
 @MainActor
@@ -61,10 +61,12 @@ func makeTestComposition(
 }
 
 @MainActor
-func makeSaveGiftUseCase() -> (SaveGiftUseCase, TestGiftGateway) {
+func makeSaveGiftUseCase(
+    now: @escaping () -> Date = { Date() }
+) -> (SaveGiftUseCase, TestGiftGateway) {
     let gateway = TestGiftGateway()
     let suggestions = SuggestGiftUseCase(intelligenceGateway: TestIntelligenceGateway())
-    return (SaveGiftUseCase(giftGateway: gateway, suggestGift: suggestions), gateway)
+    return (SaveGiftUseCase(giftGateway: gateway, suggestGift: suggestions, now: now), gateway)
 }
 
 func makeGiftInput(

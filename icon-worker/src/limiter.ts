@@ -10,7 +10,7 @@ export interface Limits {
 }
 
 export type Admission =
-  | { kind: "cached"; key: string | null; confidence: number }
+  | { kind: "cached"; key: string | null; confidence: number; price: number | null; priceConfidence: number | null }
   | { kind: "go"; reservationId: number }
   | { kind: "rate_limited"; retryAfterSeconds: number }
   | { kind: "budget_exhausted"; retryAfterSeconds: number };
@@ -32,7 +32,14 @@ export interface SettleInput {
   /** The call's actual (or conservatively estimated) cost, replacing the reservation. */
   costMicros: number;
   /** Present only when the provider answered; undefined leaves the cache untouched. */
-  answer?: { cacheKey: string; key: string | null; confidence: number };
+  answer?: {
+    cacheKey: string;
+    key: string | null;
+    confidence: number;
+    /** The price bucket and its confidence; both null for requests without a currency. */
+    price: number | null;
+    priceConfidence: number | null;
+  };
   now: number;
 }
 
@@ -59,12 +66,22 @@ export class IconLimiter extends DurableObject<unknown> {
     this.sql.exec(`
       CREATE TABLE IF NOT EXISTS counters (scope TEXT NOT NULL, bucket TEXT NOT NULL, value INTEGER NOT NULL,
         PRIMARY KEY (scope, bucket));
-      CREATE TABLE IF NOT EXISTS cache (hash TEXT PRIMARY KEY, icon TEXT, confidence REAL NOT NULL, created INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS cache (hash TEXT PRIMARY KEY, icon TEXT, confidence REAL NOT NULL, created INTEGER NOT NULL,
+        price REAL, price_confidence REAL);
       CREATE INDEX IF NOT EXISTS cache_created ON cache (created);
       CREATE TABLE IF NOT EXISTS reservations (id INTEGER PRIMARY KEY AUTOINCREMENT, micros INTEGER NOT NULL,
         day TEXT NOT NULL, month TEXT NOT NULL, created INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS hash_keys (day TEXT PRIMARY KEY, key BLOB NOT NULL);
     `);
+    this.addMissingCacheColumns();
+  }
+
+  /** The cache table predates the price columns in production, and CREATE TABLE IF NOT EXISTS keeps it as it was. */
+  private addMissingCacheColumns(): void {
+    const existing = new Set(this.sql.exec<{ name: string }>("PRAGMA table_info(cache)").toArray().map((column) => column.name));
+    for (const column of ["price", "price_confidence"]) {
+      if (!existing.has(column)) this.sql.exec(`ALTER TABLE cache ADD COLUMN ${column} REAL`);
+    }
   }
 
   async admit(input: AdmitInput): Promise<Admission> {
@@ -85,13 +102,19 @@ export class IconLimiter extends DurableObject<unknown> {
     const minute = minuteBucket(now);
 
     const cached = this.sql
-      .exec<{ icon: string | null; confidence: number; created: number }>(
-        "SELECT icon, confidence, created FROM cache WHERE hash = ?",
+      .exec<{ icon: string | null; confidence: number; created: number; price: number | null; price_confidence: number | null }>(
+        "SELECT icon, confidence, created, price, price_confidence FROM cache WHERE hash = ?",
         input.cacheKey,
       )
       .toArray()[0];
     if (cached && now - cached.created < CACHE_TTL_MS) {
-      return { kind: "cached", key: cached.icon, confidence: cached.confidence };
+      return {
+        kind: "cached",
+        key: cached.icon,
+        confidence: cached.confidence,
+        price: cached.price,
+        priceConfidence: cached.price_confidence,
+      };
     }
 
     const retryAfterMinute = 60 - Math.floor((now / 1000) % 60);
@@ -143,11 +166,13 @@ export class IconLimiter extends DurableObject<unknown> {
     }
     if (input.answer) {
       this.sql.exec(
-        "INSERT OR REPLACE INTO cache (hash, icon, confidence, created) VALUES (?, ?, ?, ?)",
+        "INSERT OR REPLACE INTO cache (hash, icon, confidence, created, price, price_confidence) VALUES (?, ?, ?, ?, ?, ?)",
         input.answer.cacheKey,
         input.answer.key,
         input.answer.confidence,
         input.now,
+        input.answer.price,
+        input.answer.priceConfidence,
       );
     }
     this.prune(input.now);

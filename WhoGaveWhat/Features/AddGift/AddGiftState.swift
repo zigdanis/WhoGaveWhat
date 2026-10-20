@@ -64,6 +64,7 @@ final class AddGiftState {
             aiEmoji: draft.aiEmoji,
             value: draft.value,
             valueTouched: draft.valueTouched,
+            estimatedValue: draft.estimatedValue,
             fromID: draft.fromID,
             toID: draft.toID,
             paidByYou: draft.paidByYou,
@@ -98,8 +99,15 @@ final class AddGiftState {
         set { setName(newValue) }
     }
 
+    /// True while the shown value is the inferred estimate rather than something the user entered.
+    var showsEstimate: Bool { !draft.valueTouched && draft.estimatedValue != nil }
+
+    /// The value the gift would be saved with, if any: the user's, or else the estimate.
+    var effectiveValue: Int? { draft.valueTouched ? draft.value : draft.estimatedValue }
+
     var valueText: String {
         get {
+            if showsEstimate { return draft.estimatedValue.map(String.init) ?? "" }
             guard draft.valueTouched else { return "" }
             return draft.value.map(String.init) ?? ""
         }
@@ -107,6 +115,12 @@ final class AddGiftState {
             let digits = newValue.filter(\.isNumber)
             draft.value = digits.isEmpty ? nil : Int(digits)
             draft.valueTouched = true
+            // With a hand-picked emoji too, nothing an answer brings could still be used.
+            if draft.emoji != nil {
+                suggestionTask?.cancel()
+                suggestionTask = nil
+                aiLoading = false
+            }
         }
     }
 
@@ -120,9 +134,15 @@ final class AddGiftState {
     }
 
     /// Updates the name, shows the keyword heuristic right away and, after a short
-    /// pause in typing, asks the selected model for a better emoji.
+    /// pause in typing, asks the selected model for a better emoji and an approximate price.
     func setName(_ name: String) {
         guard name != draft.name else { return }
+        // An estimate belongs to the name it was made for; it must not be saved under another one.
+        if name.trimmingCharacters(in: .whitespacesAndNewlines)
+            != draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        {
+            draft.estimatedValue = nil
+        }
         draft.name = name
         hasEditedName = true
         // Without a specific keyword match, keep the emoji the gift already had instead of the generic one.
@@ -135,18 +155,30 @@ final class AddGiftState {
         suggestionTask = nil
         aiLoading = false
         let trimmed = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard draft.emoji == nil, trimmed.count >= 2, suggestGift.isIntelligenceAvailable else {
+        // A hand-picked emoji still leaves the price to estimate while the user hasn't entered one.
+        let wantsAnswer = draft.emoji == nil || !draft.valueTouched
+        guard wantsAnswer, trimmed.count >= 2, suggestGift.isIntelligenceAvailable else {
+            // No answer is coming for this name, so an estimate for an earlier one would be stale.
+            draft.estimatedValue = nil
             return
         }
         suggestionTask = Task {
             try? await Task.sleep(for: delay)
             guard !isStale(trimmed) else { return }
-            aiLoading = true
-            let result = await suggestGift.intelligentSuggestion(for: trimmed)
+            // The spinner belongs to the icon, so it stays hidden over a hand-picked emoji.
+            aiLoading = draft.emoji == nil
+            let result = await suggestGift.intelligentSuggestion(for: trimmed, currency: currency)
             guard !isStale(trimmed) else { return }
             aiLoading = false
-            if let result, draft.emoji == nil { draft.aiEmoji = result.emoji }
+            if let emoji = result?.emoji, draft.emoji == nil { draft.aiEmoji = emoji }
+            // The user's own value always wins; an answer without a price clears an earlier estimate.
+            if !draft.valueTouched { draft.estimatedValue = result?.value }
         }
+    }
+
+    /// The currency the estimate is asked for: the app's current one, or USD without preferences.
+    private var currency: SupportedCurrency {
+        preferences.flatMap { SupportedCurrency(rawValue: $0.currencyCode) } ?? .usd
     }
 
     /// True once this inference was cancelled or the name moved on. Whoever cancelled it
@@ -174,8 +206,11 @@ final class AddGiftState {
     }
     func selectEmoji(_ emoji: String) {
         draft.emoji = emoji
-        suggestionTask?.cancel()
-        suggestionTask = nil
+        // An answer still on its way can bring the price; it never replaces the picked emoji.
+        if draft.valueTouched {
+            suggestionTask?.cancel()
+            suggestionTask = nil
+        }
         aiLoading = false
         picker = nil
     }

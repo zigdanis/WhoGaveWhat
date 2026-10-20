@@ -38,9 +38,13 @@ struct SwiftDataPersistenceTests {
             createdAt: createdAt
         )
 
+        let savedAt = Date(timeIntervalSince1970: 456)
+
         try giftGateway.save(gift)
+        #expect(try giftGateway.loadGifts().first?.lastSavedAt == nil)
         gift.name = "Updated gift"
         gift.value = 1_500
+        gift.lastSavedAt = savedAt
         gift.giverID = "member"
         try giftGateway.save(gift)
 
@@ -50,6 +54,7 @@ struct SwiftDataPersistenceTests {
         #expect(loaded.first?.name == "Updated gift")
         #expect(loaded.first?.value == 1_500)
         #expect(loaded.first?.createdAt == createdAt)
+        #expect(loaded.first?.lastSavedAt == savedAt)
         #expect(loaded.first?.giverID == "member")
         #expect(loaded.first?.recipientID == "friend")
         #expect(loaded.first?.direction(relativeTo: "member") == .given)

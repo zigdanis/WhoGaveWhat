@@ -425,8 +425,9 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attach("\(checkpointPrefix)cloud-icons-suggestion")
 
         app.buttons["Cancel"].tap()
-        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: timeout))
-        app.buttons["Settings"].tap()
+        let settingsTab = app.tabBars.buttons["Settings"]
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: timeout))
+        settingsTab.tap()
         let toggle = app.switches["settings.cloud-icons"]
         XCTAssertTrue(toggle.waitForExistence(timeout: timeout))
         waitForValue(toggle, expected: "1")
@@ -435,7 +436,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         // Tap the switch itself; the row's center is its label.
         toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.87, dy: 0.5)).tap()
         waitForValue(toggle, expected: "0")
-        app.buttons["Done"].tap()
+        app.tabBars.buttons["Home"].tap()
 
         // Declining in Settings suppresses future in-sheet prompts.
         app.buttons["Add a gift"].tap()
@@ -542,7 +543,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
     func testMarkingPersonAsMeShowsYouBadgeAndDeletingClearsIt() throws {
         let personName = "CI me person \(UUID().uuidString.prefix(8))"
-        let prompt = app.staticTexts["Mark yourself in People to see your balance"]
+        let prompt = app.buttons["year-summary.mark-self"]
         let badge = app.staticTexts["people.you-badge"]
 
         app.tabBars.buttons["Insights"].tap()
@@ -736,7 +737,6 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.buttons["person-editor.cancel"].tap()
     }
 
-    /// Home summary without a viewpoint, then Insights balances and comparison once the giver is "You".
     private func attach(_ name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name

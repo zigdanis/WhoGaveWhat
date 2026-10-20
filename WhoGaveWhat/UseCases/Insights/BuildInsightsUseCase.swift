@@ -14,6 +14,11 @@ struct PersonBalance: Identifiable, Equatable {
     /// Positive when the viewpoint person received more than they gave.
     var net: Double { receivedValue - givenValue }
     var isEven: Bool { net.rounded() == 0 }
+    /// Gift count balance, oriented like `net`: positive when the viewpoint person received
+    /// more gifts from `person` than they gave them.
+    var countNet: Int { receivedCount - givenCount }
+    /// True when both gave the same number of gifts, whatever those gifts were worth.
+    var isCountEven: Bool { countNet == 0 }
 }
 
 /// Gifts exchanged between two people, in both directions.
@@ -92,8 +97,9 @@ struct BuildInsightsUseCase {
         )
     }
 
-    /// One entry per person the viewpoint person exchanged gifts with, largest
-    /// absolute net first. People without a shared gift are left out.
+    /// One entry per person the viewpoint person exchanged gifts with, largest absolute
+    /// count balance first, then largest absolute money net, then by name. People
+    /// without a shared gift are left out.
     func balances(
         gifts: [Gift],
         people: [Person],
@@ -121,6 +127,7 @@ struct BuildInsightsUseCase {
                 )
             }
             .sorted { lhs, rhs in
+                if abs(lhs.countNet) != abs(rhs.countNet) { return abs(lhs.countNet) > abs(rhs.countNet) }
                 if abs(lhs.net) != abs(rhs.net) { return abs(lhs.net) > abs(rhs.net) }
                 return lhs.person.name.localizedStandardCompare(rhs.person.name) == .orderedAscending
             }
@@ -148,7 +155,7 @@ struct BuildInsightsUseCase {
         return alphabetical(people).first
     }
 
-    /// The counterpart with the largest absolute net for `person`, or the first
+    /// The counterpart with the largest balance for `person` (see `balances`), or the first
     /// other person alphabetically when they have no shared gifts that year.
     func defaultCounterpart(
         gifts: [Gift],

@@ -22,6 +22,7 @@ final class AppComposition {
     let renamePersonUseCase: RenamePersonUseCase
     let deletePersonUseCase: DeletePersonUseCase
     let buildInsights = BuildInsightsUseCase()
+    let rankPickerOptions = RankPickerOptionsUseCase()
     let completeOnboarding: CompleteOnboardingUseCase
 
     convenience init(store: SwiftDataStore) {
@@ -115,6 +116,15 @@ final class AppComposition {
         reloadData()
     }
 
+    /// People ordered for a picker by recent use in `role`; `data.gifts` is reloaded after every save and delete.
+    func rankedPeople(for role: PersonPickerRole) -> [Person] {
+        rankPickerOptions.rankPeople(data.people, by: role, in: data.gifts)
+    }
+
+    var rankedOccasions: [Occasion] {
+        rankPickerOptions.rankOccasions(data.occasions, in: data.gifts)
+    }
+
     func createPerson(name: String) -> String? {
         let id = try? createPersonUseCase.execute(
             name: name,
@@ -164,7 +174,7 @@ final class AppComposition {
     }
 
     func setCurrencyCode(_ currencyCode: String) {
-        guard self.currencyCode != currencyCode else { return }
+        guard SupportedCurrency(rawValue: currencyCode) != nil, self.currencyCode != currencyCode else { return }
         preferences.setCurrencyCode(currencyCode)
         self.currencyCode = currencyCode
     }

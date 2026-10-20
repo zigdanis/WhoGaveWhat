@@ -36,6 +36,8 @@ final class StoredGift {
     var createdAt: Date
     // The default lets stores created before this attribute open with a lightweight migration.
     var emojiPickedByUser: Bool = false
+    // Optional, so stores created before this attribute open with a lightweight migration.
+    var lastSavedAt: Date?
 
     init(
         id: String,
@@ -48,7 +50,8 @@ final class StoredGift {
         date: Date,
         value: Double,
         createdAt: Date,
-        emojiPickedByUser: Bool = false
+        emojiPickedByUser: Bool = false,
+        lastSavedAt: Date? = nil
     ) {
         self.id = id
         self.emoji = emoji
@@ -61,5 +64,6 @@ final class StoredGift {
         self.value = value
         self.createdAt = createdAt
         self.emojiPickedByUser = emojiPickedByUser
+        self.lastSavedAt = lastSavedAt
     }
 }
