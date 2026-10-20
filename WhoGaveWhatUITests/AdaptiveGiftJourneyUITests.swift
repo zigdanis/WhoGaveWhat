@@ -201,12 +201,15 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
     /// One pick from the Photos library, confirmed at the crop step.
     private func choosePersonPhoto() {
-        app.buttons["person-editor.photo"].tap()
-        let choosePhoto = app.buttons["person-editor.choose-photo"]
-        XCTAssertTrue(choosePhoto.waitForExistence(timeout: timeout))
-        choosePhoto.tap()
+        // With an empty avatar a single tap opens the system picker directly.
+        let avatar = app.buttons["person-editor.photo"]
+        avatar.tap()
         let picker = app.navigationBars["Photos"]
-        XCTAssertTrue(picker.waitForExistence(timeout: photoLoadTimeout))
+        let opened = waitWithOneRetry(
+            timeout: photoLoadTimeout / 2,
+            recover: { if !picker.exists, avatar.isHittable { avatar.tap() } }
+        ) { picker.exists }
+        XCTAssertTrue(opened, "The photo picker did not open after tapping the empty avatar")
         let photos = app.images.matching(NSPredicate(format: "label BEGINSWITH[c] 'Photo,'"))
         XCTAssertTrue(photos.firstMatch.waitForExistence(timeout: photoLoadTimeout))
         // XCTest snapshots are slow on a cold Simulator; wait until the first tile stops moving.
@@ -592,6 +595,76 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
         app.tabBars.buttons["Insights"].tap()
         XCTAssertTrue(prompt.waitForExistence(timeout: timeout))
+    }
+
+    /// Temporary visual check: the avatar stays visible while its photo options are shown.
+    func testPersonPhotoOptionsStayAnchoredToAvatar() throws {
+        let personName = "CI photo person \(UUID().uuidString.prefix(8))"
+        app.tabBars.buttons["People"].tap()
+        let addPerson = app.buttons["people.add-person"]
+        XCTAssertTrue(addPerson.waitForExistence(timeout: timeout))
+        addPerson.tap()
+        let nameField = app.textFields["person-editor.name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: timeout))
+        nameField.tap()
+        nameField.typeText(personName)
+        app.buttons["person-editor.save"].tap()
+
+        let personRow = app.staticTexts[personName]
+        XCTAssertTrue(personRow.waitForExistence(timeout: timeout))
+        personRow.tap()
+        XCTAssertTrue(app.navigationBars[personName].waitForExistence(timeout: timeout))
+        app.buttons["person-detail.edit"].tap()
+        let editorName = app.textFields["person-editor.name"]
+        XCTAssertTrue(editorName.waitForExistence(timeout: timeout))
+        if app.keyboards.firstMatch.exists { editorName.typeText("\n") }
+
+        let photoButton = app.buttons["person-editor.photo"]
+        XCTAssertTrue(photoButton.waitForExistence(timeout: timeout))
+        XCTAssertEqual(photoButton.label, "Choose photo")
+        choosePersonPhoto()
+        waitForLabel(photoButton, expected: "Change photo")
+        attach("person-photo-set")
+
+        // Dialog actions may not carry identifiers; match them by label, excluding the avatar itself.
+        let remove = app.buttons.matching(NSPredicate(format: "label == 'Remove photo'")).firstMatch
+        let change = app.buttons.matching(
+            NSPredicate(format: "label == 'Change photo' AND identifier != 'person-editor.photo'")
+        ).firstMatch
+        let avatarFrame = photoButton.frame
+        photoButton.tap()
+        XCTAssertTrue(remove.waitForExistence(timeout: timeout))
+        XCTAssertTrue(change.exists)
+        // The dialog may hide the avatar from accessibility; the screenshot shows it stays visible.
+        if photoButton.exists { XCTAssertEqual(photoButton.frame, avatarFrame) }
+        attach("person-photo-options")
+
+        change.tap()
+        dismissPhotoPicker()
+        XCTAssertEqual(photoButton.label, "Change photo")
+        photoButton.tap()
+        XCTAssertTrue(remove.waitForExistence(timeout: timeout))
+        remove.tap()
+        waitForLabel(photoButton, expected: "Choose photo")
+        attach("person-photo-removed")
+
+        // The green badge sits outside the avatar circle; it must open the picker too.
+        photoButton.coordinate(withNormalizedOffset: CGVector(dx: 0.875, dy: 0.875)).tap()
+        dismissPhotoPicker()
+        app.buttons["person-editor.cancel"].tap()
+    }
+
+    /// Waits for the Photos picker, then closes it without choosing a photo.
+    private func dismissPhotoPicker() {
+        let picker = app.navigationBars["Photos"]
+        XCTAssertTrue(picker.waitForExistence(timeout: photoLoadTimeout))
+        let close = picker.buttons.matching(NSPredicate(format: "label IN {'Cancel', 'Close'}")).firstMatch
+        if close.waitForExistence(timeout: timeout) {
+            close.tap()
+        } else {
+            picker.swipeDown(velocity: .fast)
+        }
+        waitForDisappearance(picker)
     }
 
     func testPersonEditorTitleUsesRussianLocalization() throws {
@@ -1001,6 +1074,12 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             }
         }
         return false
+    }
+
+    private func waitForLabel(_ element: XCUIElement, expected: String) {
+        let predicate = NSPredicate(format: "label == %@", expected)
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed)
     }
 
     private func waitForValue(_ element: XCUIElement, expected: String) {

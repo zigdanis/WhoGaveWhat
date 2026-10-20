@@ -1318,6 +1318,13 @@
         "ru" : { "stringUnit" : { "state" : "translated", "value" : "Удалить фото" } }
       }
     },
+    "Shows options to change or remove the photo." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shows options to change or remove the photo." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Показывает варианты: изменить или удалить фото." } }
+      }
+    },
     "estimated" : {
       "extractionState" : "manual",
       "localizations" : {
