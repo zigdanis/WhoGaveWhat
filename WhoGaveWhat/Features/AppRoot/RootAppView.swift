@@ -1,28 +1,36 @@
 import SwiftUI
 
-/// Native iOS 26 shell: a Liquid Glass tab bar floating over three navigation
-/// stacks, with a floating "Add a gift" glass button pinned just above it. Person detail
-/// is a native push; "Add a gift" and Settings are native sheets.
+/// Native iOS 26 shell: a Liquid Glass tab bar floating over four navigation
+/// stacks (Home, People, Insights, Settings), with a floating "Add a gift" glass button
+/// pinned just above it on the first three. Person detail is a native push; "Add a gift"
+/// is a native sheet.
 struct RootAppView: View {
     let composition: AppComposition
 
     var body: some View {
         TabView(selection: tabSelection) {
-            stack(.home, "Home", "Home") {
+            stack(.home, "Home", image: "Home") {
                 // Home is its own native List (smooth swipe-to-delete), so it
                 // carries its own background + floating button rather than the
                 // shared ScreenScroll wrapper.
                 HomeView(composition: composition)
+                    .navigationTitle("Who gave what")
             }
-            stack(.people, "People", "People") {
+            stack(.people, "People", image: "People") {
                 // People is its own native List (swipe-to-delete a person), so it
                 // carries its own background + floating button like Home.
                 PeopleView(composition: composition)
                     .navigationTitle("People")
             }
-            stack(.insights, "Insights", "Insights") {
+            stack(.insights, "Insights", image: "Insights") {
                 ScreenScroll(composition: composition) { InsightsView(composition: composition) }
                     .navigationTitle("Insights")
+            }
+            // Settings is a preferences screen, so it has no floating "Add a gift" button.
+            Tab("Settings", systemImage: "gearshape", value: AppTab.settings) {
+                NavigationStack {
+                    SettingsView(composition: composition)
+                }
             }
         }
         .tint(Color.brand)
@@ -30,27 +38,25 @@ struct RootAppView: View {
         .sheet(item: giftSheetBinding) { route in
             AddGiftSheet(route: route, composition: composition)
         }
-        .sheet(isPresented: settingsBinding) { SettingsView(composition: composition) }
     }
 
     /// One tab: a navigation stack that pushes `PersonDetailView` for any entity id.
-    /// `icon` is a custom (template-rendered) asset name from `Assets.xcassets`.
-    @ViewBuilder
+    /// `image` is a custom (template-rendered) asset name from `Assets.xcassets`.
     private func stack<Content: View>(
-        _ value: AppTab, _ title: String, _ icon: String,
+        _ value: AppTab, _ title: LocalizedStringKey, image: String,
         @ViewBuilder _ content: () -> Content
-    ) -> some View {
-        NavigationStack {
-            content()
-                .navigationDestination(for: String.self) { id in
-                    PersonDetailView(entityId: id, composition: composition)
-                }
-                .navigationDestination(for: Gift.self) { gift in
-                    GiftDetailView(giftId: gift.id, composition: composition)
-                }
+    ) -> some TabContent<AppTab> {
+        Tab(title, image: image, value: value) {
+            NavigationStack {
+                content()
+                    .navigationDestination(for: String.self) { id in
+                        PersonDetailView(entityId: id, composition: composition)
+                    }
+                    .navigationDestination(for: Gift.self) { gift in
+                        GiftDetailView(giftId: gift.id, composition: composition)
+                    }
+            }
         }
-        .tabItem { Label(LocalizedStringKey(title), image: icon) }
-        .tag(value)
     }
 
     private var tabSelection: Binding<AppTab> {
@@ -61,12 +67,6 @@ struct RootAppView: View {
         Binding(
             get: { composition.router.giftSheet },
             set: { composition.router.giftSheet = $0 })
-    }
-
-    private var settingsBinding: Binding<Bool> {
-        Binding(
-            get: { composition.router.showsSettings },
-            set: { if !$0 { composition.router.dismissSettings() } })
     }
 }
 

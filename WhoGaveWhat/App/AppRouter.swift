@@ -11,6 +11,7 @@ enum AppTab: String, Equatable {
     case home
     case people
     case insights
+    case settings
 }
 
 enum GiftSheetRoute: Identifiable, Equatable {
@@ -36,7 +37,6 @@ final class AppRouter {
     var screen: AppScreen
     var tab: AppTab = .home
     var giftSheet: GiftSheetRoute?
-    var showsSettings = false
 
     init(
         didCompleteOnboarding: Bool,
@@ -65,6 +65,4 @@ final class AppRouter {
     func presentNewGift() { giftSheet = .create }
     func presentEditGift(id: String) { giftSheet = .edit(giftID: id) }
     func dismissGiftSheet() { giftSheet = nil }
-    func presentSettings() { showsSettings = true }
-    func dismissSettings() { showsSettings = false }
 }
