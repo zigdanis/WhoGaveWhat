@@ -595,41 +595,6 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(prompt.waitForExistence(timeout: timeout))
     }
 
-    // Temporary visual evidence for the Home cleanup PR; remove after review.
-    func testHomeCleanupAndSettingsTabEvidence() throws {
-        // A gift in the shared store (created in English) so Home shows its timeline.
-        addQuickGift()
-
-        app.terminate()
-        app.launchArguments = ["-AppleLanguages", "(ru)", "-AppleLocale", "ru_RU"]
-        app.launch()
-
-        XCTAssertTrue(app.navigationBars["Кто че подарил"].waitForExistence(timeout: timeout))
-        XCTAssertFalse(element(identifier: "year-summary").exists)
-        for label in ["Главная", "Люди", "Аналитика", "Настройки"] {
-            XCTAssertTrue(app.tabBars.buttons[label].exists, "Missing tab \(label)")
-        }
-        XCTAssertFalse(app.navigationBars.buttons["Настройки"].exists, "Home must not show a gear button")
-        attach("ru-home-cleanup")
-
-        app.tabBars.buttons["Настройки"].tap()
-        XCTAssertTrue(element(identifier: "settings.screen").waitForExistence(timeout: timeout))
-        XCTAssertTrue(element(identifier: "settings.cloud-icons").exists)
-        XCTAssertFalse(app.buttons["Готово"].exists)
-        XCTAssertFalse(app.buttons["Done"].exists)
-        attach("ru-settings-tab")
-
-        app.terminate()
-        app.launchArguments = [
-            "-AppleLanguages", "(ru)",
-            "-AppleLocale", "ru_RU",
-            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL"
-        ]
-        app.launch()
-        XCTAssertTrue(app.navigationBars["Кто че подарил"].waitForExistence(timeout: timeout))
-        attach("ru-home-large-type")
-    }
-
     func testPersonEditorTitleUsesRussianLocalization() throws {
         app.terminate()
         app.launchArguments = ["-AppleLanguages", "(ru)", "-AppleLocale", "ru_RU"]
