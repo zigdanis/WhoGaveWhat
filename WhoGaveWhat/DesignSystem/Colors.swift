@@ -34,6 +34,9 @@ extension Color {
     static let receivedTint = Color(light: 0xE6F2EC, dark: 0x3DD39A, darkAlpha: 0.18)
     static let given = textPrimary
     static let givenTint = fillTrack
+    /// Warm highlight for an even exchange, distinct from both directions.
+    static let even = Color(light: 0x8A5B00, dark: 0xFFD27A)
+    static let evenTint = Color(light: 0xFFF2D1, dark: 0xFFC94D, darkAlpha: 0.18)
 
     // MARK: Status
     static let destructive = Color(uiColor: .systemRed)

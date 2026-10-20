@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Signed gift-count chip: received tint when ahead, given tint when behind, and a friendly
-/// brand-tinted "Even" at zero.
+/// warm "Even" at zero.
 struct CountBalanceBadge: View {
     let net: Int
 
@@ -23,11 +23,11 @@ struct CountBalanceBadge: View {
     }
 
     private var foreground: Color {
-        net == 0 ? Color.brand : appearance.main
+        net == 0 ? Color.even : appearance.main
     }
 
     private var tint: Color {
-        net == 0 ? Color.brand.opacity(0.12) : appearance.tint
+        net == 0 ? Color.evenTint : appearance.tint
     }
 
     private var appearance: GiftDirectionAppearance {

@@ -75,6 +75,7 @@ final class InsightsOwnerBalanceEvidenceUITests: XCTestCase {
         let field = app.textFields["add-gift.name"]
         XCTAssertTrue(field.waitForExistence(timeout: timeout))
         field.tap()
+        waitForKeyboardFocus(field)
         field.typeText(name)
         choosePerson(giver, endpoint: "from", create: createGiver)
         choosePerson(recipient, endpoint: "to", create: createRecipient)
@@ -83,6 +84,7 @@ final class InsightsOwnerBalanceEvidenceUITests: XCTestCase {
         if !amount.exists { app.buttons["add-gift.details"].tap() }
         XCTAssertTrue(amount.waitForExistence(timeout: timeout))
         amount.tap()
+        waitForKeyboardFocus(amount)
         amount.typeText(value)
 
         let save = app.buttons["add-gift.save"]
@@ -97,6 +99,7 @@ final class InsightsOwnerBalanceEvidenceUITests: XCTestCase {
         XCTAssertTrue(query.waitForExistence(timeout: timeout))
         if create {
             query.tap()
+            waitForKeyboardFocus(query)
             query.typeText(name)
             app.buttons["person-picker.add"].tap()
         } else {
@@ -109,6 +112,7 @@ final class InsightsOwnerBalanceEvidenceUITests: XCTestCase {
             row.tap()
         }
         waitForDisappearance(query)
+        waitForValue(app.buttons["add-gift.\(endpoint)"], expected: name)
     }
 
     private func markOwnerAsMe() {
@@ -141,6 +145,28 @@ final class InsightsOwnerBalanceEvidenceUITests: XCTestCase {
 
     private func waitForDisappearance(_ element: XCUIElement) {
         let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed)
+    }
+
+    private func waitForKeyboardFocus(_ element: XCUIElement) {
+        let focusedElement = app.descendants(matching: .any)
+            .matching(identifier: element.identifier)
+            .matching(NSPredicate(format: "hasKeyboardFocus == true"))
+            .firstMatch
+        // A tap during a sheet transition can be dropped on CI; re-tap once before failing.
+        var focused = false
+        for attempt in 1...2 where !focused {
+            if attempt == 2, element.exists { element.tap() }
+            let expectation = XCTNSPredicateExpectation(
+                predicate: NSPredicate(format: "exists == true"), object: focusedElement)
+            focused = XCTWaiter.wait(for: [expectation], timeout: timeout) == .completed
+        }
+        XCTAssertTrue(focused, "Text field did not acquire keyboard focus: \(element)")
+    }
+
+    private func waitForValue(_ element: XCUIElement, expected: String) {
+        let predicate = NSPredicate(format: "value == %@", expected)
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
         XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed)
     }
 

@@ -45,7 +45,9 @@ struct YearSummaryCard: View {
     private func ownerIdentity(_ owner: Person) -> some View {
         HStack(spacing: 10) {
             AvatarView(
-                initials: owner.name.initials, color: owner.color, size: .compact, imageData: owner.imageData)
+                initials: owner.name.initials, color: owner.color, size: .compact, imageData: owner.imageData
+            )
+            .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(owner.name)
                     .font(Font.app(15, .semibold)).foregroundColor(Color.textPrimary)
