@@ -6,8 +6,6 @@ import SwiftUI
 /// their year in month headers and dates. The year summary lives in Insights.
 struct HomeView: View {
     let composition: AppComposition
-    /// Gift awaiting delete confirmation (set by the swipe action).
-    @State private var pendingDelete: Gift?
 
     var body: some View {
         let year = currentYear
@@ -31,13 +29,8 @@ struct HomeView: View {
                                     currencyCode: composition.currencyCode)
                             }
                             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
-                                    pendingDelete = gift
-                                } label: {
-                                    Image(systemName: "trash")
-                                }
-                                .accessibilityLabel("Delete")
+                            .swipeToDelete(title: Text("Delete this gift?"), allowsFullSwipe: true) {
+                                composition.deleteGift(id: gift.id)
                             }
                         }
                     } header: {
@@ -51,25 +44,6 @@ struct HomeView: View {
         .scrollEdgeEffectStyle(.soft, for: .bottom)
         .background(Color.appBackground)
         .floatingAddButton(composition: composition)
-        .confirmationDialog(
-            "Delete this gift?",
-            isPresented: deleteConfirmBinding,
-            titleVisibility: .visible,
-            presenting: pendingDelete
-        ) { gift in
-            Button("Delete", role: .destructive) {
-                composition.deleteGift(id: gift.id)
-                pendingDelete = nil
-            }
-            Button("Cancel", role: .cancel) { pendingDelete = nil }
-        }
-    }
-
-    /// Drives the confirmation dialog off the optional pending gift.
-    private var deleteConfirmBinding: Binding<Bool> {
-        Binding(
-            get: { pendingDelete != nil },
-            set: { if !$0 { pendingDelete = nil } })
     }
 
     /// Months and dates omit the year only for the current calendar year.
