@@ -177,11 +177,12 @@ struct PersonPhotoCropView: View {
     private func updateViewport(size: CGSize, safeRect: CGRect) {
         viewportSize = size
         cropRect = cropFrame(in: safeRect)
-        offset = PersonPhotoCropLayout(
-            viewportSize: size,
-            imageSize: image.size,
-            cropRect: cropRect
-        ).clampedOffset(offset, zoom: zoom)
+        let layout = PersonPhotoCropLayout(viewportSize: size, imageSize: image.size, cropRect: cropRect)
+        // Unfolding or rotating can enlarge the circle past the zoomed-out photo, so the zoom
+        // is clamped to the new minimum before the offset.
+        zoom = min(maximumZoom, max(layout.minimumZoom, zoom))
+        lastZoom = zoom
+        offset = layout.clampedOffset(offset, zoom: zoom)
         lastOffset = offset
     }
 

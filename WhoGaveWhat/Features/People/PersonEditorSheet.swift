@@ -90,7 +90,6 @@ struct PersonEditorSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.appBackground)
         .presentationDetents([.large])
-        .presentationSizing(.form)
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.appBackground)
         .interactiveDismissDisabled(isLoadingPhoto)

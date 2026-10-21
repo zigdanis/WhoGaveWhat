@@ -334,6 +334,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     }
 
     func testAddGiftSheetSizesCompactAndExpandedContent() throws {
+        // Read before the sheet opens; a presented sheet can hide the tab bar from accessibility.
+        let hasHorizontalTabBar = app.tabBars.firstMatch.exists
         app.buttons["Add a gift"].tap()
 
         let giftTitle = app.descendants(matching: .any)["add-gift.title"]
@@ -353,7 +355,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         )
         // With a horizontal tab bar (regular iPhones) the sheet spans the window, so the title
         // is centered in the window too.
-        if app.tabBars.firstMatch.exists {
+        if hasHorizontalTabBar {
             XCTAssertLessThanOrEqual(
                 abs(giftTitle.frame.midX - app.windows.firstMatch.frame.midX),
                 2,

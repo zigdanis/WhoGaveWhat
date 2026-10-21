@@ -140,9 +140,9 @@ struct AddGiftSheet: View {
             updateSheetHeight(for: lastContentHeight)
         }
         .presentationDetents([.height(sheetHeight)], selection: $selectedDetent)
-        // Form width with the content's height; plain fitted sizing would also take the
-        // ScrollView's narrow ideal width.
-        .presentationSizing(.form.fitted(horizontal: false, vertical: true))
+        // No presentationSizing: with fitted sizing a regular iPhone never settled once a nested
+        // picker raised the keyboard. The measured height detent already fits the content, and
+        // regular width gets a form-sized sheet by default.
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.appBackground)
         .sheet(item: $state.picker) { kind in
@@ -584,8 +584,6 @@ private struct AddGiftPickerSheet: View {
         }
         // No Cancel button — these sheets are dismissed with a swipe down.
         .presentationDetents(detents, selection: $selectedDetent)
-        // Form width everywhere; the date picker also takes its content's height.
-        .presentationSizing(.form.fitted(horizontal: false, vertical: isDate))
         .onPreferenceChange(IntrinsicModalHeaderHeightKey.self) { height in
             headerHeight = height
             guard isDate else { return }

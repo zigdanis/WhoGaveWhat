@@ -129,8 +129,13 @@ final class AppDiscoveryUITests: XCTestCase {
                 self.app.state == .runningBackground || self.app.state == .runningBackgroundSuspended
             }, object: app
         )
-        guard XCTWaiter.wait(for: [backgrounded], timeout: timeout) == .completed else {
-            throw DiscoveryFailure.appNotBackgrounded
+        if XCTWaiter.wait(for: [backgrounded], timeout: timeout) != .completed {
+            // On the folded iPhone Duo Simulator a synthesized Home press can leave the app in the
+            // foreground; switching to another app backgrounds it just the same.
+            settings.activate()
+            guard settings.wait(for: .runningForeground, timeout: timeout) else {
+                throw DiscoveryFailure.appNotBackgrounded
+            }
         }
         app.activate()
         guard app.wait(for: .runningForeground, timeout: timeout) else {
