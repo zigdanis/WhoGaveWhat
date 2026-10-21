@@ -1,0 +1,86 @@
+name: iPhone Duo display probe (temporary)
+
+# Temporary probe: how to open iPhone Duo in the Simulator from CI; lives only on its probe branch.
+on:
+  push:
+    branches: [probe/duo-displays]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: xcode-27
+    timeout-minutes: 40
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: scripts/install-simulator-runtime.sh 'iOS 27.1' 'iPhone Duo'
+      - name: Build the app for the Simulator
+        run: |
+          xcodebuild build -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- | tail -n 5
+      - name: Probe displays and poses
+        run: |
+          set -x
+          out="$RUNNER_TEMP/duo"; mkdir -p "$out"
+          udid=$(xcrun simctl create probe-duo com.apple.CoreSimulator.SimDeviceType.iPhone-Duo com.apple.CoreSimulator.SimRuntime.iOS-27-1)
+          xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid" -b
+          xcrun simctl help ui > "$out/simctl-help-ui.txt" 2>&1 || true
+          xcrun simctl ui "$udid" 2>&1 | head -40 > "$out/simctl-ui.txt" || true
+          xcrun simctl io "$udid" enumerate > "$out/enumerate-closed.txt" 2>&1
+          ports=$(python3 -I - "$out/enumerate-closed.txt" <<'PY'
+          import re, sys
+          text = open(sys.argv[1]).read()
+          inner = outer = ""
+          for block in text.split("Port:"):
+              uuid = re.search(r"UUID: (\S+)", block)
+              width = re.search(r"Default width: (\d+)", block)
+              if uuid and width:
+                  if width.group(1) == "2007": inner = uuid.group(1)
+                  if width.group(1) == "1398": outer = uuid.group(1)
+          print(inner, outer)
+          PY
+          )
+          inner=${ports% *}; outer=${ports#* }
+          echo "inner=$inner outer=$outer"
+          xcrun simctl install "$udid" "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/WhoGaveWhat.app"
+          shot() {
+            xcrun simctl io "$udid" screenshot --display="$outer" "$out/$1-outer.png" || true
+            xcrun simctl io "$udid" screenshot --display="$inner" "$out/$1-inner.png" || true
+          }
+          launch() {
+            xcrun simctl terminate "$udid" pro.ziganshin.WhoGaveWhat 2>/dev/null || true
+            env SIMCTL_CHILD_KS_START=app SIMCTL_CHILD_KS_CLOUD_ICON_CONSENT=declined "$@" \
+              xcrun simctl launch "$udid" pro.ziganshin.WhoGaveWhat
+            sleep 8
+          }
+          launch; shot closed-home
+          launch SIMCTL_CHILD_KS_SHEET=1; shot closed-sheet
+          # Try to open the device: inner display on, outer off.
+          xcrun simctl io "$udid" screenConfig --display="$inner" power on || true
+          xcrun simctl io "$udid" screenConfig --display="$outer" power off || true
+          sleep 8
+          xcrun simctl io "$udid" enumerate > "$out/enumerate-open.txt" 2>&1
+          shot open-after-power
+          launch; shot open-home
+          launch SIMCTL_CHILD_KS_TAB=insights; shot open-insights
+          launch SIMCTL_CHILD_KS_TAB=people; shot open-people
+          launch SIMCTL_CHILD_KS_SHEET=1; shot open-sheet
+          xcrun simctl terminate "$udid" pro.ziganshin.WhoGaveWhat || true
+          env SIMCTL_CHILD_KS_CLOUD_ICON_CONSENT=declined xcrun simctl launch "$udid" pro.ziganshin.WhoGaveWhat; sleep 8; shot open-onboarding
+          # Landscape on the inner display.
+          xcrun simctl io "$udid" screenConfig --display="$inner" geometry 2853x2007 || true
+          sleep 6; shot open-rotated
+          xcrun simctl spawn "$udid" log show --last 5m --style compact --predicate 'process == "SpringBoard" AND (eventMessage CONTAINS[c] "fold" OR eventMessage CONTAINS[c] "posture" OR eventMessage CONTAINS[c] "display")' > "$out/springboard-display-log.txt" 2>&1 || true
+          ls -la "$out"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: duo-display-probe
+          path: ${{ runner.temp }}/duo
