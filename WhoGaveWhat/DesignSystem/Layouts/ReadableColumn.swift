@@ -29,8 +29,9 @@ private struct ReadableColumn: ViewModifier {
 }
 
 extension View {
-    /// Keeps a scroll container's content at a readable width, centered, when the window is wide.
-    /// Compact widths get a zero margin, so iPhones look unchanged.
+    /// Keeps a full-screen scroll container's content at a readable width, centered, when the window
+    /// is wide. Compact widths get a zero margin, so iPhones look unchanged. Sheets don't use it: in
+    /// regular width they are already form-width, and a narrower column would misalign their header.
     func readableColumn(maxWidth: CGFloat = ReadableWidth.content) -> some View {
         modifier(ReadableColumn(maxWidth: maxWidth))
     }

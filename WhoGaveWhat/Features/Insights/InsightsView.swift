@@ -334,7 +334,6 @@ private struct InsightsPersonPicker: View {
                 }
                 .padding(16)
             }
-            .readableColumn()
             .scrollIndicators(.hidden)
         }
         .presentationDetents([.medium, .large])

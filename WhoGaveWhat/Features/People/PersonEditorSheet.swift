@@ -82,7 +82,6 @@ struct PersonEditorSheet: View {
                 .padding(.bottom, 28)
                 .frame(maxWidth: .infinity)
             }
-            .readableColumn()
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
             .accessibilityIdentifier("person-editor.scroll")

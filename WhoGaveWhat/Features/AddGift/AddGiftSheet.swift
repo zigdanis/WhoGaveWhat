@@ -120,7 +120,6 @@ struct AddGiftSheet: View {
                 .contentShape(Rectangle())
                 .onTapGesture { focus = nil }
             }
-            .readableColumn()
             .scrollIndicators(.hidden)
             .accessibilityIdentifier("add-gift.scroll")
             .scrollDismissesKeyboard(.interactively)
@@ -679,7 +678,6 @@ private struct AddGiftPickerSheet: View {
             }
             .padding(16)
         }
-        .readableColumn()
         .scrollIndicators(.hidden)
     }
 
@@ -716,7 +714,6 @@ private struct AddGiftPickerSheet: View {
             }
             .padding(16)
         }
-        .readableColumn()
         .scrollIndicators(.hidden)
     }
 
@@ -910,7 +907,6 @@ private struct PersonPickerContent: View {
             }
             .padding(16)
         }
-        .readableColumn()
         .scrollIndicators(.hidden)
         .onAppear {
             onProvisionalSelection(pickerState.selectedID)
