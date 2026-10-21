@@ -76,6 +76,7 @@ private struct IntrinsicModalHeader: View {
     let trailingActionIsEnabled: Bool
     let trailingActionAccessibilityIdentifier: String?
     let titleAccessibilityIdentifier: String?
+    @Environment(\.compactVerticalSpace) private var compactVerticalSpace
     @State private var leadingActionWidth: CGFloat = 0
     @State private var trailingActionWidth: CGFloat = 0
 
@@ -86,7 +87,7 @@ private struct IntrinsicModalHeader: View {
             verticallyStackedHeader
         }
         .padding(.horizontal, 16)
-        .padding(.top, 24)
+        .padding(.top, compactVerticalSpace ? 16 : 24)
         .frame(maxWidth: .infinity)
         .fixedSize(horizontal: false, vertical: true)
         .layoutPriority(1)

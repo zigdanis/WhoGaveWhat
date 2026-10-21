@@ -16,14 +16,15 @@ private struct ReadableColumn: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            // Safe-area padding adds to the list's own margins, so a zero margin changes nothing;
+            // content margins would replace an inset-grouped list's default side margins.
+            .safeAreaPadding(.horizontal, readableMargin(containerWidth: containerWidth, maxWidth: maxWidth))
+            // Measured outside the padding, so the margin can never feed back into the width.
             .onGeometryChange(for: CGFloat.self) { proxy in
                 proxy.size.width
             } action: { width in
                 containerWidth = width
             }
-            // Safe-area padding adds to the list's own margins, so a zero margin changes nothing;
-            // content margins would replace an inset-grouped list's default side margins.
-            .safeAreaPadding(.horizontal, readableMargin(containerWidth: containerWidth, maxWidth: maxWidth))
     }
 }
 

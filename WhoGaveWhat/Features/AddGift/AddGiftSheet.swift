@@ -4,6 +4,7 @@ import SwiftUI
 /// explicit, while less frequent fields remain behind the Details disclosure.
 struct AddGiftSheet: View {
     let composition: AppComposition
+    @Environment(\.compactVerticalSpace) private var compactVerticalSpace
     @State private var state: AddGiftState
     @State private var showsDetails: Bool
     @State private var sheetHeight: CGFloat = 420
@@ -81,7 +82,7 @@ struct AddGiftSheet: View {
                     ) {
                         focus = nil
                     }
-                    .padding(.top, 16)
+                    .padding(.top, compactVerticalSpace ? 8 : 16)
                     if showsDetails {
                         GiftDetailsSection(
                             dateLabel: state.draft.date.giftInputLabel(),
@@ -101,9 +102,12 @@ struct AddGiftSheet: View {
                         isEnabled: state.input.canSave,
                         onSave: { state.save(using: composition) }
                     )
-                    .padding(.top, 24)
+                    .padding(.top, compactVerticalSpace ? 12 : 24)
                 }
-                .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 16)
+                // A short window tightens only the vertical gaps, so Save stays above the keyboard.
+                .padding(.horizontal, 16)
+                .padding(.top, compactVerticalSpace ? 2 : 6)
+                .padding(.bottom, compactVerticalSpace ? 8 : 16)
                 .onGeometryChange(for: CGFloat.self) { geometry in
                     geometry.size.height
                 } action: { contentHeight in
@@ -136,7 +140,9 @@ struct AddGiftSheet: View {
             updateSheetHeight(for: lastContentHeight)
         }
         .presentationDetents([.height(sheetHeight)], selection: $selectedDetent)
-        .presentationSizing(.fitted)
+        // Form width with the content's height; plain fitted sizing would also take the
+        // ScrollView's narrow ideal width.
+        .presentationSizing(.form.fitted(horizontal: false, vertical: true))
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.appBackground)
         .sheet(item: $state.picker) { kind in
@@ -562,15 +568,6 @@ private struct AddGiftPickerSheet: View {
     }
 
     var body: some View {
-        // The sizing types differ, so the date picker and the list pickers branch.
-        if isDate {
-            scaffold.presentationSizing(.fitted)
-        } else {
-            scaffold.presentationSizing(.form)
-        }
-    }
-
-    private var scaffold: some View {
         IntrinsicModalScaffold(title: title) {
             content
                 .background(Color.appBackground)
@@ -587,6 +584,8 @@ private struct AddGiftPickerSheet: View {
         }
         // No Cancel button — these sheets are dismissed with a swipe down.
         .presentationDetents(detents, selection: $selectedDetent)
+        // Form width everywhere; the date picker also takes its content's height.
+        .presentationSizing(.form.fitted(horizontal: false, vertical: isDate))
         .onPreferenceChange(IntrinsicModalHeaderHeightKey.self) { height in
             headerHeight = height
             guard isDate else { return }

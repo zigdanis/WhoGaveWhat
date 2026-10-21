@@ -11,6 +11,8 @@ struct PersonEditorSheet: View {
     let onSave: (String, Data?) throws -> Void
     let onDelete: (() -> Void)?
 
+    /// On a short window the hero photo would push Delete under the keyboard, so the photo card shrinks.
+    @Environment(\.compactVerticalSpace) private var isCompact
     @State private var name: String
     @State private var imageData: Data?
     @State private var selectedPhotoItem: PhotosPickerItem?
@@ -20,7 +22,6 @@ struct PersonEditorSheet: View {
     @State private var photoSessionID = UUID()
     @State private var cropSession: PersonPhotoCropSession?
     @State private var errorMessage: String?
-    @State private var scrollHeight: CGFloat = 0
     @FocusState private var nameIsFocused: Bool
 
     init(
@@ -82,11 +83,6 @@ struct PersonEditorSheet: View {
                 .frame(maxWidth: .infinity)
             }
             .readableColumn()
-            .onGeometryChange(for: CGFloat.self) { proxy in
-                proxy.size.height
-            } action: { height in
-                scrollHeight = height
-            }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
             .accessibilityIdentifier("person-editor.scroll")
@@ -141,11 +137,6 @@ struct PersonEditorSheet: View {
             photoSessionID = UUID()
             isLoadingPhoto = false
         }
-    }
-
-    /// With the keyboard up on a short window the hero photo would push Delete under the keyboard.
-    private var isCompact: Bool {
-        scrollHeight > 0 && scrollHeight < 360
     }
 
     private var canSave: Bool {

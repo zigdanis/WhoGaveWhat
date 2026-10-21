@@ -133,7 +133,6 @@ struct PersonDetailView: View {
         // Rename the person (with a Delete person option at the bottom).
         .sheet(isPresented: $renaming) {
             renameSheet(name: name, count: giftsCount)
-                .presentationSizing(.form)
         }
     }
 

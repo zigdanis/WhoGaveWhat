@@ -182,13 +182,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(app.images["person-detail.hero"].waitForExistence(timeout: timeout))
         attach("person-edited")
 
-        // iOS 26 nests the toolbar button in a wrapper with the same identifier; tap the wrapper.
-        // On iPhone Duo's outer display the button sits in the vertical bar instead.
-        let wrapped = detail.otherElements["person-detail.edit"].firstMatch
-        let vertical = app.toolbars.buttons["person-detail.edit"].firstMatch
-        XCTAssertTrue(waitWithOneRetry(timeout: timeout) { wrapped.exists || vertical.exists })
-        let edit = wrapped.exists ? wrapped : vertical
-        XCTAssertTrue(waitWithOneRetry(timeout: timeout) { edit.isHittable })
+        // On iOS 26 the first match is a wrapper with the button's identifier; on iOS 27 and in
+        // iPhone Duo's vertical bar it is the button. Either way its center is the button.
+        let edit = element(identifier: "person-detail.edit")
+        XCTAssertTrue(waitWithOneRetry(timeout: timeout) { edit.exists && edit.isHittable })
         edit.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         let delete = app.buttons["person-editor.delete"]
         XCTAssertTrue(delete.waitForExistence(timeout: timeout))
@@ -354,6 +351,15 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
             2,
             "Compact gift sheet title should remain centered over the form"
         )
+        // With a horizontal tab bar (regular iPhones) the sheet spans the window, so the title
+        // is centered in the window too.
+        if app.tabBars.firstMatch.exists {
+            XCTAssertLessThanOrEqual(
+                abs(giftTitle.frame.midX - app.windows.firstMatch.frame.midX),
+                2,
+                "Compact gift sheet title should be centered in the window"
+            )
+        }
         assertCompactSaveGap(save, keyboard: keyboard)
         attach("gift-content-sized-compact-keyboard")
 

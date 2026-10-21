@@ -306,7 +306,17 @@ final class AppDiscoveryUITests: XCTestCase {
 
     private func enterSettingsSearch(_ text: String) throws {
         let nativeSearch = settings.searchFields.firstMatch
-        let search = nativeSearch.waitForExistence(timeout: 3) ? nativeSearch : settings.textFields.firstMatch
+        let textSearch = settings.textFields.firstMatch
+        if !nativeSearch.waitForExistence(timeout: 3), !textSearch.exists {
+            // On iPhone Duo's outer display, Search is a button in the vertical bar, not a field.
+            let searchButton = settings.toolbars.buttons["Search"].firstMatch
+            if searchButton.exists {
+                searchButton.tap()
+                let shown = NSPredicate { _, _ in nativeSearch.exists || textSearch.exists }
+                _ = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: shown, object: nil)], timeout: timeout)
+            }
+        }
+        let search = nativeSearch.exists ? nativeSearch : textSearch
         if !search.waitForExistence(timeout: timeout) {
             settings.swipeDown()
         }

@@ -18,10 +18,11 @@ extension XCUIApplication {
         return tabButton(name)
     }
 
-    /// Taps Back. The vertical bar on iPhone Duo's outer display also holds the Back button.
+    /// Taps Back. The system Back button is `BackButton` in either bar; on iPhone Duo's outer
+    /// display it sits in the vertical bar, where the navigation bar has no buttons.
     func navigateBack() {
-        let back = navigationBars.buttons.element(boundBy: 0)
-        (back.exists ? back : buttons["BackButton"].firstMatch).tap()
+        let back = buttons["BackButton"].firstMatch
+        (back.exists ? back : navigationBars.buttons.element(boundBy: 0)).tap()
     }
 
     /// Whether a tab bar with the named tab is on screen, horizontal or vertical.

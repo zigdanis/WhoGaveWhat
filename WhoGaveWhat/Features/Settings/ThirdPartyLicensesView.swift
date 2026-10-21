@@ -14,6 +14,7 @@ struct ThirdPartyLicensesView: View {
             .textSelection(.enabled)
             .padding(16)
         }
+        .readableColumn()
         .background(Color.appBackground)
         .accessibilityIdentifier("settings.third-party-licenses.screen")
         .navigationTitle("Third-party licenses")
