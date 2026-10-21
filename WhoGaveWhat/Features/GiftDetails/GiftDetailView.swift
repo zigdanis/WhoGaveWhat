@@ -38,17 +38,17 @@ struct GiftDetailView: View {
             }
             .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 40)
         }
+        .readableColumn()
         .scrollIndicators(.hidden)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     composition.router.presentEditGift(id: gift.id)
                 } label: {
-                    Image(systemName: "pencil")
+                    Label("Edit", systemImage: "pencil")
                         .font(.system(size: 17, weight: .semibold))
                 }
                 .tint(Color.brand)
-                .accessibilityLabel("Edit")
             }
         }
     }

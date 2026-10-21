@@ -116,6 +116,7 @@ struct AddGiftSheet: View {
                 .contentShape(Rectangle())
                 .onTapGesture { focus = nil }
             }
+            .readableColumn()
             .scrollIndicators(.hidden)
             .accessibilityIdentifier("add-gift.scroll")
             .scrollDismissesKeyboard(.interactively)
@@ -135,6 +136,7 @@ struct AddGiftSheet: View {
             updateSheetHeight(for: lastContentHeight)
         }
         .presentationDetents([.height(sheetHeight)], selection: $selectedDetent)
+        .presentationSizing(.fitted)
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.appBackground)
         .sheet(item: $state.picker) { kind in
@@ -560,6 +562,15 @@ private struct AddGiftPickerSheet: View {
     }
 
     var body: some View {
+        // The sizing types differ, so the date picker and the list pickers branch.
+        if isDate {
+            scaffold.presentationSizing(.fitted)
+        } else {
+            scaffold.presentationSizing(.form)
+        }
+    }
+
+    private var scaffold: some View {
         IntrinsicModalScaffold(title: title) {
             content
                 .background(Color.appBackground)
@@ -671,6 +682,7 @@ private struct AddGiftPickerSheet: View {
             }
             .padding(16)
         }
+        .readableColumn()
         .scrollIndicators(.hidden)
     }
 
@@ -707,6 +719,7 @@ private struct AddGiftPickerSheet: View {
             }
             .padding(16)
         }
+        .readableColumn()
         .scrollIndicators(.hidden)
     }
 
@@ -900,6 +913,7 @@ private struct PersonPickerContent: View {
             }
             .padding(16)
         }
+        .readableColumn()
         .scrollIndicators(.hidden)
         .onAppear {
             onProvisionalSelection(pickerState.selectedID)

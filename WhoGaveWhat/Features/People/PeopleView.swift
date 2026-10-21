@@ -14,6 +14,7 @@ struct PeopleView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .readableColumn()
         .scrollContentBackground(.hidden)
         .scrollEdgeEffectStyle(.soft, for: .bottom)
         .background(Color.appBackground)

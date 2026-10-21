@@ -8,6 +8,8 @@ struct SignInView: View {
             content
         }
         .padding(.horizontal, 26)
+        .frame(maxWidth: ReadableWidth.onboarding)
+        .frame(maxWidth: .infinity)
     }
 
     private var content: some View {

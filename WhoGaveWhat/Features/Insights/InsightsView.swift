@@ -337,6 +337,7 @@ private struct InsightsPersonPicker: View {
             .scrollIndicators(.hidden)
         }
         .presentationDetents([.medium, .large])
+        .presentationSizing(.form)
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.appBackground)
     }

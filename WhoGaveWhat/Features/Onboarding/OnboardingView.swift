@@ -57,6 +57,8 @@ struct OnboardingView: View {
             .tint(Color.brandFill)
         }
         .padding(.horizontal, 26)
+        .frame(maxWidth: ReadableWidth.onboarding)
+        .frame(maxWidth: .infinity)
         .padding(.top, 8)
         .padding(.bottom, 30)
         .animation(.easeInOut(duration: 0.25), value: step)

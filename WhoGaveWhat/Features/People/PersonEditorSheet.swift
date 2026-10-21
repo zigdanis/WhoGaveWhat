@@ -20,6 +20,7 @@ struct PersonEditorSheet: View {
     @State private var photoSessionID = UUID()
     @State private var cropSession: PersonPhotoCropSession?
     @State private var errorMessage: String?
+    @State private var scrollHeight: CGFloat = 0
     @FocusState private var nameIsFocused: Bool
 
     init(
@@ -55,12 +56,13 @@ struct PersonEditorSheet: View {
                 onSave: save
             )
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: isCompact ? 16 : 20) {
                     PersonEditorNameField(name: $name, isFocused: $nameIsFocused)
                     if showsPhoto {
                         PersonEditorPhotoControl(
                             imageData: imageData,
                             isLoading: isLoadingPhoto,
+                            isCompact: isCompact,
                             isPickerPresented: $isPhotoPickerPresented,
                             onRemove: removePhoto
                         )
@@ -79,6 +81,12 @@ struct PersonEditorSheet: View {
                 .padding(.bottom, 28)
                 .frame(maxWidth: .infinity)
             }
+            .readableColumn()
+            .onGeometryChange(for: CGFloat.self) { proxy in
+                proxy.size.height
+            } action: { height in
+                scrollHeight = height
+            }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
             .accessibilityIdentifier("person-editor.scroll")
@@ -86,6 +94,7 @@ struct PersonEditorSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.appBackground)
         .presentationDetents([.large])
+        .presentationSizing(.form)
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.appBackground)
         .interactiveDismissDisabled(isLoadingPhoto)
@@ -132,6 +141,11 @@ struct PersonEditorSheet: View {
             photoSessionID = UUID()
             isLoadingPhoto = false
         }
+    }
+
+    /// With the keyboard up on a short window the hero photo would push Delete under the keyboard.
+    private var isCompact: Bool {
+        scrollHeight > 0 && scrollHeight < 360
     }
 
     private var canSave: Bool {
@@ -271,6 +285,7 @@ private struct PersonEditorNameField: View {
 private struct PersonEditorPhotoControl: View {
     let imageData: Data?
     let isLoading: Bool
+    let isCompact: Bool
     @Binding var isPickerPresented: Bool
     let onRemove: () -> Void
     @State private var isShowingOptions = false
@@ -278,13 +293,15 @@ private struct PersonEditorPhotoControl: View {
     var body: some View {
         VStack(spacing: 10) {
             avatarButton
-            Text("Photo")
-                .font(.body.weight(.medium))
-                .foregroundStyle(Color.textSecondary)
-                .accessibilityHidden(true)
+            if !isCompact {
+                Text("Photo")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Color.textSecondary)
+                    .accessibilityHidden(true)
+            }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
+        .padding(.vertical, isCompact ? 14 : 20)
         .background(
             Color.surface,
             in: RoundedRectangle(cornerRadius: DesignMetrics.radiusXLarge, style: .continuous)
@@ -303,7 +320,7 @@ private struct PersonEditorPhotoControl: View {
             }
         } label: {
             ZStack(alignment: .bottomTrailing) {
-                AvatarView(initials: "", color: Color.avatarPlaceholder, size: .hero, imageData: imageData)
+                AvatarView(initials: "", color: Color.avatarPlaceholder, size: isCompact ? .large : .hero, imageData: imageData)
                 Image(systemName: isLoading ? "hourglass" : "plus")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(Color.onFill)
