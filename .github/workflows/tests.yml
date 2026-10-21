@@ -50,7 +50,7 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
       XCODE_VERSION: '27.1'
       SIMULATOR_RUNTIME: iOS 27.1
-      SIMULATOR_DEVICE: iPhone 18 Pro
+      SIMULATOR_DEVICE: iPhone Duo
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
@@ -64,7 +64,7 @@ jobs:
           xcrun simctl help delete
           xcrun xcresulttool version
       - name: Install the iOS Simulator runtime for the selected Xcode
-        run: scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME"
+        run: scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME" "$SIMULATOR_DEVICE"
       - name: Test app smoke and record any requested clip
         env:
           VIDEO_TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.video_test || '' }}
@@ -94,7 +94,7 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
       XCODE_VERSION: '27.1'
       SIMULATOR_RUNTIME: iOS 27.1
-      SIMULATOR_DEVICE: iPhone 18 Pro
+      SIMULATOR_DEVICE: iPhone Duo
       HEAD_SHA: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
@@ -106,7 +106,7 @@ jobs:
           xcrun simctl help delete
           xcrun xcresulttool version
       - name: Install the iOS Simulator runtime for the selected Xcode
-        run: scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME"
+        run: scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME" "$SIMULATOR_DEVICE"
       - name: Run focused Spotlight diagnostic
         run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/spotlight-diagnostics" --verify-app-names --discovery-only --runtime "$SIMULATOR_RUNTIME" --device "$SIMULATOR_DEVICE" --fresh-ci-simulator
       - name: Render diagnostic report
