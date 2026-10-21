@@ -42,15 +42,29 @@ concurrency:
 
 jobs:
   test:
-    name: Unit tests and app smoke
+    name: ${{ matrix.name }}
     # GitHub's Xcode 27 image (macOS 27); see actions/runner-images#14404.
     runs-on: xcode-27
     timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The iOS 27.1 Simulator runtime supports only iPhone Duo, which boots folded
+          # (outer display). Regular iPhones run the preinstalled iOS 27.0 runtime.
+          - name: Unit tests and app smoke
+            device: iPhone Duo
+            runtime: iOS 27.1
+            artifact: ui-app-smoke
+          - name: Unit tests and app smoke (iPhone 18 Pro)
+            device: iPhone 18 Pro
+            runtime: iOS 27.0
+            artifact: ui-iphone-smoke
     env:
       DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
       XCODE_VERSION: '27.1'
-      SIMULATOR_RUNTIME: iOS 27.1
-      SIMULATOR_DEVICE: iPhone Duo
+      SIMULATOR_RUNTIME: ${{ matrix.runtime }}
+      SIMULATOR_DEVICE: ${{ matrix.device }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
@@ -79,7 +93,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ui-app-smoke-attempt-${{ github.run_attempt }}
+          name: ${{ matrix.artifact }}-attempt-${{ github.run_attempt }}
           path: ${{ runner.temp }}/ui-app-smoke
           if-no-files-found: warn
           retention-days: 14

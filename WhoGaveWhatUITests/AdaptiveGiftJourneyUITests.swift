@@ -183,8 +183,11 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attach("person-edited")
 
         // iOS 26 nests the toolbar button in a wrapper with the same identifier; tap the wrapper.
-        let edit = detail.otherElements["person-detail.edit"].firstMatch
-        XCTAssertTrue(edit.waitForExistence(timeout: timeout))
+        // On iPhone Duo's outer display the button sits in the vertical bar instead.
+        let wrapped = detail.otherElements["person-detail.edit"].firstMatch
+        let vertical = app.toolbars.buttons["person-detail.edit"].firstMatch
+        XCTAssertTrue(waitWithOneRetry(timeout: timeout) { wrapped.exists || vertical.exists })
+        let edit = wrapped.exists ? wrapped : vertical
         XCTAssertTrue(waitWithOneRetry(timeout: timeout) { edit.isHittable })
         edit.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         let delete = app.buttons["person-editor.delete"]
@@ -338,17 +341,19 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
         let giftTitle = app.descendants(matching: .any)["add-gift.title"]
         XCTAssertTrue(giftTitle.waitForExistence(timeout: timeout))
-        XCTAssertLessThanOrEqual(
-            abs(giftTitle.frame.midX - app.windows.firstMatch.frame.midX),
-            2,
-            "Compact gift sheet title should remain centered"
-        )
         let giftNameField = app.textFields["add-gift.name"]
         XCTAssertTrue(giftNameField.waitForExistence(timeout: timeout))
         let keyboard = app.keyboards.firstMatch
         XCTAssertTrue(keyboard.waitForExistence(timeout: timeout))
         let save = app.buttons["add-gift.save"]
+        // The full-width Save button spans the form. On iPhone Duo's outer display the form
+        // stops short of the vertical status bar, so the window's center is not the form's.
         XCTAssertTrue(save.waitForExistence(timeout: timeout))
+        XCTAssertLessThanOrEqual(
+            abs(giftTitle.frame.midX - save.frame.midX),
+            2,
+            "Compact gift sheet title should remain centered over the form"
+        )
         assertCompactSaveGap(save, keyboard: keyboard)
         attach("gift-content-sized-compact-keyboard")
 

@@ -107,12 +107,13 @@ class EvidenceTests(unittest.TestCase):
         accepted = dict(id=123, status='completed', conclusion='success', event='pull_request',
                         head_sha=self.sha, run_attempt=2)
         skipped = dict(accepted, id=124, run_attempt=1)
-        skipped_jobs = {'total_count': 2, 'jobs': [
+        skipped_jobs = {'total_count': 3, 'jobs': [
             dict(name='Unit tests and app smoke', status='completed', conclusion='skipped'),
+            dict(name='Unit tests and app smoke (iPhone 18 Pro)', status='completed', conclusion='skipped'),
             dict(name='Spotlight diagnostics (non-acceptance)', status='completed', conclusion='skipped')]}
-        actual_jobs = {'total_count': 2, 'jobs': [
+        actual_jobs = {'total_count': 3, 'jobs': [
             dict(name='Unit tests and app smoke', status='completed', conclusion='success'),
-            skipped_jobs['jobs'][1]]}
+            dict(skipped_jobs['jobs'][1], conclusion='success'), skipped_jobs['jobs'][2]]}
         def mocked(*args):
             if args[:2] == ('run', 'list'):
                 return json.dumps([{'databaseId': 124}, {'databaseId': 123}])
@@ -132,6 +133,7 @@ class EvidenceTests(unittest.TestCase):
     def test_newer_failed_running_or_ambiguous_native_runs_remain_authoritative(self):
         skipped_jobs = [
             dict(name='Unit tests and app smoke', status='completed', conclusion='skipped'),
+            dict(name='Unit tests and app smoke (iPhone 18 Pro)', status='completed', conclusion='skipped'),
             dict(name='Spotlight diagnostics (non-acceptance)', status='completed', conclusion='skipped')]
         for condition in ('failed', 'running', 'queued', 'cancelled', 'native-success', 'unknown-job',
                           'missing-job', 'incomplete-jobs', 'unfinished-job', 'rerun'):
@@ -139,7 +141,7 @@ class EvidenceTests(unittest.TestCase):
                 newer = dict(id=124, status='completed', conclusion='success', event='pull_request',
                              head_sha=self.sha, run_attempt=1)
                 jobs = [dict(job) for job in skipped_jobs]
-                total = 2
+                total = 3
                 if condition in ('failed', 'cancelled'):
                     newer['conclusion'] = 'failure' if condition == 'failed' else 'cancelled'
                 if condition in ('running', 'queued'):
@@ -150,9 +152,9 @@ class EvidenceTests(unittest.TestCase):
                     jobs[0]['name'] = 'Different job'
                 if condition == 'missing-job':
                     jobs = jobs[1:]
-                    total = 1
+                    total = 2
                 if condition == 'incomplete-jobs':
-                    total = 3
+                    total = 4
                 if condition == 'unfinished-job':
                     jobs[0]['status'] = 'in_progress'
                 if condition == 'rerun':
@@ -189,8 +191,9 @@ class EvidenceTests(unittest.TestCase):
                     if '/124/attempts/' in args[1]:
                         if failure == 'jobs-unavailable':
                             raise evidence.subprocess.CalledProcessError(1, ['gh', 'api'])
-                        return json.dumps({'total_count': 2, 'jobs': [
+                        return json.dumps({'total_count': 3, 'jobs': [
                             dict(name='Unit tests and app smoke', status='completed', conclusion='skipped'),
+                            dict(name='Unit tests and app smoke (iPhone 18 Pro)', status='completed', conclusion='skipped'),
                             dict(name='Spotlight diagnostics (non-acceptance)', status='completed', conclusion='skipped')]})
                     self.fail('Verification failure must not select older run 123')
                 with patch.object(evidence, 'gh', side_effect=mocked):

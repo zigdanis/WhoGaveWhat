@@ -1103,7 +1103,9 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         jobs = dict(zip(job_blocks[1::2], job_blocks[2::2]))
         self.assertEqual({'test', 'spotlight-diagnostics'}, set(jobs))
         self.assertNotIn('--discovery-only', jobs['test'])
-        self.assertIn('name: Unit tests and app smoke', jobs['test'])
+        self.assertIn('- name: Unit tests and app smoke\n', jobs['test'])
+        self.assertIn('- name: Unit tests and app smoke (iPhone 18 Pro)\n', jobs['test'])
+        self.assertIn('fail-fast: false', jobs['test'])
         self.assertIn('run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names', jobs['test'])
         # Video is opt-in: only a manual dispatch can name a clip, passed through the environment.
         self.assertIn("VIDEO_TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.video_test || '' }}", jobs['test'])
@@ -1115,11 +1117,13 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         self.assertIn('continue-on-error: true', diagnostic)
         self.assertNotIn('continue-on-error:', jobs['test'])
         self.assertIn('--verify-app-names --discovery-only', diagnostic)
+        self.assertIn('device: iPhone Duo\n            runtime: iOS 27.1\n', jobs['test'])
+        self.assertIn('device: iPhone 18 Pro\n            runtime: iOS 27.0\n', jobs['test'])
+        self.assertIn('SIMULATOR_RUNTIME: iOS 27.1', diagnostic)
+        self.assertIn('SIMULATOR_DEVICE: iPhone Duo', diagnostic)
         for job in (jobs['test'], diagnostic):
             self.assertIn('runs-on: xcode-27\n', job)
             self.assertIn('DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer', job)
-            self.assertIn('SIMULATOR_RUNTIME: iOS 27.1', job)
-            self.assertIn('SIMULATOR_DEVICE: iPhone Duo', job)
             self.assertIn('scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME" "$SIMULATOR_DEVICE"', job)
             self.assertIn('--runtime "$SIMULATOR_RUNTIME" --device "$SIMULATOR_DEVICE"', job)
         self.assertIn('--fresh-ci-simulator', jobs['test'])
@@ -1143,7 +1147,9 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         self.assertIn("group: tests-${{ github.event.pull_request.number && "
                       "format('pr-{0}', github.event.pull_request.number) || github.run_id }}", workflow)
         self.assertIn('HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}', workflow)
-        self.assertIn('name: ui-app-smoke-attempt-${{ github.run_attempt }}', workflow)
+        self.assertIn('name: ${{ matrix.artifact }}-attempt-${{ github.run_attempt }}', workflow)
+        self.assertIn('artifact: ui-app-smoke\n', workflow)
+        self.assertIn('artifact: ui-iphone-smoke\n', workflow)
 
     def test_lightweight_checks_remain_automatic_with_the_existing_check_names_and_commands(self):
         workflow = (Path(__file__).parents[2] / '.github/workflows/checks.yml').read_text()

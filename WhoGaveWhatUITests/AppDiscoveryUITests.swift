@@ -247,8 +247,8 @@ final class AppDiscoveryUITests: XCTestCase {
         XCTAssertLessThan(english.frame.minY, russian.frame.minY, "English must remain the primary system language")
         attach("english-system-russian-secondary")
 
-        try tapSetting("General")
-        try tapSetting("Settings")
+        try goBackInSettings(to: "General")
+        try goBackInSettings(to: "Settings")
         try tapSetting("Apps")
         attach("settings-apps-list")
         try enterSettingsSearch("Who Gave")
@@ -288,6 +288,20 @@ final class AppDiscoveryUITests: XCTestCase {
             settings.swipeUp()
         }
         throw DiscoveryFailure.missingSettingsControl(label, settings.debugDescription)
+    }
+
+    /// Goes back one Settings page. On a regular iPhone, Back shows the previous page's title;
+    /// on iPhone Duo's outer display it is an icon in the vertical bar under the status bar.
+    private func goBackInSettings(to title: String) throws {
+        let back = settings.buttons["BackButton"].firstMatch
+        if back.waitForExistence(timeout: 2) && back.isHittable {
+            back.tap()
+        } else {
+            try tapSetting(title)
+        }
+        guard settings.navigationBars[title].waitForExistence(timeout: timeout) else {
+            throw DiscoveryFailure.missingSettingsControl(title, settings.debugDescription)
+        }
     }
 
     private func enterSettingsSearch(_ text: String) throws {
