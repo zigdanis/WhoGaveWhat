@@ -37,7 +37,9 @@ concurrency:
 jobs:
   release:
     if: github.repository == 'zigdanis/WhoGaveWhat' && github.ref == 'refs/heads/master' && github.event_name == 'workflow_dispatch'
-    runs-on: macos-26
+    # GitHub's Xcode 27 image (macOS 27); Xcode 27.1 builds with the iOS 27.1 SDK, which
+    # App Store Connect accepts and which runs full screen on iPhone Duo.
+    runs-on: xcode-27
     timeout-minutes: 75
     environment: testflight
     permissions:
@@ -50,7 +52,7 @@ jobs:
       NOTES_RU: ${{ inputs.notes_ru }}
       RESUME_RUN_ID: ${{ inputs.resume_run_id }}
       OPERATION: ${{ inputs.operation }}
-      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
       ALLOW_NATIVE_RELEASE_BUILD: ${{ vars.ALLOW_NATIVE_RELEASE_BUILD }}
       MATCH_GIT_URL: ${{ vars.MATCH_GIT_URL }}
       MATCH_GIT_BRANCH: ${{ vars.MATCH_GIT_BRANCH }}

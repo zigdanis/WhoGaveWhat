@@ -79,8 +79,8 @@ final class AppDiscoveryUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Добавить подарок"].waitForExistence(timeout: timeout))
         attach("app-language-russian-home")
 
-        let peopleTab = app.tabBars.buttons["Люди"]
-        XCTAssertTrue(peopleTab.waitForExistence(timeout: timeout))
+        let peopleTab = app.waitForTabButton("Люди", timeout: timeout)
+        XCTAssertTrue(peopleTab.exists)
         peopleTab.tap()
         XCTAssertTrue(peopleTab.isSelected)
         XCTAssertTrue(app.buttons["people.add-person"].waitForExistence(timeout: timeout))
@@ -92,8 +92,8 @@ final class AppDiscoveryUITests: XCTestCase {
         XCTAssertFalse(app.textFields["add-gift.name"].exists)
         attach("app-language-navigation-resumed")
 
-        let homeTab = app.tabBars.buttons["Главная"]
-        XCTAssertTrue(homeTab.waitForExistence(timeout: timeout))
+        let homeTab = app.waitForTabButton("Главная", timeout: timeout)
+        XCTAssertTrue(homeTab.exists)
         homeTab.tap()
         XCTAssertTrue(homeTab.isSelected)
         app.buttons["Добавить подарок"].tap()
@@ -118,7 +118,7 @@ final class AppDiscoveryUITests: XCTestCase {
         app.launchEnvironment = [:]
         app.launch()
         XCTAssertTrue(app.buttons["Далее"].waitForExistence(timeout: timeout))
-        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        XCTAssertFalse(app.showsTabBar(withTab: "Главная"))
         attach("app-language-cold-onboarding")
     }
 
@@ -160,8 +160,8 @@ final class AppDiscoveryUITests: XCTestCase {
         app.activate()
         try waitForSpotlightAppCatalog()
 
-        let peopleTab = app.tabBars.buttons["Люди"]
-        XCTAssertTrue(peopleTab.waitForExistence(timeout: timeout))
+        let peopleTab = app.waitForTabButton("Люди", timeout: timeout)
+        XCTAssertTrue(peopleTab.exists)
         peopleTab.tap()
         XCTAssertTrue(peopleTab.isSelected)
         XCTAssertTrue(app.buttons["people.add-person"].waitForExistence(timeout: timeout))
@@ -172,8 +172,8 @@ final class AppDiscoveryUITests: XCTestCase {
         XCTAssertFalse(app.textFields["add-gift.name"].exists)
         attach("spotlight-navigation-preserved")
 
-        let homeTab = app.tabBars.buttons["Главная"]
-        XCTAssertTrue(homeTab.waitForExistence(timeout: timeout))
+        let homeTab = app.waitForTabButton("Главная", timeout: timeout)
+        XCTAssertTrue(homeTab.exists)
         homeTab.tap()
         XCTAssertTrue(homeTab.isSelected)
         XCTAssertTrue(app.buttons["Добавить подарок"].waitForExistence(timeout: timeout))
@@ -201,7 +201,7 @@ final class AppDiscoveryUITests: XCTestCase {
         app.launchEnvironment = [:]
         try openSpotlightLauncher(query: "кто че", checkpoint: "spotlight-cold-launch")
         XCTAssertTrue(app.buttons["Далее"].waitForExistence(timeout: timeout))
-        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        XCTAssertFalse(app.showsTabBar(withTab: "Главная"))
         attach("spotlight-cold-onboarding")
     }
 
