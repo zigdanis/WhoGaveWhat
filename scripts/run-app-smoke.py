@@ -64,7 +64,10 @@ GENERATED_LOG_LABELS = (
     "simulator-signing-info", "simulator-signing-display", "simulator-signing-verify",
 )
 COLD_BOOT_TIMEOUT_SECONDS = 600
+# Used only when no model is requested and no iPhone is booted.
 DEFAULT_DEVICE = "iPhone 17 Pro"
+# simctl io needs a display on multi-display models; iPhone Duo's "primary" is the outer display it boots on.
+RECORDING_DISPLAYS = {"iPhone Duo": "primary"}
 # One UI test method, as accepted by -only-testing; video is recorded only on request.
 VIDEO_TEST_PATTERN = re.compile(r"WhoGaveWhatUITests/[A-Za-z0-9_]+/test[A-Za-z0-9_]+")
 LANGUAGE_SHUTDOWN_TIMEOUT_SECONDS = 180
@@ -215,11 +218,17 @@ def _available_iphones(payload):
     return devices
 
 
-def _booted_iphone(devices, requested_runtime):
-    """Return the newest booted iPhone, rejecting one that conflicts with an explicit runtime."""
+def _booted_iphone(devices, requested_runtime, device_name=None):
+    """Return the newest booted iPhone, rejecting one that conflicts with an explicit runtime or model."""
     booted = [device for device in devices if device.get("state") == "Booted"]
     if not booted:
         return None
+    if device_name is not None:
+        matching = [device for device in booted if device.get("name") == device_name]
+        if not matching:
+            names = ", ".join(sorted({device.get("name", "") for device in booted}))
+            raise ValueError(f"Booted iPhone ({names}) is not the requested {device_name}; shut it down first")
+        booted = matching
     selected = max(booted, key=lambda device: _runtime_version(device["runtime"]))
     if requested_runtime is not None and selected["runtime"] != requested_runtime:
         raise ValueError(
@@ -227,12 +236,14 @@ def _booted_iphone(devices, requested_runtime):
     return selected
 
 
-def select_simulator(payload, requested_runtime=None, device_name=DEFAULT_DEVICE):
-    """Reuse a booted iPhone; otherwise select an available Simulator of the named model."""
+def select_simulator(payload, requested_runtime=None, device_name=None):
+    """Reuse a booted iPhone of the requested model, or of any model when none was requested;
+    otherwise select an available Simulator of that model (DEFAULT_DEVICE when none was requested)."""
     devices = _available_iphones(payload)
-    booted = _booted_iphone(devices, requested_runtime)
+    booted = _booted_iphone(devices, requested_runtime, device_name)
     if booted:
         return booted
+    device_name = device_name or DEFAULT_DEVICE
     candidates = [device for device in devices if device.get("name") == device_name
                   and (requested_runtime is None or device["runtime"] == requested_runtime)]
     if not candidates:
@@ -316,10 +327,11 @@ def cleanup_ci_simulator(directory, metadata):
         fixture["cleanup_error"] = str(error)
 
 
-def start_recording(directory, simulator_id, video_path):
+def start_recording(directory, simulator_id, video_path, display=None):
     """Start simctl recording and return its process and open diagnostic log."""
     log = (directory / "record-video.log").open("w")
-    command = ["xcrun", "simctl", "io", simulator_id, "recordVideo", "--codec=h264", str(video_path)]
+    command = ["xcrun", "simctl", "io", simulator_id, "recordVideo", "--codec=h264",
+               *([f"--display={display}"] if display else []), str(video_path)]
     try:
         process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT, text=True)
     except BaseException:
@@ -489,7 +501,7 @@ def prepare_disposable_languages(directory, simulator, metadata):
 
 
 def run(directory, verify_app_names=False, discovery_only=False, runtime=None, fresh_ci_simulator=False,
-        video_test=None, device_name=DEFAULT_DEVICE):
+        video_test=None, device_name=None):
     """Run the native XCTest journey, preserving diagnostics and real evidence."""
     if discovery_only and not verify_app_names:
         raise ValueError("Discovery-only diagnostics require --verify-app-names")
@@ -541,8 +553,12 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
     try:
         listing = run_command(directory, "simulator-list", ["xcrun", "simctl", "list", "devices", "available", "--json"], 30)
         payload = json.loads(listing.stdout)
-        simulator = (create_ci_simulator(directory, payload, runtime, metadata, device_name) if fresh_ci_simulator
-                     else select_simulator(payload, requested_runtime=runtime, device_name=device_name))
+        if fresh_ci_simulator:
+            model = device_name or DEFAULT_DEVICE
+            simulator = create_ci_simulator(directory, payload, runtime, metadata, model)
+        else:
+            simulator = select_simulator(payload, requested_runtime=runtime, device_name=device_name)
+            model = simulator["name"]
         simulator_id = simulator["udid"]
         metadata.update(device=simulator["name"], simulator_id=simulator_id, runtime=simulator["runtime"])
         if verify_app_names:
@@ -555,8 +571,10 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
         target = ["-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
                   "-destination", f"platform=iOS Simulator,id={simulator_id}", "-derivedDataPath", str(directory / "DerivedData"),
                   "-parallel-testing-enabled", "NO"]
+        # The tests attach their own failure screenshots and hierarchies; default diagnostics
+        # collection can outlive the tests (sysdiagnose) and lose the result bundle to the timeout.
         command = ["xcodebuild", "test", *target, "-resultBundlePath", str(result_bundle),
-                   "CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-"]
+                   "-collect-test-diagnostics", "never", "CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-"]
         if discovery_only:
             command.append(f"-only-testing:{SPOTLIGHT_DIAGNOSTIC_TEST}")
         elif verify_app_names:
@@ -574,10 +592,12 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
             if video_test:
                 # A short clip of one already-built test, recorded only after the full suite passes.
                 try:
-                    recording = start_recording(directory, simulator_id, directory / "clip.mp4")
+                    recording = start_recording(directory, simulator_id, directory / "clip.mp4",
+                                                display=RECORDING_DISPLAYS.get(model))
                     run_command(directory, "xcodebuild-clip", [
                         "xcodebuild", "test-without-building", *target,
-                        "-resultBundlePath", str(directory / "Clip.xcresult"), f"-only-testing:{video_test}"], 900)
+                        "-resultBundlePath", str(directory / "Clip.xcresult"), "-collect-test-diagnostics", "never",
+                        f"-only-testing:{video_test}"], 900)
                     stop_recording(directory, recording)
                     recording = None
                 except (NativeCommandError, OSError, subprocess.SubprocessError) as error:
@@ -661,10 +681,12 @@ if __name__ == "__main__":
     parser.add_argument("--discovery-only", action="store_true",
                         help="Run only the strict OS Spotlight method; partial diagnostic evidence, never acceptance")
     parser.add_argument("--runtime", help="Require a canonical runtime such as 'iOS 27.1'; reject conflicting booted iPhones")
-    parser.add_argument("--device", default=DEFAULT_DEVICE,
-                        help=f"Simulator model to select or create (default: {DEFAULT_DEVICE})")
+    parser.add_argument("--device",
+                        help="Simulator model to select or create; a booted iPhone is reused only if it is this model "
+                        f"(default: any booted iPhone, else {DEFAULT_DEVICE})")
     parser.add_argument("--fresh-ci-simulator", action="store_true",
-                        help="GitHub Actions only: create a run-owned Simulator of --device on the explicit runtime")
+                        help=f"GitHub Actions only: create a run-owned Simulator of --device (default {DEFAULT_DEVICE}) "
+                        "on the explicit runtime")
     parser.add_argument("--video-test", help="After the suite passes, record a clip of this one UI test "
                         "(WhoGaveWhatUITests/Class/testMethod); no video is recorded otherwise")
     args = parser.parse_args()
