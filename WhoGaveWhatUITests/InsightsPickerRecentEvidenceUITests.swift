@@ -36,7 +36,7 @@ final class InsightsPickerRecentEvidenceUITests: XCTestCase {
         addPerson(firstName)
         addPerson(secondName)
 
-        app.tabButton("Insights").tap()
+        selectTab("Insights")
         XCTAssertTrue(app.navigationBars["Insights"].waitForExistence(timeout: timeout))
         let personB = app.buttons["insights.compare.b"]
         for _ in 0..<4 where !(personB.exists && personB.isHittable) {
@@ -66,7 +66,7 @@ final class InsightsPickerRecentEvidenceUITests: XCTestCase {
     }
 
     private func addPerson(_ name: String) {
-        app.tabButton("People").tap()
+        selectTab("People")
         let addPerson = app.buttons["people.add-person"]
         XCTAssertTrue(addPerson.waitForExistence(timeout: timeout))
         addPerson.tap()
@@ -82,6 +82,16 @@ final class InsightsPickerRecentEvidenceUITests: XCTestCase {
             app.swipeUp()
         }
         XCTAssertTrue(row.waitForExistence(timeout: timeout))
+    }
+
+    /// While scrolled down, the tab bar collapses to the current tab; scroll back up to expand it.
+    private func selectTab(_ name: String) {
+        for _ in 0..<8 {
+            let tab = app.waitForTabButton(name, timeout: 2)
+            if tab.exists && tab.isHittable { break }
+            app.swipeDown()
+        }
+        app.tabButton(name).tap()
     }
 
     private var pickerRows: XCUIElementQuery {
