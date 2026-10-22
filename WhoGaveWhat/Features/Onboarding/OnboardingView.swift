@@ -187,7 +187,7 @@ private struct OnbLogged: View {
                 }
                 .padding(18)
             }
-            .frame(width: 304)
+            .frame(maxWidth: 304)
 
             Text("Logged in seconds")
                 .font(Font.app(27, .bold)).tracking(-0.5)
@@ -246,7 +246,7 @@ private struct OnbAddsUp: View {
                 }
                 .padding(18)
             }
-            .frame(width: 304)
+            .frame(maxWidth: 304)
 
             Text("It adds up per person")
                 .font(Font.app(27, .bold)).tracking(-0.5)
