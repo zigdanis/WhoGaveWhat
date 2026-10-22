@@ -177,9 +177,7 @@ struct InsightsView: View {
                         HStack(spacing: 8) {
                             personButton(a, caption: "Person A", slot: .compareA)
                                 .accessibilityIdentifier("insights.compare.a")
-                            Image(systemName: "arrow.left.arrow.right")
-                                .font(.system(size: 14, weight: .semibold)).foregroundColor(Color.textTertiary)
-                                .accessibilityHidden(true)
+                            swapButton
                             personButton(b, caption: "Person B", slot: .compareB)
                                 .accessibilityIdentifier("insights.compare.b")
                         }
@@ -195,6 +193,25 @@ struct InsightsView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("insights.compare")
+    }
+
+    /// Swaps Person A and Person B, so the flows and net read from the other side.
+    private var swapButton: some View {
+        Button {
+            let previousA = compareA?.id
+            withAnimation(.easeInOut(duration: 0.2)) {
+                compareAID = compareB?.id
+                compareBID = previousA
+            }
+        } label: {
+            Image(systemName: "arrow.left.arrow.right")
+                .font(.system(size: 14, weight: .semibold)).foregroundColor(Color.textSecondary)
+                .frame(width: 32, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Swap people")
+        .accessibilityIdentifier("insights.compare.swap")
     }
 
     private func comparisonDetails(_ comparison: PersonComparison) -> some View {

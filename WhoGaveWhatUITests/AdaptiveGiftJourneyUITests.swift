@@ -264,6 +264,17 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(flow.label.contains("42"), flow.label)
         attach("insights-compare")
 
+        // The middle button swaps the two people; tapping it again restores the order.
+        let personB = app.buttons["insights.compare.b"]
+        let swap = app.buttons["insights.compare.swap"]
+        swap.tap()
+        XCTAssertTrue(waitWithOneRetry(timeout: timeout) { personA.label.contains(friendName) })
+        XCTAssertTrue(personB.label.contains(giverName), personB.label)
+        attach("insights-compare-swapped")
+        swap.tap()
+        XCTAssertTrue(waitWithOneRetry(timeout: timeout) { personA.label.contains(giverName) })
+        XCTAssertTrue(personB.label.contains(friendName), personB.label)
+
         selectTab("People")
         let giverRow = app.staticTexts[giverName]
         XCTAssertTrue(giverRow.waitForExistence(timeout: timeout))
