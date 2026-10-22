@@ -75,7 +75,13 @@ final class InsightsPickerRecentEvidenceUITests: XCTestCase {
         nameField.tap()
         nameField.typeText(name)
         app.buttons["person-editor.save"].tap()
-        XCTAssertTrue(app.staticTexts[name].waitForExistence(timeout: timeout))
+        waitForDisappearance(nameField)
+        // People is a lazy List and "Zz" sorts last, below people left by earlier tests.
+        let row = app.staticTexts[name]
+        for _ in 0..<8 where !row.waitForExistence(timeout: 1) {
+            app.swipeUp()
+        }
+        XCTAssertTrue(row.waitForExistence(timeout: timeout))
     }
 
     private var pickerRows: XCUIElementQuery {

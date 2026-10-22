@@ -383,7 +383,7 @@ struct InsightsPickerRankingCompositionTests {
 
         #expect(
             composition.insightsPickerPeople(for: .compareA, selectedID: "anton").map(\.id) == [
-                "anton", "alisa", "dmitri", "igor", "lena", "maria", "marina", "olga", "pavel", "sofia"
+                "anton", "alisa", "maria", "dmitri", "pavel", "igor", "lena", "marina", "olga", "sofia"
             ])
     }
 
