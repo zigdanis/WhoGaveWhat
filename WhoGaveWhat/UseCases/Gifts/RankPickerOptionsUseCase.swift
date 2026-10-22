@@ -19,6 +19,22 @@ struct RankPickerOptionsUseCase {
         return rank(occasions) { usageByName[$0.name] }
     }
 
+    /// The current choice first, then recent picks newest first, then everyone else in the given order.
+    func rankPeople(_ people: [Person], selectedID: String?, recentIDs: [String]) -> [Person] {
+        let peopleByID = Dictionary(people.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var leadingIDs = Set<String>()
+        let leading = ([selectedID].compactMap { $0 } + recentIDs).compactMap { id -> Person? in
+            guard leadingIDs.insert(id).inserted else { return nil }
+            return peopleByID[id]
+        }
+        return leading + people.filter { !leadingIDs.contains($0.id) }
+    }
+
+    /// `recentIDs` with `id` moved to the front, keeping at most `limit` entries.
+    func recordingPick(_ id: String, in recentIDs: [String], limit: Int = 10) -> [String] {
+        Array(([id] + recentIDs.filter { $0 != id }).prefix(limit))
+    }
+
     private struct Usage {
         var latest: Date
         var count: Int

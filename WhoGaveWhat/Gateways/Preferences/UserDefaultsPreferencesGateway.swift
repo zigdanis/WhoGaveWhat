@@ -11,6 +11,7 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
     /// Static so the initializer can read it before every stored property is set.
     private static let cloudIconConsentKey = "cloudIconConsent"
     private let installIDKey = "cloudIconInstallID"
+    private let recentInsightsPicksKeyPrefix = "insightsRecentPicks."
     private(set) var cloudIconConsent: CloudIconConsent
 
     init(defaults: UserDefaults = .standard) {
@@ -70,5 +71,13 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
         } else {
             defaults.removeObject(forKey: selfPersonKey)
         }
+    }
+
+    func recentInsightsPicks(for slot: InsightsPickerSlot) -> [String] {
+        defaults.stringArray(forKey: recentInsightsPicksKeyPrefix + slot.rawValue) ?? []
+    }
+
+    func setRecentInsightsPicks(_ ids: [String], for slot: InsightsPickerSlot) {
+        defaults.set(ids, forKey: recentInsightsPicksKeyPrefix + slot.rawValue)
     }
 }

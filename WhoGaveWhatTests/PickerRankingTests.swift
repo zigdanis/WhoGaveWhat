@@ -346,3 +346,58 @@ struct PickerRankingPersonPickerStateTests {
         #expect(state.visiblePeople.map(\.id) == ["bob", "alice", "alex", "carol"])
     }
 }
+
+struct RankInsightsPickerPeopleTests {
+    private let useCase = RankPickerOptionsUseCase()
+
+    private func ids(selectedID: String?, recentIDs: [String]) -> [String] {
+        useCase.rankPeople(allPeople, selectedID: selectedID, recentIDs: recentIDs).map(\.id)
+    }
+
+    @Test func withoutSelectionOrPicksKeepsTheGivenOrder() {
+        #expect(ids(selectedID: nil, recentIDs: []) == ["alex", "alice", "bob", "carol"])
+    }
+
+    @Test func selectionComesFirstThenRecentPicksNewestFirst() {
+        #expect(ids(selectedID: "bob", recentIDs: []) == ["bob", "alex", "alice", "carol"])
+        #expect(ids(selectedID: "bob", recentIDs: ["carol", "alice"]) == ["bob", "carol", "alice", "alex"])
+    }
+
+    @Test func duplicateAndUnknownIDsAreSkipped() {
+        #expect(
+            ids(selectedID: "carol", recentIDs: ["gone", "carol", "alice", "alice"])
+                == ["carol", "alice", "alex", "bob"])
+    }
+
+    @Test func recordingAPickMovesItToTheFrontAndCapsTheList() {
+        #expect(useCase.recordingPick("bob", in: []) == ["bob"])
+        #expect(useCase.recordingPick("bob", in: ["alice", "bob", "carol"]) == ["bob", "alice", "carol"])
+        #expect(useCase.recordingPick("d", in: ["a", "b", "c"], limit: 3) == ["d", "a", "b"])
+    }
+}
+
+@MainActor
+struct InsightsPickerRankingCompositionTests {
+    @Test func withoutPicksTheSelectionLeadsTheAlphabeticalList() throws {
+        let composition = try makeTestComposition()
+
+        #expect(
+            composition.insightsPickerPeople(for: .compareA, selectedID: "anton").map(\.id) == [
+                "anton", "alisa", "maria", "dmitri", "pavel", "igor", "lena", "marina", "olga", "sofia"
+            ])
+    }
+
+    @Test func picksAreRememberedPerPickerNewestFirst() throws {
+        let composition = try makeTestComposition()
+
+        composition.recordInsightsPick("olga", for: .compareB)
+        composition.recordInsightsPick("igor", for: .compareB)
+        composition.recordInsightsPick("olga", for: .compareB)
+
+        let compareB = composition.insightsPickerPeople(for: .compareB, selectedID: "pavel").map(\.id)
+        let compareA = composition.insightsPickerPeople(for: .compareA, selectedID: "pavel").map(\.id)
+        #expect(Array(compareB.prefix(4)) == ["pavel", "olga", "igor", "alisa"])
+        #expect(Array(compareA.prefix(2)) == ["pavel", "alisa"])
+        #expect(compareB.count == 10)
+    }
+}

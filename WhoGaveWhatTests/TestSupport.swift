@@ -24,6 +24,13 @@ final class TestPreferencesGateway: PreferencesGateway {
     func setSelfPersonID(_ id: String?) {
         selfPersonID = id
     }
+    var recentInsightsPicks: [InsightsPickerSlot: [String]] = [:]
+    func recentInsightsPicks(for slot: InsightsPickerSlot) -> [String] {
+        recentInsightsPicks[slot] ?? []
+    }
+    func setRecentInsightsPicks(_ ids: [String], for slot: InsightsPickerSlot) {
+        recentInsightsPicks[slot] = ids
+    }
 }
 
 @MainActor

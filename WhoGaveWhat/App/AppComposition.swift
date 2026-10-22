@@ -125,6 +125,19 @@ final class AppComposition {
         rankPickerOptions.rankOccasions(data.occasions, in: data.gifts)
     }
 
+    /// People for an Insights picker: the current choice, then recent picks in that picker, then alphabetical.
+    func insightsPickerPeople(for slot: InsightsPickerSlot, selectedID: String?) -> [Person] {
+        rankPickerOptions.rankPeople(
+            buildInsights.alphabetical(data.people),
+            selectedID: selectedID,
+            recentIDs: preferences.recentInsightsPicks(for: slot))
+    }
+
+    func recordInsightsPick(_ id: String, for slot: InsightsPickerSlot) {
+        let recent = rankPickerOptions.recordingPick(id, in: preferences.recentInsightsPicks(for: slot))
+        preferences.setRecentInsightsPicks(recent, for: slot)
+    }
+
     func createPerson(name: String) -> String? {
         let id = try? createPersonUseCase.execute(
             name: name,

@@ -1,14 +1,5 @@
 import SwiftUI
 
-/// Which person a picker sheet is choosing.
-private enum InsightsPicker: Identifiable {
-    case subject
-    case compareA
-    case compareB
-
-    var id: Self { self }
-}
-
 /// Year summary, the balance with each person, and a two-person comparison.
 struct InsightsView: View {
     let composition: AppComposition
@@ -17,7 +8,7 @@ struct InsightsView: View {
     @State private var subjectID: String?
     @State private var compareAID: String?
     @State private var compareBID: String?
-    @State private var picker: InsightsPicker?
+    @State private var picker: InsightsPickerSlot?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -36,9 +27,10 @@ struct InsightsView: View {
         .sheet(item: $picker) { slot in
             InsightsPersonPicker(
                 title: pickerTitle(for: slot),
-                people: useCase.alphabetical(data.people),
+                people: composition.insightsPickerPeople(for: slot, selectedID: selectedID(for: slot)),
                 selectedID: selectedID(for: slot),
                 onSelect: { id in
+                    composition.recordInsightsPick(id, for: slot)
                     select(id, for: slot)
                     picker = nil
                 })
@@ -69,7 +61,7 @@ struct InsightsView: View {
         data.selfPerson
     }
 
-    private func pickerTitle(for slot: InsightsPicker) -> LocalizedStringResource {
+    private func pickerTitle(for slot: InsightsPickerSlot) -> LocalizedStringResource {
         switch slot {
         case .subject: "Balances for"
         case .compareA: "Person A"
@@ -92,7 +84,7 @@ struct InsightsView: View {
         return useCase.defaultCounterpart(gifts: data.gifts, people: data.people, for: compareA, year: year)
     }
 
-    private func selectedID(for slot: InsightsPicker) -> String? {
+    private func selectedID(for slot: InsightsPickerSlot) -> String? {
         switch slot {
         case .subject: subject?.id
         case .compareA: compareA?.id
@@ -101,7 +93,7 @@ struct InsightsView: View {
     }
 
     /// Choosing the person already on the other side swaps the two.
-    private func select(_ id: String, for slot: InsightsPicker) {
+    private func select(_ id: String, for slot: InsightsPickerSlot) {
         switch slot {
         case .subject:
             subjectID = id
@@ -238,7 +230,7 @@ struct InsightsView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func personButton(_ person: Person, caption: LocalizedStringKey, slot: InsightsPicker) -> some View {
+    private func personButton(_ person: Person, caption: LocalizedStringKey, slot: InsightsPickerSlot) -> some View {
         Button {
             picker = slot
         } label: {
