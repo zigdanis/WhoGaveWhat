@@ -10,10 +10,14 @@ Claude Design.
 open WhoGaveWhat.xcodeproj      # then ⌘R
 # or build for an installed Simulator:
 xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
+  -destination 'platform=iOS Simulator,name=iPhone Duo' build
 ```
 
-- **Minimum iOS:** 26.0 — built against the iOS 26 SDK, native **Liquid Glass** throughout (no back-deployment).
+Debug builds launched with `KS_SAMPLE_DATA=1` use the seeded in-memory sample store, for screenshots; Release builds ignore it.
+
+- **Minimum iOS:** 26.0 — built with **Xcode 27.1** against the iOS 27.1 SDK, native **Liquid Glass** throughout.
+  The iOS 27.1 SDK lets the app fill both iPhone Duo displays. The iPhone Duo Simulator needs the iOS 27.1 runtime
+  (`xcodebuild -downloadPlatform iOS`, or `scripts/install-simulator-runtime.sh 'iOS 27.1' 'iPhone Duo'`).
 - **Dependencies:** none yet (added via **Swift Package Manager** if/when needed)
 - **Bundle id:** `pro.ziganshin.WhoGaveWhat`
 

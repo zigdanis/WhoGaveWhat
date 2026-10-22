@@ -125,55 +125,72 @@ struct PersonPhotoCropView: View {
     private let maximumZoom: CGFloat = 6
 
     var body: some View {
-        GeometryReader { proxy in
-            let size = proxy.size
-            let frame = cropFrame(in: size)
-            let layout = PersonPhotoCropLayout(viewportSize: size, imageSize: image.size, cropRect: frame)
-
+        // The outer reader stays inside the safe area and lays out the header; the inner one is
+        // full-bleed and lays out the photo. The difference between their frames is the safe
+        // region, including iPhone Duo's vertical status strip, without reading window insets.
+        GeometryReader { safeProxy in
+            let safeFrame = safeProxy.frame(in: .global)
             ZStack {
-                Color.black
-                Image(uiImage: image)
-                    .resizable()
-                    .frame(width: layout.displaySize.width, height: layout.displaySize.height)
-                    .scaleEffect(zoom)
-                    .offset(offset)
-                    .frame(width: size.width, height: size.height)
-                    .clipped()
-                    .contentShape(Rectangle())
-                    .simultaneousGesture(dragGesture(layout: layout))
-                    .simultaneousGesture(magnificationGesture(layout: layout))
-                    .accessibilityIdentifier("person-photo-crop.image")
-                cropGuide(frame: frame, size: size)
-                    .allowsHitTesting(false)
-                cropHeader(topInset: Self.windowSafeInsets.top)
-            }
-            .onAppear {
-                viewportSize = size
-                cropRect = frame
-            }
-            .onChange(of: size) { _, newSize in
-                viewportSize = newSize
-                cropRect = cropFrame(in: newSize)
-                offset = PersonPhotoCropLayout(
-                    viewportSize: newSize,
-                    imageSize: image.size,
-                    cropRect: cropRect
-                ).clampedOffset(offset, zoom: zoom)
-                lastOffset = offset
+                GeometryReader { proxy in
+                    let size = proxy.size
+                    let fullFrame = proxy.frame(in: .global)
+                    let safeRect = safeFrame.offsetBy(dx: -fullFrame.minX, dy: -fullFrame.minY)
+                    let frame = cropFrame(in: safeRect)
+                    let layout = PersonPhotoCropLayout(viewportSize: size, imageSize: image.size, cropRect: frame)
+
+                    ZStack {
+                        Color.black
+                        Image(uiImage: image)
+                            .resizable()
+                            .frame(width: layout.displaySize.width, height: layout.displaySize.height)
+                            .scaleEffect(zoom)
+                            .offset(offset)
+                            .frame(width: size.width, height: size.height)
+                            .clipped()
+                            .contentShape(Rectangle())
+                            .simultaneousGesture(dragGesture(layout: layout))
+                            .simultaneousGesture(magnificationGesture(layout: layout))
+                            .accessibilityIdentifier("person-photo-crop.image")
+                        cropGuide(frame: frame, size: size)
+                            .allowsHitTesting(false)
+                    }
+                    .onAppear {
+                        viewportSize = size
+                        cropRect = frame
+                    }
+                    .onChange(of: size) { _, newSize in
+                        updateViewport(size: newSize, safeRect: safeRect)
+                    }
+                    .onChange(of: safeRect) { _, newSafeRect in
+                        updateViewport(size: size, safeRect: newSafeRect)
+                    }
+                }
+                .ignoresSafeArea()
+                cropHeader
             }
         }
-        .ignoresSafeArea()
         .background(Color.black.ignoresSafeArea())
         .preferredColorScheme(.dark)
         .statusBarHidden()
     }
 
-    private func cropFrame(in size: CGSize) -> CGRect {
-        guard size.width > 0, size.height > 0 else { return .zero }
-        let insets = Self.windowSafeInsets
-        let side = min(size.width - 36, size.height - insets.top - insets.bottom - 48)
-        let centerY = (size.height + insets.top - insets.bottom) / 2
-        return CGRect(x: (size.width - side) / 2, y: centerY - side / 2, width: side, height: side)
+    private func updateViewport(size: CGSize, safeRect: CGRect) {
+        viewportSize = size
+        cropRect = cropFrame(in: safeRect)
+        let layout = PersonPhotoCropLayout(viewportSize: size, imageSize: image.size, cropRect: cropRect)
+        // Unfolding or rotating can enlarge the circle past the zoomed-out photo, so the zoom
+        // is clamped to the new minimum before the offset.
+        zoom = min(maximumZoom, max(layout.minimumZoom, zoom))
+        lastZoom = zoom
+        offset = layout.clampedOffset(offset, zoom: zoom)
+        lastOffset = offset
+    }
+
+    /// The largest crop circle, with a margin, centered in the safe region.
+    private func cropFrame(in safeRect: CGRect) -> CGRect {
+        guard safeRect.width > 0, safeRect.height > 0 else { return .zero }
+        let side = max(0, min(safeRect.width - 36, safeRect.height - 48))
+        return CGRect(x: safeRect.midX - side / 2, y: safeRect.midY - side / 2, width: side, height: side)
     }
 
     private var layout: PersonPhotoCropLayout {
@@ -194,7 +211,7 @@ struct PersonPhotoCropView: View {
         }
     }
 
-    private func cropHeader(topInset: CGFloat) -> some View {
+    private var cropHeader: some View {
         VStack {
             HStack {
                 cropButton(symbol: "xmark", label: "Cancel", identifier: "crop.cancel", prominent: false) {
@@ -214,7 +231,7 @@ struct PersonPhotoCropView: View {
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.top, topInset + 8)
+            .padding(.top, 8)
             Spacer()
         }
     }
@@ -262,14 +279,5 @@ struct PersonPhotoCropView: View {
                 lastZoom = zoom
                 lastOffset = offset
             }
-    }
-
-    private static var windowSafeInsets: EdgeInsets {
-        let windows = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap(\.windows)
-        let window = windows.first(where: \.isKeyWindow) ?? windows.first
-        let inset = window?.safeAreaInsets ?? .zero
-        return EdgeInsets(top: inset.top, leading: inset.left, bottom: inset.bottom, trailing: inset.right)
     }
 }

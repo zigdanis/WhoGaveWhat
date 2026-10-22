@@ -42,12 +42,29 @@ concurrency:
 
 jobs:
   test:
-    name: Unit tests and app smoke
-    runs-on: macos-26
-    timeout-minutes: 55
+    name: ${{ matrix.name }}
+    # GitHub's Xcode 27 image (macOS 27); see actions/runner-images#14404.
+    runs-on: xcode-27
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The iOS 27.1 Simulator runtime supports only iPhone Duo, which boots folded
+          # (outer display). Regular iPhones run the preinstalled iOS 27.0 runtime.
+          - name: Unit tests and app smoke
+            device: iPhone Duo
+            runtime: iOS 27.1
+            artifact: ui-app-smoke
+          - name: Unit tests and app smoke (iPhone 18 Pro)
+            device: iPhone 18 Pro
+            runtime: iOS 27.0
+            artifact: ui-iphone-smoke
     env:
-      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
-      XCODE_VERSION: '26.6'
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
+      XCODE_VERSION: '27.1'
+      SIMULATOR_RUNTIME: ${{ matrix.runtime }}
+      SIMULATOR_DEVICE: ${{ matrix.device }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
@@ -55,14 +72,17 @@ jobs:
         run: |
           swift --version
           xcodebuild -version
+          xcodebuild -showsdks
           xcrun simctl help
           xcrun simctl help create
           xcrun simctl help delete
           xcrun xcresulttool version
+      - name: Install the iOS Simulator runtime for the selected Xcode
+        run: scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME" "$SIMULATOR_DEVICE"
       - name: Test app smoke and record any requested clip
         env:
           VIDEO_TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.video_test || '' }}
-        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names --runtime 'iOS 26.4' --fresh-ci-simulator ${VIDEO_TEST:+--video-test "$VIDEO_TEST"}
+        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names --runtime "$SIMULATOR_RUNTIME" --device "$SIMULATOR_DEVICE" --fresh-ci-simulator ${VIDEO_TEST:+--video-test "$VIDEO_TEST"}
       - name: Render evidence report
         if: always()
         run: |
@@ -73,7 +93,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ui-app-smoke-attempt-${{ github.run_attempt }}
+          name: ${{ matrix.artifact }}-attempt-${{ github.run_attempt }}
           path: ${{ runner.temp }}/ui-app-smoke
           if-no-files-found: warn
           retention-days: 14
@@ -82,11 +102,13 @@ jobs:
     name: Spotlight diagnostics (non-acceptance)
     continue-on-error: true
     if: github.event_name == 'workflow_dispatch' && inputs.spotlight_diagnostics
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 55
     env:
-      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
-      XCODE_VERSION: '26.6'
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
+      XCODE_VERSION: '27.1'
+      SIMULATOR_RUNTIME: iOS 27.1
+      SIMULATOR_DEVICE: iPhone Duo
       HEAD_SHA: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
@@ -97,8 +119,10 @@ jobs:
           xcrun simctl help create
           xcrun simctl help delete
           xcrun xcresulttool version
+      - name: Install the iOS Simulator runtime for the selected Xcode
+        run: scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME" "$SIMULATOR_DEVICE"
       - name: Run focused Spotlight diagnostic
-        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/spotlight-diagnostics" --verify-app-names --discovery-only --runtime 'iOS 26.4' --fresh-ci-simulator
+        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/spotlight-diagnostics" --verify-app-names --discovery-only --runtime "$SIMULATOR_RUNTIME" --device "$SIMULATOR_DEVICE" --fresh-ci-simulator
       - name: Render diagnostic report
         if: always()
         run: |

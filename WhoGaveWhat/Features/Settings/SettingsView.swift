@@ -79,6 +79,7 @@ struct SettingsView: View {
             }
             .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 30)
         }
+        .readableColumn()
         .scrollIndicators(.hidden)
         .background(Color.appBackground)
         .accessibilityIdentifier("settings.screen")

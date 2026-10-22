@@ -111,6 +111,7 @@ struct PersonDetailView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .readableColumn()
         .scrollContentBackground(.hidden)
         .background(Color.appBackground)
         .navigationTitle(name)
@@ -121,11 +122,10 @@ struct PersonDetailView: View {
                     Button {
                         renaming = true
                     } label: {
-                        Image(systemName: "pencil")
+                        Label("Edit person", systemImage: "pencil")
                             .font(.system(size: 17, weight: .semibold))
                     }
                     .tint(Color.brand)
-                    .accessibilityLabel("Edit person")
                     .accessibilityIdentifier("person-detail.edit")
                 }
             }

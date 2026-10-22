@@ -79,8 +79,8 @@ final class AppDiscoveryUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Добавить подарок"].waitForExistence(timeout: timeout))
         attach("app-language-russian-home")
 
-        let peopleTab = app.tabBars.buttons["Люди"]
-        XCTAssertTrue(peopleTab.waitForExistence(timeout: timeout))
+        let peopleTab = app.waitForTabButton("Люди", timeout: timeout)
+        XCTAssertTrue(peopleTab.exists)
         peopleTab.tap()
         XCTAssertTrue(peopleTab.isSelected)
         XCTAssertTrue(app.buttons["people.add-person"].waitForExistence(timeout: timeout))
@@ -92,8 +92,8 @@ final class AppDiscoveryUITests: XCTestCase {
         XCTAssertFalse(app.textFields["add-gift.name"].exists)
         attach("app-language-navigation-resumed")
 
-        let homeTab = app.tabBars.buttons["Главная"]
-        XCTAssertTrue(homeTab.waitForExistence(timeout: timeout))
+        let homeTab = app.waitForTabButton("Главная", timeout: timeout)
+        XCTAssertTrue(homeTab.exists)
         homeTab.tap()
         XCTAssertTrue(homeTab.isSelected)
         app.buttons["Добавить подарок"].tap()
@@ -118,7 +118,7 @@ final class AppDiscoveryUITests: XCTestCase {
         app.launchEnvironment = [:]
         app.launch()
         XCTAssertTrue(app.buttons["Далее"].waitForExistence(timeout: timeout))
-        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        XCTAssertFalse(app.showsTabBar(withTab: "Главная"))
         attach("app-language-cold-onboarding")
     }
 
@@ -129,8 +129,13 @@ final class AppDiscoveryUITests: XCTestCase {
                 self.app.state == .runningBackground || self.app.state == .runningBackgroundSuspended
             }, object: app
         )
-        guard XCTWaiter.wait(for: [backgrounded], timeout: timeout) == .completed else {
-            throw DiscoveryFailure.appNotBackgrounded
+        if XCTWaiter.wait(for: [backgrounded], timeout: timeout) != .completed {
+            // On the folded iPhone Duo Simulator a synthesized Home press can leave the app in the
+            // foreground; switching to another app backgrounds it just the same.
+            settings.activate()
+            guard settings.wait(for: .runningForeground, timeout: timeout) else {
+                throw DiscoveryFailure.appNotBackgrounded
+            }
         }
         app.activate()
         guard app.wait(for: .runningForeground, timeout: timeout) else {
@@ -160,8 +165,8 @@ final class AppDiscoveryUITests: XCTestCase {
         app.activate()
         try waitForSpotlightAppCatalog()
 
-        let peopleTab = app.tabBars.buttons["Люди"]
-        XCTAssertTrue(peopleTab.waitForExistence(timeout: timeout))
+        let peopleTab = app.waitForTabButton("Люди", timeout: timeout)
+        XCTAssertTrue(peopleTab.exists)
         peopleTab.tap()
         XCTAssertTrue(peopleTab.isSelected)
         XCTAssertTrue(app.buttons["people.add-person"].waitForExistence(timeout: timeout))
@@ -172,8 +177,8 @@ final class AppDiscoveryUITests: XCTestCase {
         XCTAssertFalse(app.textFields["add-gift.name"].exists)
         attach("spotlight-navigation-preserved")
 
-        let homeTab = app.tabBars.buttons["Главная"]
-        XCTAssertTrue(homeTab.waitForExistence(timeout: timeout))
+        let homeTab = app.waitForTabButton("Главная", timeout: timeout)
+        XCTAssertTrue(homeTab.exists)
         homeTab.tap()
         XCTAssertTrue(homeTab.isSelected)
         XCTAssertTrue(app.buttons["Добавить подарок"].waitForExistence(timeout: timeout))
@@ -201,7 +206,7 @@ final class AppDiscoveryUITests: XCTestCase {
         app.launchEnvironment = [:]
         try openSpotlightLauncher(query: "кто че", checkpoint: "spotlight-cold-launch")
         XCTAssertTrue(app.buttons["Далее"].waitForExistence(timeout: timeout))
-        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        XCTAssertFalse(app.showsTabBar(withTab: "Главная"))
         attach("spotlight-cold-onboarding")
     }
 
@@ -247,8 +252,8 @@ final class AppDiscoveryUITests: XCTestCase {
         XCTAssertLessThan(english.frame.minY, russian.frame.minY, "English must remain the primary system language")
         attach("english-system-russian-secondary")
 
-        try tapSetting("General")
-        try tapSetting("Settings")
+        try goBackInSettings(to: "General")
+        try goBackInSettings(to: "Settings")
         try tapSetting("Apps")
         attach("settings-apps-list")
         try enterSettingsSearch("Who Gave")
@@ -290,9 +295,33 @@ final class AppDiscoveryUITests: XCTestCase {
         throw DiscoveryFailure.missingSettingsControl(label, settings.debugDescription)
     }
 
+    /// Goes back one Settings page. On a regular iPhone, Back shows the previous page's title;
+    /// on iPhone Duo's outer display it is an icon in the vertical bar under the status bar.
+    private func goBackInSettings(to title: String) throws {
+        let back = settings.buttons["BackButton"].firstMatch
+        if back.waitForExistence(timeout: 2) && back.isHittable {
+            back.tap()
+        } else {
+            try tapSetting(title)
+        }
+        guard settings.navigationBars[title].waitForExistence(timeout: timeout) else {
+            throw DiscoveryFailure.missingSettingsControl(title, settings.debugDescription)
+        }
+    }
+
     private func enterSettingsSearch(_ text: String) throws {
         let nativeSearch = settings.searchFields.firstMatch
-        let search = nativeSearch.waitForExistence(timeout: 3) ? nativeSearch : settings.textFields.firstMatch
+        let textSearch = settings.textFields.firstMatch
+        if !nativeSearch.waitForExistence(timeout: 3), !textSearch.exists {
+            // On iPhone Duo's outer display, Search is a button in the vertical bar, not a field.
+            let searchButton = settings.toolbars.buttons["Search"].firstMatch
+            if searchButton.exists {
+                searchButton.tap()
+                let shown = NSPredicate { _, _ in nativeSearch.exists || textSearch.exists }
+                _ = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: shown, object: nil)], timeout: timeout)
+            }
+        }
+        let search = nativeSearch.exists ? nativeSearch : textSearch
         if !search.waitForExistence(timeout: timeout) {
             settings.swipeDown()
         }

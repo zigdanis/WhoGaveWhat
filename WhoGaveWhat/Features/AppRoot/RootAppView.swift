@@ -83,6 +83,7 @@ struct ScreenScroll<Content: View>: View {
                 .padding(.top, 4)
                 .padding(.bottom, 12)
         }
+        .readableColumn()
         .scrollIndicators(.hidden)
         .scrollEdgeEffectStyle(.soft, for: .bottom)
         .background(Color.appBackground)

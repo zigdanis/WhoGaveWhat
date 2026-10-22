@@ -11,6 +11,8 @@ struct PersonEditorSheet: View {
     let onSave: (String, Data?) throws -> Void
     let onDelete: (() -> Void)?
 
+    /// On a short window the hero photo would push Delete under the keyboard, so the photo card shrinks.
+    @Environment(\.compactVerticalSpace) private var isCompact
     @State private var name: String
     @State private var imageData: Data?
     @State private var selectedPhotoItem: PhotosPickerItem?
@@ -55,12 +57,13 @@ struct PersonEditorSheet: View {
                 onSave: save
             )
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: isCompact ? 16 : 20) {
                     PersonEditorNameField(name: $name, isFocused: $nameIsFocused)
                     if showsPhoto {
                         PersonEditorPhotoControl(
                             imageData: imageData,
                             isLoading: isLoadingPhoto,
+                            isCompact: isCompact,
                             isPickerPresented: $isPhotoPickerPresented,
                             onRemove: removePhoto
                         )
@@ -271,6 +274,7 @@ private struct PersonEditorNameField: View {
 private struct PersonEditorPhotoControl: View {
     let imageData: Data?
     let isLoading: Bool
+    let isCompact: Bool
     @Binding var isPickerPresented: Bool
     let onRemove: () -> Void
     @State private var isShowingOptions = false
@@ -278,13 +282,15 @@ private struct PersonEditorPhotoControl: View {
     var body: some View {
         VStack(spacing: 10) {
             avatarButton
-            Text("Photo")
-                .font(.body.weight(.medium))
-                .foregroundStyle(Color.textSecondary)
-                .accessibilityHidden(true)
+            if !isCompact {
+                Text("Photo")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Color.textSecondary)
+                    .accessibilityHidden(true)
+            }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
+        .padding(.vertical, isCompact ? 14 : 20)
         .background(
             Color.surface,
             in: RoundedRectangle(cornerRadius: DesignMetrics.radiusXLarge, style: .continuous)
@@ -303,7 +309,7 @@ private struct PersonEditorPhotoControl: View {
             }
         } label: {
             ZStack(alignment: .bottomTrailing) {
-                AvatarView(initials: "", color: Color.avatarPlaceholder, size: .hero, imageData: imageData)
+                AvatarView(initials: "", color: Color.avatarPlaceholder, size: isCompact ? .large : .hero, imageData: imageData)
                 Image(systemName: isLoading ? "hourglass" : "plus")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(Color.onFill)

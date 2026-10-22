@@ -8,7 +8,8 @@ START = "<!-- visual-evidence:start -->"
 END = "<!-- visual-evidence:end -->"
 METADATA_PREFIX = "<!-- visual-evidence:metadata "
 ATTACHMENT = re.compile(r"https://github\.com/user-attachments/assets/[A-Za-z0-9-]+\Z")
-NATIVE_JOB_NAMES = {"Unit tests and app smoke", "Spotlight diagnostics (non-acceptance)"}
+NATIVE_JOB_NAMES = {"Unit tests and app smoke", "Unit tests and app smoke (iPhone 18 Pro)",
+                    "Spotlight diagnostics (non-acceptance)"}
 # A manual dispatch on the PR branch runs the same full suite and can add a requested clip.
 ACCEPTANCE_EVENTS = {"pull_request", "workflow_dispatch"}
 

@@ -4,6 +4,7 @@ import SwiftUI
 /// explicit, while less frequent fields remain behind the Details disclosure.
 struct AddGiftSheet: View {
     let composition: AppComposition
+    @Environment(\.compactVerticalSpace) private var compactVerticalSpace
     @State private var state: AddGiftState
     @State private var showsDetails: Bool
     @State private var sheetHeight: CGFloat = 420
@@ -81,7 +82,7 @@ struct AddGiftSheet: View {
                     ) {
                         focus = nil
                     }
-                    .padding(.top, 16)
+                    .padding(.top, compactVerticalSpace ? 8 : 16)
                     if showsDetails {
                         GiftDetailsSection(
                             dateLabel: state.draft.date.giftInputLabel(),
@@ -101,9 +102,12 @@ struct AddGiftSheet: View {
                         isEnabled: state.input.canSave,
                         onSave: { state.save(using: composition) }
                     )
-                    .padding(.top, 24)
+                    .padding(.top, compactVerticalSpace ? 12 : 24)
                 }
-                .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 16)
+                // A short window tightens only the vertical gaps, so Save stays above the keyboard.
+                .padding(.horizontal, 16)
+                .padding(.top, compactVerticalSpace ? 2 : 6)
+                .padding(.bottom, compactVerticalSpace ? 8 : 16)
                 .onGeometryChange(for: CGFloat.self) { geometry in
                     geometry.size.height
                 } action: { contentHeight in
@@ -135,6 +139,9 @@ struct AddGiftSheet: View {
             updateSheetHeight(for: lastContentHeight)
         }
         .presentationDetents([.height(sheetHeight)], selection: $selectedDetent)
+        // No presentationSizing: with fitted sizing a regular iPhone never settled once a nested
+        // picker raised the keyboard. The measured height detent already fits the content, and
+        // regular width gets a form-sized sheet by default.
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.appBackground)
         .sheet(item: $state.picker) { kind in

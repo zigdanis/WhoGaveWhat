@@ -22,7 +22,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.launchEnvironment["KS_CLOUD_ICONS"] = "stub"
         app.launchEnvironment["KS_CLOUD_ICON_CONSENT"] = "declined"
         app.launch()
-        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.waitForTabButton("Home", timeout: timeout).exists)
     }
 
     override func tearDown() {
@@ -148,7 +148,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     /// Creates a person in People, renames them and sets a photo, then deletes them.
     private func addEditAndDeletePerson() throws {
         let personName = "CI person \(UUID().uuidString.prefix(8))"
-        app.tabBars.buttons["People"].tap()
+        app.tabButton("People").tap()
         let addPerson = app.buttons["people.add-person"]
         XCTAssertTrue(addPerson.waitForExistence(timeout: timeout))
         addPerson.tap()
@@ -182,10 +182,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(app.images["person-detail.hero"].waitForExistence(timeout: timeout))
         attach("person-edited")
 
-        // iOS 26 nests the toolbar button in a wrapper with the same identifier; tap the wrapper.
-        let edit = detail.otherElements["person-detail.edit"].firstMatch
-        XCTAssertTrue(edit.waitForExistence(timeout: timeout))
-        XCTAssertTrue(waitWithOneRetry(timeout: timeout) { edit.isHittable })
+        // On iOS 26 the first match is a wrapper with the button's identifier; on iOS 27 and in
+        // iPhone Duo's vertical bar it is the button. Either way its center is the button.
+        let edit = element(identifier: "person-detail.edit")
+        XCTAssertTrue(waitWithOneRetry(timeout: timeout) { edit.exists && edit.isHittable })
         edit.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         let delete = app.buttons["person-editor.delete"]
         XCTAssertTrue(delete.waitForExistence(timeout: timeout))
@@ -233,7 +233,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
     /// The giver's balances and a giver-friend comparison, before and after the giver becomes "You".
     private func verifyInsights() {
-        app.tabBars.buttons["Insights"].tap()
+        app.tabButton("Insights").tap()
         XCTAssertTrue(app.navigationBars["Insights"].waitForExistence(timeout: timeout))
         let subject = app.buttons["insights.balances.subject"]
         XCTAssertTrue(subject.waitForExistence(timeout: timeout))
@@ -266,9 +266,9 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         // The switch sits at the trailing edge; the label area of a row toggle is not tappable.
         meSwitch.coordinate(withNormalizedOffset: CGVector(dx: 0.87, dy: 0.5)).tap()
         waitForValue(meSwitch, expected: "1")
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.navigateBack()
 
-        app.tabBars.buttons["Insights"].tap()
+        app.tabButton("Insights").tap()
         waitForDisappearance(subject)
         XCTAssertTrue(balanceRow(friendName).waitForExistence(timeout: timeout))
         XCTAssertTrue(personA.label.contains(giverName), personA.label)
@@ -278,15 +278,14 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
 
     /// While scrolled down, the tab bar collapses to the current tab; scroll back up to expand it.
     private func selectTab(_ name: String) {
-        let tab = app.tabBars.buttons[name]
-        for _ in 0..<3 where !tab.waitForExistence(timeout: 2) {
+        for _ in 0..<3 where !app.waitForTabButton(name, timeout: 2).exists {
             app.swipeDown()
         }
-        tab.tap()
+        app.tabButton(name).tap()
     }
 
     private func typeGiftName(_ name: String) {
-        app.tabBars.buttons["Home"].tap()
+        app.tabButton("Home").tap()
         app.buttons["Add a gift"].tap()
         let field = app.textFields["add-gift.name"]
         XCTAssertTrue(field.waitForExistence(timeout: timeout))
@@ -335,21 +334,34 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     }
 
     func testAddGiftSheetSizesCompactAndExpandedContent() throws {
+        // Read before the sheet opens; a presented sheet can hide the tab bar from accessibility.
+        let hasHorizontalTabBar = app.tabBars.firstMatch.exists
         app.buttons["Add a gift"].tap()
 
         let giftTitle = app.descendants(matching: .any)["add-gift.title"]
         XCTAssertTrue(giftTitle.waitForExistence(timeout: timeout))
-        XCTAssertLessThanOrEqual(
-            abs(giftTitle.frame.midX - app.windows.firstMatch.frame.midX),
-            2,
-            "Compact gift sheet title should remain centered"
-        )
         let giftNameField = app.textFields["add-gift.name"]
         XCTAssertTrue(giftNameField.waitForExistence(timeout: timeout))
         let keyboard = app.keyboards.firstMatch
         XCTAssertTrue(keyboard.waitForExistence(timeout: timeout))
         let save = app.buttons["add-gift.save"]
+        // The full-width Save button spans the form. On iPhone Duo's outer display the form
+        // stops short of the vertical status bar, so the window's center is not the form's.
         XCTAssertTrue(save.waitForExistence(timeout: timeout))
+        XCTAssertLessThanOrEqual(
+            abs(giftTitle.frame.midX - save.frame.midX),
+            2,
+            "Compact gift sheet title should remain centered over the form"
+        )
+        // With a horizontal tab bar (regular iPhones) the sheet spans the window, so the title
+        // is centered in the window too.
+        if hasHorizontalTabBar {
+            XCTAssertLessThanOrEqual(
+                abs(giftTitle.frame.midX - app.windows.firstMatch.frame.midX),
+                2,
+                "Compact gift sheet title should be centered in the window"
+            )
+        }
         assertCompactSaveGap(save, keyboard: keyboard)
         attach("gift-content-sized-compact-keyboard")
 
@@ -383,7 +395,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attach("gift-content-sized-refocused-compact-keyboard")
 
         app.buttons["Cancel"].tap()
-        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.waitForTabButton("Home", timeout: timeout).exists)
     }
 
     func testCloudIconConsentAndSettings() {
@@ -425,8 +437,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         attach("\(checkpointPrefix)cloud-icons-suggestion")
 
         app.buttons["Cancel"].tap()
-        let settingsTab = app.tabBars.buttons["Settings"]
-        XCTAssertTrue(settingsTab.waitForExistence(timeout: timeout))
+        let settingsTab = app.waitForTabButton("Settings", timeout: timeout)
+        XCTAssertTrue(settingsTab.exists)
         settingsTab.tap()
         let toggle = app.switches["settings.cloud-icons"]
         XCTAssertTrue(toggle.waitForExistence(timeout: timeout))
@@ -436,7 +448,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         // Tap the switch itself; the row's center is its label.
         toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.87, dy: 0.5)).tap()
         waitForValue(toggle, expected: "0")
-        app.tabBars.buttons["Home"].tap()
+        app.tabButton("Home").tap()
 
         // Declining in Settings suppresses future in-sheet prompts.
         app.buttons["Add a gift"].tap()
@@ -449,8 +461,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
     }
 
     func testAddPersonCreateCancelAndDeleteConfirmation() throws {
-        let people = app.tabBars.buttons["People"]
-        XCTAssertTrue(people.waitForExistence(timeout: timeout))
+        let people = app.waitForTabButton("People", timeout: timeout)
+        XCTAssertTrue(people.exists)
         people.tap()
 
         let cancelledName = "CI cancelled person \(UUID().uuidString.prefix(8))"
@@ -546,10 +558,10 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         let prompt = app.buttons["year-summary.mark-self"]
         let badge = app.staticTexts["people.you-badge"]
 
-        app.tabBars.buttons["Insights"].tap()
+        app.tabButton("Insights").tap()
         XCTAssertTrue(prompt.waitForExistence(timeout: timeout))
 
-        app.tabBars.buttons["People"].tap()
+        app.tabButton("People").tap()
         let addPerson = app.buttons["people.add-person"]
         XCTAssertTrue(addPerson.waitForExistence(timeout: timeout))
         addPerson.tap()
@@ -573,15 +585,15 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         waitForExpectations(timeout: timeout)
         attach("person-detail-is-me")
 
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.navigateBack()
         XCTAssertTrue(badge.waitForExistence(timeout: timeout))
         attach("people-you-badge")
 
-        app.tabBars.buttons["Insights"].tap()
+        app.tabButton("Insights").tap()
         XCTAssertTrue(app.navigationBars["Insights"].waitForExistence(timeout: timeout))
         XCTAssertFalse(prompt.exists)
 
-        app.tabBars.buttons["People"].tap()
+        app.tabButton("People").tap()
         XCTAssertTrue(personRow.waitForExistence(timeout: timeout))
         personRow.tap()
         app.buttons["person-detail.edit"].tap()
@@ -594,7 +606,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["People"].waitForExistence(timeout: timeout))
         XCTAssertFalse(badge.exists)
 
-        app.tabBars.buttons["Insights"].tap()
+        app.tabButton("Insights").tap()
         XCTAssertTrue(prompt.waitForExistence(timeout: timeout))
     }
 
@@ -603,8 +615,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.launchArguments = ["-AppleLanguages", "(ru)", "-AppleLocale", "ru_RU"]
         app.launch()
 
-        let people = app.tabBars.buttons["Люди"]
-        XCTAssertTrue(people.waitForExistence(timeout: timeout))
+        let people = app.waitForTabButton("Люди", timeout: timeout)
+        XCTAssertTrue(people.exists)
         people.tap()
         app.buttons["people.add-person"].tap()
         let personName = "CI localized person \(UUID().uuidString.prefix(8))"
@@ -640,8 +652,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         app.launchArguments = ["-AppleLanguages", "(ru)", "-AppleLocale", "ru_RU"]
         app.launch()
 
-        let people = app.tabBars.buttons["Люди"]
-        XCTAssertTrue(people.waitForExistence(timeout: timeout))
+        let people = app.waitForTabButton("Люди", timeout: timeout)
+        XCTAssertTrue(people.exists)
         people.tap()
         app.buttons["people.add-person"].tap()
         let newName = app.textFields["person-editor.name"]

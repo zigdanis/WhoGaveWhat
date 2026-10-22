@@ -122,6 +122,12 @@ class FreshCISimulatorTests(unittest.TestCase):
             name='iPhone 17 Pro', udid=self.source_id, state='Shutdown', isAvailable=True,
             deviceTypeIdentifier=self.device_type)]}}
 
+    def runtimes_payload(self, name='iOS 26.4', device_name='iPhone 17 Pro'):
+        return {'runtimes': [dict(
+            name=name, identifier=self.runtime_id, isAvailable=True, buildversion='23E244',
+            supportedDeviceTypes=[dict(name='iPhone 17 Pro Max', identifier=self.device_type + '-Max'),
+                                  dict(name=device_name, identifier=self.device_type)])]}
+
     def test_fresh_fixture_requires_ci_and_explicit_runtime_before_native_actions(self):
         for environment, runtime in (({}, 'iOS 26.4'), ({'GITHUB_ACTIONS': 'false'}, 'iOS 26.4'),
                                      ({'GITHUB_ACTIONS': 'true'}, None)):
@@ -132,18 +138,54 @@ class FreshCISimulatorTests(unittest.TestCase):
                 native.assert_not_called()
 
     def test_fixture_rejects_missing_exact_phone_runtime_and_conflicting_booted_runtime_before_create(self):
-        missing_phone = self.source_payload()
-        missing_phone['devices'][self.runtime_id][0]['name'] = 'iPhone 16'
-        missing_runtime = {'devices': {'com.apple.CoreSimulator.SimRuntime.iOS-26-5':
-                                       self.source_payload()['devices'][self.runtime_id]}}
         conflict = self.source_payload()
         conflict['devices']['com.apple.CoreSimulator.SimRuntime.iOS-26-5'] = [dict(
             name='iPhone 16', udid='conflict', state='Booted', isAvailable=True)]
-        for payload in (missing_phone, missing_runtime, conflict):
-            with self.subTest(payload=payload), patch.object(smoke, 'run_command') as native:
+        duplicate_runtime = self.runtimes_payload()
+        duplicate_runtime['runtimes'].append(dict(duplicate_runtime['runtimes'][0], identifier='other'))
+        for payload, runtimes in ((self.source_payload(), self.runtimes_payload(device_name='iPhone 16')),
+                                  (self.source_payload(), self.runtimes_payload(name='iOS 26.5')),
+                                  (self.source_payload(), duplicate_runtime),
+                                  (conflict, self.runtimes_payload())):
+            with self.subTest(payload=payload, runtimes=runtimes), patch.object(
+                    smoke, 'run_command', return_value=subprocess.CompletedProcess(
+                        [], 0, json.dumps(runtimes), '')) as native:
+                metadata = {}
                 with self.assertRaises(ValueError):
-                    smoke.create_ci_simulator(Path('/unused'), payload, 'iOS 26.4', {})
-                native.assert_not_called()
+                    smoke.create_ci_simulator(Path('/unused'), payload, 'iOS 26.4', metadata)
+                self.assertEqual([] if payload is conflict else ['simulator-runtimes'],
+                                 [call.args[1] for call in native.call_args_list])
+                self.assertNotIn('simulator_fixture', metadata)
+
+    def test_fixture_creates_the_requested_model_on_a_runtime_without_default_devices(self):
+        calls = []
+        created_name = None
+        def native(_directory, label, command, timeout):
+            nonlocal created_name
+            calls.append(label)
+            if label == 'simulator-runtimes':
+                self.assertEqual(['xcrun', 'simctl', 'list', 'runtimes', 'available', '--json'], command)
+                output = json.dumps(self.runtimes_payload(name='iOS 27.1', device_name='iPhone 18 Pro'))
+            elif label == 'simulator-create':
+                self.assertEqual([self.device_type, self.runtime_id], command[-2:])
+                created_name = command[3]
+                output = self.created_id
+            else:
+                output = json.dumps({'devices': {self.runtime_id: [dict(
+                    name=created_name, udid=self.created_id, state='Shutdown', isAvailable=True,
+                    deviceTypeIdentifier=self.device_type)]}})
+            return subprocess.CompletedProcess(command, 0, output, '')
+        metadata = {}
+        with patch.object(smoke, 'run_command', side_effect=native):
+            simulator = smoke.create_ci_simulator(Path('/unused'), {'devices': {}}, 'iOS 27.1', metadata,
+                                                  'iPhone 18 Pro')
+        self.assertEqual(['simulator-runtimes', 'simulator-create', 'simulator-created-list'], calls)
+        self.assertEqual((self.created_id, 'iOS 27.1', self.runtime_id),
+                         (simulator['udid'], simulator['runtime'], simulator['runtime_identifier']))
+        fixture = metadata['simulator_fixture']
+        self.assertEqual(('iPhone 18 Pro', self.device_type, '23E244', True),
+                         (fixture['device_name'], fixture['device_type_identifier'], fixture['runtime_build'],
+                          fixture['creation_verified']))
 
     def test_failed_creation_or_verification_never_takes_ownership_of_an_existing_device(self):
         for failure in ('create-error', 'invalid-udid', 'existing-udid', 'list-error', 'wrong-runtime'):
@@ -152,7 +194,9 @@ class FreshCISimulatorTests(unittest.TestCase):
                 calls = []
                 def native(_directory, label, command, timeout):
                     calls.append(command)
-                    if label == 'simulator-create':
+                    if label == 'simulator-runtimes':
+                        output = json.dumps(self.runtimes_payload())
+                    elif label == 'simulator-create':
                         self.assertEqual(60, timeout)
                         if failure == 'create-error':
                             raise smoke.NativeCommandError('create timed out')
@@ -193,6 +237,8 @@ class FreshCISimulatorTests(unittest.TestCase):
                     output = signing_fixture(label)
                     if label == 'simulator-list':
                         output = json.dumps(self.source_payload())
+                    elif label == 'simulator-runtimes':
+                        output = json.dumps(self.runtimes_payload())
                     elif label == 'simulator-create':
                         self.assertEqual(['xcrun', 'simctl', 'create'], command[:3])
                         self.assertEqual([self.device_type, self.runtime_id], command[-2:])
@@ -211,6 +257,7 @@ class FreshCISimulatorTests(unittest.TestCase):
                         self.assertIn(f'platform=iOS Simulator,id={self.created_id}', command)
                         self.assertIn('CODE_SIGNING_ALLOWED=YES', command)
                         self.assertIn('CODE_SIGN_IDENTITY=-', command)
+                        self.assertIn('-collect-test-diagnostics never', ' '.join(command))
                         self.assertNotIn('-skip-testing:WhoGaveWhatUITests/AppDiscoveryUITests', command)
                         self.assertEqual(discovery_only, f'-only-testing:{smoke.SPOTLIGHT_DIAGNOSTIC_TEST}' in command)
                         self.assertEqual(not discovery_only, f'-skip-testing:{smoke.SPOTLIGHT_DIAGNOSTIC_TEST}' in command)
@@ -230,7 +277,7 @@ class FreshCISimulatorTests(unittest.TestCase):
                     self.assertEqual((self.created_id, 'Shutdown', 'iOS 26.4'),
                                      (simulator['udid'], simulator['state'], simulator['runtime']))
                     self.assertTrue(metadata['simulator_fixture']['creation_verified'])
-                def record(_directory, simulator_id, _video):
+                def record(_directory, simulator_id, _video, display=None):
                     self.assertEqual(self.created_id, simulator_id)
                     events.append('record-start')
                     return Mock(), Mock()
@@ -254,8 +301,9 @@ class FreshCISimulatorTests(unittest.TestCase):
                 self.assertEqual('original Calendar catalog assertion', metadata['native_test_error'])
                 self.assertEqual(self.created_id, metadata['simulator_id'])
                 fixture = metadata['simulator_fixture']
-                self.assertEqual((self.source_id, self.device_type, self.runtime_id),
-                                 (fixture['source_simulator_id'], fixture['device_type_identifier'], fixture['runtime_identifier']))
+                self.assertEqual(('iPhone 17 Pro', self.device_type, self.runtime_id),
+                                 (fixture['device_name'], fixture['device_type_identifier'], fixture['runtime_identifier']))
+                self.assertIsNone(metadata['requested_device'], 'no model was requested; the fixture uses the default')
                 self.assertEqual('failure' if cleanup_failure else 'success', fixture['cleanup_outcome'])
                 self.assertEqual(cleanup_failure, 'cleanup_error' in fixture)
                 self.assertTrue(metadata['simulator_signing']['verified'])
@@ -288,6 +336,8 @@ class FreshCISimulatorTests(unittest.TestCase):
                         output = signing_fixture(label)
                         if label == 'simulator-list':
                             output = json.dumps(self.source_payload())
+                        elif label == 'simulator-runtimes':
+                            output = json.dumps(self.runtimes_payload())
                         elif label == 'simulator-create':
                             created_name = command[3]
                             output = self.created_id
@@ -466,6 +516,22 @@ class NativeCommandTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'No available'):
             smoke.select_simulator({'devices': {}})
 
+    def test_requested_model_reuses_only_a_booted_phone_of_that_model(self):
+        payload = {'devices': {
+            'com.apple.CoreSimulator.SimRuntime.iOS-27-0': [
+                dict(name='iPhone 18 Pro', udid='booted-pro', state='Booted', isAvailable=True)],
+            'com.apple.CoreSimulator.SimRuntime.iOS-27-1': [
+                dict(name='iPhone Duo', udid='duo', state='Shutdown', isAvailable=True)],
+        }}
+        self.assertEqual('booted-pro', smoke.select_simulator(payload)['udid'])
+        self.assertEqual('booted-pro', smoke.select_simulator(payload, device_name='iPhone 18 Pro')['udid'])
+        with self.assertRaisesRegex(ValueError, r'Booted iPhone \(iPhone 18 Pro\) is not the requested iPhone Duo'):
+            smoke.select_simulator(payload, device_name='iPhone Duo')
+        payload['devices']['com.apple.CoreSimulator.SimRuntime.iOS-27-0'][0]['state'] = 'Shutdown'
+        self.assertEqual('duo', smoke.select_simulator(payload, device_name='iPhone Duo')['udid'])
+        with self.assertRaisesRegex(ValueError, 'No available booted iPhone or iPhone 17 Pro'):
+            smoke.select_simulator(payload)
+
     def test_explicit_runtime_selects_existing_exact_17_pro_instead_of_newer_runtime(self):
         payload = {'devices': {
             'com.apple.CoreSimulator.SimRuntime.iOS-26-4': [
@@ -540,6 +606,68 @@ class NativeCommandTests(unittest.TestCase):
             process.wait.assert_called_once_with(timeout=30)
             self.assertTrue(recording[1].closed)
 
+    def test_multi_display_model_records_its_mapped_display(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            process = Mock()
+            process.poll.return_value = None
+            with patch.object(smoke.subprocess, 'Popen', return_value=process) as popen, \
+                    patch.object(smoke.time, 'sleep'):
+                recording = smoke.start_recording(Path(temporary), 'sim-id', Path(temporary) / 'clip.mp4',
+                                                  display=smoke.RECORDING_DISPLAYS['iPhone Duo'])
+                recording[1].close()
+                smoke.start_recording(Path(temporary), 'sim-id', Path(temporary) / 'clip.mp4')[1].close()
+            duo, single = (call.args[0] for call in popen.call_args_list)
+            self.assertEqual(['xcrun', 'simctl', 'io', 'sim-id', 'recordVideo', '--codec=h264', '--display=primary',
+                              str(Path(temporary) / 'clip.mp4')], duo)
+            self.assertNotIn('--display', ' '.join(single))
+        self.assertEqual({'iPhone Duo': 'primary'}, smoke.RECORDING_DISPLAYS)
+
+    def test_requested_clip_on_iphone_duo_records_the_outer_display(self):
+        clip_test = 'WhoGaveWhatUITests/AdaptiveGiftJourneyUITests/testAdaptiveGiftJourney'
+        runtime_id = 'com.apple.CoreSimulator.SimRuntime.iOS-27-1'
+        duo_type = 'com.apple.CoreSimulator.SimDeviceType.iPhone-Duo'
+        created_id = '11111111-2222-3333-4444-555555555555'
+        for fresh in (False, True):
+            with self.subTest(fresh=fresh), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                displays = []
+                created_name = None
+
+                def native(_directory, label, command, _timeout, **_kwargs):
+                    nonlocal created_name
+                    output = signing_fixture(label)
+                    if label == 'simulator-list':
+                        devices = [] if fresh else [dict(name='iPhone Duo', udid='duo-id', state='Booted', isAvailable=True)]
+                        output = json.dumps({'devices': {runtime_id: devices}})
+                    elif label == 'simulator-runtimes':
+                        output = json.dumps({'runtimes': [dict(
+                            name='iOS 27.1', identifier=runtime_id, isAvailable=True, buildversion='24A94425',
+                            supportedDeviceTypes=[dict(name='iPhone Duo', identifier=duo_type)])]})
+                    elif label == 'simulator-create':
+                        created_name = command[3]
+                        output = created_id + '\n'
+                    elif label in ('simulator-created-list', 'simulator-created-state'):
+                        output = json.dumps({'devices': {runtime_id: [dict(
+                            name=created_name, udid=created_id, state='Shutdown', isAvailable=True,
+                            deviceTypeIdentifier=duo_type)]}})
+                    return subprocess.CompletedProcess(command, 0, output, '')
+
+                def record(_directory, simulator_id, _video, display=None):
+                    displays.append((simulator_id, display))
+                    return Mock(), Mock()
+
+                with patch.dict(os.environ, {'GITHUB_ACTIONS': 'true'}), \
+                        patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
+                        patch.object(smoke, 'run_command', side_effect=native), \
+                        patch.object(smoke, 'start_recording', side_effect=record), \
+                        patch.object(smoke, 'stop_recording'), \
+                        patch.object(smoke, 'verify_built_simulator_identity'):
+                    with self.assertRaises(ValueError):
+                        # No screenshots are exported here, so the evidence stays incomplete after the clip.
+                        smoke.run(directory, runtime='iOS 27.1' if fresh else None, fresh_ci_simulator=fresh,
+                                  video_test=clip_test, device_name='iPhone Duo')
+                self.assertEqual([(created_id if fresh else 'duo-id', 'primary')], displays)
+
     def test_video_timeout_terminates_and_kills_stuck_recorder(self):
         with tempfile.TemporaryDirectory() as temporary:
             process = Mock()
@@ -581,7 +709,7 @@ class EvidenceExportTests(unittest.TestCase):
                         raise smoke.NativeCommandError('second native test failed')
                 return subprocess.CompletedProcess(command, 0, signing_fixture(label), '')
 
-            def make_recording(_directory, _simulator_id, _video_path):
+            def make_recording(_directory, _simulator_id, _video_path, display=None):
                 recorder = Mock()
                 recorder.poll.return_value = None
                 recorder.returncode = -signal.SIGINT
@@ -712,14 +840,16 @@ class EvidenceExportTests(unittest.TestCase):
                         self.assertNotIn(f'-only-testing:{clip_test}', command)
                     if label == 'xcodebuild-clip':
                         self.assertEqual(['xcodebuild', 'test-without-building'], command[:2])
+                        self.assertIn('-collect-test-diagnostics never', ' '.join(command))
                         self.assertIn(f'-only-testing:{clip_test}', command)
                         self.assertIn(str(directory / 'Clip.xcresult'), command)
                         if clip_failure:
                             raise smoke.NativeCommandError('clip test failed')
                     return subprocess.CompletedProcess(command, 0, signing_fixture(label), '')
 
-                def record(_directory, _simulator_id, video):
+                def record(_directory, _simulator_id, video, display=None):
                     self.assertEqual(directory / 'clip.mp4', video)
+                    self.assertIsNone(display, 'a single-display iPhone records its only display')
                     events.append('record-start')
                     return Mock(), Mock()
 
@@ -1054,7 +1184,9 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         jobs = dict(zip(job_blocks[1::2], job_blocks[2::2]))
         self.assertEqual({'test', 'spotlight-diagnostics'}, set(jobs))
         self.assertNotIn('--discovery-only', jobs['test'])
-        self.assertIn('name: Unit tests and app smoke', jobs['test'])
+        self.assertIn('- name: Unit tests and app smoke\n', jobs['test'])
+        self.assertIn('- name: Unit tests and app smoke (iPhone 18 Pro)\n', jobs['test'])
+        self.assertIn('fail-fast: false', jobs['test'])
         self.assertIn('run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names', jobs['test'])
         # Video is opt-in: only a manual dispatch can name a clip, passed through the environment.
         self.assertIn("VIDEO_TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.video_test || '' }}", jobs['test'])
@@ -1066,8 +1198,15 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         self.assertIn('continue-on-error: true', diagnostic)
         self.assertNotIn('continue-on-error:', jobs['test'])
         self.assertIn('--verify-app-names --discovery-only', diagnostic)
-        self.assertIn("--runtime 'iOS 26.4'", jobs['test'])
-        self.assertIn("--runtime 'iOS 26.4'", diagnostic)
+        self.assertIn('device: iPhone Duo\n            runtime: iOS 27.1\n', jobs['test'])
+        self.assertIn('device: iPhone 18 Pro\n            runtime: iOS 27.0\n', jobs['test'])
+        self.assertIn('SIMULATOR_RUNTIME: iOS 27.1', diagnostic)
+        self.assertIn('SIMULATOR_DEVICE: iPhone Duo', diagnostic)
+        for job in (jobs['test'], diagnostic):
+            self.assertIn('runs-on: xcode-27\n', job)
+            self.assertIn('DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer', job)
+            self.assertIn('scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME" "$SIMULATOR_DEVICE"', job)
+            self.assertIn('--runtime "$SIMULATOR_RUNTIME" --device "$SIMULATOR_DEVICE"', job)
         self.assertIn('--fresh-ci-simulator', jobs['test'])
         self.assertIn('--fresh-ci-simulator', diagnostic)
         self.assertIn('name: spotlight-diagnostics-attempt-', diagnostic)
@@ -1089,7 +1228,9 @@ class AppDiscoveryAcceptanceTests(unittest.TestCase):
         self.assertIn("group: tests-${{ github.event.pull_request.number && "
                       "format('pr-{0}', github.event.pull_request.number) || github.run_id }}", workflow)
         self.assertIn('HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}', workflow)
-        self.assertIn('name: ui-app-smoke-attempt-${{ github.run_attempt }}', workflow)
+        self.assertIn('name: ${{ matrix.artifact }}-attempt-${{ github.run_attempt }}', workflow)
+        self.assertIn('artifact: ui-app-smoke\n', workflow)
+        self.assertIn('artifact: ui-iphone-smoke\n', workflow)
 
     def test_lightweight_checks_remain_automatic_with_the_existing_check_names_and_commands(self):
         workflow = (Path(__file__).parents[2] / '.github/workflows/checks.yml').read_text()

@@ -7,7 +7,18 @@ struct WhoGaveWhatApp: App {
     @State private var composition: AppComposition
 
     init() {
-        _composition = State(initialValue: AppComposition(store: .shared))
+        _composition = State(initialValue: AppComposition(store: Self.launchStore))
+    }
+
+    /// The persistent store, or in Debug builds the seeded in-memory one when a screenshot
+    /// launch sets `KS_SAMPLE_DATA=1`.
+    private static var launchStore: SwiftDataStore {
+        #if DEBUG
+            if ProcessInfo.processInfo.environment["KS_SAMPLE_DATA"] == "1" {
+                return .preview
+            }
+        #endif
+        return .shared
     }
 
     var body: some Scene {

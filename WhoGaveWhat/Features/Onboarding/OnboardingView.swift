@@ -57,6 +57,8 @@ struct OnboardingView: View {
             .tint(Color.brandFill)
         }
         .padding(.horizontal, 26)
+        .frame(maxWidth: ReadableWidth.onboarding)
+        .frame(maxWidth: .infinity)
         .padding(.top, 8)
         .padding(.bottom, 30)
         .animation(.easeInOut(duration: 0.25), value: step)
@@ -185,7 +187,7 @@ private struct OnbLogged: View {
                 }
                 .padding(18)
             }
-            .frame(width: 304)
+            .frame(maxWidth: 304)
 
             Text("Logged in seconds")
                 .font(Font.app(27, .bold)).tracking(-0.5)
@@ -244,7 +246,7 @@ private struct OnbAddsUp: View {
                 }
                 .padding(18)
             }
-            .frame(width: 304)
+            .frame(maxWidth: 304)
 
             Text("It adds up per person")
                 .font(Font.app(27, .bold)).tracking(-0.5)
