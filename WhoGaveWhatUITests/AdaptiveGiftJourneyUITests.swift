@@ -227,7 +227,8 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(waitForCrop(cropConfirm, picker: picker, photos: photos))
         waitForDisappearance(picker)
         attach("person-photo-crop")
-        // The controls sit in the bottom corners, clear of the Home indicator, on every iPhone.
+        // The controls sit in the bottom corners, clear of the Home indicator, on every iPhone;
+        // 34 pt matches the crop view's minimum Home-indicator gap.
         let window = app.windows.firstMatch.frame
         for control in [app.buttons["crop.cancel"], cropConfirm] {
             XCTAssertGreaterThan(control.frame.minY, window.midY, "\(control.identifier) is not at the bottom")
@@ -270,6 +271,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         swap.tap()
         XCTAssertTrue(waitWithOneRetry(timeout: timeout) { personA.label.contains(friendName) })
         XCTAssertTrue(personB.label.contains(giverName), personB.label)
+        XCTAssertTrue(app.staticTexts["Net for \(friendName)"].waitForExistence(timeout: timeout))
         attach("insights-compare-swapped")
         swap.tap()
         XCTAssertTrue(waitWithOneRetry(timeout: timeout) { personA.label.contains(giverName) })

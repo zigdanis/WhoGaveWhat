@@ -11,8 +11,7 @@ struct RootAppView: View {
         TabView(selection: tabSelection) {
             stack(.home, "Home", image: "Home") {
                 // Home is its own native List (smooth swipe-to-delete), so it
-                // carries its own background + floating button rather than the
-                // shared ScreenScroll wrapper.
+                // carries its own background and the floating "Add a gift" button.
                 HomeView(composition: composition)
                     .navigationTitle("Who gave what")
             }

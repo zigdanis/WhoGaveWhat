@@ -207,7 +207,8 @@ struct InsightsView: View {
             Image(systemName: "arrow.left.arrow.right")
                 .font(.system(size: 14, weight: .semibold)).foregroundColor(Color.textSecondary)
                 .frame(width: 32, height: 44)
-                .contentShape(Rectangle())
+                // Reach into the 8 pt gaps on both sides for a 44 pt target without narrowing the pickers.
+                .contentShape(Rectangle().inset(by: -6))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Swap people")
