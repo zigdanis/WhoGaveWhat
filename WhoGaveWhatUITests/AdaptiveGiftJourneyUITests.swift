@@ -227,6 +227,12 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(waitForCrop(cropConfirm, picker: picker, photos: photos))
         waitForDisappearance(picker)
         attach("person-photo-crop")
+        // The controls sit in the bottom corners, clear of the Home indicator, on every iPhone.
+        let window = app.windows.firstMatch.frame
+        for control in [app.buttons["crop.cancel"], cropConfirm] {
+            XCTAssertGreaterThan(control.frame.minY, window.midY, "\(control.identifier) is not at the bottom")
+            XCTAssertLessThanOrEqual(control.frame.maxY, window.maxY - 34, "\(control.identifier) is too low")
+        }
         cropConfirm.tap()
         XCTAssertTrue(app.staticTexts["person-editor.title"].waitForExistence(timeout: timeout))
     }
@@ -237,6 +243,7 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Insights"].waitForExistence(timeout: timeout))
         let subject = app.buttons["insights.balances.subject"]
         XCTAssertTrue(subject.waitForExistence(timeout: timeout))
+        XCTAssertFalse(app.buttons["Add a gift"].exists, "Insights should not offer Add a gift")
         subject.tap()
         pickInsightsPerson(giverName)
         XCTAssertTrue(balanceRow(recipientName).waitForExistence(timeout: timeout))

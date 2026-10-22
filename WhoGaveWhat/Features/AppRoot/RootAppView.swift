@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Native iOS 26 shell: a Liquid Glass tab bar floating over four navigation
 /// stacks (Home, People, Insights, Settings), with a floating "Add a gift" glass button
-/// pinned just above it on the first three. Person detail is a native push; "Add a gift"
+/// pinned just above it on Home. Person detail is a native push; "Add a gift"
 /// is a native sheet.
 struct RootAppView: View {
     let composition: AppComposition
@@ -23,7 +23,8 @@ struct RootAppView: View {
                     .navigationTitle("People")
             }
             stack(.insights, "Insights", image: "Insights") {
-                ScreenScroll(composition: composition) { InsightsView(composition: composition) }
+                // Insights is a read-only summary, so it has no floating "Add a gift" button.
+                ScreenScroll { InsightsView(composition: composition) }
                     .navigationTitle("Insights")
             }
             // Settings is a preferences screen, so it has no floating "Add a gift" button.
@@ -71,10 +72,8 @@ struct RootAppView: View {
 }
 
 /// Shared scroll container for a tab's root screen — content scrolls under the
-/// floating glass tab bar, and the "Add a gift" glass button is pinned just above it via
-/// a bottom safe-area inset (so it never overlaps the bar on any device).
+/// floating glass tab bar.
 struct ScreenScroll<Content: View>: View {
-    let composition: AppComposition
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -87,12 +86,10 @@ struct ScreenScroll<Content: View>: View {
         .scrollIndicators(.hidden)
         .scrollEdgeEffectStyle(.soft, for: .bottom)
         .background(Color.appBackground)
-        .floatingAddButton(composition: composition)
     }
 }
 
-/// The floating "Add a gift" button, pinned just above the tab bar. Shared by
-/// `ScreenScroll` and Home's native List.
+/// The floating "Add a gift" button, pinned just above the tab bar on Home.
 struct AddGiftFAB: View {
     let router: AppRouter
 
