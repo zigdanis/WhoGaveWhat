@@ -39,12 +39,14 @@ export interface SettleInput {
     /** The price bucket and its confidence; both null for requests without a currency. */
     price: number | null;
     priceConfidence: number | null;
+    /** How long the answer is served from the cache; at most, and by default, 30 days. */
+    ttlMs?: number;
   };
   now: number;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const CACHE_TTL_MS = 30 * DAY_MS;
+export const CACHE_TTL_MS = 30 * DAY_MS;
 const MAX_CACHE_ROWS = 20_000;
 /** While data remains, an alarm prunes at least this often, even without traffic. */
 const PRUNE_INTERVAL_MS = 60 * 60 * 1000;
@@ -165,12 +167,14 @@ export class IconLimiter extends DurableObject<unknown> {
       this.add("spend", reservation.day, delta);
     }
     if (input.answer) {
+      // A shorter-lived row is stored as if written earlier, so the same 30-day expiry and pruning drop it sooner.
+      const ttl = Math.min(input.answer.ttlMs ?? CACHE_TTL_MS, CACHE_TTL_MS);
       this.sql.exec(
         "INSERT OR REPLACE INTO cache (hash, icon, confidence, created, price, price_confidence) VALUES (?, ?, ?, ?, ?, ?)",
         input.answer.cacheKey,
         input.answer.key,
         input.answer.confidence,
-        input.now,
+        input.now - (CACHE_TTL_MS - ttl),
         input.answer.price,
         input.answer.priceConfidence,
       );
