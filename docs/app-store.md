@@ -11,8 +11,7 @@ review. It runs only by manual dispatch on `master`, after Danis approves the li
 
 | Field | Limit | Notes |
 |---|---|---|
-| `name.txt` | 30 | Must be unique across the App Store. |
-| `subtitle.txt` | 30 | Searchable. |
+| `subtitle.txt` | 30 | Searchable, so it carries the main search phrase ("gift tracker", «учёт подарков»). |
 | `keywords.txt` | 100 | Comma-separated, no spaces after commas; don't repeat words from the name or subtitle. |
 | `promotional_text.txt` | 170 | Can change at any time without review. |
 | `description.txt` | 4000 | Not searchable. Plain text. |
@@ -20,7 +19,14 @@ review. It runs only by manual dispatch on `master`, after Danis approves the li
 
 ## Set in App Store Connect by hand
 
-These can't be set through the API key upload.
+These can't be set through the API key upload, or are kept by hand on purpose.
+
+**Name:** "Who Gave What" (en-US) and «Кто Че Подарил» (ru). There is no `name.txt`, so the upload
+never changes the name.
+
+**Content Rights:** Yes, the app contains third-party content (Lucide icons under the ISC License,
+see `WhoGaveWhat/Resources/THIRD_PARTY_NOTICES.md`, and the cloud gift icons), and you have the
+rights to use it.
 
 **Pricing and Availability:** Free, all countries. Apple Vision Pro availability off (the account
 is not eligible to publish on visionOS; see ITMS-90984).
