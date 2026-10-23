@@ -14,8 +14,8 @@
     "JEV_PRICE_PER_MTOK_USD": "0.042",
     "JEV_RUSSIAN_HINTS": "true",
     "MIN_CONFIDENCE": "0.35",
-    // Choice confidence is spread across adjacent price buckets, so it is lower than for icons.
-    "MIN_PRICE_CONFIDENCE": "0.2",
+    // How concentrated Jev's price probability is around the estimate: 0 for an even spread, 1 for all of it nearby.
+    "MIN_PRICE_CONFIDENCE": "0.05",
     "MONTHLY_BUDGET_USD": "3",
     "DAILY_BUDGET_USD": "0.5",
     "PER_INSTALL_PER_DAY": "100",
