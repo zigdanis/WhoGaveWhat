@@ -168,5 +168,9 @@ platform :ios do
         UI.user_error!('Archived app version or build number differs from release receipt')
       end
     end
+    # The generated sample portraits are development assets and must never ship.
+    if Dir[File.join(app, '**/*.car')].any? { |catalog| File.binread(catalog).include?('sample-face-') }
+      UI.user_error!('Archive contains the sample-data portraits')
+    end
   end
 end

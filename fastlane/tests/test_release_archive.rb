@@ -32,6 +32,15 @@ Dir.mktmpdir('whogavewhat-archive-test-') do |archive|
     end
   end
   write_plist.call(app, values)
+  File.binwrite(File.join(app, 'Assets.car'), "BOMStore\0AppIcon\0")
+  fastfile.verify_release_archive(archive, record)
+  File.binwrite(File.join(app, 'Assets.car'), "BOMStore\0sample-face-anton\0")
+  begin
+    fastfile.verify_release_archive(archive, record)
+    raise 'Archive verification accepted the sample-data portraits'
+  rescue FastlaneCore::Interface::FastlaneError
+  end
+  FileUtils.rm(File.join(app, 'Assets.car'))
   write_plist.call(File.join(app, 'PlugIns/Unexpected.appex'), values)
   begin
     fastfile.verify_release_archive(archive, record)

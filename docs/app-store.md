@@ -46,3 +46,10 @@ content shared with others, no messaging, no gambling, no loot boxes. Expected r
 **App Review Information:** sign-in not required.
 
 **Export compliance:** already declared in the build (`ITSAppUsesNonExemptEncryption = NO`).
+
+## Sample portraits
+
+The faces of the sample people in the screenshots are fictional portraits generated with Codex's
+built-in image generation; the prompts are in [`sample-faces-prompts.json`](sample-faces-prompts.json).
+They live in `WhoGaveWhat/SampleContent`, a development asset path that Xcode leaves out of
+archives, and the TestFlight lane rejects an archive that still contains them.

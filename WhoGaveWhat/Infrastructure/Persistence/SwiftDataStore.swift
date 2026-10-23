@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import UIKit
 
 @MainActor
 final class SwiftDataStore {
@@ -76,7 +77,8 @@ final class SwiftDataStore {
                 id: person.0,
                 name: localized(person.1),
                 colorHex: person.2,
-                sortIndex: index
+                sortIndex: index,
+                imageData: Self.samplePhoto(for: person.0)
             )
             context.insert(storedPerson)
             peopleByID[person.0] = storedPerson
@@ -123,5 +125,11 @@ final class SwiftDataStore {
         }
 
         try context.save()
+    }
+
+    /// Generated portraits for the sample people, from `SampleContent`. Xcode leaves that folder
+    /// out of archives (`DEVELOPMENT_ASSET_PATHS`), so release builds get no photo here.
+    static func samplePhoto(for personID: String) -> Data? {
+        NSDataAsset(name: "sample-face-\(personID)")?.data
     }
 }
