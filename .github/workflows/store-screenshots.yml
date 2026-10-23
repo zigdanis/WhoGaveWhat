@@ -93,10 +93,13 @@ jobs:
               raise SystemExit(f'Expected the screenshot sets {sorted(expected)}, got {sorted(found)}')
           for display in sorted(expected):
               part = parts / f'store-screenshots-{display}'
-              # Each set's own report stays beside the merged folders for review.
+              # Each set's own report stays beside the merged folders for review; its contact sheet now sits
+              # one level below the screenshots it links to.
               (out / display).mkdir(parents=True)
-              for name in ('metadata.json', 'index.html'):
-                  shutil.copy2(part / name, out / display / name)
+              shutil.copy2(part / 'metadata.json', out / display / 'metadata.json')
+              sheet = (part / 'index.html').read_text()
+              sheet = sheet.replace('href="screenshots/', 'href="../screenshots/').replace('src="screenshots/', 'src="../screenshots/')
+              (out / display / 'index.html').write_text(sheet)
               for source in sorted((part / 'screenshots').glob('*/*.png')):
                   target = out / 'screenshots' / source.parent.name / source.name
                   if target.exists():
