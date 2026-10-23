@@ -1,0 +1,106 @@
+name: App Store metadata
+run-name: App Store metadata ${{ inputs.app_version }}${{ inputs.screenshots_run_id && format(' with screenshots from run {0}', inputs.screenshots_run_id) || '' }}
+
+# Uploads the listing text from fastlane/metadata, and the screenshots of a Store screenshots run when given,
+# to the editable App Store version. It never uploads a build and never submits for review.
+on:
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: App Store version to create or update, for example 1.0
+        type: string
+        required: true
+      screenshots_run_id:
+        description: Optional Store screenshots run ID; its store-screenshots artifact replaces the version's screenshots
+        type: string
+
+permissions:
+  contents: read
+
+# Shared with TestFlight so the two never touch App Store Connect at the same time.
+concurrency:
+  group: whogavewhat-testflight
+  cancel-in-progress: false
+
+jobs:
+  metadata:
+    if: github.repository == 'zigdanis/WhoGaveWhat' && github.ref == 'refs/heads/master' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: testflight
+    permissions:
+      contents: read
+      actions: read # Download the screenshots artifact of another run.
+    env:
+      STORE_VERSION: ${{ inputs.app_version }}
+      SCREENSHOTS_RUN_ID: ${{ inputs.screenshots_run_id }}
+      FASTLANE_SKIP_UPDATE_CHECK: 'true'
+      FASTLANE_HIDE_CHANGELOG: 'true'
+      FASTLANE_SKIP_DOCS: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - name: Validate inputs and prepare a private directory
+        run: |
+          [[ "$STORE_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]] || { echo 'app_version must look like 1.0 or 1.0.1'; exit 1; }
+          [[ -z "$SCREENSHOTS_RUN_ID" || "$SCREENSHOTS_RUN_ID" =~ ^[0-9]+$ ]] || { echo 'screenshots_run_id must be a run ID'; exit 1; }
+          DIRECTORY=$(mktemp -d "$RUNNER_TEMP/whogavewhat-store.XXXXXX")
+          chmod 700 "$DIRECTORY"
+          echo "STORE_TEMP=$DIRECTORY" >> "$GITHUB_ENV"
+      - name: Download the reviewed screenshots
+        if: inputs.screenshots_run_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Fork pull requests can run their own copy of the workflow under the same name, so the run must
+          # come from this repository's own branches.
+          RUN=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SCREENSHOTS_RUN_ID")
+          jq -e --arg repo "$GITHUB_REPOSITORY" '.name == "Store screenshots" and .conclusion == "success"
+            and .head_repository.full_name == $repo' <<< "$RUN" >/dev/null \
+            || { echo "Run $SCREENSHOTS_RUN_ID is not a successful Store screenshots run of $GITHUB_REPOSITORY"; exit 1; }
+          echo "Screenshots from $(jq -r '.head_branch + " @ " + .head_sha' <<< "$RUN")"
+          gh run download "$SCREENSHOTS_RUN_ID" --repo "$GITHUB_REPOSITORY" --name store-screenshots --dir "$STORE_TEMP/downloaded"
+          SCREENSHOTS=$(find "$STORE_TEMP/downloaded" -maxdepth 2 -type d -name screenshots | head -n 1)
+          test -n "$SCREENSHOTS" || { echo 'The artifact has no screenshots folder'; exit 1; }
+          echo "STORE_SCREENSHOTS_DIR=$SCREENSHOTS" >> "$GITHUB_ENV"
+      - name: Retrieve the App Store Connect key
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          value = os.environ.get('ASC_PRIVATE_KEY', '')
+          if not value.strip():
+              raise SystemExit('Missing environment secret: ASC_PRIVATE_KEY')
+          path = Path(os.environ['STORE_TEMP']) / 'AuthKey.p8'
+          path.write_text(value.rstrip('\n') + '\n')
+          path.chmod(0o600)
+          PY
+          echo "ASC_KEY_PATH=$STORE_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
+      - name: Upload the listing
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          BETA_REVIEW_INFO: ${{ secrets.BETA_REVIEW_INFO }}
+        run: bundle exec fastlane ios store_metadata
+      - name: Remove keys and downloaded files
+        if: always()
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          python3 - <<'PY'
+          import os, shutil
+          from pathlib import Path
+          key_id = os.environ.get('ASC_KEY_ID', '')
+          if key_id and key_id.isalnum():
+              (Path.home() / '.appstoreconnect/private_keys' / ('AuthKey_' + key_id + '.p8')).unlink(missing_ok=True)
+          path = os.environ.get('STORE_TEMP')
+          if path:
+              shutil.rmtree(path, ignore_errors=True)
+          PY

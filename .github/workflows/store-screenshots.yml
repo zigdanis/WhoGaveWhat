@@ -1,0 +1,54 @@
+name: Store screenshots
+
+on:
+  workflow_dispatch:
+  # Lets the screenshots be reviewed on a pull request before this workflow exists on master.
+  pull_request:
+    paths:
+      - 'fastlane/metadata/**'
+      - 'WhoGaveWhatUITests/StoreScreenshotsUITests.swift'
+      - 'WhoGaveWhat/Infrastructure/Persistence/SwiftDataStore.swift'
+      - 'scripts/store-screenshots.py'
+      - '.github/workflows/store-screenshots.yml'
+
+permissions:
+  contents: read
+
+# Superseded PR runs are cancelled. Manual runs get unique groups.
+concurrency:
+  group: store-screenshots-${{ github.event.pull_request.number && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  screenshots:
+    name: Plain 6.9-inch screenshots (English and Russian)
+    # GitHub's Xcode 27 image (macOS 27); see actions/runner-images#14404.
+    runs-on: xcode-27
+    timeout-minutes: 60
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
+      XCODE_VERSION: '27.1'
+      # iPhone Duo is the only model on iOS 27.1; the 6.9-inch Pro Max models run the preinstalled iOS 27.0 runtime.
+      # The script picks iPhone 18 Pro Max there, or else the newest Pro Max or Plus.
+      SIMULATOR_RUNTIME: iOS 27.0
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show tool versions
+        run: |
+          xcodebuild -version
+          xcrun simctl help
+          xcrun xcresulttool version
+      - name: Install the iOS Simulator runtime for the selected Xcode
+        run: scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME"
+      - name: Capture the store screenshots
+        run: python3 scripts/store-screenshots.py "$RUNNER_TEMP/store-screenshots" --runtime "$SIMULATOR_RUNTIME"
+      - name: Upload screenshots and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: store-screenshots
+          path: ${{ runner.temp }}/store-screenshots
+          if-no-files-found: warn
+          retention-days: 30
+          overwrite: true

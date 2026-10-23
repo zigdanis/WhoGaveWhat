@@ -23,6 +23,23 @@ struct SwiftDataPersistenceTests {
         #expect(gifts.first { $0.id == "g1" }?.direction(relativeTo: "anton") == nil)
     }
 
+    @Test func sampleAmountsFollowTheRequestedCurrency() throws {
+        func values(of store: SwiftDataStore) throws -> [String: Double] {
+            let gifts = try SwiftDataGiftGateway(context: store.context).loadGifts()
+            return Dictionary(uniqueKeysWithValues: gifts.map { ($0.id, $0.value) })
+        }
+
+        let defaults = try values(of: SwiftDataStore(inMemory: true, seed: true))
+        let rubles = try values(of: SwiftDataStore(inMemory: true, seed: true, sampleCurrency: .rub))
+        let dollars = try values(of: SwiftDataStore(inMemory: true, seed: true, sampleCurrency: .usd))
+
+        #expect(defaults == rubles)
+        #expect(rubles["g2"] == 9_500)
+        #expect(dollars["g2"] == 180)
+        #expect(dollars.count == 12)
+        #expect(dollars.values.allSatisfy { $0 > 0 && $0 <= 180 })
+    }
+
     @Test func giftGatewayRoundTripsRelationshipsAndUpdatesByStableID() throws {
         let store = try SwiftDataStore(inMemory: true)
         let peopleGateway = SwiftDataPeopleGateway(context: store.context)

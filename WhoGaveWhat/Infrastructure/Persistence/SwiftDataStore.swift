@@ -17,9 +17,11 @@ final class SwiftDataStore {
         }
     }()
 
+    /// Sample amounts follow the currency the app resolves for this device, as the screenshots show them.
     static let preview: SwiftDataStore = {
         do {
-            return try SwiftDataStore(inMemory: true, seed: true)
+            let currency = SupportedCurrency(rawValue: UserDefaultsPreferencesGateway().currencyCode) ?? .usd
+            return try SwiftDataStore(inMemory: true, seed: true, sampleCurrency: currency)
         } catch {
             fatalError("SwiftData preview store failed to load: \(error)")
         }
@@ -30,7 +32,8 @@ final class SwiftDataStore {
 
     init(
         inMemory: Bool = false,
-        seed: Bool = false
+        seed: Bool = false,
+        sampleCurrency: SupportedCurrency = .rub
     ) throws {
         let schema = Schema([StoredPerson.self, StoredGift.self])
         let configuration = ModelConfiguration(
@@ -43,11 +46,11 @@ final class SwiftDataStore {
         context.autosaveEnabled = false
 
         if seed {
-            try seedIfNeeded()
+            try seedIfNeeded(currency: sampleCurrency)
         }
     }
 
-    private func seedIfNeeded() throws {
+    private func seedIfNeeded(currency: SupportedCurrency) throws {
         guard try context.fetchCount(FetchDescriptor<StoredPerson>()) == 0 else { return }
 
         func localized(_ value: String) -> String {
@@ -79,20 +82,20 @@ final class SwiftDataStore {
             peopleByID[person.0] = storedPerson
         }
 
-        // id, emoji, name, giver, recipient, paid, occasion, date, value
-        let gifts: [(String, String, String, String, String, Bool, String, String, Double)] = [
-            ("g1", "💐", "Bouquet of roses", "maria", "marina", false, "Birthday", "2026-05-12", 2000),
-            ("g2", "⌚", "Wristwatch", "pavel", "anton", false, "Birthday", "2026-04-03", 9500),
-            ("g3", "🧸", "Teddy bear", "maria", "alisa", false, "New Year", "2026-01-02", 1500),
-            ("g4", "📚", "Book set", "igor", "anton", false, "Graduation", "2026-03-20", 1800),
-            ("g5", "🍷", "Bottle of wine", "dmitri", "anton", false, "Housewarming", "2026-02-15", 1900),
-            ("g6", "🪴", "Potted plant", "olga", "marina", false, "Just because", "2026-05-28", 1200),
-            ("g7", "🪆", "Matryoshka doll", "pavel", "sofia", false, "New Year", "2026-01-02", 1400),
-            ("g8", "🧱", "Lego set", "sofia", "lena", true, "Birthday", "2026-06-02", 1500),
-            ("g9", "💍", "Silver necklace", "marina", "maria", true, "Anniversary", "2026-02-14", 4500),
-            ("g10", "🍫", "Box of chocolates", "anton", "olga", true, "Just because", "2026-05-28", 700),
-            ("g11", "🍷", "Bottle of wine", "anton", "igor", true, "Birthday", "2026-04-18", 2100),
-            ("g12", "🎟️", "Concert tickets", "anton", "dmitri", true, "Birthday", "2026-03-09", 3000)
+        // id, emoji, name, giver, recipient, paid, occasion, date, value in rubles, value in dollars
+        let gifts: [(String, String, String, String, String, Bool, String, String, Double, Double)] = [
+            ("g1", "💐", "Bouquet of roses", "maria", "marina", false, "Birthday", "2026-05-12", 2000, 45),
+            ("g2", "⌚", "Wristwatch", "pavel", "anton", false, "Birthday", "2026-04-03", 9500, 180),
+            ("g3", "🧸", "Teddy bear", "maria", "alisa", false, "New Year", "2026-01-02", 1500, 25),
+            ("g4", "📚", "Book set", "igor", "anton", false, "Graduation", "2026-03-20", 1800, 40),
+            ("g5", "🍷", "Bottle of wine", "dmitri", "anton", false, "Housewarming", "2026-02-15", 1900, 30),
+            ("g6", "🪴", "Potted plant", "olga", "marina", false, "Just because", "2026-05-28", 1200, 25),
+            ("g7", "🪆", "Matryoshka doll", "pavel", "sofia", false, "New Year", "2026-01-02", 1400, 30),
+            ("g8", "🧱", "Lego set", "sofia", "lena", true, "Birthday", "2026-06-02", 1500, 60),
+            ("g9", "💍", "Silver necklace", "marina", "maria", true, "Anniversary", "2026-02-14", 4500, 120),
+            ("g10", "🍫", "Box of chocolates", "anton", "olga", true, "Just because", "2026-05-28", 700, 15),
+            ("g11", "🍷", "Bottle of wine", "anton", "igor", true, "Birthday", "2026-04-18", 2100, 35),
+            ("g12", "🎟️", "Concert tickets", "anton", "dmitri", true, "Birthday", "2026-03-09", 3000, 90)
         ]
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
@@ -114,7 +117,7 @@ final class SwiftDataStore {
                     paidByYou: gift.5,
                     occasion: gift.6,
                     date: date,
-                    value: gift.8,
+                    value: currency == .usd ? gift.9 : gift.8,
                     createdAt: date.addingTimeInterval(TimeInterval(index))
                 ))
         }

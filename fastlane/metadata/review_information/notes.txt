@@ -1,0 +1,7 @@
+No account or sign-in is required, and all data is stored on the device. On the welcome screens tap Get started (or Skip); if a sign-in screen follows, tap Start without an account.
+
+To try it: tap Add on Home, type a gift name such as "Bouquet of roses", pick who gave and who received it, then Save. In People, open a person and turn on "This is me" to see per-person balances in Insights.
+
+Optional cloud suggestions: the first time you type a gift name, the app asks whether it may send the gift name to TypeSafe AI (through our Cloudflare server) to choose an icon and an approximate price. It is off until allowed and can be turned off in Settings > Cloud icon suggestions. Only the gift name, currency and a random rate-limit ID are sent; people, dates, amounts and occasions never leave the device. Without it, icons are chosen on device.
+
+The app is iPhone-only and supports English and Russian.

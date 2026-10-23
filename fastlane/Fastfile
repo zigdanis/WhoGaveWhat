@@ -3,6 +3,7 @@ require 'securerandom'
 require 'cfpropertylist'
 require 'pilot'
 require_relative 'testflight_release'
+require_relative 'store_metadata'
 
 platform :ios do
   desc 'Check Apple account, tester access and app signing without uploading'
@@ -23,6 +24,29 @@ platform :ios do
   desc 'Update and verify EN/RU notes on the exact existing build without uploading'
   lane :release_notes do
     run_release(upload: true, notes_only: true)
+  end
+
+  desc 'Upload the App Store listing text, and screenshots when STORE_SCREENSHOTS_DIR is set; no build, no review submission'
+  lane :store_metadata do
+    UI.user_error!('Use the manually dispatched App Store metadata workflow') unless ENV['GITHUB_ACTIONS'] == 'true'
+    version = StoreMetadata.validate_version(ENV['STORE_VERSION'])
+    metadata_path = File.join(FastlaneCore::FastlaneFolder.path, 'metadata')
+    screenshots_path = StoreMetadata.screenshots_path(ENV['STORE_SCREENSHOTS_DIR'])
+    review = StoreMetadata.review_information(
+      TestflightRelease.new.review_info, File.join(metadata_path, 'review_information', 'notes.txt'))
+    begin
+      api_key = app_store_connect_api_key(key_id: ENV.fetch('ASC_KEY_ID'), issuer_id: ENV.fetch('ASC_ISSUER_ID'),
+                                          key_filepath: ENV.fetch('ASC_KEY_PATH'), duration: 1200)
+    ensure
+      # Clear even when token creation fails, before Fastlane prints lane context.
+      lane_context.delete(SharedValues::APP_STORE_CONNECT_API_KEY)
+    end
+    deliver(api_key: api_key, app_identifier: TestflightRelease::APP_ID, app_version: version,
+            metadata_path: metadata_path, screenshots_path: screenshots_path,
+            skip_screenshots: screenshots_path.nil?, overwrite_screenshots: true,
+            skip_binary_upload: true, submit_for_review: false, automatic_release: false, force: true,
+            run_precheck_before_submit: false, precheck_include_in_app_purchases: false,
+            ignore_language_directory_validation: false, app_review_information: review)
   end
 
   def run_release(upload:, status_only: false, notes_only: false)

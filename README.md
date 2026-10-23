@@ -14,6 +14,11 @@ xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
 ```
 
 Debug builds launched with `KS_SAMPLE_DATA=1` use the seeded in-memory sample store, for screenshots; Release builds ignore it.
+Its amounts are in the currency the device resolves (dollars or rubles).
+
+App Store screenshots are plain captures of that sample data. The `Store screenshots` workflow (or
+`python3 scripts/store-screenshots.py OUT`) writes `screenshots/en-US` and `screenshots/ru` for fastlane;
+the manual `App Store metadata` workflow uploads `fastlane/metadata` and, when given a screenshots run ID, those images.
 
 - **Minimum iOS:** 26.0 — built with **Xcode 27.1** against the iOS 27.1 SDK, native **Liquid Glass** throughout.
   The iOS 27.1 SDK lets the app fill both iPhone Duo displays. The iPhone Duo Simulator needs the iOS 27.1 runtime
