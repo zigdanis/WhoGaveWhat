@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import Testing
+import UIKit
 
 @testable import WhoGaveWhat
 
@@ -38,6 +39,14 @@ struct SwiftDataPersistenceTests {
         #expect(dollars["g2"] == 180)
         #expect(dollars.count == 12)
         #expect(dollars.values.allSatisfy { $0 > 0 && $0 <= 180 })
+    }
+
+    @Test func samplePeopleHavePortraitsExceptOlgaAndLena() throws {
+        let store = try SwiftDataStore(inMemory: true, seed: true)
+        let people = try SwiftDataPeopleGateway(context: store.context).loadPeople().people
+        let withPhotos = Set(people.filter { $0.imageData.flatMap(UIImage.init(data:)) != nil }.map(\.id))
+
+        #expect(withPhotos == ["anton", "marina", "sofia", "alisa", "maria", "pavel", "igor", "dmitri"])
     }
 
     @Test func giftGatewayRoundTripsRelationshipsAndUpdatesByStableID() throws {
