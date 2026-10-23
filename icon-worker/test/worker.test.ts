@@ -721,7 +721,21 @@ describe("price distribution", () => {
     expect(medianBucket("USD", { usd_20000: 1 })).toEqual({ bucket: 20_000, confidence: 1 });
   });
 
-  it.each([undefined, null, "usd_5", {}, { usd_5: -0.1, usd_10: 1 }, { usd_5: "0.5", usd_10: 0.5 }, { usd_5: 0.2 }, { usd_5: 0.9, usd_10: 0.9 }])(
+  it("accepts a sum that rounding moved slightly off 1", () => {
+    expect(medianBucket("USD", { usd_5: 0.52, usd_10: 0.53 })).toEqual({ bucket: 10, confidence: 1 });
+  });
+
+  it.each([
+    undefined,
+    null,
+    "usd_5",
+    {},
+    { usd_5: -0.1, usd_10: 1 },
+    { usd_5: "0.5", usd_10: 0.5 },
+    { usd_5: 0.2 },
+    { usd_5: 0.9, usd_10: 0.9 },
+    { usd_5: 0.5, rub_300: 0.5 },
+  ])(
     "has no estimate for %j",
     (probabilities) => {
       expect(medianBucket("USD", probabilities)).toBeNull();

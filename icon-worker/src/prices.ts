@@ -70,8 +70,9 @@ export function medianBucket(currency: Currency, probabilities: unknown): { buck
     weights.push(value);
   }
   const total = weights.reduce((sum, weight) => sum + weight, 0);
-  // The options should hold all of the probability; much less means the distribution is not usable.
-  if (!(total >= 0.5 && total <= 1.01)) return null;
+  // The options hold all of the probability. Jev rounds each value, so the sum can drift a little
+  // from 1; further off means the distribution doesn't match the options asked.
+  if (!(total >= 0.9 && total <= 1.1)) return null;
   let cumulative = 0;
   let index = 0;
   while (index < buckets.length - 1 && (cumulative += weights[index]) / total < 0.5) index += 1;
