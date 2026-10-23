@@ -7,10 +7,16 @@ LOCALES = ('en-US', 'ru')
 LIMITS = {'subtitle.txt': 30, 'keywords.txt': 100, 'promotional_text.txt': 170, 'description.txt': 4000}
 
 
+# Blocks that hold emoji: Miscellaneous Technical (⌚ ⏰), Miscellaneous Symbols and Dingbats (☀ ✅),
+# Miscellaneous Symbols and Arrows (⭐ ⬛), and the pictograph planes (😉 🎁, flags), plus the emoji
+# variation selector and zero-width joiner. Text punctuation such as — « » • → stays allowed.
+EMOJI_BLOCKS = ((0x2300, 0x23FF), (0x2600, 0x27BF), (0x2B00, 0x2BFF), (0x1F000, 0x1FAFF))
+
+
 def emoji(text):
-    """Characters App Store Connect rejects in listing text: pictographs, symbols-and-dingbats, flags, variation selector."""
+    """Characters App Store Connect rejects in listing text."""
     return sorted({character for character in text
-                   if 0x1F000 <= ord(character) <= 0x1FAFF or 0x2600 <= ord(character) <= 0x27BF
+                   if any(start <= ord(character) <= end for start, end in EMOJI_BLOCKS)
                    or ord(character) in (0xFE0F, 0x200D)})
 
 
@@ -33,8 +39,10 @@ class StoreListingTextTests(unittest.TestCase):
                 self.assertEqual([], emoji(path.read_text()))
 
     def test_emoji_detection(self):
-        self.assertEqual(['😉'], emoji('у вас 😉'))
-        self.assertEqual([], emoji('«Кто Че Подарил» — учёт • подарков ;)'))
+        for character in ('😉', '🎁', '⏰', '⌚', '⭐', '✅', '☀'):
+            with self.subTest(character=character):
+                self.assertEqual([character], emoji(f'у вас {character}'))
+        self.assertEqual([], emoji('«Кто Че Подарил» — учёт • подарков → ;)'))
 
 
 if __name__ == '__main__':
