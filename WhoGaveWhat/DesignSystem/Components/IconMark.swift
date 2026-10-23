@@ -17,6 +17,7 @@ private struct TriangleShape: Shape {
 
 struct IconMark: View {
     var size: CGFloat
+    @Environment(\.colorScheme) private var colorScheme
     private var corner: CGFloat { size * 0.225 }
     private let give = [CGPoint(x: 0.45275, y: 0.238), CGPoint(x: 0.6715, y: 0.531), CGPoint(x: 0.234, y: 0.531)]
     private let take = [CGPoint(x: 0.328, y: 0.57), CGPoint(x: 0.7655, y: 0.57), CGPoint(x: 0.54675, y: 0.863)]
@@ -29,7 +30,8 @@ struct IconMark: View {
         }
         .overlay(
             RoundedRectangle(cornerRadius: corner, style: .continuous)
-                .strokeBorder(Color.onFill.opacity(0.14), lineWidth: 1)
+                // The dark tile nearly matches dark surfaces, so its rim carries the edge there.
+                .strokeBorder(Color.onFill.opacity(colorScheme == .dark ? 0.28 : 0.14), lineWidth: 1)
         )
         .frame(width: size, height: size)
     }

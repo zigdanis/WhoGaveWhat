@@ -1561,6 +1561,23 @@
         }
       }
     },
+    "Icon picked for you" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Icon picked for you"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Иконка подбирается сама"
+          }
+        }
+      }
+    },
     "Igor" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1642,6 +1659,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Лена"
+          }
+        }
+      }
+    },
+    "Log your first gift" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log your first gift"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запишите первый подарок"
           }
         }
       }
@@ -1778,23 +1812,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пока нет подарков"
-          }
-        }
-      }
-    },
-    "Nothing here yet — add your first to start tracking." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nothing here yet — add your first to start tracking."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Здесь пока пусто — добавьте первый, чтобы начать."
           }
         }
       }
@@ -2666,6 +2683,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Кто че подарил"
+          }
+        }
+      }
+    },
+    "Who gave whom how much" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Who gave whom how much"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кто кому сколько"
           }
         }
       }
