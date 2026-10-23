@@ -3,8 +3,9 @@
 
 The Debug app runs with its sample data on a fresh Simulator, once per language, through
 WhoGaveWhatUITests/StoreScreenshotsUITests. `--display iphone-6.9` (the default) uses a 6.9-inch iPhone and
-writes `<out>/screenshots/<locale>/NN_slug.png`; `--display iphone-duo` uses iPhone Duo, which boots folded, and
-writes the outer display as `duo_NN_slug.png`. Each run also writes metadata.json and an index.html contact sheet.
+writes `<out>/screenshots/<locale>/NN_slug.png`; `--display iphone-6.3` uses iPhone 18 Pro and writes
+`medium_NN_slug.png`; `--display iphone-duo` uses iPhone Duo, which boots folded, and writes the outer display as
+`duo_NN_slug.png`. Each run also writes metadata.json and an index.html contact sheet.
 """
 import argparse
 import collections
@@ -32,9 +33,11 @@ LOCALES = ("en-US", "ru")
 # Simulator model when the set needs one.
 Display = collections.namedtuple("Display", "key title sizes prefix device")
 IPHONE_69 = Display("iphone-6.9", "6.9-inch", frozenset({(1320, 2868), (1290, 2796), (1260, 2736)}), "", None)
+# Apple requires at least one screenshot for iPhone with Dynamic Island (medium display), the 6.3-inch set.
+IPHONE_63 = Display("iphone-6.3", "6.3-inch", frozenset({(1206, 2622), (1179, 2556)}), "medium_", "iPhone 18 Pro")
 # The iPhone Duo Simulator boots folded, so its screenshots show the outer display.
 IPHONE_DUO = Display("iphone-duo", "iPhone Duo outer display", frozenset({(1398, 2034)}), "duo_", "iPhone Duo")
-DISPLAYS = {display.key: display for display in (IPHONE_69, IPHONE_DUO)}
+DISPLAYS = {display.key: display for display in (IPHONE_69, IPHONE_63, IPHONE_DUO)}
 ALLOWED_SIZES = IPHONE_69.sizes
 MIN_SHOTS = 5
 MAX_SHOTS = 10  # App Store Connect accepts at most ten screenshots per set.

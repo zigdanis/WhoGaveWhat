@@ -36,6 +36,11 @@ jobs:
             display: iphone-6.9
             runtime: iOS 27.0
             device: ''
+          # Apple requires at least one screenshot for iPhone with Dynamic Island (medium display).
+          - name: Plain 6.3-inch screenshots (English and Russian)
+            display: iphone-6.3
+            runtime: iOS 27.0
+            device: ''
           # The iOS 27.1 runtime supports only iPhone Duo, which boots folded: the set shows the outer display.
           - name: Plain iPhone Duo screenshots (English and Russian)
             display: iphone-duo
@@ -87,7 +92,7 @@ jobs:
           from pathlib import Path
           parts = Path(os.environ['RUNNER_TEMP']) / 'parts'
           out = Path(os.environ['RUNNER_TEMP']) / 'store-screenshots'
-          expected = {'iphone-6.9', 'iphone-duo'}
+          expected = {'iphone-6.9', 'iphone-6.3', 'iphone-duo'}
           found = {path.name.removeprefix('store-screenshots-') for path in parts.iterdir()}
           if found != expected:
               raise SystemExit(f'Expected the screenshot sets {sorted(expected)}, got {sorted(found)}')

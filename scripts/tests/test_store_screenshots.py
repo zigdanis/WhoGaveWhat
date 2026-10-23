@@ -81,6 +81,21 @@ class DeviceSelectionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'No available iPhone Duo Simulator on iOS 27.0'):
             shots.choose_device(payload, runtime='iOS 27.0', display=shots.IPHONE_DUO)
 
+    def test_the_6_3_inch_set_uses_iphone_18_pro(self):
+        payload = {'runtimes': [runtime('iOS 27.1', ['iPhone Duo']),
+                                runtime('iOS 27.0', ['iPhone 18 Pro', 'iPhone 18 Pro Max'])]}
+
+        choice = shots.choose_device(payload, display=shots.IPHONE_63)
+
+        self.assertEqual(('iPhone 18 Pro', 'iOS 27.0'), (choice['device'], choice['runtime']))
+        shots.validate_size(1206, 2622, 'shot', shots.IPHONE_63)
+        with self.assertRaisesRegex(ValueError, '6.3-inch sizes are 1206x2622, 1179x2556'):
+            shots.validate_size(1320, 2868, 'shot', shots.IPHONE_63)
+
+    def test_every_set_has_its_own_file_prefix(self):
+        prefixes = [display.prefix for display in shots.DISPLAYS.values()]
+        self.assertEqual(len(prefixes), len(set(prefixes)))
+
     def test_an_explicit_model_must_exist(self):
         payload = {'runtimes': [runtime('iOS 27.0', ['iPhone 18 Pro Max', 'iPhone 18'])]}
 
