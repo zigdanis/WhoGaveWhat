@@ -1,3 +1,6 @@
+require 'fileutils'
+require 'tmpdir'
+
 # Pure helpers for the `store_metadata` lane: validation and the private App Review contact mapping.
 module StoreMetadata
   VERSION_PATTERN = /\A\d+\.\d+(\.\d+)?\z/
@@ -25,18 +28,26 @@ module StoreMetadata
 
   # Contact details come from the private secret, never from the repository; only the notes may live in
   # fastlane/metadata/review_information/notes.txt and win over a notes entry in the secret. Without any
-  # contact field the contact stays as entered in App Store Connect, since deliver sends only the given fields.
+  # contact field this returns nil: App Store Connect rejects review detail updates that lack the contact,
+  # so the section stays as entered there.
   def self.review_information(info, notes_path)
     missing = REVIEW_CONTACT_FIELDS.keys.select { |key| info[key].to_s.strip.empty? }
-    if missing.length == REVIEW_CONTACT_FIELDS.length
-      result = {}
-    elsif missing.empty?
-      result = REVIEW_CONTACT_FIELDS.to_h { |key, option| [option, info.fetch(key).strip] }
-    else
+    return nil if missing.length == REVIEW_CONTACT_FIELDS.length
+    unless missing.empty?
       raise "Missing App Review contact fields: #{missing.join(', ')}; supply BETA_REVIEW_INFO as an encrypted JSON secret"
     end
+    result = REVIEW_CONTACT_FIELDS.to_h { |key, option| [option, info.fetch(key).strip] }
     notes = File.file?(notes_path) ? File.read(notes_path).strip : info['notes'].to_s.strip
     result[:notes] = notes unless notes.empty?
     result
+  end
+
+  # deliver also reads review_information/*.txt from the metadata folder on its own, so leaving the section
+  # alone needs a copy of the folder without it. Returns the copy's path inside `parent`.
+  def self.metadata_without_review_information(metadata_path, parent)
+    copy = File.join(Dir.mktmpdir('store-metadata-', parent), 'metadata')
+    FileUtils.cp_r(metadata_path, copy)
+    FileUtils.rm_rf(File.join(copy, 'review_information'))
+    copy
   end
 end

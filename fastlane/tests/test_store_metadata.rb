@@ -1,5 +1,6 @@
 require 'minitest/autorun'
 require 'tmpdir'
+require 'fileutils'
 require_relative '../store_metadata'
 
 class StoreMetadataTest < Minitest::Test
@@ -56,12 +57,30 @@ class StoreMetadataTest < Minitest::Test
     refute_includes error.message, 'ada@example.com'
   end
 
-  def test_without_a_contact_only_the_notes_are_sent
+  def test_without_a_contact_the_review_section_is_left_alone
     Dir.mktmpdir do |directory|
       path = File.join(directory, 'notes.txt')
-      assert_equal({}, StoreMetadata.review_information({}, path))
       File.write(path, "From file\n")
-      assert_equal({ notes: 'From file' }, StoreMetadata.review_information({ 'contact_email' => ' ' }, path))
+      assert_nil StoreMetadata.review_information({}, path)
+      assert_nil StoreMetadata.review_information({ 'contact_email' => ' ', 'notes' => 'From secret' }, path)
+    end
+  end
+
+  def test_metadata_copy_drops_only_the_review_section
+    Dir.mktmpdir do |directory|
+      source = File.join(directory, 'metadata')
+      FileUtils.mkdir_p([File.join(source, 'en-US'), File.join(source, 'review_information')])
+      File.write(File.join(source, 'en-US', 'subtitle.txt'), 'Gift tracker')
+      File.write(File.join(source, 'copyright.txt'), '2026')
+      File.write(File.join(source, 'review_information', 'notes.txt'), 'Notes')
+
+      copy = StoreMetadata.metadata_without_review_information(source, directory)
+
+      refute_equal source, copy
+      assert_equal 'Gift tracker', File.read(File.join(copy, 'en-US', 'subtitle.txt'))
+      assert File.file?(File.join(copy, 'copyright.txt'))
+      refute File.exist?(File.join(copy, 'review_information'))
+      assert File.file?(File.join(source, 'review_information', 'notes.txt'))
     end
   end
 end
