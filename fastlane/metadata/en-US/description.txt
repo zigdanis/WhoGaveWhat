@@ -1,25 +1,20 @@
-Who Gave What is a warm little ledger for every gift you give and get.
+Who Gave What is a simple, fast way to keep track of the gifts you and your family give and receive. There's no way to hold it all in your head, and sooner or later you'll want to remember what you gave someone a year or two ago.
 
-Remember that Aunt Maria sent a teddy bear for New Year, that you brought wine to Igor's birthday, and who actually paid for the family present. No more guessing when it's your turn to return the favor.
+Now you're the one with the best memory in the family 😉
 
 LOGGED IN SECONDS
-• Type what the gift was and the app picks a matching icon.
-• Choose who gave it and who received it. The people and occasions you used most recently come first.
-• Add the occasion and date. Add an approximate value only when it's useful.
-• Mark gifts you paid for on someone else's behalf, so you can see who is really paying.
+• Everything is stored right on your iPhone, so saving is instant.
+• Just enter the gift, who gave it and who received it. The app suggests an icon and an approximate price for you.
 
-IT ADDS UP PER PERSON
-• Every gift is linked to a person, with their photo and full gift history.
-• See all your gifts in one timeline, month by month.
-• Mark yourself in People to see your balance with each person: what you've received and what you've given back.
-• Compare any two people side by side for any year.
+A HISTORY WITH EVERYONE
+• Every person has their own gift history, so you can see at a glance who gave what and when.
+• It's all clear right away: how much you've given and how much you've received in return.
+• Compare any two people for any year.
 
-PRIVATE BY DESIGN
+YOUR DATA STAYS YOURS
 • No account needed. Your people, gifts and amounts stay on your iPhone.
 • No ads and no tracking.
-• Optional cloud suggestions stay off until you allow them. When they're on, only the gift name, your currency and a random ID used to limit requests are sent, to choose an icon and suggest an approximate price. People, dates, amounts and occasions are never sent.
+• Cloud suggestions work only with your permission. People, dates and amounts are never sent.
 
 MADE FOR iPHONE
-• A clean Liquid Glass design in light and dark mode.
-• Uses both displays on iPhone Duo.
-• In English and Russian, with values in US dollars or rubles.
+• Liquid Glass design and support for both displays on iPhone Duo.
