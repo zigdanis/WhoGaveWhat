@@ -265,10 +265,11 @@ class RunTests(unittest.TestCase):
             self.assertEqual([('1', 'en-US'), ('1', 'ru')], environments)
             self.assertNotIn('TEST_RUNNER_KS_STORE_LOCALE', os.environ)
             labels = [label for label, _ in commands]
-            self.assertLess(labels.index('status-bar'), labels.index('xcodebuild-build'))
-            self.assertLess(labels.index('xcodebuild-build'), labels.index('xcodebuild-test-en-US'))
+            self.assertLess(labels.index('xcodebuild-build'), labels.index('status-bar-1'))
+            self.assertLess(labels.index('status-bar-1'), labels.index('xcodebuild-test-en-US'))
             self.assertEqual('cleanup', labels[-1])
-            status = dict(commands)['status-bar']
+            self.assertEqual('overridden', metadata['status_bar'])
+            status = dict(commands)['status-bar-1']
             self.assertEqual(['override', '--time', '9:41'], status[4:7])
             tests = dict(commands)['xcodebuild-test-ru']
             self.assertIn('test-without-building', tests)
