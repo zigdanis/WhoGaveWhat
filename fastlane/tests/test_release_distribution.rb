@@ -45,8 +45,9 @@ class FakePilotBuild
   def add_beta_groups(beta_groups:) = @assigned_groups.concat(beta_groups)
 end
 
-selected = Struct.new(:id, :name).new('group', 'WhoGaveWhat testers')
-unrelated = Struct.new(:id, :name).new('other', 'Other testers')
+# Real Spaceship groups, so Pilot's own matching (by name or ID) decides which group is selected.
+selected = Spaceship::ConnectAPI::BetaGroup.new('group', 'name' => 'WhoGaveWhat testers')
+unrelated = Spaceship::ConnectAPI::BetaGroup.new('other', 'name' => 'Other testers')
 [[false, false], [true, false], [true, true]].each do |internal, all_builds|
   release.instance_variable_set(:@group, {
     'id' => selected.id,

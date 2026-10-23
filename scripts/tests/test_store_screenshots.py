@@ -69,6 +69,18 @@ class DeviceSelectionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Duo'):
             shots.choose_device(payload, device='iPhone Duo')
 
+    def test_the_duo_set_uses_iphone_duo_on_its_runtime(self):
+        payload = {'runtimes': [runtime('iOS 27.1', ['iPhone Duo']), runtime('iOS 27.0', ['iPhone 18 Pro Max'])]}
+
+        choice = shots.choose_device(payload, display=shots.IPHONE_DUO)
+
+        self.assertEqual(('iPhone Duo', 'iOS 27.1'), (choice['device'], choice['runtime']))
+        self.assertEqual('iPhone Duo', shots.choose_device(payload, 'iPhone Duo', display=shots.IPHONE_DUO)['device'])
+        with self.assertRaisesRegex(ValueError, 'need iPhone Duo, not iPhone 18 Pro Max'):
+            shots.choose_device(payload, 'iPhone 18 Pro Max', display=shots.IPHONE_DUO)
+        with self.assertRaisesRegex(ValueError, 'No available iPhone Duo Simulator on iOS 27.0'):
+            shots.choose_device(payload, runtime='iOS 27.0', display=shots.IPHONE_DUO)
+
     def test_an_explicit_model_must_exist(self):
         payload = {'runtimes': [runtime('iOS 27.0', ['iPhone 18 Pro Max', 'iPhone 18'])]}
 
@@ -98,6 +110,14 @@ class PngSizeTests(unittest.TestCase):
         for size in [(1206, 2622), (1320, 2867), (2868, 1320), (2868, 2868)]:
             with self.subTest(size=size), self.assertRaises(ValueError):
                 shots.validate_size(*size, 'shot')
+
+    def test_only_the_duo_outer_display_size_passes_for_duo(self):
+        shots.validate_size(1398, 2034, 'shot', shots.IPHONE_DUO)
+        for size in [(1320, 2868), (2007, 2853)]:
+            with self.subTest(size=size), self.assertRaisesRegex(ValueError, 'iPhone Duo outer display sizes are 1398x2034'):
+                shots.validate_size(*size, 'shot', shots.IPHONE_DUO)
+        with self.assertRaisesRegex(ValueError, 'portrait'):
+            shots.validate_size(2034, 1398, 'shot', shots.IPHONE_DUO)
 
     def test_a_landscape_error_names_the_problem(self):
         with self.assertRaisesRegex(ValueError, 'portrait'):
@@ -144,6 +164,10 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual('01_home.png', names[0])
         self.assertEqual('07_people.png', names[-1])
         self.assertEqual(sorted(names), names)
+
+    def test_duo_names_share_the_language_folder_without_clashing(self):
+        self.assertEqual('duo_01_home.png', shots.output_name(1, 'home', shots.IPHONE_DUO.prefix))
+        self.assertNotEqual(shots.IPHONE_69.prefix, shots.IPHONE_DUO.prefix)
 
 
 class SetValidationTests(unittest.TestCase):
@@ -194,7 +218,7 @@ class IndexTests(unittest.TestCase):
 
 
 class RunTests(unittest.TestCase):
-    def fake_environment(self, directory, width=1320, height=2868, ru_slugs=None):
+    def fake_environment(self, directory, width=1320, height=2868, ru_slugs=None, display=None):
         commands = []
         environments = []
 
@@ -276,6 +300,21 @@ class RunTests(unittest.TestCase):
             self.assertIn('-only-testing:WhoGaveWhatUITests/StoreScreenshotsUITests', tests)
             self.assertIn('-collect-test-diagnostics', tests)
             self.assertFalse((directory / 'ru.xcresult').exists())
+
+    def test_a_duo_run_names_its_files_for_the_duo_set(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            commands, _ = self.run_with(directory, width=1398, height=2034)
+
+            shots.run(directory, display=shots.IPHONE_DUO)
+
+            self.assertEqual(sorted(f'duo_{number:02d}_{slug}.png' for number, slug in enumerate(SLUGS, start=1)),
+                             sorted(path.name for path in (directory / 'screenshots/ru').iterdir()))
+            metadata = json.loads((directory / 'metadata.json').read_text())
+            self.assertEqual(('iphone-duo', 'iPhone Duo', 'iOS 27.1', ['1398x2034']),
+                             (metadata['display'], metadata['device'], metadata['runtime'], metadata['sizes']))
+            self.assertIn(['iOS 27.1', 'iPhone Duo'], [arguments for label, arguments in commands if label == 'create'])
+            self.assertIn('src="screenshots/en-US/duo_01_home.png"', (directory / 'index.html').read_text())
 
     def test_wrong_screenshot_size_fails_clearly_and_still_cleans_up(self):
         with tempfile.TemporaryDirectory() as temporary:
