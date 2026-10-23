@@ -13,9 +13,11 @@ the app holds no secret.
 
 - `200 {"emoji": "🎸", "confidence": 0.82}`. `emoji` is `null` when no specific icon fits
   or confidence is below `MIN_CONFIDENCE`; the app then keeps its own icon.
-- With `currency`, the answer also has `"price": 10000, "priceConfidence": 0.41`. `price` is a whole
+- With `currency`, the answer also has `"price": 10000, "priceConfidence": 0.44`. `price` is a whole
   number in that currency, or `null` when Jev is not sure enough (`priceConfidence` below
-  `MIN_PRICE_CONFIDENCE`) or gave no usable price. Requests without `currency` get exactly the
+  `MIN_PRICE_CONFIDENCE`) or gave no usable price. `priceConfidence` says how concentrated Jev's
+  probability is around the estimate, from 0 for an even spread to 1, or is Jev's own confidence when
+  it sent no distribution (see below). Requests without `currency` get exactly the
   icon-only answer above, so older app versions are unaffected.
 - `400 invalid_request`: missing or malformed install ID, name outside 2–80 characters,
   a `currency` other than `RUB` or `USD`, body over 4 KB, or not JSON.
@@ -31,7 +33,15 @@ the app holds no secret.
   with an English description and optional Russian hints (`JEV_RUSSIAN_HINTS`).
 - `src/prices.ts` holds the price question: one Choice option per round price bucket in the
   currency (`rub_5000` → "About 5,000 Russian rubles"; the app keeps the same lists in
-  `GiftPriceBuckets.swift`), with `PRICE_VERSION` for the cache. When the icon is money-like
+  `GiftPriceBuckets.swift`), with `PRICE_VERSION` for the cache. The buckets are ordered, so the
+  estimate is the weighted median of Jev's `probabilities`, not its single top choice: for a broad
+  item such as a bicycle, probability spreads over many neighbouring amounts, the top option holds
+  little and Jev's own `confidence` falls to about 0, while most of the probability still lies around
+  one amount. The confidence compares the probability on the median bucket and the bucket on each
+  side of it with what an even spread would put there (3/15): 0 for an even spread or less, 1 when
+  all of it is there. Without a usable distribution, the top choice and Jev's confidence, on the same
+  0-to-1 scale, are used instead. The `jev` log line says which (`price`: `distribution`, `choice`
+  or `none`). `MIN_PRICE_CONFIDENCE` is 0.05, so a price is shown unless Jev has next to no idea. When the icon is money-like
   (`money`, `banknotes`, `gift_card`, `coins`) and the name holds one clear amount ("Деньги 5000р",
   "5к", "$100"), that amount is returned as the price instead of a bucket, unsnapped and
   whatever the confidence; the currency is not converted.
@@ -48,10 +58,11 @@ the app holds no secret.
   or API key the Worker fails closed.
   It caches answers for 30 days by a SHA-256 of the normalized name, catalog version,
   model and hint setting (and, with a currency, the price version and currency; the key for
-  requests without one is unchanged). The cache table gained nullable `price` and
+  requests without one is unchanged). A reply that asked for a price but has no usable price answer
+  is cached for only an hour, so one bad reply doesn't hide the price for a month. The cache table gained nullable `price` and
   `price_confidence` columns, added on startup to a table that predates them. Install IDs and IP addresses are counted under HMACs with a
   random key per UTC day; each key and its counters are deleted within about two days. Raw names, install IDs
-  and IP addresses are not stored, and logs contain only model, token count and latency.
+  and IP addresses are not stored, and logs contain only model, token count, latency and where the price came from.
   Requests prune expired rows, and an hourly alarm does the same while the Worker is idle.
 
 The price question adds about 15 short options, roughly 250 input tokens on top of the icon
