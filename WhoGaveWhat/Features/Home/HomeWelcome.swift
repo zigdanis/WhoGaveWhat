@@ -125,33 +125,30 @@ private struct TileGlow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme
+    @State private var pulseStart = Date.now
 
     var body: some View {
         // The glow color is brighter against dark backgrounds, so dark mode needs less opacity.
         let opacity: ClosedRange<Double> = colorScheme == .dark ? 0.12...0.55 : 0.15...0.65
         let isPulsing =
             !reduceMotion && scenePhase == .active && router.tab == .home && router.giftSheet == nil
-        let glow = RoundedRectangle(cornerRadius: DesignMetrics.radiusLarge, style: .continuous)
-            .fill(Color.brandGlow)
-
-        // Separate branches, so leaving the pulse removes its animator and nothing keeps animating.
-        Group {
-            if isPulsing {
-                // Starts from the resting level, so resuming continues without a jump.
-                glow.phaseAnimator([0.5, 1.0, 0.0]) { glow, level in
-                    glow.glowLevel(level, opacity: opacity)
-                } animation: { level in
-                    switch level {
-                    case 1.0: .easeOut(duration: 0.7)
-                    case 0.0: .easeInOut(duration: 1.4)
-                    default: .easeIn(duration: 0.7)
-                    }
-                }
-            } else {
-                glow.glowLevel(0.5, opacity: opacity)
-            }
+        // A paused timeline asks for no frames, so nothing animates while the pulse is off.
+        TimelineView(.animation(paused: !isPulsing)) { context in
+            RoundedRectangle(cornerRadius: DesignMetrics.radiusLarge, style: .continuous)
+                .fill(Color.brandGlow)
+                .glowLevel(isPulsing ? Self.level(at: context.date, since: pulseStart) : 0.5, opacity: opacity)
+        }
+        // Eases into the resting glow instead of snapping when a sheet slides up; Reduce Motion stays instant.
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.35), value: isPulsing)
+        .onChange(of: isPulsing, initial: true) { _, pulsing in
+            if pulsing { pulseStart = .now }
         }
         .accessibilityHidden(true)
+    }
+
+    /// Breathes on a 2.8-second cycle, rising from the resting level so a resumed pulse never jumps.
+    private static func level(at date: Date, since start: Date) -> Double {
+        0.5 + 0.5 * sin(2 * .pi * date.timeIntervalSince(start) / 2.8)
     }
 }
 
