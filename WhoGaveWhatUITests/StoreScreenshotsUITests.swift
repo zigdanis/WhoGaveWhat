@@ -24,20 +24,22 @@ final class StoreScreenshotsUITests: XCTestCase {
         let giverName: String
         let recipientName: String
         let watchName: String
+        /// Compared with the viewpoint: they exchanged a gift each way, so both flows have values.
+        let compareName: String
 
         static let english = Listing(
             id: "en-US", appleLanguage: "en", appleLocale: "en_US", currency: "USD",
             homeTab: "Home", peopleTab: "People", insightsTab: "Insights",
             addGift: "Add a gift", cancel: "Cancel", giftTitle: "Gift", insightsTitle: "Insights",
             giftName: "Bouquet of roses", viewpointName: "Anton", giverName: "Anton", recipientName: "Marina",
-            watchName: "Wristwatch")
+            watchName: "Wristwatch", compareName: "Igor")
 
         static let russian = Listing(
             id: "ru", appleLanguage: "ru", appleLocale: "ru_RU", currency: "RUB",
             homeTab: "Главная", peopleTab: "Люди", insightsTab: "Аналитика",
             addGift: "Добавить подарок", cancel: "Отмена", giftTitle: "Подарок", insightsTitle: "Аналитика",
             giftName: "Букет роз", viewpointName: "Антон", giverName: "Антон", recipientName: "Марина",
-            watchName: "Наручные часы")
+            watchName: "Наручные часы", compareName: "Игорь")
     }
 
     private var app: XCUIApplication!
@@ -167,21 +169,39 @@ final class StoreScreenshotsUITests: XCTestCase {
         captureStoreShot("insights")
     }
 
-    /// The comparison card at the end of the Insights scroll view.
+    /// The comparison card at the end of the Insights scroll view, with a person who gave and received.
     private func captureCompare() {
         let compare = element(identifier: "insights.compare")
         XCTAssertTrue(compare.waitForExistence(timeout: timeout))
+        scrollToEnd(of: compare)
+        let personB = app.buttons["insights.compare.b"]
+        XCTAssertTrue(personB.isHittable)
+        personB.tap()
+        let row = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH 'insights.picker.person.' AND label CONTAINS %@", listing.compareName)
+        ).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: timeout))
+        row.tap()
+        waitForDisappearance(row)
+        let chosen = NSPredicate(format: "label CONTAINS %@", listing.compareName)
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: chosen, object: personB)], timeout: timeout),
+            .completed)
+        scrollToEnd(of: compare)
+        XCTAssertTrue(app.buttons["insights.compare.a"].isHittable)
+        XCTAssertTrue(personB.isHittable)
+        captureStoreShot("compare")
+    }
+
+    private func scrollToEnd(of element: XCUIElement) {
         var previousMaxY: CGFloat?
         for _ in 0..<6 {
-            let maxY = compare.frame.maxY
+            let maxY = element.frame.maxY
             if maxY == previousMaxY { break }
             previousMaxY = maxY
             app.swipeUp()
             settle(0.8)
         }
-        XCTAssertTrue(app.buttons["insights.compare.a"].isHittable)
-        XCTAssertTrue(app.buttons["insights.compare.b"].isHittable)
-        captureStoreShot("compare")
     }
 
     private func capturePeople() {

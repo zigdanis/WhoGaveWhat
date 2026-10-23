@@ -1519,19 +1519,76 @@
         }
       }
     },
-    "gifts · %@" : {
+    "person.stat-caption %lld %@" : {
+      "comment" : "Caption under a person's received or given count, which is shown above it; only the plural word and the total value.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gifts · %@"
+            "value" : "%1$#@gifts@ · %2$@"
+          },
+          "substitutions" : {
+            "gifts" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "gift"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "gifts"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "подарков · %@"
+            "value" : "%1$#@gifts@ · %2$@"
+          },
+          "substitutions" : {
+            "gifts" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "подарка"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "подарков"
+                    }
+                  },
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "подарок"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "подарка"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

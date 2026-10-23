@@ -192,7 +192,8 @@ struct PersonDetailView: View {
                 }
                 .foregroundColor(color)
                 Text("\(count)").font(Font.app(25, .bold, rounded: true)).tracking(-0.4).foregroundColor(Color.textPrimary).padding(.top, 9)
-                Text("gifts · \(formattedCurrency(value, code: composition.currencyCode))")
+                // The count is shown above; the caption only needs the plural form of "gifts".
+                Text("person.stat-caption \(count) \(formattedCurrency(value, code: composition.currencyCode))")
                     .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary).padding(.top, 2)
                     .fixedSize(horizontal: false, vertical: true)
             }
