@@ -28,6 +28,8 @@ extension Color {
     static let brand = Color(uiColor: .brand)
     /// Solid fill for primary controls that carry a white label in both modes.
     static let brandFill = Color(light: 0x12805C, dark: 0x117A58)
+    /// Bright brand green for glows in both modes; the deep light-mode brand reads as a shadow.
+    static let brandGlow = Color(hex: 0x3DD39A)
 
     // MARK: Gift directions
     static let received = brand

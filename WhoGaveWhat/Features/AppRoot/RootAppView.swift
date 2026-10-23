@@ -101,8 +101,10 @@ struct AddGiftFAB: View {
 }
 
 extension View {
-    /// Pin the floating "Add a gift" button above the tab bar.
-    func floatingAddButton(composition: AppComposition) -> some View {
-        safeAreaInset(edge: .bottom) { AddGiftFAB(router: composition.router) }
+    /// Pin the floating "Add a gift" button above the tab bar while `isVisible`.
+    func floatingAddButton(composition: AppComposition, isVisible: Bool = true) -> some View {
+        safeAreaInset(edge: .bottom) {
+            if isVisible { AddGiftFAB(router: composition.router) }
+        }
     }
 }

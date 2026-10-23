@@ -23,7 +23,6 @@ final class AppComposition {
     let deletePersonUseCase: DeletePersonUseCase
     let buildInsights = BuildInsightsUseCase()
     let rankPickerOptions = RankPickerOptionsUseCase()
-    let completeOnboarding: CompleteOnboardingUseCase
 
     convenience init(store: SwiftDataStore) {
         let preferences = UserDefaultsPreferencesGateway()
@@ -65,7 +64,7 @@ final class AppComposition {
         }
         self.peopleGateway = peopleGateway
         currencyCode = preferences.currencyCode
-        router = AppRouter(didCompleteOnboarding: preferences.didCompleteOnboarding)
+        router = AppRouter(launchEnvironment: launchEnvironment)
         loadGiftsUseCase = LoadGiftsUseCase(gateway: giftGateway)
         saveGiftUseCase = SaveGiftUseCase(giftGateway: giftGateway, suggestGift: suggestGift)
         deleteGiftUseCase = DeleteGiftUseCase(gateway: giftGateway)
@@ -77,7 +76,6 @@ final class AppComposition {
             createPerson: createPerson
         )
         deletePersonUseCase = DeletePersonUseCase(peopleGateway: peopleGateway)
-        completeOnboarding = CompleteOnboardingUseCase(preferencesGateway: preferences)
 
         // Verification launches can start without a viewpoint left over from an earlier run.
         if launchEnvironment["KS_RESET_SELF"] == "1" {
@@ -102,7 +100,7 @@ final class AppComposition {
 
     @discardableResult
     func continueAppDiscovery(_ activity: NSUserActivity) -> Bool {
-        // Spotlight already opens this scene. Keep onboarding, navigation and any draft intact.
+        // Spotlight already opens this scene. Keep navigation and any draft intact.
         AppDiscoveryIndexer.recognizes(activity)
     }
 

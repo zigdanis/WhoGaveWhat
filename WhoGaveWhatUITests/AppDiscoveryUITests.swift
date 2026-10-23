@@ -67,8 +67,7 @@ final class AppDiscoveryUITests: XCTestCase {
     }
 
     /// Mandatory app-owned behavior; OS Spotlight retrieval is a separate diagnostic.
-    func testRussianAppLanguagePreservesNavigationDraftAndColdOnboarding() throws {
-        app.launchEnvironment["KS_START"] = "app"
+    func testRussianAppLanguagePreservesNavigationDraftAndColdHome() throws {
         app.launchEnvironment["KS_SPOTLIGHT_DIAGNOSTICS"] = "0"
         app.launch()
         XCTAssertTrue(app.buttons["Add a gift"].waitForExistence(timeout: timeout))
@@ -113,13 +112,12 @@ final class AppDiscoveryUITests: XCTestCase {
         XCTAssertTrue(homeTab.isSelected, "Cancelling the draft must retain Home")
         attach("app-language-draft-cancelled")
 
-        // A normal cold launch, without the UI shortcut, must preserve onboarding.
+        // A normal cold launch, without verification overrides, opens Home.
         app.terminate()
         app.launchEnvironment = [:]
         app.launch()
-        XCTAssertTrue(app.buttons["Далее"].waitForExistence(timeout: timeout))
-        XCTAssertFalse(app.showsTabBar(withTab: "Главная"))
-        attach("app-language-cold-onboarding")
+        assertColdLaunchShowsHome()
+        attach("app-language-cold-home")
     }
 
     private func backgroundAndResumeApp() throws {
@@ -144,9 +142,8 @@ final class AppDiscoveryUITests: XCTestCase {
     }
 
     /// Optional OS-owned Spotlight diagnostic, selected explicitly by --discovery-only.
-    func testRussianAppLanguageAndBilingualSpotlightPreserveDraftAndOnboarding() throws {
+    func testRussianAppLanguageAndBilingualSpotlightPreserveDraftAndColdHome() throws {
         // Launch without AppleLanguages overrides: the app must follow its real Settings preference.
-        app.launchEnvironment["KS_START"] = "app"
         app.launchEnvironment["KS_SPOTLIGHT_DIAGNOSTICS"] = "1"
         app.launch()
         observeLauncherQueriesWhileForeground("discovery-english")
@@ -201,13 +198,25 @@ final class AppDiscoveryUITests: XCTestCase {
         XCTAssertTrue(homeTab.isSelected, "Cancelling the Spotlight-preserved draft must retain Home")
         attach("spotlight-draft-cancelled")
 
-        // The UI launch shortcut never completes onboarding. SpringBoard must launch without that shortcut.
+        // SpringBoard launches without verification overrides and must open Home.
         app.terminate()
         app.launchEnvironment = [:]
         try openSpotlightLauncher(query: "кто че", checkpoint: "spotlight-cold-launch")
-        XCTAssertTrue(app.buttons["Далее"].waitForExistence(timeout: timeout))
-        XCTAssertFalse(app.showsTabBar(withTab: "Главная"))
-        attach("spotlight-cold-onboarding")
+        assertColdLaunchShowsHome()
+        attach("spotlight-cold-home")
+    }
+
+    /// Home with its one add action: the welcome card's button before the first gift, the floating
+    /// button after it. The store survives earlier tests, so either can be present.
+    private func assertColdLaunchShowsHome() {
+        let homeTab = app.waitForTabButton("Главная", timeout: timeout)
+        XCTAssertTrue(homeTab.exists)
+        XCTAssertTrue(homeTab.isSelected)
+        XCTAssertTrue(app.buttons["Добавить подарок"].waitForExistence(timeout: timeout))
+        XCTAssertEqual(app.buttons.matching(identifier: "Добавить подарок").count, 1)
+        if app.otherElements["home.welcome"].exists {
+            XCTAssertTrue(app.buttons["home.welcome.add"].exists)
+        }
     }
 
     private func observeLauncherQueriesWhileForeground(_ checkpoint: String) {

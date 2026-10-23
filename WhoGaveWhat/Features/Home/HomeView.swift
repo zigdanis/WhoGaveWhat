@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// Home timeline as a native `List` — so swipe-to-delete and tap-to-open are the
-/// system's own gestures (smooth, reliable) rather than a hand-rolled drag.
+/// system's own gestures (smooth, reliable) rather than a hand-rolled drag. Before the
+/// first gift it shows `HomeWelcome` instead.
 /// Shows the full timeline across all years, grouped by month; past years carry
 /// their year in month headers and dates. The year summary lives in Insights.
 struct HomeView: View {
@@ -12,11 +13,17 @@ struct HomeView: View {
         List {
             if composition.data.gifts.isEmpty {
                 Section {
-                    emptyState
-                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 16, trailing: 16))
+                    HomeWelcome(router: composition.router)
+                        // The row spans the full width and pads itself, so the cell has room for the
+                        // welcome tile's glow instead of clipping it.
+                        .padding(.horizontal, 24)
+                        .padding(.top, 8)
+                        .padding(.bottom, 24)
+                        .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
                 }
+                .listSectionMargins(.horizontal, 0)
             } else {
                 ForEach(timeline) { group in
                     Section {
@@ -44,7 +51,10 @@ struct HomeView: View {
         .scrollContentBackground(.hidden)
         .scrollEdgeEffectStyle(.soft, for: .bottom)
         .background(Color.appBackground)
-        .floatingAddButton(composition: composition)
+        // The welcome card carries the only "Add a gift" action until the first gift.
+        .floatingAddButton(composition: composition, isVisible: !composition.data.gifts.isEmpty)
+        // The first saved gift and the last deleted one swap the welcome, timeline and button smoothly.
+        .animation(.default, value: composition.data.gifts.isEmpty)
     }
 
     /// Months and dates omit the year only for the current calendar year.
@@ -64,27 +74,6 @@ struct HomeView: View {
         .textCase(nil)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
-    }
-
-    /// Quiet placeholder shown before the first gift — a faint icon and a short
-    /// explanation, with the shared floating add button remaining the only CTA.
-    private var emptyState: some View {
-        Card {
-            VStack(spacing: 12) {
-                Image(systemName: "gift")
-                    .font(.system(size: 40, weight: .light))
-                    .foregroundColor(Color.textTertiary)
-                Text("No gifts yet")
-                    .font(Font.app(17, .semibold)).foregroundColor(Color.textPrimary)
-                Text("Nothing here yet — add your first to start tracking.")
-                    .font(Font.app(14, .regular)).foregroundColor(Color.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 260)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 32)
-            .padding(.horizontal, 16)
-        }
     }
 
     private var timeline: [GiftTimelineSection] {

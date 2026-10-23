@@ -2,7 +2,6 @@ import SwiftUI
 
 enum ReadableWidth {
     static let content: CGFloat = 560
-    static let onboarding: CGFloat = 480
 }
 
 /// Side margin that centers a column of at most `maxWidth` in a container of `containerWidth`.
