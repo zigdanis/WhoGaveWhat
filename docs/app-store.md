@@ -55,8 +55,9 @@ is not eligible to publish on visionOS; see ITMS-90984).
 content shared with others, no messaging, no gambling, no loot boxes. Expected result: 4+.
 
 **App Review Information:** sign-in not required. Enter the contact (first and last name, email,
-phone) here once. The upload sends only the reviewer notes unless the `BETA_REVIEW_INFO` secret
-holds all four contact fields, and then it overwrites them.
+phone) here once, and keep the reviewer notes in step with `review_information/notes.txt`. The
+upload leaves this section alone unless the `BETA_REVIEW_INFO` secret holds all four contact fields:
+App Store Connect rejects review detail updates without the contact.
 
 **Export compliance:** already declared in the build (`ITSAppUsesNonExemptEncryption = NO`).
 

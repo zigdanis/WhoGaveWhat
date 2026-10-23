@@ -34,6 +34,10 @@ platform :ios do
     screenshots_path = StoreMetadata.screenshots_path(ENV['STORE_SCREENSHOTS_DIR'])
     review = StoreMetadata.review_information(
       TestflightRelease.new.review_info, File.join(metadata_path, 'review_information', 'notes.txt'))
+    if review.nil?
+      UI.important('No App Review contact in BETA_REVIEW_INFO: the App Review section stays as set in App Store Connect')
+      metadata_path = StoreMetadata.metadata_without_review_information(metadata_path, ENV.fetch('STORE_TEMP', Dir.tmpdir))
+    end
     begin
       api_key = app_store_connect_api_key(key_id: ENV.fetch('ASC_KEY_ID'), issuer_id: ENV.fetch('ASC_ISSUER_ID'),
                                           key_filepath: ENV.fetch('ASC_KEY_PATH'), duration: 1200)
