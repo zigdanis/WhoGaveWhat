@@ -398,11 +398,11 @@ describe("gift price estimate", () => {
   });
 
   it("returns a null price below the confidence threshold", async () => {
-    const jev = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.39 }));
+    const jev = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.04 }));
     const response = await handle(request({ name: "гитара", currency: "RUB" }), testEnv(), deps(jev.fetcher));
-    expect(await body(response)).toEqual({ emoji: "🎸", confidence: 0.9, price: null, priceConfidence: 0.39 });
+    expect(await body(response)).toEqual({ emoji: "🎸", confidence: 0.9, price: null, priceConfidence: 0.04 });
 
-    const atThreshold = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.4 }));
+    const atThreshold = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.05 }));
     const edge = await handle(request({ name: "гитара 2", currency: "RUB" }), testEnv(), deps(atThreshold.fetcher));
     expect((await body(edge)).price).toBe(5_000);
   });
@@ -446,17 +446,17 @@ describe("gift price estimate", () => {
   });
 
   it("estimates the weighted median of the distribution, not the single most likely bucket", async () => {
-    // A bicycle: kids', city and mountain bikes. The top option alone holds too little to pass.
+    // A bicycle: kids', city and mountain bikes. The most likely bucket is 10,000, the median 15,000.
     const spread = { rub_5000: 0.1, rub_10000: 0.2, rub_15000: 0.2, rub_20000: 0.15, rub_30000: 0.15, rub_50000: 0.15, rub_100000: 0.05 };
     const jev = fakeJev(pricedReply("bicycle", { choice: "rub_10000", confidence: 0.14, probabilities: spread }));
     const response = await handle(request({ name: "велосипед", currency: "RUB" }), testEnv(), deps(jev.fetcher));
-    expect(await body(response)).toEqual({ emoji: "🚲", confidence: 0.9, price: 15_000, priceConfidence: 0.55 });
+    expect(await body(response)).toEqual({ emoji: "🚲", confidence: 0.9, price: 15_000, priceConfidence: 0.438 });
 
     // Probability spread evenly over every amount says nothing about the price.
     const even = Object.fromEntries(PRICE_BUCKETS.USD.map((bucket) => [`usd_${bucket}`, 1 / PRICE_BUCKETS.USD.length]));
     const flat = fakeJev(pricedReply("guitar", { choice: "usd_5", confidence: 0, probabilities: even }));
     const vague = await body(await handle(request({ name: "гитара", currency: "USD" }), testEnv(), deps(flat.fetcher)));
-    expect(vague).toEqual({ emoji: "🎸", confidence: 0.9, price: null, priceConfidence: 0.2 });
+    expect(vague).toEqual({ emoji: "🎸", confidence: 0.9, price: null, priceConfidence: 0 });
   });
 
   it("serves the same price from the cache without calling Jev again", async () => {
@@ -716,7 +716,7 @@ describe("price distribution", () => {
     expect(medianBucket("USD", { usd_5: 0.6, usd_10: 0.4 })).toEqual({ bucket: 5, confidence: 1 });
     expect(medianBucket("USD", { usd_100: 0.3, usd_150: 0.3, usd_200: 0.4 })).toEqual({ bucket: 150, confidence: 1 });
     // Two far-apart peaks: the median sits between them with little probability nearby.
-    expect(medianBucket("RUB", { rub_300: 0.45, rub_1000: 0.1, rub_1000000: 0.45 })).toEqual({ bucket: 1_000, confidence: 0.1 });
+    expect(medianBucket("RUB", { rub_300: 0.45, rub_1000: 0.1, rub_1000000: 0.45 })).toEqual({ bucket: 1_000, confidence: 0 });
     // The top bucket has a neighbour on one side only.
     expect(medianBucket("USD", { usd_20000: 1 })).toEqual({ bucket: 20_000, confidence: 1 });
   });

@@ -13,11 +13,11 @@ the app holds no secret.
 
 - `200 {"emoji": "🎸", "confidence": 0.82}`. `emoji` is `null` when no specific icon fits
   or confidence is below `MIN_CONFIDENCE`; the app then keeps its own icon.
-- With `currency`, the answer also has `"price": 10000, "priceConfidence": 0.55`. `price` is a whole
+- With `currency`, the answer also has `"price": 10000, "priceConfidence": 0.44`. `price` is a whole
   number in that currency, or `null` when Jev is not sure enough (`priceConfidence` below
-  `MIN_PRICE_CONFIDENCE`) or gave no usable price. `priceConfidence` is the share of Jev's probability
-  on the estimated bucket and its neighbours, or Jev's own confidence when it sent no distribution
-  (see below). Requests without `currency` get exactly the
+  `MIN_PRICE_CONFIDENCE`) or gave no usable price. `priceConfidence` says how concentrated Jev's
+  probability is around the estimate, from 0 for an even spread to 1, or is Jev's own confidence when
+  it sent no distribution (see below). Requests without `currency` get exactly the
   icon-only answer above, so older app versions are unaffected.
 - `400 invalid_request`: missing or malformed install ID, name outside 2–80 characters,
   a `currency` other than `RUB` or `USD`, body over 4 KB, or not JSON.
@@ -37,11 +37,11 @@ the app holds no secret.
   estimate is the weighted median of Jev's `probabilities`, not its single top choice: for a broad
   item such as a bicycle, probability spreads over many neighbouring amounts, the top option holds
   little and Jev's own `confidence` falls to about 0, while most of the probability still lies around
-  one amount. The price is shown when at least `MIN_PRICE_CONFIDENCE` of the probability is on the
-  median bucket and the bucket on each side of it; an even spread over all 15 buckets gives 0.2.
-  Without a usable distribution, the top choice and Jev's confidence are used instead, which is
-  stricter: Jev's confidence is never above the share it would get. The `jev` log line says which
-  (`price`: `distribution`, `choice` or `none`). When the icon is money-like
+  one amount. The confidence compares the probability on the median bucket and the bucket on each
+  side of it with what an even spread would put there (3/15): 0 for an even spread or less, 1 when
+  all of it is there. Without a usable distribution, the top choice and Jev's confidence, on the same
+  0-to-1 scale, are used instead. The `jev` log line says which (`price`: `distribution`, `choice`
+  or `none`). `MIN_PRICE_CONFIDENCE` is 0.05, so a price is shown unless Jev has next to no idea. When the icon is money-like
   (`money`, `banknotes`, `gift_card`, `coins`) and the name holds one clear amount ("Деньги 5000р",
   "5к", "$100"), that amount is returned as the price instead of a bucket, unsnapped and
   whatever the confidence; the currency is not converted.

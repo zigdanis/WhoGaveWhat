@@ -14,8 +14,8 @@
     "JEV_PRICE_PER_MTOK_USD": "0.042",
     "JEV_RUSSIAN_HINTS": "true",
     "MIN_CONFIDENCE": "0.35",
-    // The share of Jev's price probability on the estimated bucket and its neighbours; an even spread gives 0.2.
-    "MIN_PRICE_CONFIDENCE": "0.4",
+    // How concentrated Jev's price probability is around the estimate: 0 for an even spread, 1 for all of it nearby.
+    "MIN_PRICE_CONFIDENCE": "0.05",
     "MONTHLY_BUDGET_USD": "3",
     "DAILY_BUDGET_USD": "0.5",
     "PER_INSTALL_PER_DAY": "100",
