@@ -319,8 +319,6 @@ class RunTests(unittest.TestCase):
             self.assertFalse((directory / 'DerivedData').exists())
 
 
-if __name__ == '__main__':
-    unittest.main()
 
 
 class StatusBarTests(unittest.TestCase):
@@ -346,3 +344,7 @@ class StatusBarTests(unittest.TestCase):
         with patch.object(shots.smoke, 'run_command', side_effect=flaky):
             self.assertEqual(shots.override_status_bar(Path('/tmp'), 'UDID'), 'overridden')
         self.assertEqual(calls, ['status-bar-1', 'status-bar-2'])
+
+
+if __name__ == '__main__':
+    unittest.main()
