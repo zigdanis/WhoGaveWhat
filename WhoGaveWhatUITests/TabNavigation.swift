@@ -25,9 +25,4 @@ extension XCUIApplication {
         let back = buttons.matching(identifier: "BackButton").allElementsBoundByIndex.first { $0.isHittable }
         (back ?? navigationBars.buttons.element(boundBy: 0)).tap()
     }
-
-    /// Whether a tab bar with the named tab is on screen, horizontal or vertical.
-    func showsTabBar(withTab name: String) -> Bool {
-        tabBars.firstMatch.exists || toolbars.buttons[name].exists
-    }
 }

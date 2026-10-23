@@ -6,7 +6,6 @@ import Observation
 @MainActor
 @Observable
 final class TestPreferencesGateway: PreferencesGateway {
-    var didCompleteOnboarding = false
     var currencyCode = "USD"
     var selfPersonID: String?
     var cloudIconConsent: CloudIconConsent = .undecided
@@ -14,9 +13,6 @@ final class TestPreferencesGateway: PreferencesGateway {
     func setCloudIconConsent(_ consent: CloudIconConsent) {
         if cloudIconConsent != consent, consent == .declined { installID = UUID().uuidString }
         cloudIconConsent = consent
-    }
-    func setDidCompleteOnboarding(_ completed: Bool) {
-        didCompleteOnboarding = completed
     }
     func setCurrencyCode(_ currencyCode: String) {
         self.currencyCode = currencyCode

@@ -38,11 +38,11 @@ APP_LANGUAGE_CHECKPOINT_NAMES = (
     "settings-apps-list", "settings-search-app", "app-settings-before", "app-language-picker", "app-language-russian",
     "app-language-english-home", "app-language-russian-home", "app-language-navigation-before",
     "app-language-navigation-resumed", "app-language-draft-before", "app-language-draft-resumed",
-    "app-language-draft-cancelled", "app-language-cold-onboarding",
+    "app-language-draft-cancelled", "app-language-cold-home",
 )
 SPOTLIGHT_DIAGNOSTIC_TEST = (
     "WhoGaveWhatUITests/AppDiscoveryUITests/"
-    "testRussianAppLanguageAndBilingualSpotlightPreserveDraftAndOnboarding"
+    "testRussianAppLanguageAndBilingualSpotlightPreserveDraftAndColdHome"
 )
 APP_DISCOVERY_CHECKPOINT_NAMES = (
     "home-screen-english", "system-settings", "language-region-before",
@@ -51,7 +51,7 @@ APP_DISCOVERY_CHECKPOINT_NAMES = (
     "home-screen-russian-app", "russian-app-home", "spotlight-draft-before",
     "spotlight-russian", "spotlight-russian-opened", "spotlight-english", "spotlight-english-opened",
     "spotlight-navigation-result", "spotlight-navigation-preserved", "spotlight-draft-cancelled",
-    "spotlight-cold-launch", "spotlight-cold-onboarding",
+    "spotlight-cold-launch", "spotlight-cold-home",
 )
 GENERATED_LOG_LABELS = (
     "simulator-list", "simulator-boot", "simulator-bootstatus", "record-video",
@@ -531,7 +531,7 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
         metadata["planned_checkpoint_names"].extend(APP_LANGUAGE_CHECKPOINT_NAMES)
         metadata["scenario"] += (
             "; English system with Russian app language selected in Settings; direct app background/resume"
-            " preserves navigation and the gift draft; cancellation and normal cold launch preserve onboarding")
+            " preserves navigation and the gift draft; cancellation and normal cold launch open Home")
         metadata.update(
             acceptance_scope="app-owned",
             spotlight_search_outcome="not-run",

@@ -16,7 +16,6 @@ final class AdaptiveGiftJourneyUITests: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-        app.launchEnvironment["KS_START"] = "app"
         // The store survives between tests; never inherit a viewpoint from an earlier journey.
         app.launchEnvironment["KS_RESET_SELF"] = "1"
         app.launchEnvironment["KS_CLOUD_ICONS"] = "stub"

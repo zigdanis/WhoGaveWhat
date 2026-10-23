@@ -365,15 +365,12 @@ struct PersonPickerStateTests {
 
 @MainActor
 struct RouterTests {
-    @Test func routesScreensTabsAndSheetsIndependently() {
-        let router = AppRouter(didCompleteOnboarding: false, launchEnvironment: [:])
-        #expect(router.screen == .onboarding)
-        router.showSignIn()
-        #expect(router.screen == .signIn)
-        router.showMainApp()
+    @Test func routesTabsAndSheetsIndependently() {
+        let router = AppRouter(launchEnvironment: [:])
+        #expect(router.tab == .home)
+        #expect(router.giftSheet == nil)
         router.selectTab(.people)
         router.presentEditGift(id: "g1")
-        #expect(router.screen == .main)
         #expect(router.tab == .people)
         #expect(router.giftSheet == .edit(giftID: "g1"))
         router.dismissGiftSheet()

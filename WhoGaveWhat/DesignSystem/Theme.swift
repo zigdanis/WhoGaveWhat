@@ -43,7 +43,7 @@ extension Font {
 }
 
 extension View {
-    /// Soft, diffuse shadow for lifted surfaces (onboarding tiles, hero marks).
+    /// Soft, diffuse shadow for lifted surfaces and hero marks.
     /// Grouped cards sit flat on the background; floating controls use glass.
     func softShadow(prominent: Bool = false) -> some View {
         shadow(
