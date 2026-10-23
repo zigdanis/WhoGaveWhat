@@ -10,6 +10,10 @@ no longer supported.
 | `ios app_store` | Archive/upload a new receipt or resume its exact build |
 | `ios release_status` | Read recorded Apple build, distribution and locale state |
 | `ios release_notes` | Update/read back EN/RU notes on the existing processed build |
+| `ios store_metadata` | Upload `fastlane/metadata` (and `STORE_SCREENSHOTS_DIR` when set) to the `STORE_VERSION` App Store version; no build, no review submission |
+
+`store_metadata` runs in the manual `App Store metadata` workflow. App Review contact details come from the
+`BETA_REVIEW_INFO` secret, never from the repository; only `metadata/review_information/notes.txt` is committed.
 
 Native tests and app smoke use direct Apple tools through
 `scripts/run-app-smoke.py`, locally on macOS or in the `Tests` workflow.
