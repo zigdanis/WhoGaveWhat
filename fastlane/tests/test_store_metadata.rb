@@ -54,6 +54,14 @@ class StoreMetadataTest < Minitest::Test
     end
     assert_includes error.message, 'contact_email, contact_phone'
     refute_includes error.message, 'ada@example.com'
-    assert_raises(RuntimeError) { StoreMetadata.review_information({}, '/nonexistent') }
+  end
+
+  def test_without_a_contact_only_the_notes_are_sent
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, 'notes.txt')
+      assert_equal({}, StoreMetadata.review_information({}, path))
+      File.write(path, "From file\n")
+      assert_equal({ notes: 'From file' }, StoreMetadata.review_information({ 'contact_email' => ' ' }, path))
+    end
   end
 end

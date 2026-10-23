@@ -24,13 +24,17 @@ module StoreMetadata
   end
 
   # Contact details come from the private secret, never from the repository; only the notes may live in
-  # fastlane/metadata/review_information/notes.txt and win over a notes entry in the secret.
+  # fastlane/metadata/review_information/notes.txt and win over a notes entry in the secret. Without any
+  # contact field the contact stays as entered in App Store Connect, since deliver sends only the given fields.
   def self.review_information(info, notes_path)
     missing = REVIEW_CONTACT_FIELDS.keys.select { |key| info[key].to_s.strip.empty? }
-    unless missing.empty?
+    if missing.length == REVIEW_CONTACT_FIELDS.length
+      result = {}
+    elsif missing.empty?
+      result = REVIEW_CONTACT_FIELDS.to_h { |key, option| [option, info.fetch(key).strip] }
+    else
       raise "Missing App Review contact fields: #{missing.join(', ')}; supply BETA_REVIEW_INFO as an encrypted JSON secret"
     end
-    result = REVIEW_CONTACT_FIELDS.to_h { |key, option| [option, info.fetch(key).strip] }
     notes = File.file?(notes_path) ? File.read(notes_path).strip : info['notes'].to_s.strip
     result[:notes] = notes unless notes.empty?
     result
