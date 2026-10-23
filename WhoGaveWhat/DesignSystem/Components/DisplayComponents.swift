@@ -1,21 +1,5 @@
 import SwiftUI
 
-struct BarView: View {
-    let pct: Double
-    let color: Color
-    var height: CGFloat = 8
-
-    var body: some View {
-        GeometryReader { geometry in
-            Capsule().fill(color)
-                .frame(width: max(geometry.size.width * CGFloat(max(pct, 4) / 100), height))
-        }
-        .frame(height: height)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Capsule().fill(Color.fillTrack))
-    }
-}
-
 struct SectionHeader: View {
     let text: LocalizedStringResource
     var body: some View {

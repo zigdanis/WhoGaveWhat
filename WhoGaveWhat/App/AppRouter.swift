@@ -1,12 +1,6 @@
 import Foundation
 import Observation
 
-enum AppScreen: Equatable {
-    case onboarding
-    case signIn
-    case main
-}
-
 enum AppTab: String, Equatable {
     case home
     case people
@@ -34,23 +28,10 @@ enum GiftSheetRoute: Identifiable, Equatable {
 @MainActor
 @Observable
 final class AppRouter {
-    var screen: AppScreen
     var tab: AppTab = .home
     var giftSheet: GiftSheetRoute?
 
-    init(
-        didCompleteOnboarding: Bool,
-        launchEnvironment: [String: String] = ProcessInfo.processInfo.environment
-    ) {
-        screen = didCompleteOnboarding ? .main : .onboarding
-
-        if let start = launchEnvironment["KS_START"] {
-            switch start {
-            case "app": screen = .main
-            case "signin": screen = .signIn
-            default: break
-            }
-        }
+    init(launchEnvironment: [String: String] = ProcessInfo.processInfo.environment) {
         if let rawTab = launchEnvironment["KS_TAB"], let tab = AppTab(rawValue: rawTab) {
             self.tab = tab
         }
@@ -59,8 +40,6 @@ final class AppRouter {
         }
     }
 
-    func showSignIn() { screen = .signIn }
-    func showMainApp() { screen = .main }
     func selectTab(_ tab: AppTab) { self.tab = tab }
     func presentNewGift() { giftSheet = .create }
     func presentEditGift(id: String) { giftSheet = .edit(giftID: id) }

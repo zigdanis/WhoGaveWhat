@@ -5,7 +5,6 @@ import Observation
 @Observable
 final class UserDefaultsPreferencesGateway: PreferencesGateway {
     private let defaults: UserDefaults
-    private let onboardingKey = "didOnboard"
     private let currencyCodeKey = "preferredCurrencyCode"
     private let selfPersonKey = "selfPersonID"
     /// Static so the initializer can read it before every stored property is set.
@@ -38,10 +37,6 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
         cloudIconConsent = consent
     }
 
-    var didCompleteOnboarding: Bool {
-        defaults.bool(forKey: onboardingKey)
-    }
-
     var currencyCode: String {
         let storedCode = defaults.string(forKey: currencyCodeKey)
         let currency = SupportedCurrency.resolve(
@@ -54,10 +49,6 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
     var selfPersonID: String? {
         guard let storedID = defaults.string(forKey: selfPersonKey), !storedID.isEmpty else { return nil }
         return storedID
-    }
-
-    func setDidCompleteOnboarding(_ completed: Bool) {
-        defaults.set(completed, forKey: onboardingKey)
     }
 
     func setCurrencyCode(_ currencyCode: String) {
