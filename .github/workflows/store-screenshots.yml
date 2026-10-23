@@ -9,6 +9,7 @@ on:
       - 'WhoGaveWhatUITests/StoreScreenshotsUITests.swift'
       - 'WhoGaveWhat/Infrastructure/Persistence/SwiftDataStore.swift'
       - 'scripts/store-screenshots.py'
+      - 'scripts/install-simulator-runtime.sh'
       - '.github/workflows/store-screenshots.yml'
 
 permissions:
@@ -21,16 +22,31 @@ concurrency:
 
 jobs:
   screenshots:
-    name: Plain 6.9-inch screenshots (English and Russian)
+    name: ${{ matrix.name }}
     # GitHub's Xcode 27 image (macOS 27); see actions/runner-images#14404.
     runs-on: xcode-27
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The 6.9-inch Pro Max models run the preinstalled iOS 27.0 runtime. The script picks
+          # iPhone 18 Pro Max there, or else the newest Pro Max or Plus.
+          - name: Plain 6.9-inch screenshots (English and Russian)
+            display: iphone-6.9
+            runtime: iOS 27.0
+            device: ''
+          # The iOS 27.1 runtime supports only iPhone Duo, which boots folded: the set shows the outer display.
+          - name: Plain iPhone Duo screenshots (English and Russian)
+            display: iphone-duo
+            runtime: iOS 27.1
+            device: iPhone Duo
     env:
       DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
       XCODE_VERSION: '27.1'
-      # iPhone Duo is the only model on iOS 27.1; the 6.9-inch Pro Max models run the preinstalled iOS 27.0 runtime.
-      # The script picks iPhone 18 Pro Max there, or else the newest Pro Max or Plus.
-      SIMULATOR_RUNTIME: iOS 27.0
+      SCREENSHOT_DISPLAY: ${{ matrix.display }}
+      SIMULATOR_RUNTIME: ${{ matrix.runtime }}
+      SIMULATOR_DEVICE: ${{ matrix.device }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
@@ -40,15 +56,61 @@ jobs:
           xcrun simctl help
           xcrun xcresulttool version
       - name: Install the iOS Simulator runtime for the selected Xcode
-        run: scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME"
+        run: scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME" ${SIMULATOR_DEVICE:+"$SIMULATOR_DEVICE"}
       - name: Capture the store screenshots
-        run: python3 scripts/store-screenshots.py "$RUNNER_TEMP/store-screenshots" --runtime "$SIMULATOR_RUNTIME"
+        run: python3 scripts/store-screenshots.py "$RUNNER_TEMP/store-screenshots" --display "$SCREENSHOT_DISPLAY" --runtime "$SIMULATOR_RUNTIME"
       - name: Upload screenshots and diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: store-screenshots
+          name: store-screenshots-${{ matrix.display }}
           path: ${{ runner.temp }}/store-screenshots
           if-no-files-found: warn
+          retention-days: 30
+          overwrite: true
+
+  combine:
+    name: App Store screenshot sets combined
+    needs: screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: store-screenshots-*
+          path: ${{ runner.temp }}/parts
+      # One folder per language holding every set, the layout the App Store metadata workflow uploads.
+      - name: Merge the sets into one folder per language
+        run: |
+          python3 -I - <<'PY'
+          import os, shutil
+          from pathlib import Path
+          parts = Path(os.environ['RUNNER_TEMP']) / 'parts'
+          out = Path(os.environ['RUNNER_TEMP']) / 'store-screenshots'
+          expected = {'iphone-6.9', 'iphone-duo'}
+          found = {path.name.removeprefix('store-screenshots-') for path in parts.iterdir()}
+          if found != expected:
+              raise SystemExit(f'Expected the screenshot sets {sorted(expected)}, got {sorted(found)}')
+          for display in sorted(expected):
+              part = parts / f'store-screenshots-{display}'
+              # Each set's own report stays beside the merged folders for review.
+              (out / display).mkdir(parents=True)
+              for name in ('metadata.json', 'index.html'):
+                  shutil.copy2(part / name, out / display / name)
+              for source in sorted((part / 'screenshots').glob('*/*.png')):
+                  target = out / 'screenshots' / source.parent.name / source.name
+                  if target.exists():
+                      raise SystemExit(f'Two sets both produced {source.parent.name}/{source.name}')
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  shutil.copy2(source, target)
+          for language in sorted((out / 'screenshots').iterdir()):
+              print(language.name, sorted(path.name for path in language.iterdir()))
+          PY
+      - name: Upload the combined screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: store-screenshots
+          path: ${{ runner.temp }}/store-screenshots
+          if-no-files-found: error
           retention-days: 30
           overwrite: true

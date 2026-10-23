@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Capture the plain App Store screenshots in every store language and lay them out for fastlane deliver.
 
-The Debug app runs with its sample data on a fresh 6.9-inch iPhone Simulator, once per language, through
-WhoGaveWhatUITests/StoreScreenshotsUITests. The result is `<out>/screenshots/<locale>/NN_slug.png`, plus
-metadata.json and an index.html contact sheet.
+The Debug app runs with its sample data on a fresh Simulator, once per language, through
+WhoGaveWhatUITests/StoreScreenshotsUITests. `--display iphone-6.9` (the default) uses a 6.9-inch iPhone and
+writes `<out>/screenshots/<locale>/NN_slug.png`; `--display iphone-duo` uses iPhone Duo, which boots folded, and
+writes the outer display as `duo_NN_slug.png`. Each run also writes metadata.json and an index.html contact sheet.
 """
 import argparse
+import collections
 import contextlib
 import html
 import importlib.util
@@ -25,8 +27,15 @@ _spec.loader.exec_module(smoke)
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCALES = ("en-US", "ru")
-# Apple's accepted portrait sizes for the 6.9-inch iPhone screenshot set.
-ALLOWED_SIZES = {(1320, 2868), (1290, 2796), (1260, 2736)}
+# One App Store Connect screenshot set: Apple's accepted portrait sizes, the file name prefix that keeps the sets
+# apart in one language folder (deliver sorts files by name and sorts them into sets by size), and the
+# Simulator model when the set needs one.
+Display = collections.namedtuple("Display", "key title sizes prefix device")
+IPHONE_69 = Display("iphone-6.9", "6.9-inch", frozenset({(1320, 2868), (1290, 2796), (1260, 2736)}), "", None)
+# The iPhone Duo Simulator boots folded, so its screenshots show the outer display.
+IPHONE_DUO = Display("iphone-duo", "iPhone Duo outer display", frozenset({(1398, 2034)}), "duo_", "iPhone Duo")
+DISPLAYS = {display.key: display for display in (IPHONE_69, IPHONE_DUO)}
+ALLOWED_SIZES = IPHONE_69.sizes
 MIN_SHOTS = 5
 MAX_SHOTS = 10  # App Store Connect accepts at most ten screenshots per set.
 STATUS_BAR_ARGUMENTS = (
@@ -61,11 +70,12 @@ def _device_preference(name):
     return None
 
 
-def choose_device(payload, device=None, runtime=None):
-    """Pick the 6.9-inch iPhone model and the newest available iOS runtime that supports it.
+def choose_device(payload, device=None, runtime=None, display=IPHONE_69):
+    """Pick the Simulator model for `display` and the newest available iOS runtime that supports it.
 
-    `payload` is the JSON of `simctl list runtimes available` (or `simctl list -j`). Without `device` only the
-    preferred model and other Pro Max and Plus models qualify; iPhone Duo is never accepted.
+    `payload` is the JSON of `simctl list runtimes available` (or `simctl list -j`). For the 6.9-inch set, without
+    `device` only the preferred model and other Pro Max and Plus models qualify, and iPhone Duo is never accepted.
+    A set tied to one model, such as iPhone Duo, accepts only that model.
     """
     runtimes = _ios_runtimes(payload)
     if runtime is not None:
@@ -74,9 +84,14 @@ def choose_device(payload, device=None, runtime=None):
     for item in runtimes:
         for device_type in item.get("supportedDeviceTypes", []):
             supported.setdefault(device_type.get("name", ""), []).append(item)
-    if device is not None:
+    if display.device is not None:
+        if device not in (None, display.device):
+            raise ValueError(f"The {display.title} screenshots need {display.device}, not {device}")
+        device = display.device
+        names = [device] if device in supported else []
+    elif device is not None:
         if "Duo" in device:
-            raise ValueError("iPhone Duo does not produce App Store screenshot sizes")
+            raise ValueError("iPhone Duo does not produce 6.9-inch App Store screenshot sizes")
         names = [device] if device in supported else []
     else:
         names = sorted((name for name in supported if _device_preference(name) is not None), key=_device_preference)
@@ -92,8 +107,8 @@ def choose_device(payload, device=None, runtime=None):
 
 # MARK: Attachments and layout
 
-def output_name(number, slug):
-    return f"{number:02d}_{slug}.png"
+def output_name(number, slug, prefix=""):
+    return f"{prefix}{number:02d}_{slug}.png"
 
 
 def plan_outputs(manifest, locale):
@@ -123,15 +138,15 @@ def png_size(path):
     return struct.unpack(">II", header[16:24])
 
 
-def validate_size(width, height, name):
+def validate_size(width, height, name, display=IPHONE_69):
     if width >= height:
         raise ValueError(f"{name} is {width}x{height}; store screenshots must be portrait")
-    if (width, height) not in ALLOWED_SIZES:
-        allowed = ", ".join(f"{w}x{h}" for w, h in sorted(ALLOWED_SIZES, reverse=True))
-        raise ValueError(f"{name} is {width}x{height}; the 6.9-inch sizes are {allowed}")
+    if (width, height) not in display.sizes:
+        allowed = ", ".join(f"{w}x{h}" for w, h in sorted(display.sizes, reverse=True))
+        raise ValueError(f"{name} is {width}x{height}; the {display.title} sizes are {allowed}")
 
 
-def validate_set(shots_by_locale):
+def validate_set(shots_by_locale, display=IPHONE_69):
     """Check numbering, locale parity and sizes. `shots_by_locale` maps locale -> [(number, slug, (w, h))]."""
     reference = None
     sizes = set()
@@ -147,14 +162,14 @@ def validate_set(shots_by_locale):
         elif names != reference[1]:
             raise ValueError(f"{locale} screenshots {names} differ from {reference[0]} {reference[1]}")
         for number, slug, (width, height) in shots:
-            validate_size(width, height, f"{locale}/{output_name(number, slug)}")
+            validate_size(width, height, f"{locale}/{output_name(number, slug, display.prefix)}", display)
             sizes.add((width, height))
     if len(sizes) > 1:
         raise ValueError(f"Screenshots mix sizes: {sorted(sizes)}")
     return next(iter(sizes)) if sizes else None
 
 
-def export_locale(directory, locale, result_bundle):
+def export_locale(directory, locale, result_bundle, display=IPHONE_69):
     """Export one run's attachments and copy its store screenshots to `screenshots/<locale>/`."""
     attachments = directory / f"attachments-{locale}"
     smoke._export_xcresult_attachments(result_bundle, attachments, directory)
@@ -169,14 +184,14 @@ def export_locale(directory, locale, result_bundle):
         source = attachments / filename
         if not source.is_file() or not source.stat().st_size:
             raise ValueError(f"Exported {locale} screenshot {filename} is missing or empty")
-        shutil.copy2(source, target / output_name(number, slug))
+        shutil.copy2(source, target / output_name(number, slug, display.prefix))
         result.append((number, slug, png_size(source)))
     return result
 
 
 # MARK: Reports
 
-def render_index(shots_by_locale, title="WhoGaveWhat App Store screenshots"):
+def render_index(shots_by_locale, title="WhoGaveWhat App Store screenshots", prefix=""):
     parts = ['<!doctype html><html lang="en"><meta charset="utf-8">',
              '<meta name="viewport" content="width=device-width, initial-scale=1">',
              f"<title>{html.escape(title)}</title>",
@@ -187,8 +202,8 @@ def render_index(shots_by_locale, title="WhoGaveWhat App Store screenshots"):
     for locale, shots in shots_by_locale.items():
         parts.append(f"<h2>{html.escape(locale)}</h2><div class=\"row\">")
         for number, slug, (width, height) in shots:
-            relative = quote(f"screenshots/{locale}/{output_name(number, slug)}")
-            caption = html.escape(f"{output_name(number, slug)} ({width}x{height})")
+            relative = quote(f"screenshots/{locale}/{output_name(number, slug, prefix)}")
+            caption = html.escape(f"{output_name(number, slug, prefix)} ({width}x{height})")
             parts.append(f'<figure><a href="{relative}"><img loading="lazy" src="{relative}" alt="{caption}"></a>'
                          f"<figcaption>{caption}</figcaption></figure>")
         parts.append("</div>")
@@ -243,20 +258,21 @@ def override_status_bar(directory, simulator_id, attempts=STATUS_BAR_ATTEMPTS):
     return "real"
 
 
-def run(directory, device=None, runtime=None, locales=LOCALES):
+def run(directory, device=None, runtime=None, locales=LOCALES, display=IPHONE_69):
     directory = directory.resolve()
     directory.mkdir(parents=True, exist_ok=True)
     clear_previous_outputs(directory)
     head = os.environ.get("HEAD_SHA") or subprocess.check_output(["git", "rev-parse", "HEAD"], text=True, cwd=ROOT).strip()
     metadata = {"head_sha": head, "run_id": os.environ.get("GITHUB_RUN_ID", "local"),
                 "xcode": os.environ.get("XCODE_VERSION", "selected local Xcode"), "locales": list(locales),
+                "display": display.key,
                 "outcome": "failure"}
     shots_by_locale = {}
     failed_bundles = []
     try:
         runtimes = smoke.run_command(directory, "simulator-runtimes-list", [
             "xcrun", "simctl", "list", "runtimes", "available", "--json"], 30)
-        choice = choose_device(json.loads(runtimes.stdout), device, runtime)
+        choice = choose_device(json.loads(runtimes.stdout), device, runtime, display)
         metadata.update(device=choice["device"], runtime=choice["runtime"])
         listing = smoke.run_command(directory, "simulator-list", [
             "xcrun", "simctl", "list", "devices", "available", "--json"], 30)
@@ -284,12 +300,13 @@ def run(directory, device=None, runtime=None, locales=LOCALES):
                     "xcodebuild", "test-without-building", *target, "-resultBundlePath", str(bundle),
                     "-collect-test-diagnostics", "never", f"-only-testing:{TEST_CLASS}", *signing],
                     TEST_TIMEOUT_SECONDS, cwd=ROOT)
-            shots_by_locale[locale] = export_locale(directory, locale, bundle)
-        size = validate_set(shots_by_locale)
+            shots_by_locale[locale] = export_locale(directory, locale, bundle, display)
+        size = validate_set(shots_by_locale, display)
         metadata.update(sizes=[f"{size[0]}x{size[1]}"],
-                        screenshots={locale: [output_name(number, slug) for number, slug, _ in shots]
+                        screenshots={locale: [output_name(number, slug, display.prefix) for number, slug, _ in shots]
                                      for locale, shots in shots_by_locale.items()})
-        (directory / "index.html").write_text(render_index(shots_by_locale))
+        (directory / "index.html").write_text(render_index(
+            shots_by_locale, f"WhoGaveWhat App Store screenshots ({display.title})", display.prefix))
         metadata["outcome"] = "success"
         failed_bundles = []
     except (smoke.NativeCommandError, OSError, ValueError, json.JSONDecodeError, subprocess.SubprocessError) as error:
@@ -317,12 +334,14 @@ def run(directory, device=None, runtime=None, locales=LOCALES):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path, help="Output folder; screenshots go to <directory>/screenshots/<locale>/")
-    parser.add_argument("--device", help=f"Simulator model (default: {PREFERRED_DEVICE}, else the newest Pro Max or Plus)")
+    parser.add_argument("--display", choices=sorted(DISPLAYS), default=IPHONE_69.key,
+                        help="App Store screenshot set to capture (default: %(default)s)")
+    parser.add_argument("--device", help=f"Simulator model for the 6.9-inch set (default: {PREFERRED_DEVICE}, else the newest Pro Max or Plus)")
     parser.add_argument("--runtime", help="Require a runtime such as 'iOS 27.0' (default: newest one supporting the model)")
     parser.add_argument("--locale", action="append", choices=LOCALES, help="Store language to capture (default: all)")
     args = parser.parse_args(argv)
     try:
-        run(args.directory, args.device, args.runtime, tuple(args.locale or LOCALES))
+        run(args.directory, args.device, args.runtime, tuple(args.locale or LOCALES), DISPLAYS[args.display])
     except (smoke.NativeCommandError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1

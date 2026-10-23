@@ -2,8 +2,17 @@
 
 The listing text lives in [`fastlane/metadata`](../fastlane/metadata) in fastlane `deliver`
 layout, in English (`en-US`) and Russian (`ru`). Screenshots are generated, not committed: the
-`Store screenshots` workflow captures them on a 6.9" iPhone Simulator from the Debug sample data
-and keeps them as a `store-screenshots` artifact for review.
+`Store screenshots` workflow captures them from the Debug sample data and keeps them as a
+`store-screenshots` artifact for review. There are two sets:
+
+- **6.9" iPhone** (`NN_slug.png`, 1320×2868) on iPhone 18 Pro Max.
+- **iPhone Duo** (`duo_NN_slug.png`, 1398×2034) on the folded iPhone Duo Simulator, so it shows the
+  outer display. Apple doesn't say which display to show, and only the folded pose can be captured
+  in CI. With Duo screenshots the product page shows the "optimized for iPhone Duo" badge; Apple
+  requires them from April 2027 for apps built with the iOS 27.1 SDK. Uploading this set needs
+  fastlane 2.241.1 or later (`APP_IPHONE_DUO`).
+
+fastlane `deliver` sorts each language folder's files into sets by pixel size, in file name order.
 
 The `App Store metadata` workflow uploads the text and, when given a screenshots run ID, those
 screenshots to the editable App Store version. It never uploads a build and never submits for
