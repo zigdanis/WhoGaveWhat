@@ -85,28 +85,24 @@ struct AppDiscoveryTests {
         #expect(recorder.attempts.count == 2)
     }
 
-    @Test func launchActivityPreservesColdOnboardingAndSignIn() throws {
+    @Test func coldLaunchOpensHomeAndLaunchActivityKeepsIt() throws {
         let composition = try makeTestComposition()
-        #expect(composition.router.screen == .onboarding)
+        #expect(composition.router.tab == .home)
+        #expect(composition.router.giftSheet == nil)
 
         #expect(composition.continueAppDiscovery(launcherActivity()))
-        #expect(composition.router.screen == .onboarding)
-
-        composition.router.showSignIn()
-        #expect(composition.continueAppDiscovery(launcherActivity()))
-        #expect(composition.router.screen == .signIn)
+        #expect(composition.router.tab == .home)
+        #expect(composition.router.giftSheet == nil)
     }
 
     @Test(arguments: [AppTab.home, .people, .insights, .settings])
     func launchActivityPreservesWarmNavigationAndOpenGift(tab: AppTab) throws {
         let composition = try makeTestComposition()
         let router = composition.router
-        router.showMainApp()
         router.selectTab(tab)
         router.presentEditGift(id: "g1")
 
         #expect(composition.continueAppDiscovery(launcherActivity()))
-        #expect(router.screen == .main)
         #expect(router.tab == tab)
         #expect(router.giftSheet == .edit(giftID: "g1"))
 
@@ -129,7 +125,6 @@ struct AppDiscoveryTests {
 
         for activity in [unrelated, missing, wrongIdentifier, malformed] {
             #expect(!composition.continueAppDiscovery(activity))
-            #expect(composition.router.screen == .onboarding)
             #expect(composition.router.tab == .people)
             #expect(composition.router.giftSheet == .create)
         }

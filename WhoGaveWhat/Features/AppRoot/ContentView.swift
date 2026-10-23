@@ -6,20 +6,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
-            switch composition.router.screen {
-            case .onboarding:
-                OnboardingView(
-                    router: composition.router,
-                    currencyCode: composition.currencyCode
-                )
-                .transition(.opacity)
-            case .signIn:
-                SignInView(composition: composition)
-                    .transition(.opacity)
-            case .main:
-                RootAppView(composition: composition)
-                    .transition(.opacity)
-            }
+            RootAppView(composition: composition)
         }
         // Set at the root so every screen and sheet sees the same short-window signal.
         .measuresCompactVerticalSpace()
@@ -29,7 +16,6 @@ struct ContentView: View {
             if launchColorScheme != nil { AppearanceMarker() }
         }
         .foregroundColor(Color.textPrimary)
-        .animation(.easeInOut(duration: 0.25), value: composition.router.screen)
         .preferredColorScheme(launchColorScheme)
     }
 

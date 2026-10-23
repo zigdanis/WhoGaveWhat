@@ -165,50 +165,10 @@
         }
       }
     },
-    "≈ value" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "≈ value"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "≈ стоимость"
-          }
-        }
-      }
-    },
     "₽" : {
 
     },
     "0" : {
-
-    },
-    "1 800 ₽" : {
-
-    },
-    "6 gifts together" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "6 gifts together"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "6 подарков вместе"
-          }
-        }
-      }
-    },
-    "14 700 ₽" : {
 
     },
     "About" : {
@@ -789,57 +749,6 @@
         }
       }
     },
-    "Continue" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continue"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Далее"
-          }
-        }
-      }
-    },
-    "Continue with Apple" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continue with Apple"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Продолжить с Apple"
-          }
-        }
-      }
-    },
-    "Continue with email" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continue with email"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Продолжить с почтой"
-          }
-        }
-      }
-    },
     "Count this in your own giving" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1393,23 +1302,6 @@
         }
       }
     },
-    "Every gift links to someone, so you can look back on years of giving at a glance." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Every gift links to someone, so you can look back on years of giving at a glance."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Каждый подарок привязан к человеку — и годы дарения видны с одного взгляда."
-          }
-        }
-      }
-    },
     "Export data" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1440,23 +1332,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "От"
-          }
-        }
-      }
-    },
-    "Get started" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Get started"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Начать"
           }
         }
       }
@@ -1720,23 +1595,6 @@
         }
       }
     },
-    "It adds up per person" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "It adds up per person"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Всё копится по людям"
-          }
-        }
-      }
-    },
     "Just because" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1750,23 +1608,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Просто так"
-          }
-        }
-      }
-    },
-    "Keep your gifts safe" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keep your gifts safe"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Сохраните свои подарки"
           }
         }
       }
@@ -1801,23 +1642,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Лена"
-          }
-        }
-      }
-    },
-    "Logged in seconds" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Logged in seconds"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Запись за секунды"
           }
         }
       }
@@ -1873,23 +1697,6 @@
         }
       }
     },
-    "Maybe later — keep it on this phone" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Maybe later — keep it on this phone"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Позже — оставить на этом телефоне"
-          }
-        }
-      }
-    },
     "Name" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1903,23 +1710,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Имя"
-          }
-        }
-      }
-    },
-    "Never forget who gave what — or which gifts went where." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Never forget who gave what — or which gifts went where."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Не забывайте, кто что подарил и кому предназначался подарок."
           }
         }
       }
@@ -2506,23 +2296,6 @@
       "comment" : "A label describing a gift's details are currently being shown.",
       "isCommentAutoGenerated" : true
     },
-    "Sign in to back up and sync across devices — or start right now. Everything stays on this phone until you do." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sign in to back up and sync across devices — or start right now. Everything stays on this phone until you do."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Войдите, чтобы создать резервную копию и синхронизировать устройства — или начните прямо сейчас. До этого всё хранится только на телефоне."
-          }
-        }
-      }
-    },
     "Sign out" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2540,23 +2313,6 @@
         }
       }
     },
-    "Sign-in is coming soon" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sign-in is coming soon"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Вход появится позже"
-          }
-        }
-      }
-    },
     "Silver necklace" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2570,23 +2326,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Серебряное колье"
-          }
-        }
-      }
-    },
-    "Skip" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Skip"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Пропустить"
           }
         }
       }
@@ -2621,40 +2360,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "София"
-          }
-        }
-      }
-    },
-    "Soon" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Soon"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Скоро"
-          }
-        }
-      }
-    },
-    "Start without an account" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start without an account"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Начать без аккаунта"
           }
         }
       }
@@ -2880,23 +2585,6 @@
         }
       }
     },
-    "Type what it was — Who Gave What picks the icon. Add a value only when it is useful." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Type what it was — Who Gave What picks the icon. Add a value only when it is useful."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Опишите подарок — «Кто че подарил» подберёт иконку. Укажите стоимость, только если это нужно."
-          }
-        }
-      }
-    },
     "Use this date" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2961,40 +2649,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Свадьба"
-          }
-        }
-      }
-    },
-    "WHAT'S THE GIFT?" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "WHAT'S THE GIFT?"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ЧТО ЗА ПОДАРОК?"
-          }
-        }
-      }
-    },
-    "Who Gave What" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Who Gave What"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Кто че подарил"
           }
         }
       }
@@ -3131,23 +2785,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не выбрано"
-          }
-        }
-      }
-    },
-    "optional" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "optional"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "необязательно"
           }
         }
       }
