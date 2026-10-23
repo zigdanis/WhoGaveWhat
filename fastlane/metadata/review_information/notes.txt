@@ -1,4 +1,4 @@
-No account or sign-in is required. Tap Get started (or Skip) on the welcome screens to reach the app; all data is stored on the device.
+No account or sign-in is required, and all data is stored on the device. On the welcome screens tap Get started (or Skip); if a sign-in screen follows, tap Start without an account.
 
 To try it: tap Add on Home, type a gift name such as "Bouquet of roses", pick who gave and who received it, then Save. In People, open a person and turn on "This is me" to see per-person balances in Insights.
 

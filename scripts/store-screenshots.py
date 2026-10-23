@@ -38,6 +38,8 @@ ATTACHMENT_NAME = re.compile(r"store-(?P<locale>en-US|ru)-(?P<number>\d{2})-(?P<
 PREFERRED_DEVICE = "iPhone 18 Pro Max"
 FALLBACK_DEVICE_PATTERNS = (r"iPhone (\d+) Pro Max", r"iPhone (\d+) Plus")
 BUILD_TIMEOUT_SECONDS = 1800
+STATUS_BAR_ATTEMPTS = 3
+STATUS_BAR_TIMEOUT_SECONDS = 90
 TEST_TIMEOUT_SECONDS = 900
 
 
@@ -227,6 +229,20 @@ def environment(**values):
 
 # MARK: Run
 
+def override_status_bar(directory, simulator_id, attempts=STATUS_BAR_ATTEMPTS):
+    """Set the clean 9:41 status bar, or keep the real one when the Simulator never accepts the override."""
+    for attempt in range(1, attempts + 1):
+        try:
+            smoke.run_command(directory, f"status-bar-{attempt}", [
+                "xcrun", "simctl", "status_bar", simulator_id, "override", *STATUS_BAR_ARGUMENTS],
+                STATUS_BAR_TIMEOUT_SECONDS)
+            return "overridden"
+        except smoke.NativeCommandError as error:
+            print(f"Status bar override attempt {attempt} failed: {error}", flush=True)
+    print("::warning::The status bar override failed; screenshots show the Simulator's real status bar", flush=True)
+    return "real"
+
+
 def run(directory, device=None, runtime=None, locales=LOCALES):
     directory = directory.resolve()
     directory.mkdir(parents=True, exist_ok=True)
@@ -251,14 +267,14 @@ def run(directory, device=None, runtime=None, locales=LOCALES):
         smoke.run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
         smoke.run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
                           smoke.COLD_BOOT_TIMEOUT_SECONDS)
-        smoke.run_command(directory, "status-bar", [
-            "xcrun", "simctl", "status_bar", simulator_id, "override", *STATUS_BAR_ARGUMENTS], 30)
         target = ["-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
                   "-destination", f"platform=iOS Simulator,id={simulator_id}",
                   "-derivedDataPath", str(directory / "DerivedData"), "-parallel-testing-enabled", "NO"]
         signing = ["CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-"]
         smoke.run_command(directory, "xcodebuild-build", ["xcodebuild", "build-for-testing", *target, *signing],
                           BUILD_TIMEOUT_SECONDS, cwd=ROOT)
+        # Overridden after the build: right after a cold boot the override can hang while the Simulator settles.
+        metadata["status_bar"] = override_status_bar(directory, simulator_id)
         for locale in locales:
             bundle = directory / f"{locale}.xcresult"
             failed_bundles.append(bundle)

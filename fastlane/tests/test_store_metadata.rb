@@ -35,7 +35,7 @@ class StoreMetadataTest < Minitest::Test
     Dir.mktmpdir do |directory|
       info = StoreMetadata.review_information(CONTACT, File.join(directory, 'notes.txt'))
       assert_equal({ first_name: 'Ada', last_name: 'Lovelace', email_address: 'ada@example.com',
-                     phone_number: '+10000000000', demo_required: false }, info)
+                     phone_number: '+10000000000' }, info)
     end
   end
 

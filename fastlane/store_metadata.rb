@@ -33,6 +33,6 @@ module StoreMetadata
     result = REVIEW_CONTACT_FIELDS.to_h { |key, option| [option, info.fetch(key).strip] }
     notes = File.file?(notes_path) ? File.read(notes_path).strip : info['notes'].to_s.strip
     result[:notes] = notes unless notes.empty?
-    result.merge(demo_required: false)
+    result
   end
 end

@@ -320,3 +320,28 @@ class RunTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class StatusBarTests(unittest.TestCase):
+    def test_retries_and_then_keeps_the_real_status_bar(self):
+        calls = []
+
+        def failing(directory, label, command, timeout, **kwargs):
+            calls.append(label)
+            raise shots.smoke.NativeCommandError(f'{label} timed out after {timeout}s')
+
+        with patch.object(shots.smoke, 'run_command', side_effect=failing):
+            self.assertEqual(shots.override_status_bar(Path('/tmp'), 'UDID', attempts=3), 'real')
+        self.assertEqual(calls, ['status-bar-1', 'status-bar-2', 'status-bar-3'])
+
+    def test_stops_after_the_first_success(self):
+        calls = []
+
+        def flaky(directory, label, command, timeout, **kwargs):
+            calls.append(label)
+            if len(calls) == 1:
+                raise shots.smoke.NativeCommandError('status-bar-1 timed out after 90s')
+
+        with patch.object(shots.smoke, 'run_command', side_effect=flaky):
+            self.assertEqual(shots.override_status_bar(Path('/tmp'), 'UDID'), 'overridden')
+        self.assertEqual(calls, ['status-bar-1', 'status-bar-2'])

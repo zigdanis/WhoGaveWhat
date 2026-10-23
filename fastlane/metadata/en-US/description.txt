@@ -1,10 +1,10 @@
 Who Gave What is a warm little ledger for every gift you give and get.
 
-Remember that Aunt Maria sent a teddy bear for New Year, that you brought wine to Igor's birthday, and who actually paid for the family present. No more guessing when it's your turn to return the favour.
+Remember that Aunt Maria sent a teddy bear for New Year, that you brought wine to Igor's birthday, and who actually paid for the family present. No more guessing when it's your turn to return the favor.
 
 LOGGED IN SECONDS
 • Type what the gift was and the app picks a matching icon.
-• Choose who gave it and who received it. The people and occasions you use most come first.
+• Choose who gave it and who received it. The people and occasions you used most recently come first.
 • Add the occasion and date. Add an approximate value only when it's useful.
 • Mark gifts you paid for on someone else's behalf, so you can see who is really paying.
 
@@ -17,7 +17,7 @@ IT ADDS UP PER PERSON
 PRIVATE BY DESIGN
 • No account needed. Your people, gifts and amounts stay on your iPhone.
 • No ads and no tracking.
-• Optional cloud suggestions stay off until you allow them. When they're on, only the gift name and your currency are sent, to choose an icon and suggest an approximate price. People, dates, amounts and occasions are never sent.
+• Optional cloud suggestions stay off until you allow them. When they're on, only the gift name, your currency and a random ID used to limit requests are sent, to choose an icon and suggest an approximate price. People, dates, amounts and occasions are never sent.
 
 MADE FOR iPHONE
 • A clean Liquid Glass design in light and dark mode.

@@ -57,9 +57,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          RUN=$(gh run view "$SCREENSHOTS_RUN_ID" --repo "$GITHUB_REPOSITORY" --json workflowName,conclusion)
-          jq -e '.workflowName == "Store screenshots" and .conclusion == "success"' <<< "$RUN" >/dev/null \
-            || { echo "Run $SCREENSHOTS_RUN_ID is not a successful Store screenshots run"; exit 1; }
+          # Fork pull requests can run their own copy of the workflow under the same name, so the run must
+          # come from this repository's own branches.
+          RUN=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SCREENSHOTS_RUN_ID")
+          jq -e --arg repo "$GITHUB_REPOSITORY" '.name == "Store screenshots" and .conclusion == "success"
+            and .head_repository.full_name == $repo' <<< "$RUN" >/dev/null \
+            || { echo "Run $SCREENSHOTS_RUN_ID is not a successful Store screenshots run of $GITHUB_REPOSITORY"; exit 1; }
+          echo "Screenshots from $(jq -r '.head_branch + " @ " + .head_sha' <<< "$RUN")"
           gh run download "$SCREENSHOTS_RUN_ID" --repo "$GITHUB_REPOSITORY" --name store-screenshots --dir "$STORE_TEMP/downloaded"
           SCREENSHOTS=$(find "$STORE_TEMP/downloaded" -maxdepth 2 -type d -name screenshots | head -n 1)
           test -n "$SCREENSHOTS" || { echo 'The artifact has no screenshots folder'; exit 1; }
