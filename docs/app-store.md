@@ -24,7 +24,7 @@ review. It runs only by manual dispatch on `master`, after Danis approves the li
 | `keywords.txt` | 100 | Comma-separated, no spaces after commas; don't repeat words from the name or subtitle. |
 | `promotional_text.txt` | 170 | Can change at any time without review. |
 | `description.txt` | 4000 | Not searchable. Plain text. |
-| `review_information/notes.txt` | 4000 | Reviewer notes. Contact details come from the `BETA_REVIEW_INFO` secret and are never committed. |
+| `review_information/notes.txt` | 4000 | Reviewer notes. Contact details are never committed (see App Review Information below). |
 
 ## Set in App Store Connect by hand
 
@@ -52,7 +52,9 @@ is not eligible to publish on visionOS; see ITMS-90984).
 **Age Rating:** answer None / No to every question. No unrestricted web access, no user-generated
 content shared with others, no messaging, no gambling, no loot boxes. Expected result: 4+.
 
-**App Review Information:** sign-in not required.
+**App Review Information:** sign-in not required. Enter the contact (first and last name, email,
+phone) here once. The upload sends only the reviewer notes unless the `BETA_REVIEW_INFO` secret
+holds all four contact fields, and then it overwrites them.
 
 **Export compliance:** already declared in the build (`ITSAppUsesNonExemptEncryption = NO`).
 
