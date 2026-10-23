@@ -3,10 +3,10 @@
  * in the requested currency. The app holds the same bucket lists in `GiftPriceBuckets.swift`;
  * keep them identical.
  *
- * Bump `PRICE_VERSION` whenever buckets, descriptions or instructions change, so cached
- * answers from an older price question are not reused.
+ * Bump `PRICE_VERSION` whenever buckets, descriptions, instructions or the way an answer becomes a
+ * price change, so cached answers from an older price question are not reused.
  */
-export const PRICE_VERSION = "2026-10-20.1";
+export const PRICE_VERSION = "2026-10-23.1";
 
 export type Currency = "RUB" | "USD";
 
@@ -45,6 +45,42 @@ function priceKey(currency: Currency, bucket: number): string {
 export function bucketFromKey(currency: Currency, key: unknown): number | null {
   if (typeof key !== "string") return null;
   return PRICE_BUCKETS[currency].find((bucket) => priceKey(currency, bucket) === key) ?? null;
+}
+
+/**
+ * The bucket Jev's price distribution points to, or null when `probabilities` is missing or malformed.
+ *
+ * The buckets are ordered amounts, so the estimate is the weighted median rather than the single most
+ * likely bucket: a bicycle spread over 10,000–50,000 rubles lands in the middle of that range. Its
+ * confidence looks at the share of probability on that bucket and its neighbours, so a spread over
+ * adjacent amounts still counts as agreement, while a flat or widely split distribution does not.
+ * Jev's own `confidence` looks only at the top option, which falls to about 0 for such spreads.
+ * Like Jev's, it is 0 for an even spread (or less probability nearby than that) and 1 when all of it
+ * is nearby, so one threshold fits both.
+ */
+export function medianBucket(currency: Currency, probabilities: unknown): { bucket: number; confidence: number } | null {
+  if (typeof probabilities !== "object" || probabilities === null) return null;
+  const buckets = PRICE_BUCKETS[currency];
+  const weights: number[] = [];
+  for (const bucket of buckets) {
+    const value = Object.hasOwn(probabilities, priceKey(currency, bucket))
+      ? (probabilities as Record<string, unknown>)[priceKey(currency, bucket)]
+      : 0;
+    if (typeof value !== "number" || !(value >= 0 && value <= 1)) return null;
+    weights.push(value);
+  }
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  // The options hold all of the probability. Jev rounds each value, so the sum can drift a little
+  // from 1; further off means the distribution doesn't match the options asked.
+  if (!(total >= 0.9 && total <= 1.1)) return null;
+  let cumulative = 0;
+  let index = 0;
+  while (index < buckets.length - 1 && (cumulative += weights[index]) / total < 0.5) index += 1;
+  const nearby = weights.slice(Math.max(0, index - 1), index + 2);
+  const share = nearby.reduce((sum, weight) => sum + weight, 0) / total;
+  // What the same buckets would hold under an even spread: 3/15, or 2/15 at either end.
+  const even = nearby.length / buckets.length;
+  return { bucket: buckets[index], confidence: Math.min(1, Math.max(0, (share - even) / (1 - even))) };
 }
 
 /** Icons whose gift is an amount of money, so an amount written in the name beats the estimate. */

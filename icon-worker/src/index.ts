@@ -35,6 +35,8 @@ const MAX_ATTEMPTS = 2;
 /** Every 503 says when to retry, so clients don't wait longer than needed after a passing failure. */
 const PROVIDER_RETRY_AFTER_SECONDS = 30;
 const CONFIG_RETRY_AFTER_SECONDS = 300;
+/** A reply without a usable price is asked again after this, instead of after the usual 30 days. */
+const MISSING_PRICE_TTL_MS = 60 * 60 * 1000;
 const INSTALL_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default {
@@ -115,18 +117,26 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
       reservationId: admission.reservationId,
       costMicros: Math.ceil(answer.inputTokens * pricePerToken) + unknownUsageAttempts * attemptMicros,
       // Without a usable price answer the bucket is null and its confidence 0, like a low-confidence price.
+      // Such a reply is cached only briefly, so one bad reply doesn't hide the price for 30 days.
       answer: {
         cacheKey,
         key,
         confidence: answer.confidence,
         price: currency === null ? null : (answer.price?.bucket ?? null),
         priceConfidence: currency === null ? null : (answer.price?.confidence ?? 0),
+        ...(currency !== null && !answer.price && { ttlMs: MISSING_PRICE_TTL_MS }),
       },
       now: deps.now(),
     });
     // Operational metrics only; the gift name is never logged.
     console.log(
-      JSON.stringify({ event: "jev", model: answer.model, tokens: answer.inputTokens, ms: deps.now() - started }),
+      JSON.stringify({
+        event: "jev",
+        model: answer.model,
+        tokens: answer.inputTokens,
+        ms: deps.now() - started,
+        ...(currency !== null && { price: answer.price?.source ?? "none" }),
+      }),
     );
     return answerResponse({
       key,

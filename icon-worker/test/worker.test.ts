@@ -4,7 +4,7 @@ import { IconLimiter } from "../src/limiter";
 import { handle, type Env } from "../src/index";
 import { ICON_KEYS, ICONS, criteria } from "../src/icons";
 import { JEV_URL, parseAnswer } from "../src/jev";
-import { PRICE_BUCKETS, explicitAmount, priceCriteria } from "../src/prices";
+import { PRICE_BUCKETS, explicitAmount, medianBucket, priceCriteria } from "../src/prices";
 
 const INSTALL = "3f2b8c1e-4d5a-4e6f-8a9b-0c1d2e3f4a5b";
 const NOW = Date.UTC(2026, 9, 16, 12, 0, 30);
@@ -36,14 +36,21 @@ function jevReply(choice: string, confidence = 0.9, inputTokens = 2_500, status 
   );
 }
 
-/** A reply to a request with the price question; `price` undefined leaves the price answer out. */
-function pricedReply(choice: string, price?: { choice: unknown; confidence: unknown }, confidence = 0.9) {
+/**
+ * A reply to a request with the price question; `price` undefined leaves the price answer out. Without
+ * `probabilities`, the price answer has an empty distribution, so the single choice is used.
+ */
+function pricedReply(
+  choice: string,
+  price?: { choice: unknown; confidence: unknown; probabilities?: unknown },
+  confidence = 0.9,
+) {
   return new Response(
     JSON.stringify({
       model: "jev-1.13.0",
       answers: {
         icon: { type: "choice", choice, confidence, probabilities: {} },
-        ...(price && { price: { type: "choice", ...price, probabilities: {} } }),
+        ...(price && { price: { type: "choice", probabilities: {}, ...price } }),
       },
       usage: { input_tokens: 2_700, output_tokens: 20 },
     }),
@@ -391,11 +398,11 @@ describe("gift price estimate", () => {
   });
 
   it("returns a null price below the confidence threshold", async () => {
-    const jev = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.19 }));
+    const jev = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.04 }));
     const response = await handle(request({ name: "гитара", currency: "RUB" }), testEnv(), deps(jev.fetcher));
-    expect(await body(response)).toEqual({ emoji: "🎸", confidence: 0.9, price: null, priceConfidence: 0.19 });
+    expect(await body(response)).toEqual({ emoji: "🎸", confidence: 0.9, price: null, priceConfidence: 0.04 });
 
-    const atThreshold = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.2 }));
+    const atThreshold = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.05 }));
     const edge = await handle(request({ name: "гитара 2", currency: "RUB" }), testEnv(), deps(atThreshold.fetcher));
     expect((await body(edge)).price).toBe(5_000);
   });
@@ -428,6 +435,28 @@ describe("gift price estimate", () => {
       expect(response.status).toBe(200);
       expect(await body(response)).toEqual({ emoji: "🎸", confidence: 0.9, price: null, priceConfidence: 0 });
     }
+    // They are cached for an hour only, so one bad reply doesn't hide the price for 30 days.
+    const again = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.9 }));
+    const soon = await body(await handle(request({ name: "гитара 0", currency: "RUB" }), testEnv(), deps(again.fetcher, NOW + 59 * 60_000)));
+    expect(soon.price).toBeNull();
+    expect(again.calls).toHaveLength(0);
+    const later = await body(await handle(request({ name: "гитара 0", currency: "RUB" }), testEnv(), deps(again.fetcher, NOW + 61 * 60_000)));
+    expect(later.price).toBe(5_000);
+    expect(again.calls).toHaveLength(1);
+  });
+
+  it("estimates the weighted median of the distribution, not the single most likely bucket", async () => {
+    // A bicycle: kids', city and mountain bikes. The most likely bucket is 10,000, the median 15,000.
+    const spread = { rub_5000: 0.1, rub_10000: 0.2, rub_15000: 0.2, rub_20000: 0.15, rub_30000: 0.15, rub_50000: 0.15, rub_100000: 0.05 };
+    const jev = fakeJev(pricedReply("bicycle", { choice: "rub_10000", confidence: 0.14, probabilities: spread }));
+    const response = await handle(request({ name: "велосипед", currency: "RUB" }), testEnv(), deps(jev.fetcher));
+    expect(await body(response)).toEqual({ emoji: "🚲", confidence: 0.9, price: 15_000, priceConfidence: 0.438 });
+
+    // Probability spread evenly over every amount says nothing about the price.
+    const even = Object.fromEntries(PRICE_BUCKETS.USD.map((bucket) => [`usd_${bucket}`, 1 / PRICE_BUCKETS.USD.length]));
+    const flat = fakeJev(pricedReply("guitar", { choice: "usd_5", confidence: 0, probabilities: even }));
+    const vague = await body(await handle(request({ name: "гитара", currency: "USD" }), testEnv(), deps(flat.fetcher)));
+    expect(vague).toEqual({ emoji: "🎸", confidence: 0.9, price: null, priceConfidence: 0 });
   });
 
   it("serves the same price from the cache without calling Jev again", async () => {
@@ -440,7 +469,7 @@ describe("gift price estimate", () => {
     expect(jev.calls).toHaveLength(1);
 
     // The threshold applies to cached answers too.
-    const plain = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.3 }));
+    const plain = fakeJev(pricedReply("guitar", { choice: "rub_5000", confidence: 0.45 }));
     const fresh = await body(await handle(request({ name: "гитара", currency: "RUB" }), testEnv(), deps(plain.fetcher)));
     const strict = testEnv({ MIN_PRICE_CONFIDENCE: "0.5" });
     const cached = await body(await handle(request({ name: "гитара", currency: "RUB" }), strict, deps(plain.fetcher)));
@@ -679,6 +708,43 @@ describe("Jev answer validation", () => {
     { answers: { icon: { choice: "toString", confidence: 0.5 } }, usage: { input_tokens: 1 } },
   ])("rejects %j", (json) => {
     expect(() => parseAnswer(json)).toThrow();
+  });
+});
+
+describe("price distribution", () => {
+  it("takes the first bucket where half of the probability is reached", () => {
+    expect(medianBucket("USD", { usd_5: 0.6, usd_10: 0.4 })).toEqual({ bucket: 5, confidence: 1 });
+    expect(medianBucket("USD", { usd_100: 0.3, usd_150: 0.3, usd_200: 0.4 })).toEqual({ bucket: 150, confidence: 1 });
+    // Two far-apart peaks: the median sits between them with little probability nearby.
+    expect(medianBucket("RUB", { rub_300: 0.45, rub_1000: 0.1, rub_1000000: 0.45 })).toEqual({ bucket: 1_000, confidence: 0 });
+    // The top bucket has a neighbour on one side only.
+    expect(medianBucket("USD", { usd_20000: 1 })).toEqual({ bucket: 20_000, confidence: 1 });
+  });
+
+  it("accepts a sum that rounding moved slightly off 1", () => {
+    expect(medianBucket("USD", { usd_5: 0.52, usd_10: 0.53 })).toEqual({ bucket: 10, confidence: 1 });
+  });
+
+  it.each([
+    undefined,
+    null,
+    "usd_5",
+    {},
+    { usd_5: -0.1, usd_10: 1 },
+    { usd_5: "0.5", usd_10: 0.5 },
+    { usd_5: 0.2 },
+    { usd_5: 0.9, usd_10: 0.9 },
+    { usd_5: 0.5, rub_300: 0.5 },
+  ])(
+    "has no estimate for %j",
+    (probabilities) => {
+      expect(medianBucket("USD", probabilities)).toBeNull();
+    },
+  );
+
+  it("ignores options of the other currency and inherited keys", () => {
+    expect(medianBucket("USD", { rub_300: 1 })).toBeNull();
+    expect(medianBucket("USD", Object.create({ usd_5: 1 }))).toBeNull();
   });
 });
 
