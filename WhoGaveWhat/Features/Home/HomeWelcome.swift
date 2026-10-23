@@ -125,7 +125,8 @@ private struct TileGlow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme
-    @State private var pulseStart = Date.now
+    /// When the current pulse began; `distantFuture` while it is off, so a resuming frame rests at 0.5.
+    @State private var pulseStart = Date.distantFuture
 
     var body: some View {
         // The glow color is brighter against dark backgrounds, so dark mode needs less opacity.
@@ -141,14 +142,16 @@ private struct TileGlow: View {
         // Eases into the resting glow instead of snapping when a sheet slides up; Reduce Motion stays instant.
         .animation(reduceMotion ? nil : .easeOut(duration: 0.35), value: isPulsing)
         .onChange(of: isPulsing, initial: true) { _, pulsing in
-            if pulsing { pulseStart = .now }
+            pulseStart = pulsing ? .now : .distantFuture
         }
         .accessibilityHidden(true)
     }
 
     /// Breathes on a 2.8-second cycle, rising from the resting level so a resumed pulse never jumps.
+    /// The first frame after resuming renders before `onChange` stamps the new start; the stale
+    /// `distantFuture` start clamps to zero elapsed time, which is the resting level.
     private static func level(at date: Date, since start: Date) -> Double {
-        0.5 + 0.5 * sin(2 * .pi * date.timeIntervalSince(start) / 2.8)
+        0.5 + 0.5 * sin(2 * .pi * max(0, date.timeIntervalSince(start)) / 2.8)
     }
 }
 
