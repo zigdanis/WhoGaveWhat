@@ -41,7 +41,7 @@ Review for concrete correctness, persistence, concurrency, localization, target-
 
 ## Product behavior and localization
 
-- Sign-in options are placeholders that enter the local app. Do not treat them as real authentication or remote synchronization, and flag changes that imply protected or synchronized data without implementing that boundary.
+- There is no onboarding or sign-in: the app opens on Home, which shows a welcome card with the only "Add a gift" action while there are no gifts. Data stays on the device; flag changes that imply authentication, protected or synchronized data without implementing that boundary.
 - Preserve the add/edit validation rules and every success, failure, cancellation, and dismissal path. User-visible failures must not be silently discarded.
 - User-visible copy belongs in the String Catalog or localized InfoPlist resources. English and Russian entries, format arguments, pluralization, and the correct bundle/target must remain consistent.
 - Reuse established design-system tokens and components when they carry product behavior or accessibility. Flag clipped content, inaccessible controls, broken dynamic layout, or missing accessibility semantics introduced by a UI change.

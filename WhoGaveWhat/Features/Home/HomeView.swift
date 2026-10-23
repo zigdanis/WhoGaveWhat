@@ -10,48 +10,51 @@ struct HomeView: View {
 
     var body: some View {
         let year = currentYear
-        Group {
+        List {
             if composition.data.gifts.isEmpty {
-                // A plain scroll view, not a List: list cells would clip the welcome tile's glow.
-                ScrollView {
+                Section {
                     HomeWelcome(router: composition.router)
+                        // The row spans the full width and pads itself, so the cell has room for the
+                        // welcome tile's glow instead of clipping it.
                         .padding(.horizontal, 24)
                         .padding(.top, 8)
-                        .padding(.bottom, 16)
+                        .padding(.bottom, 24)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
-                .scrollBounceBehavior(.basedOnSize)
-                .scrollClipDisabled()
+                .listSectionMargins(.horizontal, 0)
             } else {
-                List {
-                    ForEach(timeline) { group in
-                        Section {
-                            ForEach(group.gifts) { gift in
-                                NavigationLink(value: gift) {
-                                    GiftRow(
-                                        gift: gift,
-                                        subtitle: composition.data.giftSubtitle(gift),
-                                        dateLabel: gift.date.giftShortLabel(displayYear: year),
-                                        currencyCode: composition.currencyCode)
-                                }
-                                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
-                                .swipeToDelete(title: Text("Delete this gift?"), allowsFullSwipe: true) {
-                                    composition.deleteGift(id: gift.id)
-                                }
+                ForEach(timeline) { group in
+                    Section {
+                        ForEach(group.gifts) { gift in
+                            NavigationLink(value: gift) {
+                                GiftRow(
+                                    gift: gift,
+                                    subtitle: composition.data.giftSubtitle(gift),
+                                    dateLabel: gift.date.giftShortLabel(displayYear: year),
+                                    currencyCode: composition.currencyCode)
                             }
-                        } header: {
-                            monthHeader(group)
+                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
+                            .swipeToDelete(title: Text("Delete this gift?"), allowsFullSwipe: true) {
+                                composition.deleteGift(id: gift.id)
+                            }
                         }
+                    } header: {
+                        monthHeader(group)
                     }
                 }
-                .listStyle(.insetGrouped)
-                .scrollContentBackground(.hidden)
             }
         }
+        .listStyle(.insetGrouped)
         .readableColumn()
+        .scrollContentBackground(.hidden)
         .scrollEdgeEffectStyle(.soft, for: .bottom)
         .background(Color.appBackground)
         // The welcome card carries the only "Add a gift" action until the first gift.
         .floatingAddButton(composition: composition, isVisible: !composition.data.gifts.isEmpty)
+        // The first saved gift and the last deleted one swap the welcome, timeline and button smoothly.
+        .animation(.default, value: composition.data.gifts.isEmpty)
     }
 
     /// Months and dates omit the year only for the current calendar year.

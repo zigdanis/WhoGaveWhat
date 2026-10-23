@@ -20,13 +20,13 @@ struct HomeWelcome: View {
         VStack(spacing: spacing) {
             WelcomeCard(router: router, isCompact: isCompact)
             tiles {
-                WelcomeTile(title: "Icon picked for you", isCompact: isCompact) {
+                WelcomeTile(title: "Auto-picked icon", isCompact: isCompact) {
                     GiftSquare(emoji: "🎁", tint: Color.receivedTint, size: iconSize, fontSize: 26)
                 }
-                WelcomeTile(title: "Who gave whom how much", isCompact: isCompact) {
+                WelcomeTile(title: "Who gave how much", isCompact: isCompact) {
                     InsightsGlyph(size: iconSize)
                 }
-                .background { TileGlow() }
+                .background { TileGlow(router: router) }
                 // The glow spreads under the neighbouring tile, not over it.
                 .zIndex(-1)
             }
@@ -46,13 +46,10 @@ private struct WelcomeCard: View {
 
     var body: some View {
         Card {
-            VStack(spacing: isCompact ? 12 : 16) {
+            VStack(spacing: isCompact ? 16 : 20) {
+                // Decorative: the button is the card's only element for VoiceOver.
                 IconMark(size: isCompact ? 48 : 56)
                     .accessibilityHidden(true)
-                Text("Log your first gift")
-                    .font(Font.app(20, .bold))
-                    .multilineTextAlignment(.center)
-                    .accessibilityAddTraits(.isHeader)
                 Button {
                     router.presentNewGift()
                 } label: {
@@ -72,7 +69,8 @@ private struct WelcomeCard: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 20)
-            .padding(.vertical, isCompact ? 18 : 24)
+            .padding(.top, isCompact ? 18 : 24)
+            .padding(.bottom, isCompact ? 16 : 20)
         }
     }
 }
@@ -119,25 +117,49 @@ private struct InsightsGlyph: View {
     }
 }
 
-/// A soft brand glow in the tile's shape that breathes slowly. With Reduce Motion it holds still
-/// halfway between its quietest and brightest.
+/// A soft brand glow in the tile's shape that breathes slowly while Home is in front. Under a
+/// sheet, on another tab, in the background or with Reduce Motion it holds still halfway between
+/// its quietest and brightest.
 private struct TileGlow: View {
+    let router: AppRouter
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         // The glow color is brighter against dark backgrounds, so dark mode needs less opacity.
         let opacity: ClosedRange<Double> = colorScheme == .dark ? 0.12...0.55 : 0.15...0.65
-        RoundedRectangle(cornerRadius: DesignMetrics.radiusLarge, style: .continuous)
+        let isPulsing =
+            !reduceMotion && scenePhase == .active && router.tab == .home && router.giftSheet == nil
+        let glow = RoundedRectangle(cornerRadius: DesignMetrics.radiusLarge, style: .continuous)
             .fill(Color.brandGlow)
-            .phaseAnimator(reduceMotion ? [0.5] : [0.0, 1.0]) { glow, level in
-                glow
-                    .scaleEffect(1 + 0.03 * level)
-                    .opacity(opacity.lowerBound + (opacity.upperBound - opacity.lowerBound) * level)
-                    .blur(radius: 8 + 6 * level)
-            } animation: { _ in
-                .easeInOut(duration: 1.4)
+
+        // Separate branches, so leaving the pulse removes its animator and nothing keeps animating.
+        Group {
+            if isPulsing {
+                // Starts from the resting level, so resuming continues without a jump.
+                glow.phaseAnimator([0.5, 1.0, 0.0]) { glow, level in
+                    glow.glowLevel(level, opacity: opacity)
+                } animation: { level in
+                    switch level {
+                    case 1.0: .easeOut(duration: 0.7)
+                    case 0.0: .easeInOut(duration: 1.4)
+                    default: .easeIn(duration: 0.7)
+                    }
+                }
+            } else {
+                glow.glowLevel(0.5, opacity: opacity)
             }
-            .accessibilityHidden(true)
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+extension View {
+    /// The glow at `level`, from 0 (quietest) to 1 (brightest).
+    fileprivate func glowLevel(_ level: Double, opacity: ClosedRange<Double>) -> some View {
+        scaleEffect(1 + 0.03 * level)
+            .opacity(opacity.lowerBound + (opacity.upperBound - opacity.lowerBound) * level)
+            .blur(radius: 8 + 6 * level)
     }
 }

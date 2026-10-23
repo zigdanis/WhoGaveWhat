@@ -443,6 +443,23 @@
         }
       }
     },
+    "Auto-picked icon" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto-picked icon"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоподбор иконки"
+          }
+        }
+      }
+    },
     "Balance" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1568,23 +1585,6 @@
         }
       }
     },
-    "Icon picked for you" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Icon picked for you"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Иконка подбирается сама"
-          }
-        }
-      }
-    },
     "Igor" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1666,23 +1666,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Лена"
-          }
-        }
-      }
-    },
-    "Log your first gift" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Log your first gift"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Запишите первый подарок"
           }
         }
       }
@@ -2677,6 +2660,23 @@
         }
       }
     },
+    "Who gave how much" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Who gave how much"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кто кому и сколько"
+          }
+        }
+      }
+    },
     "Who gave what" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2690,23 +2690,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Кто че подарил"
-          }
-        }
-      }
-    },
-    "Who gave whom how much" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Who gave whom how much"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Кто кому сколько"
           }
         }
       }
