@@ -3,9 +3,11 @@
 The listing text lives in [`fastlane/metadata`](../fastlane/metadata) in fastlane `deliver`
 layout, in English (`en-US`) and Russian (`ru`). Screenshots are generated, not committed: the
 `Store screenshots` workflow captures them from the Debug sample data and keeps them as a
-`store-screenshots` artifact for review. There are two sets:
+`store-screenshots` artifact for review. There are three sets:
 
 - **6.9" iPhone** (`NN_slug.png`, 1320×2868) on iPhone 18 Pro Max.
+- **6.3" iPhone** (`medium_NN_slug.png`, 1206×2622) on iPhone 18 Pro. Apple requires at least one
+  screenshot for iPhone with Dynamic Island (medium display) and doesn't say the 6.9" set counts.
 - **iPhone Duo** (`duo_NN_slug.png`, 1398×2034) on the folded iPhone Duo Simulator, so it shows the
   outer display. Apple doesn't say which display to show, and only the folded pose can be captured
   in CI. With Duo screenshots the product page shows the "optimized for iPhone Duo" badge; Apple
