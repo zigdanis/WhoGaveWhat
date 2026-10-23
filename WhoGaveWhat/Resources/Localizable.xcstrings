@@ -1320,6 +1320,13 @@
         }
       }
     },
+    "Swap people" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Swap people" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Поменять местами" } }
+      }
+    },
     "Use photo" : {
       "extractionState" : "manual",
       "localizations" : {

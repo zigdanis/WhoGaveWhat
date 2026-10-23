@@ -125,9 +125,9 @@ struct PersonPhotoCropView: View {
     private let maximumZoom: CGFloat = 6
 
     var body: some View {
-        // The outer reader stays inside the safe area and lays out the header; the inner one is
-        // full-bleed and lays out the photo. The difference between their frames is the safe
-        // region, including iPhone Duo's vertical status strip, without reading window insets.
+        // The outer reader stays inside the safe area; the inner one is full-bleed and lays out
+        // the photo and controls. The difference between their frames is the safe region,
+        // including iPhone Duo's vertical status strip, without reading window insets.
         GeometryReader { safeProxy in
             let safeFrame = safeProxy.frame(in: .global)
             ZStack {
@@ -153,6 +153,7 @@ struct PersonPhotoCropView: View {
                             .accessibilityIdentifier("person-photo-crop.image")
                         cropGuide(frame: frame, size: size)
                             .allowsHitTesting(false)
+                        cropControls(size: size, safeRect: safeRect)
                     }
                     .onAppear {
                         viewportSize = size
@@ -166,7 +167,6 @@ struct PersonPhotoCropView: View {
                     }
                 }
                 .ignoresSafeArea()
-                cropHeader
             }
         }
         .background(Color.black.ignoresSafeArea())
@@ -211,29 +211,31 @@ struct PersonPhotoCropView: View {
         }
     }
 
-    private var cropHeader: some View {
-        VStack {
-            HStack {
-                cropButton(symbol: "xmark", label: "Cancel", identifier: "crop.cancel", prominent: false) {
-                    onCancel()
-                }
-                Spacer()
-                cropButton(symbol: "checkmark", label: "Use photo", identifier: "crop.use", prominent: true) {
-                    guard
-                        let data = PersonPhotoImageProcessor.jpegData(
-                            for: image,
-                            layout: layout,
-                            zoom: zoom,
-                            offset: offset
-                        )
-                    else { return }
-                    onConfirm(data)
-                }
+    /// Cancel and confirm sit in the bottom corners above the Home indicator, like the system's
+    /// photo crop. A regular iPhone can report zero safe-area insets while the status bar is
+    /// hidden, so the bottom gap never drops below the Home indicator's height.
+    private func cropControls(size: CGSize, safeRect: CGRect) -> some View {
+        let bottomGap = max(size.height - safeRect.maxY, 34) + 12
+        return HStack {
+            cropButton(symbol: "xmark", label: "Cancel", identifier: "crop.cancel", prominent: false) {
+                onCancel()
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
             Spacer()
+            cropButton(symbol: "checkmark", label: "Use photo", identifier: "crop.use", prominent: true) {
+                guard
+                    let data = PersonPhotoImageProcessor.jpegData(
+                        for: image,
+                        layout: layout,
+                        zoom: zoom,
+                        offset: offset
+                    )
+                else { return }
+                onConfirm(data)
+            }
         }
+        .padding(.horizontal, 24)
+        .frame(width: safeRect.width)
+        .position(x: safeRect.midX, y: size.height - bottomGap - 24)
     }
 
     private func cropButton(
