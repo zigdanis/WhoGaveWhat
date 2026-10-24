@@ -1,0 +1,68 @@
+name: Simulator app
+
+# A Release build for the iOS Simulator. Linux agents install it on an Expo cloud simulator
+# via scripts/simulator-app.sh. It lives outside Tests so it never gates merges or TestFlight.
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '*.md'
+      - '*.html'
+      - '.agents/**'
+      - '.claude/**'
+      - 'docs/**'
+      - 'icon-worker/**'
+      - '.github/workflows/icon-worker.yml'
+  pull_request:
+    paths-ignore:
+      - '*.md'
+      - '*.html'
+      - '.agents/**'
+      - '.claude/**'
+      - 'docs/**'
+      - 'icon-worker/**'
+      - '.github/workflows/icon-worker.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: simulator-app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Simulator app
+    runs-on: xcode-27
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Release app for the simulator
+        run: |
+          xcodebuild build \
+            -project WhoGaveWhat.xcodeproj \
+            -scheme WhoGaveWhat \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/simulator-app" \
+            CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_IDENTITY=-
+      - name: Package app
+        # tar keeps the executable bits that upload-artifact drops; COPYFILE_DISABLE keeps out AppleDouble files.
+        run: |
+          mkdir "$RUNNER_TEMP/simulator-app-package"
+          COPYFILE_DISABLE=1 tar -C "$RUNNER_TEMP/simulator-app/Build/Products/Release-iphonesimulator" \
+            -czf "$RUNNER_TEMP/simulator-app-package/WhoGaveWhat-simulator.tar.gz" WhoGaveWhat.app
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-app
+          path: ${{ runner.temp }}/simulator-app-package/WhoGaveWhat-simulator.tar.gz
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 14
