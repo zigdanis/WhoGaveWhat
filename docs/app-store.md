@@ -61,6 +61,11 @@ App Store Connect rejects review detail updates without the contact.
 
 **Export compliance:** already declared in the build (`ITSAppUsesNonExemptEncryption = NO`).
 
+**Header and Search Results:** the product page header (3840 × 1646) and search results
+(3840 × 2560) images live in [`store-assets/creative`](store-assets/creative/README.md) with their
+sources and prompts. Upload them by hand on the version page for each language; fastlane does not
+support these placements.
+
 ## Sample portraits
 
 The faces of the sample people in the screenshots are fictional portraits generated with Codex's
