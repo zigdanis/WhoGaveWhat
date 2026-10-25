@@ -106,7 +106,7 @@ struct AppDiscoveryTests {
         #expect(router.tab == tab)
         #expect(router.giftSheet == .edit(giftID: "g1"))
 
-        router.presentNewGift()
+        router.presentNewGift(from: .floatingButton)
         #expect(composition.continueAppDiscovery(launcherActivity()))
         #expect(router.giftSheet == .create)
     }
@@ -114,7 +114,7 @@ struct AppDiscoveryTests {
     @Test func rejectsUnrelatedMissingAndMalformedActivitiesWithoutChangingRoute() throws {
         let composition = try makeTestComposition()
         composition.router.selectTab(.people)
-        composition.router.presentNewGift()
+        composition.router.presentNewGift(from: .floatingButton)
         let unrelated = NSUserActivity(activityType: "pro.ziganshin.WhoGaveWhat.unrelated")
         unrelated.userInfo = [CSSearchableItemActivityIdentifier: AppDiscoveryIndexer.itemIdentifier]
         let missing = NSUserActivity(activityType: CSSearchableItemActionType)

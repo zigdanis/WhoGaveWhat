@@ -7,7 +7,11 @@ struct WhoGaveWhatApp: App {
     @State private var composition: AppComposition
 
     init() {
-        _composition = State(initialValue: AppComposition(store: Self.launchStore))
+        let preferences = UserDefaultsPreferencesGateway()
+        // Monitoring starts before the store loads, so a failure there is already reported.
+        let analytics = Monitoring.makeAnalytics(configuration: .current(), isEnabled: preferences.analyticsEnabled)
+        _composition = State(
+            initialValue: AppComposition(store: Self.launchStore, preferences: preferences, analytics: analytics))
     }
 
     /// The persistent store, or in Debug builds the seeded in-memory one when a screenshot

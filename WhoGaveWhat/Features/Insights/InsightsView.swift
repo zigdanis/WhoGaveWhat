@@ -49,7 +49,11 @@ struct InsightsView: View {
     private var yearBinding: Binding<Int> {
         Binding(
             get: { year },
-            set: { selectedYear = $0 })
+            set: { chosen in
+                selectedYear = chosen
+                let currentYear = Calendar.current.component(.year, from: Date())
+                composition.analytics.track(.insightsYearChanged(isCurrentYear: chosen == currentYear))
+            })
     }
 
     private func person(id: String?) -> Person? {

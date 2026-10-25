@@ -6,6 +6,11 @@
 	objectVersion = 70;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		4A0000000000000000002001 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 4A0000000000000000002000 /* PostHog */; };
+		4A0000000000000000002003 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 4A0000000000000000002002 /* Sentry */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		2A0000000000000000001006 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -43,6 +48,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4A0000000000000000002001 /* PostHog in Frameworks */,
+				4A0000000000000000002003 /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -102,6 +109,10 @@
 				1A0000000000000000000F00 /* WhoGaveWhat */,
 			);
 			name = WhoGaveWhat;
+			packageProductDependencies = (
+				4A0000000000000000002000 /* PostHog */,
+				4A0000000000000000002002 /* Sentry */,
+			);
 			productName = WhoGaveWhat;
 			productReference = 1A0000000000000000000500 /* WhoGaveWhat.app */;
 			productType = "com.apple.product-type.application";
@@ -181,6 +192,10 @@
 				Base,
 			);
 			mainGroup = 1A0000000000000000000200;
+			packageReferences = (
+				4A0000000000000000001000 /* XCRemoteSwiftPackageReference "posthog-ios" */,
+				4A0000000000000000001001 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+			);
 			productRefGroup = 1A0000000000000000000300 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -319,8 +334,11 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
+				POSTHOG_API_KEY = "";
+				POSTHOG_HOST = "";
 				PRODUCT_BUNDLE_IDENTIFIER = pro.ziganshin.WhoGaveWhat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SENTRY_DSN = "";
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -349,8 +367,11 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
+				POSTHOG_API_KEY = "";
+				POSTHOG_HOST = "";
 				PRODUCT_BUNDLE_IDENTIFIER = pro.ziganshin.WhoGaveWhat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SENTRY_DSN = "";
 				PROVISIONING_PROFILE_SPECIFIER = "match AppStore pro.ziganshin.WhoGaveWhat";
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -465,6 +486,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4A0000000000000000001000 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.92.4;
+			};
+		};
+		4A0000000000000000001001 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.31.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4A0000000000000000002000 /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4A0000000000000000001000 /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
+		};
+		4A0000000000000000002002 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4A0000000000000000001001 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1A0000000000000000000100 /* Project object */;
 }

@@ -137,6 +137,27 @@ jobs:
             notes) bundle exec fastlane ios release_notes ;;
             deploy|resume) bundle exec fastlane ios app_store ;;
           esac
+      - name: Upload debug symbols to Sentry
+        if: success() && (env.OPERATION == 'deploy' || env.OPERATION == 'resume')
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+          SENTRY_CLI_VERSION: '3.8.2'
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ] || [ -z "$SENTRY_ORG" ] || [ -z "$SENTRY_PROJECT" ]; then
+            echo 'Sentry symbol upload skipped: set the SENTRY_AUTH_TOKEN secret and SENTRY_ORG, SENTRY_PROJECT variables'
+            exit 0
+          fi
+          dsyms="$RELEASE_TEMP/WhoGaveWhat.xcarchive/dSYMs"
+          if [ ! -d "$dsyms" ]; then
+            echo 'Sentry symbol upload skipped: this run did not archive a new build'
+            exit 0
+          fi
+          install_dir="$RUNNER_TEMP/sentry-cli"
+          mkdir -p "$install_dir"
+          curl -sL https://sentry.io/get-cli/ | INSTALL_DIR="$install_dir" INSTALL_PATH="$install_dir/sentry-cli" bash
+          "$install_dir/sentry-cli" debug-files upload --wait "$dsyms"
       - name: Keep nonsecret release receipt
         if: always() && env.RELEASE_TEMP != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

@@ -66,7 +66,8 @@ struct RootAppView: View {
     private var giftSheetBinding: Binding<GiftSheetRoute?> {
         Binding(
             get: { composition.router.giftSheet },
-            set: { composition.router.giftSheet = $0 })
+            // Only a dismissal arrives here; presenting goes through the router's tracked methods.
+            set: { if $0 == nil { composition.router.dismissGiftSheet() } })
     }
 }
 
@@ -94,7 +95,7 @@ struct AddGiftFAB: View {
 
     var body: some View {
         FloatingActionButton(title: "Add a gift", systemImage: "plus") {
-            router.presentNewGift()
+            router.presentNewGift(from: .floatingButton)
         }
         .accessibilityLabel("Add a gift")
     }

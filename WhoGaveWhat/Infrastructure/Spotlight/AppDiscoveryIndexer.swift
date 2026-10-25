@@ -17,11 +17,12 @@ final class AppDiscoveryIndexer {
     )
 
     private let indexItems: @MainActor ([CSSearchableItem]) async throws -> Void
+    private let analytics: AnalyticsGateway
     private var isIndexing = false
 
-    convenience init() {
+    convenience init(analytics: AnalyticsGateway = NoopAnalyticsGateway()) {
         let index = CSSearchableIndex(name: Self.indexName)
-        self.init { items in
+        self.init(analytics: analytics) { items in
             try await index.indexSearchableItems(items)
             #if DEBUG
                 if ProcessInfo.processInfo.environment["KS_SPOTLIGHT_DIAGNOSTICS"] == "1" {
@@ -31,7 +32,11 @@ final class AppDiscoveryIndexer {
         }
     }
 
-    init(indexItems: @escaping @MainActor ([CSSearchableItem]) async throws -> Void) {
+    init(
+        analytics: AnalyticsGateway = NoopAnalyticsGateway(),
+        indexItems: @escaping @MainActor ([CSSearchableItem]) async throws -> Void
+    ) {
+        self.analytics = analytics
         self.indexItems = indexItems
     }
 
@@ -137,6 +142,7 @@ final class AppDiscoveryIndexer {
             Self.logger.notice("App launcher index update completed: title=\(title, privacy: .public)")
         } catch {
             Self.logger.error("Unable to index app launcher: \(error.localizedDescription, privacy: .public)")
+            analytics.report(AnalyticsFailure(operation: "spotlight_index", error: error))
         }
     }
 

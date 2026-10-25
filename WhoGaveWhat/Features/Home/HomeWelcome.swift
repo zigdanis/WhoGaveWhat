@@ -51,7 +51,7 @@ private struct WelcomeCard: View {
                 IconMark(size: isCompact ? 48 : 56)
                     .accessibilityHidden(true)
                 Button {
-                    router.presentNewGift()
+                    router.presentNewGift(from: .welcomeCard)
                 } label: {
                     Label("Add a gift", systemImage: "plus")
                         .font(Font.app(17, .semibold))

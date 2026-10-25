@@ -37,7 +37,7 @@ struct HomeView: View {
                             }
                             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
                             .swipeToDelete(title: Text("Delete this gift?"), allowsFullSwipe: true) {
-                                composition.deleteGift(id: gift.id)
+                                composition.deleteGift(id: gift.id, source: .home)
                             }
                         }
                     } header: {

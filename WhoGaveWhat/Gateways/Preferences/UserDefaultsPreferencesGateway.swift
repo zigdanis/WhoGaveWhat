@@ -11,6 +11,7 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
     private static let cloudIconConsentKey = "cloudIconConsent"
     private let installIDKey = "cloudIconInstallID"
     private let recentInsightsPicksKeyPrefix = "insightsRecentPicks."
+    private let analyticsEnabledKey = "analyticsEnabled"
     private(set) var cloudIconConsent: CloudIconConsent
 
     init(defaults: UserDefaults = .standard) {
@@ -35,6 +36,14 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
         }
         defaults.set(consent.rawValue, forKey: Self.cloudIconConsentKey)
         cloudIconConsent = consent
+    }
+
+    var analyticsEnabled: Bool {
+        defaults.object(forKey: analyticsEnabledKey) as? Bool ?? true
+    }
+
+    func setAnalyticsEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: analyticsEnabledKey)
     }
 
     var currencyCode: String {

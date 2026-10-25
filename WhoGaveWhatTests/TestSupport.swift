@@ -10,6 +10,10 @@ final class TestPreferencesGateway: PreferencesGateway {
     var selfPersonID: String?
     var cloudIconConsent: CloudIconConsent = .undecided
     var installID = UUID().uuidString
+    var analyticsEnabled = true
+    func setAnalyticsEnabled(_ enabled: Bool) {
+        analyticsEnabled = enabled
+    }
     func setCloudIconConsent(_ consent: CloudIconConsent) {
         if cloudIconConsent != consent, consent == .declined { installID = UUID().uuidString }
         cloudIconConsent = consent
@@ -27,6 +31,22 @@ final class TestPreferencesGateway: PreferencesGateway {
     func setRecentInsightsPicks(_ ids: [String], for slot: InsightsPickerSlot) {
         recentInsightsPicks[slot] = ids
     }
+}
+
+/// Remembers every analytics call for assertions.
+@MainActor
+final class RecordingAnalyticsGateway: AnalyticsGateway {
+    var events: [AnalyticsEvent] = []
+    var failures: [AnalyticsFailure] = []
+    var contexts: [AnalyticsContext] = []
+    var enabledChanges: [Bool] = []
+
+    func track(_ event: AnalyticsEvent) { events.append(event) }
+    func report(_ failure: AnalyticsFailure) { failures.append(failure) }
+    func update(_ context: AnalyticsContext) { contexts.append(context) }
+    func setEnabled(_ enabled: Bool) { enabledChanges.append(enabled) }
+
+    var eventNames: [String] { events.map(\.name) }
 }
 
 @MainActor
@@ -52,14 +72,16 @@ final class TestGiftGateway: GiftGateway {
 
 @MainActor
 func makeTestComposition(
-    selfPersonID: String? = SwiftDataStore.seedSelfPersonID
+    selfPersonID: String? = SwiftDataStore.seedSelfPersonID,
+    analytics: AnalyticsGateway = NoopAnalyticsGateway()
 ) throws -> AppComposition {
     let preferences = TestPreferencesGateway()
     preferences.selfPersonID = selfPersonID
     return AppComposition(
         store: try SwiftDataStore(inMemory: true, seed: true),
         preferences: preferences,
-        intelligence: TestIntelligenceGateway()
+        intelligence: TestIntelligenceGateway(),
+        analytics: analytics
     )
 }
 

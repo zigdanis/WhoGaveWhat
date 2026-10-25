@@ -23,7 +23,9 @@ the manual `App Store metadata` workflow uploads `fastlane/metadata` and, when g
 - **Minimum iOS:** 26.0 — built with **Xcode 27.1** against the iOS 27.1 SDK, native **Liquid Glass** throughout.
   The iOS 27.1 SDK lets the app fill both iPhone Duo displays. The iPhone Duo Simulator needs the iOS 27.1 runtime
   (`xcodebuild -downloadPlatform iOS`, or `scripts/install-simulator-runtime.sh 'iOS 27.1' 'iPhone Duo'`).
-- **Dependencies:** none yet (added via **Swift Package Manager** if/when needed)
+- **Dependencies:** [PostHog iOS](https://github.com/PostHog/posthog-ios) (product analytics) and
+  [Sentry Cocoa](https://github.com/getsentry/sentry-cocoa) (crash reporting) via **Swift Package Manager**;
+  both stay silent until their keys are set, see [docs/analytics.md](docs/analytics.md).
 - **Bundle id:** `pro.ziganshin.WhoGaveWhat`
 
 ## License
