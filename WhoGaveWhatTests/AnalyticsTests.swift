@@ -325,6 +325,35 @@ struct AddGiftStateAnalyticsTests {
     }
 }
 
+@MainActor
+struct CrashReportSanitizingTests {
+    @Test func reportedErrorsKeepOnlyDomainCodeAndType() {
+        let error = SwiftDataPersistenceError.missingPerson(endpoint: .giver, id: "Aunt Maria")
+        let sanitized = SentryCrashReportingGateway.sanitized(error)
+
+        #expect(sanitized.domain == (error as NSError).domain)
+        #expect(sanitized.code == (error as NSError).code)
+        #expect(Set(sanitized.userInfo.keys) == [NSLocalizedDescriptionKey])
+        #expect(sanitized.localizedDescription.contains("SwiftDataPersistenceError"))
+        #expect(!sanitized.localizedDescription.contains("Maria"))
+    }
+
+    @Test func cloudIconConsentFromTheSheetGoesThroughTheComposition() throws {
+        let analytics = RecordingAnalyticsGateway()
+        let composition = try makeTestComposition(analytics: analytics)
+        let state = AddGiftState(
+            route: .create, data: composition.data, suggestGift: composition.suggestGift,
+            preferences: composition.preferences, analytics: analytics,
+            applyCloudIconConsent: { composition.setCloudIconConsent($0, source: .addGift) })
+
+        state.allowCloudIcons()
+
+        #expect(composition.cloudIconConsent == .allowed)
+        #expect(analytics.events == [.cloudIconsConsentChanged(allowed: true, source: .addGift)])
+        #expect(analytics.contexts.last?.cloudIcons == "allowed")
+    }
+}
+
 struct MonitoringConfigurationTests {
     @Test func readsKeysAndTreatsEmptyValuesAsAbsent() {
         let configuration = MonitoringConfiguration.current(

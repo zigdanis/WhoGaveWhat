@@ -50,7 +50,8 @@ is not eligible to publish on visionOS; see ITMS-90984).
 - **User Content → Other User Content** (the typed gift name): App Functionality; not linked to
   the user; not used for tracking.
 - **Identifiers → Device ID** (the random rate-limit ID, recreated whenever the feature is turned
-  off, and the PostHog anonymous ID): App Functionality; not linked to the user; not used for tracking.
+  off, and the PostHog anonymous ID): App Functionality and Analytics; not linked to the user; not
+  used for tracking.
 - **Usage Data → Product Interaction** (screens opened, pickers used, counts): Analytics; not
   linked to the user; not used for tracking.
 - **Diagnostics → Crash Data, Performance Data, Other Diagnostic Data** (Sentry crash and hang

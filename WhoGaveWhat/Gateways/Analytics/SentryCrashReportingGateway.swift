@@ -31,7 +31,9 @@ final class SentryCrashReportingGateway: AnalyticsGateway {
     func track(_ event: AnalyticsEvent) {
         let crumb = Breadcrumb(level: .info, category: "product")
         crumb.message = event.name
-        crumb.data = event.properties.anyValues
+        for (key, value) in event.properties {
+            crumb.setData(value: value.anyValue, key: key)
+        }
         SentrySDK.addBreadcrumb(crumb)
     }
 
@@ -41,7 +43,7 @@ final class SentryCrashReportingGateway: AnalyticsGateway {
             if !failure.details.isEmpty { scope.setExtras(failure.details.anyValues) }
         }
         if let error = failure.error {
-            SentrySDK.capture(error: error, block: configure)
+            SentrySDK.capture(error: Self.sanitized(error), block: configure)
         } else {
             SentrySDK.capture(message: "\(failure.operation): \(failure.message ?? "failed")", block: configure)
         }
@@ -50,6 +52,16 @@ final class SentryCrashReportingGateway: AnalyticsGateway {
     func update(_ context: AnalyticsContext) {
         self.context = context
         apply(context)
+    }
+
+    /// Sentry copies an error's whole `userInfo` into the report, and a SwiftData or Foundation
+    /// error can carry the failing record there, with a person's name or a gift title. Only the
+    /// domain, code and Swift type travel; they are what groups and explains the failure.
+    static func sanitized(_ error: Error) -> NSError {
+        let nsError = error as NSError
+        return NSError(
+            domain: nsError.domain, code: nsError.code,
+            userInfo: [NSLocalizedDescriptionKey: "\(nsError.domain) \(nsError.code) (\(type(of: error)))"])
     }
 
     private func apply(_ context: AnalyticsContext) {

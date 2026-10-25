@@ -18,7 +18,7 @@ struct InsightsView: View {
                 currencyCode: composition.currencyCode,
                 years: useCase.availableYears(gifts: data.gifts),
                 selectedYear: yearBinding,
-                onMarkSelf: selfPerson == nil ? { composition.router.selectTab(.people) } : nil,
+                onMarkSelf: selfPerson == nil ? { composition.router.tab = .people } : nil,
                 owner: selfPerson)
             balancesSection
             compareSection

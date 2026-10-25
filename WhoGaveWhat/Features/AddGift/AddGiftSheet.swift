@@ -21,7 +21,8 @@ struct AddGiftSheet: View {
                 data: composition.data,
                 suggestGift: composition.suggestGift,
                 preferences: composition.preferences,
-                analytics: composition.analytics
+                analytics: composition.analytics,
+                applyCloudIconConsent: { composition.setCloudIconConsent($0, source: .addGift) }
             ))
         let startsExpanded = route.editingGiftID != nil
         _showsDetails = State(initialValue: startsExpanded)

@@ -70,6 +70,11 @@ Debug and Release, exposed through `Info.plist`:
 Set them in `WhoGaveWhat.xcodeproj/project.pbxproj` (or Xcode → target → Build Settings → User-Defined)
 and commit; the TestFlight lane builds from the committed project.
 
+The packages are pinned to "up to next major" ranges. The first build on a Mac writes
+`WhoGaveWhat.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved`; commit it (it is
+ignored by the `Package.resolved` rule in `.gitignore`, so add it with `git add -f`) so release builds
+resolve the same versions.
+
 ## Crash symbols
 
 The TestFlight workflow uploads the archive's dSYMs after a successful `deploy` when these exist in
@@ -79,9 +84,11 @@ the `testflight` environment:
   `project:write` scopes;
 - variables `SENTRY_ORG` and `SENTRY_PROJECT`.
 
-Without them the step prints a skip notice and the release continues; crashes then show
+The step downloads the pinned `sentry-cli` release binary and checks its SHA-256 before running it.
+Without the secret and variables it prints a skip notice and the release continues; crashes then show
 unsymbolicated frames until the symbols are uploaded by hand with
-`sentry-cli debug-files upload PATH/dSYMs`.
+`sentry-cli debug-files upload PATH/dSYMs`. Release builds produce dSYMs
+(`DEBUG_INFORMATION_FORMAT = dwarf-with-dsym`).
 
 ## App Store privacy
 

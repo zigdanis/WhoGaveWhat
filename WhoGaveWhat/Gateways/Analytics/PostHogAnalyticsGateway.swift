@@ -7,7 +7,7 @@ import PostHog
 @MainActor
 final class PostHogAnalyticsGateway: AnalyticsGateway {
     init(apiKey: String, host: String, environment: String, enabled: Bool) {
-        let config = PostHogConfig(apiKey: apiKey, host: host)
+        let config = PostHogConfig(projectToken: apiKey, host: host)
         config.captureApplicationLifecycleEvents = true
         // SwiftUI screens are reported as explicit events instead of view-controller names.
         config.captureScreenViews = false
