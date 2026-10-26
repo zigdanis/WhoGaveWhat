@@ -20,7 +20,9 @@ struct AddGiftSheet: View {
                 route: route,
                 data: composition.data,
                 suggestGift: composition.suggestGift,
-                preferences: composition.preferences
+                preferences: composition.preferences,
+                analytics: composition.analytics,
+                applyCloudIconConsent: { composition.setCloudIconConsent($0, source: .addGift) }
             ))
         let startsExpanded = route.editingGiftID != nil
         _showsDetails = State(initialValue: startsExpanded)
@@ -43,7 +45,7 @@ struct AddGiftSheet: View {
         IntrinsicModalScaffold(
             title: state.editingGiftID == nil ? "Add a gift" : "Edit gift",
             leadingActionTitle: "Cancel",
-            onLeadingAction: composition.router.dismissGiftSheet,
+            onLeadingAction: { composition.router.dismissGiftSheet() },
             titleAccessibilityIdentifier: "add-gift.title"
         ) {
             ScrollView {
@@ -624,7 +626,7 @@ private struct AddGiftPickerSheet: View {
                 counterpartID: state.draft.toID,
                 onProvisionalSelection: state.previewFrom,
                 onSelection: state.selectFrom,
-                onCreatePerson: { composition.createPerson(name: $0) }
+                onCreatePerson: { composition.createPerson(name: $0, source: .giftPicker) }
             )
         case .to:
             PersonPickerContent(
@@ -633,7 +635,7 @@ private struct AddGiftPickerSheet: View {
                 counterpartID: state.draft.fromID,
                 onProvisionalSelection: state.previewTo,
                 onSelection: state.selectTo,
-                onCreatePerson: { composition.createPerson(name: $0) }
+                onCreatePerson: { composition.createPerson(name: $0, source: .giftPicker) }
             )
         case .occasion:
             occasionPicker
@@ -653,6 +655,7 @@ private struct AddGiftPickerSheet: View {
                 // Manual-entry first — add a new option from the top of the sheet.
                 addRow(placeholder: "Add occasion", accessibilityPrefix: "add-gift.occasion") { occasion in
                     composition.data.addOccasion(occasion)
+                    composition.analytics.track(.occasionAdded)
                     state.selectOccasion(occasion)
                 }
                 Card {

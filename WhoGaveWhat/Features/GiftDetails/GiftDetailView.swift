@@ -40,6 +40,7 @@ struct GiftDetailView: View {
         }
         .readableColumn()
         .scrollIndicators(.hidden)
+        .onAppear { composition.analytics.track(.giftDetailViewed) }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -162,7 +163,7 @@ struct GiftDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Delete", role: .destructive) {
-                composition.deleteGift(id: giftId)
+                composition.deleteGift(id: giftId, source: .giftDetail)
                 dismiss()
             }
             Button("Cancel", role: .cancel) {}

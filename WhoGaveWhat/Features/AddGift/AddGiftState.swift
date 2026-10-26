@@ -12,7 +12,11 @@ final class AddGiftState {
     private let suggestGift: SuggestGiftUseCase
     private let debounce: Duration
     private let preferences: PreferencesGateway?
+    private let analytics: AnalyticsGateway
+    /// Applies a cloud icon choice through the composition root, which records and publishes it.
+    private let applyCloudIconConsent: ((CloudIconConsent) -> Void)?
     private var hasEditedName = false
+    private var hasEditedPrice = false
     private(set) var suggestionTask: Task<Void, Never>?
     /// The automatically chosen emoji a gift being edited already has; kept until a rename yields a better guess.
     private var storedEmoji: String?
@@ -22,11 +26,15 @@ final class AddGiftState {
         data: AppData,
         suggestGift: SuggestGiftUseCase,
         preferences: PreferencesGateway? = nil,
-        debounce: Duration = .milliseconds(500)
+        debounce: Duration = .milliseconds(500),
+        analytics: AnalyticsGateway = NoopAnalyticsGateway(),
+        applyCloudIconConsent: ((CloudIconConsent) -> Void)? = nil
     ) {
         self.suggestGift = suggestGift
         self.preferences = preferences
         self.debounce = debounce
+        self.analytics = analytics
+        self.applyCloudIconConsent = applyCloudIconConsent
         editingGiftID = route.editingGiftID
 
         if let giftID = route.editingGiftID,
@@ -84,14 +92,23 @@ final class AddGiftState {
     }
 
     func allowCloudIcons() {
-        preferences?.setCloudIconConsent(.allowed)
+        setCloudIconConsent(.allowed)
         scheduleSuggestion(after: .zero)
     }
 
     func declineCloudIcons() {
-        preferences?.setCloudIconConsent(.declined)
+        setCloudIconConsent(.declined)
         // Any in-flight inference belongs to the old routing choice.
         scheduleSuggestion(after: debounce)
+    }
+
+    private func setCloudIconConsent(_ consent: CloudIconConsent) {
+        if let applyCloudIconConsent {
+            applyCloudIconConsent(consent)
+        } else {
+            preferences?.setCloudIconConsent(consent)
+            analytics.track(.cloudIconsConsentChanged(allowed: consent == .allowed, source: .addGift))
+        }
     }
 
     var name: String {
@@ -113,6 +130,11 @@ final class AddGiftState {
         }
         set {
             let digits = newValue.filter(\.isNumber)
+            // The first edit in this sheet says whether the user overrode an estimate or a stored value.
+            if !hasEditedPrice {
+                hasEditedPrice = true
+                analytics.track(.giftPriceEdited(hadEstimate: showsEstimate))
+            }
             draft.value = digits.isEmpty ? nil : Int(digits)
             draft.valueTouched = true
             // With a hand-picked emoji too, nothing an answer brings could still be used.
@@ -167,8 +189,17 @@ final class AddGiftState {
             guard !isStale(trimmed) else { return }
             // The spinner belongs to the icon, so it stays hidden over a hand-picked emoji.
             aiLoading = draft.emoji == nil
+            let provider: SuggestionProvider = preferences?.cloudIconConsent == .allowed ? .cloud : .onDevice
+            let started = Date()
             let result = await suggestGift.intelligentSuggestion(for: trimmed, currency: currency)
+            // A request the user typed past was cancelled; only answers that arrive are measured.
             guard !isStale(trimmed) else { return }
+            analytics.track(
+                .giftSuggestionCompleted(
+                    provider: provider,
+                    hasIcon: result?.emoji != nil,
+                    hasPrice: result?.value != nil,
+                    latencyMilliseconds: Int(Date().timeIntervalSince(started) * 1_000)))
             aiLoading = false
             if let emoji = result?.emoji, draft.emoji == nil { draft.aiEmoji = emoji }
             // The user's own value always wins; an answer without a price clears an earlier estimate.
@@ -188,7 +219,10 @@ final class AddGiftState {
             || draft.name.trimmingCharacters(in: .whitespacesAndNewlines) != trimmedName
     }
 
-    func open(_ picker: AddGiftPicker) { self.picker = picker }
+    func open(_ picker: AddGiftPicker) {
+        self.picker = picker
+        analytics.track(.giftPickerOpened(picker.analyticsKind))
+    }
     func closePicker() { picker = nil }
 
     func selectFrom(_ id: String) {
@@ -205,7 +239,12 @@ final class AddGiftState {
         picker = nil
     }
     func selectEmoji(_ emoji: String) {
+        pickEmoji(emoji, custom: false)
+    }
+
+    private func pickEmoji(_ emoji: String, custom: Bool) {
         draft.emoji = emoji
+        analytics.track(.giftIconPicked(custom: custom))
         // An answer still on its way can bring the price; it never replaces the picked emoji.
         if draft.valueTouched {
             suggestionTask?.cancel()
@@ -219,19 +258,32 @@ final class AddGiftState {
     func useCustomEmoji(_ value: String) {
         let emoji = value.firstGrapheme
         guard !emoji.isEmpty else { return }
-        selectEmoji(emoji)
+        pickEmoji(emoji, custom: true)
     }
 
     func save(using composition: AppComposition) {
         guard input.canSave else { return }
-        composition.saveGift(input)
-        if editingGiftID == nil { composition.router.selectTab(.home) }
-        composition.router.dismissGiftSheet()
+        let saved = composition.saveGift(input)
+        // A programmatic switch, not a tab tap, so it sets the tab directly.
+        if saved, editingGiftID == nil { composition.router.tab = .home }
+        composition.router.dismissGiftSheet(outcome: saved ? .saved : .failed)
     }
 
     func cancel() {
         suggestionTask?.cancel()
         suggestionTask = nil
         aiLoading = false
+    }
+}
+
+extension AddGiftPicker {
+    var analyticsKind: GiftPickerKind {
+        switch self {
+        case .from: .giver
+        case .to: .recipient
+        case .occasion: .occasion
+        case .emoji: .icon
+        case .date: .date
+        }
     }
 }

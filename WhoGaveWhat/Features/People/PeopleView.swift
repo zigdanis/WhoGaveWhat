@@ -30,7 +30,7 @@ struct PeopleView: View {
                 showsPhoto: false,
                 onCancel: { isAddingPerson = false },
                 onSave: { name, _ in
-                    guard composition.createPerson(name: name) != nil else {
+                    guard composition.createPerson(name: name, source: .peopleTab) != nil else {
                         throw CocoaError(.validationMissingMandatoryProperty)
                     }
                     isAddingPerson = false
@@ -63,7 +63,7 @@ struct PeopleView: View {
             allowsFullSwipe: false,
             isEnabled: composition.deletePersonUseCase.canDelete(id: person.id)
         ) {
-            composition.deletePerson(id: person.id)
+            composition.deletePerson(id: person.id, source: .peopleList)
         }
     }
 

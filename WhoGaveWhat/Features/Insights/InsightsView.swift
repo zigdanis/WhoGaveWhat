@@ -18,7 +18,7 @@ struct InsightsView: View {
                 currencyCode: composition.currencyCode,
                 years: useCase.availableYears(gifts: data.gifts),
                 selectedYear: yearBinding,
-                onMarkSelf: selfPerson == nil ? { composition.router.selectTab(.people) } : nil,
+                onMarkSelf: selfPerson == nil ? { composition.router.tab = .people } : nil,
                 owner: selfPerson)
             balancesSection
             compareSection
@@ -49,7 +49,11 @@ struct InsightsView: View {
     private var yearBinding: Binding<Int> {
         Binding(
             get: { year },
-            set: { selectedYear = $0 })
+            set: { chosen in
+                selectedYear = chosen
+                let currentYear = Calendar.current.component(.year, from: Date())
+                composition.analytics.track(.insightsYearChanged(isCurrentYear: chosen == currentYear))
+            })
     }
 
     private func person(id: String?) -> Person? {

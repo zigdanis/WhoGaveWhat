@@ -13,6 +13,7 @@ struct PersonEditorSheet: View {
 
     /// On a short window the hero photo would push Delete under the keyboard, so the photo card shrinks.
     @Environment(\.compactVerticalSpace) private var isCompact
+    @Environment(\.analytics) private var analytics
     @State private var name: String
     @State private var imageData: Data?
     @State private var selectedPhotoItem: PhotosPickerItem?
@@ -185,7 +186,9 @@ struct PersonEditorSheet: View {
             } catch is CancellationError {
                 return
             } catch {
-                guard photoSessionID == sessionID, selectedPhotoItem == item else { return }
+                // A photo removed or replaced mid-load is not a failure; only the live session reports.
+                guard !Task.isCancelled, photoSessionID == sessionID, selectedPhotoItem == item else { return }
+                analytics.report(AnalyticsFailure(operation: "load_person_photo", error: error))
                 errorMessage = NSLocalizedString("Could not load that photo.", comment: "")
                 isLoadingPhoto = false
                 selectedPhotoItem = nil

@@ -17,6 +17,11 @@ final class FoundationModelsGiftIntelligenceGateway: GiftIntelligenceGateway {
     /// Each request consumes it, so every prompt starts from a clean transcript
     /// (a long-lived session would grow its context with every keystroke-driven call).
     private var warmSession: Any?
+    private let analytics: AnalyticsGateway
+
+    init(analytics: AnalyticsGateway = NoopAnalyticsGateway()) {
+        self.analytics = analytics
+    }
 
     /// Whether the on-device model is usable right now. False on the simulator,
     /// on devices without Apple Intelligence, when the user hasn't enabled it, or
@@ -52,7 +57,14 @@ final class FoundationModelsGiftIntelligenceGateway: GiftIntelligenceGateway {
                 let session = (warmSession as? LanguageModelSession) ?? Self.makeSession()
                 warmSession = nil
                 defer { prewarm() }
-                return try? await respond(to: trimmed, currency: currency, using: session)
+                do {
+                    return try await respond(to: trimmed, currency: currency, using: session)
+                } catch is CancellationError {
+                    return nil
+                } catch {
+                    analytics.report(AnalyticsFailure(operation: "on_device_inference", error: error))
+                    return nil
+                }
             }
         #endif
         return nil

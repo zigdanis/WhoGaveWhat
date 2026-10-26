@@ -31,6 +31,7 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
     private let baseURL: URL
     private let transport: Transport
     private let now: @MainActor () -> Date
+    private let analytics: AnalyticsGateway
     private var backoffUntil = Date.distantPast
     private var cache: [String: CacheEntry] = [:]
     private var cacheOrder: [String] = []
@@ -40,11 +41,13 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
         preferences: PreferencesGateway,
         endpoint: URL = CloudGiftIconGateway.endpoint,
         now: @escaping @MainActor () -> Date = { Date() },
-        transport: Transport? = nil
+        transport: Transport? = nil,
+        analytics: AnalyticsGateway = NoopAnalyticsGateway()
     ) {
         self.preferences = preferences
         baseURL = endpoint
         self.now = now
+        self.analytics = analytics
         if let transport {
             self.transport = transport
         } else {
@@ -102,7 +105,13 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
                 backoffUntil = now().addingTimeInterval(min(max(minimum, retryAfter), 86_400))
                 return nil
             }
-            guard response.statusCode == 200 else { return nil }
+            guard response.statusCode == 200 else {
+                analytics.report(
+                    AnalyticsFailure(
+                        operation: "cloud_icon_request", message: "HTTP \(response.statusCode)",
+                        details: ["status": .int(response.statusCode)]))
+                return nil
+            }
             let decoded = try JSONDecoder().decode(IconResponse.self, from: data)
             // The server applies the confidence thresholds and returns no emoji or price below them.
             // The price is not snapped: for money it can be an amount written in the name.
@@ -115,7 +124,14 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
                 cache.removeValue(forKey: cacheOrder.removeFirst())
             }
             return result
+        } catch let error as DecodingError {
+            analytics.report(AnalyticsFailure(operation: "cloud_icon_decode", error: error))
+            return nil
         } catch {
+            // Being offline or cancelled is ordinary; anything else is worth a look.
+            if !(error is URLError || error is CancellationError) {
+                analytics.report(AnalyticsFailure(operation: "cloud_icon_request", error: error))
+            }
             return nil
         }
     }

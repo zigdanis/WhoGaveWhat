@@ -183,10 +183,10 @@ struct SelfPersonTests {
 
     @Test func deletingTheViewpointPersonClearsIt() throws {
         let composition = try makeTestComposition()
-        composition.deletePerson(id: "marina")
+        composition.deletePerson(id: "marina", source: .peopleList)
         #expect(composition.data.selfPersonID == "anton")
 
-        composition.deletePerson(id: "anton")
+        composition.deletePerson(id: "anton", source: .peopleList)
         #expect(composition.data.selfPersonID == nil)
         #expect(composition.data.people.contains { $0.id == "anton" } == false)
     }
@@ -302,7 +302,7 @@ struct PersonPickerStateTests {
         let id = try #require(
             pickerState.createAndSelectPerson(
                 named: "Dana",
-                create: { composition.createPerson(name: $0) },
+                create: { composition.createPerson(name: $0, source: .giftPicker) },
                 select: giftState.selectFrom
             ))
 
@@ -327,7 +327,7 @@ struct PersonPickerStateTests {
         let id = try #require(
             pickerState.createAndSelectPerson(
                 named: "Dana",
-                create: { composition.createPerson(name: $0) },
+                create: { composition.createPerson(name: $0, source: .giftPicker) },
                 select: giftState.selectFrom
             ))
 
@@ -352,7 +352,7 @@ struct PersonPickerStateTests {
         let id = try #require(
             pickerState.createAndSelectPerson(
                 named: existingPerson.name.uppercased(),
-                create: { composition.createPerson(name: $0) },
+                create: { composition.createPerson(name: $0, source: .giftPicker) },
                 select: giftState.selectTo
             ))
 

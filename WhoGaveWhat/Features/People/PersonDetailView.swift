@@ -104,7 +104,7 @@ struct PersonDetailView: View {
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
                         .swipeToDelete(title: Text("Delete this gift?"), allowsFullSwipe: true) {
-                            composition.deleteGift(id: gift.id)
+                            composition.deleteGift(id: gift.id, source: .personDetail)
                         }
                     }
                 }
@@ -116,6 +116,7 @@ struct PersonDetailView: View {
         .background(Color.appBackground)
         .navigationTitle(name)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { composition.analytics.track(.personDetailViewed(isSelf: isSelf, giftsCount: gs.count)) }
         .toolbar {
             if composition.deletePersonUseCase.canDelete(id: entityId) {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -158,7 +159,7 @@ struct PersonDetailView: View {
                 renaming = false
             },
             onDelete: {
-                composition.deletePerson(id: entityId)
+                composition.deletePerson(id: entityId, source: .personEditor)
                 dismiss()
             }
         )

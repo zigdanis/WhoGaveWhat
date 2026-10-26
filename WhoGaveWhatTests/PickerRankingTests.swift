@@ -252,7 +252,7 @@ struct PickerRankingCompositionTests {
     @Test func deletingAGiftRemovesItsContribution() throws {
         let composition = try makeTestComposition()
 
-        composition.deleteGift(id: "g8")
+        composition.deleteGift(id: "g8", source: .home)
 
         #expect(
             composition.rankedPeople(for: .giver).map(\.id) == [

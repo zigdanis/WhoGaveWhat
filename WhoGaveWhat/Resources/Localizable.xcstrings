@@ -375,6 +375,23 @@
         }
       }
     },
+    "Anonymous usage statistics and crash reports help improve the app. They never include names, gift titles, amounts or photos." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anonymous usage statistics and crash reports help improve the app. They never include names, gift titles, amounts or photos."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Анонимная статистика использования и отчёты о сбоях помогают улучшать приложение. В них никогда нет имён, названий подарков, сумм и фотографий."
+          }
+        }
+      }
+    },
     "Anton" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -966,6 +983,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Детали"
+          }
+        }
+      }
+    },
+    "Diagnostics" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnostics"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Диагностика"
           }
         }
       }
@@ -2352,6 +2386,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Лицензии сторонних компонентов"
+          }
+        }
+      }
+    },
+    "Share usage and crash reports" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share usage and crash reports"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправлять статистику и отчёты о сбоях"
           }
         }
       }

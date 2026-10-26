@@ -5,6 +5,7 @@ struct SettingsView: View {
     static let privacyPolicyURL = URL(string: "https://ziganshin.pro/whogavewhat/privacy-policy")!
 
     let composition: AppComposition
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         ScrollView {
@@ -32,7 +33,7 @@ struct SettingsView: View {
                         "Cloud icon suggestions",
                         isOn: Binding(
                             get: { composition.cloudIconConsent == .allowed },
-                            set: { composition.setCloudIconConsent($0 ? .allowed : .declined) }
+                            set: { composition.setCloudIconConsent($0 ? .allowed : .declined, source: .settings) }
                         )
                     )
                     .font(Font.app(16, .regular))
@@ -49,10 +50,36 @@ struct SettingsView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 14).padding(.top, 8)
 
+                SectionHeader(text: "Diagnostics").padding(.top, 24).padding(.bottom, 7)
+                Card {
+                    Toggle(
+                        "Share usage and crash reports",
+                        isOn: Binding(
+                            get: { composition.isAnalyticsEnabled },
+                            set: { composition.setAnalyticsEnabled($0) }
+                        )
+                    )
+                    .font(Font.app(16, .regular))
+                    .foregroundStyle(Color.textPrimary)
+                    .tint(Color.brandFill)
+                    .padding(.horizontal, 14).padding(.vertical, 9)
+                    .accessibilityIdentifier("settings.analytics")
+                }
+                Text(
+                    "Anonymous usage statistics and crash reports help improve the app. They never include names, gift titles, amounts or photos."
+                )
+                .font(Font.app(13, .regular))
+                .foregroundStyle(Color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 14).padding(.top, 8)
+
                 SectionHeader(text: "About").padding(.top, 24).padding(.bottom, 7)
                 Card {
                     VStack(spacing: 0) {
-                        Link(destination: Self.privacyPolicyURL) {
+                        Button {
+                            composition.analytics.track(.privacyPolicyOpened)
+                            openURL(Self.privacyPolicyURL)
+                        } label: {
                             SettingsActionRow(
                                 icon: "hand.raised.fill",
                                 tint: Color.brandFill,
@@ -65,6 +92,7 @@ struct SettingsView: View {
                         RowDivider().padding(.leading, 56)
                         NavigationLink {
                             ThirdPartyLicensesView()
+                                .onAppear { composition.analytics.track(.licensesOpened) }
                         } label: {
                             SettingsActionRow(
                                 icon: "doc.text.fill",

@@ -44,11 +44,19 @@ is not eligible to publish on visionOS; see ITMS-90984).
 
 **App Privacy** (must match `WhoGaveWhat/PrivacyInfo.xcprivacy` and the privacy policy):
 
-- Do you collect data? **Yes** — only when the user allows cloud suggestions.
+- Do you collect data? **Yes** — the typed gift name only when the user allows cloud
+  suggestions; anonymous usage events and crash reports unless the user turns off
+  Settings → Diagnostics (see [analytics.md](analytics.md)).
 - **User Content → Other User Content** (the typed gift name): App Functionality; not linked to
   the user; not used for tracking.
 - **Identifiers → Device ID** (the random rate-limit ID, recreated whenever the feature is turned
-  off): App Functionality; not linked to the user; not used for tracking.
+  off, and the PostHog anonymous ID): App Functionality and Analytics; not linked to the user; not
+  used for tracking.
+- **Usage Data → Product Interaction** (screens opened, pickers used, counts): Analytics; not
+  linked to the user; not used for tracking.
+- **Diagnostics → Crash Data, Performance Data, Other Diagnostic Data** (Sentry crash and hang
+  reports with device model and OS version): App Functionality; not linked to the user; not used
+  for tracking.
 - Nothing else. No tracking.
 
 **Age Rating:** answer None / No to every question. No unrestricted web access, no user-generated
