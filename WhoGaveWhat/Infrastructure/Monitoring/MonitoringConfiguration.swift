@@ -3,8 +3,9 @@ import Foundation
 /// Where the monitoring keys come from and whether this launch may report at all.
 ///
 /// Keys live in build settings (`POSTHOG_API_KEY`, `POSTHOG_HOST`, `SENTRY_DSN`) that the
-/// Info.plist exposes; an empty value leaves that service off. Only Release builds on a real
-/// device report: Debug builds, the Simulator and `KS_` verification launches stay silent.
+/// Info.plist exposes; an empty value leaves that service off. Only launches on a real device
+/// report; the Simulator and `KS_` verification launches stay silent. A Debug build on a device
+/// reports too, tagged `debug`, so the integration can be checked from Xcode.
 struct MonitoringConfiguration: Equatable {
     static let postHogAPIKeyInfoKey = "PostHogAPIKey"
     static let postHogHostInfoKey = "PostHogHost"
@@ -70,7 +71,7 @@ struct MonitoringConfiguration: Equatable {
     }
 
     var isReportingAllowed: Bool {
-        !isDebugBuild && !isSimulator && !isVerificationLaunch
+        !isSimulator && !isVerificationLaunch
     }
 
     var isPostHogConfigured: Bool { postHogAPIKey != nil }

@@ -386,7 +386,7 @@ struct MonitoringConfigurationTests {
         #expect(configuration.isTestFlight)
     }
 
-    @Test func onlyReleaseDeviceLaunchesWithoutVerificationFlagsReport() {
+    @Test func onlyDeviceLaunchesWithoutVerificationFlagsReport() {
         func configuration(debug: Bool, simulator: Bool, environment: [String: String]) -> MonitoringConfiguration {
             MonitoringConfiguration(
                 postHogAPIKey: "phc_test", sentryDSN: "https://key@sentry.example/1",
@@ -394,7 +394,8 @@ struct MonitoringConfigurationTests {
                 isVerificationLaunch: MonitoringConfiguration.isVerificationLaunch(environment), isTestFlight: false)
         }
         #expect(configuration(debug: false, simulator: false, environment: ["PATH": "/usr/bin"]).isReportingAllowed)
-        #expect(!configuration(debug: true, simulator: false, environment: [:]).isReportingAllowed)
+        #expect(configuration(debug: true, simulator: false, environment: [:]).isReportingAllowed)
+        #expect(!configuration(debug: true, simulator: true, environment: [:]).isReportingAllowed)
         #expect(!configuration(debug: false, simulator: true, environment: [:]).isReportingAllowed)
         #expect(!configuration(debug: false, simulator: false, environment: ["KS_START": "app"]).isReportingAllowed)
     }

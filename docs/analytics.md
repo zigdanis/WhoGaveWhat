@@ -51,10 +51,12 @@ are ordinary and are not reported.
 
 ## When nothing is sent
 
-- Debug builds, the Simulator and verification launches (any `KS_` environment variable) never
-  start the SDKs; Debug builds log every call to the unified log instead
-  (`subsystem pro.ziganshin.WhoGaveWhat`, category `Analytics`).
-- A missing key leaves that service off: the app ships silent until the keys below are set.
+- The Simulator and verification launches (any `KS_` environment variable) never start the
+  SDKs. Debug builds additionally log every call to the unified log
+  (`subsystem pro.ziganshin.WhoGaveWhat`, category `Analytics`); a Debug build on a real device
+  does report, tagged `app_environment = debug`, so a run from Xcode can be checked in PostHog
+  (filter it out of product dashboards).
+- A missing key leaves that service off.
 - Settings → Diagnostics → "Share usage and crash reports" is on by default; turning it off opts
   PostHog out and closes Sentry until it is turned on again.
 
@@ -65,9 +67,9 @@ Debug and Release, exposed through `Info.plist`:
 
 | Build setting | Info.plist key | Value |
 |---------------|----------------|-------|
-| `POSTHOG_API_KEY` | `PostHogAPIKey` | The project API key (`phc_…`) |
-| `POSTHOG_HOST` | `PostHogHost` | `https://eu.i.posthog.com` or `https://us.i.posthog.com`; empty means EU |
-| `SENTRY_DSN` | `SentryDSN` | The project DSN |
+| `POSTHOG_API_KEY` | `PostHogAPIKey` | The project API key (`phc_…`); set to the EU Cloud project |
+| `POSTHOG_HOST` | `PostHogHost` | `https://eu.i.posthog.com` (set); empty would also mean EU |
+| `SENTRY_DSN` | `SentryDSN` | The project DSN; still empty |
 
 Set them in `WhoGaveWhat.xcodeproj/project.pbxproj` (or Xcode → target → Build Settings → User-Defined)
 and commit; the TestFlight lane builds from the committed project.
