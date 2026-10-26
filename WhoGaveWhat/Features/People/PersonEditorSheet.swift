@@ -186,8 +186,9 @@ struct PersonEditorSheet: View {
             } catch is CancellationError {
                 return
             } catch {
+                // A photo removed or replaced mid-load is not a failure; only the live session reports.
+                guard !Task.isCancelled, photoSessionID == sessionID, selectedPhotoItem == item else { return }
                 analytics.report(AnalyticsFailure(operation: "load_person_photo", error: error))
-                guard photoSessionID == sessionID, selectedPhotoItem == item else { return }
                 errorMessage = NSLocalizedString("Could not load that photo.", comment: "")
                 isLoadingPhoto = false
                 selectedPhotoItem = nil

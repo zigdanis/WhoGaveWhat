@@ -7,7 +7,9 @@ hangs and handled failures with [Sentry](https://sentry.io). Both run through on
 ## What is recorded
 
 Every event carries categories and counts only. Names, gift titles, amounts, photos and exact
-dates never leave the device. The full list lives in `WhoGaveWhat/Models/AnalyticsEvent.swift`;
+dates are never part of an event or a crash report. (The separate, consented cloud icon
+suggestion still sends the typed gift name, as described in Settings.) The full list lives in
+`WhoGaveWhat/Models/AnalyticsEvent.swift`;
 `AnalyticsEventCatalogTests` keeps names and keys in snake_case.
 
 | Event | Properties | Fires when |
