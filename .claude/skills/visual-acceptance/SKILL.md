@@ -5,9 +5,10 @@ description: Capture, inspect and attach WhoGaveWhat Simulator screenshots (and 
 
 # Visual acceptance
 
-- **Capture** and inspect screenshots that show the requested UI change, then attach them to the PR. For non-UI changes, report functional checks instead.
-- **Show:** add a focused XCUITest for the changed scenario then use media from the current head's CI run.
+- **Capture** and inspect screenshots that show the requested UI change, then attach them to the PR. For non-UI changes, report functional checks instead. The `Tests` workflow runs no UI tests (only the `Store screenshots` workflow drives the UI, for the App Store set), so every PR capture is manual.
+- **App:** wait for the PR head's `Simulator app` workflow, then `scripts/simulator-app.sh PR_NUMBER` prints the Release `WhoGaveWhat.app` for it (the Release build ignores `KS_SAMPLE_DATA`, so enter the data the scenario needs). On Linux, install and drive it on an Expo cloud simulator with the `eas-simulator` skill; on a Mac, use a local simulator.
+- **Show:** walk the changed scenario by hand and screenshot each state that proves it.
 - **Limit:** use 2–6 screenshots. Skip duplicates and unrelated screens.
-- **Clip:** add a video clip only when Danis asks to review the flow manually or motion can't be shown in stills. Never attach a full-suite recording.
-- **Check:** confirm that the media shows the requested behavior, publish it with `scripts/pr-visual-evidence.py` and check that it displays clearly.
-- **Clean up:** remove downloaded evidence after publishing.
+- **Clip:** record a short clip only when Danis asks to review the flow manually or motion can't be shown in stills.
+- **Check:** confirm that the media shows the requested behavior, then attach it with `gh pr comment PR_NUMBER --attach 'PATH#alt text' --body "..."` naming the reviewed commit, and check that it displays clearly.
+- **Clean up:** stop the cloud simulator session and remove the downloaded app and media after publishing.

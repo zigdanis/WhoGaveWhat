@@ -19,7 +19,7 @@ python3 scripts/sync-localizations.py --derived-data /tmp/whogavewhat-localizati
 ```
 
 Review and commit the catalog update together with the source changes. The `Tests`
-workflow runs the same synchronization check after each app smoke build. Its
+workflow runs the same synchronization check after each unit test build. Its
 `--check` option compares a synchronized temporary copy with the tracked catalog
 and fails if they differ, leaving the checkout unchanged:
 

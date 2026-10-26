@@ -16,8 +16,7 @@ certificate repository remains private.
 ## Contributions and builds
 
 Open contributions against `WhoGaveWhat`. Its test workflows run without signing
-secrets. The evidence gate uses trusted default-branch scripts and does not execute
-contributor artifacts. Simulator builds do not require the maintainer's Apple
+secrets. Simulator builds do not require the maintainer's Apple
 account. Device builds require your own signing team and, where needed, your own
 bundle identifier. Do not commit account emails, credentials or personal signing
 configuration.
@@ -26,8 +25,8 @@ Publication does not enable automatic distribution. TestFlight uses a manual
 `workflow_dispatch` on the canonical repository's verified `master` and the
 protected `testflight` environment, whose custom deployment policy allows only
 `master` and no tags. The delivery agent may invoke this protected dispatch after
-each routine feature or fix passes its review, bot, CI, visual-evidence, merge,
-and master-CI gates, unless the user explicitly limits the work to no deployment.
+each routine feature or fix passes its review, bot, CI, screenshot review (or
+functional checks for non-UI changes), merge, and master-CI gates, unless the user explicitly limits the work to no deployment.
 Pushes, pull requests and forks do not run that release job.
 Release helpers require an explicit `--repo` and validate the canonical target
 and environment policy before dispatching or importing credentials.
