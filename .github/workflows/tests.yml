@@ -82,7 +82,7 @@ jobs:
       - name: Test app smoke and record any requested clip
         env:
           VIDEO_TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.video_test || '' }}
-        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names --runtime "$SIMULATOR_RUNTIME" --device "$SIMULATOR_DEVICE" --fresh-ci-simulator ${VIDEO_TEST:+--video-test "$VIDEO_TEST"}
+        run: python3 scripts/run-app-smoke.py "$RUNNER_TEMP/ui-app-smoke" --verify-app-names --runtime "$SIMULATOR_RUNTIME" --device "$SIMULATOR_DEVICE" --fresh-ci-simulator --check-localizations ${VIDEO_TEST:+--video-test "$VIDEO_TEST"}
       - name: Render evidence report
         if: always()
         run: |

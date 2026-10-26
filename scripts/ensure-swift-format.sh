@@ -1,6 +1,6 @@
 #!/bin/sh
-# Prints the path of a swift-format binary from the Swift release that CI's Xcode ships
-# (Xcode 26.6, Swift 6.3.3), installing it once into a user cache directory when missing.
+# Prints the path of the pinned Swift 6.3.3 fallback formatter for hosts without a
+# toolchain, installing it once into a user cache directory when missing.
 #   --print-install-dir  print the cache directory and exit (no network)
 #   --print-url          print the toolchain download URL and exit (no network)
 # SWIFT_FORMAT_OS and SWIFT_FORMAT_ARCH override uname for tests.

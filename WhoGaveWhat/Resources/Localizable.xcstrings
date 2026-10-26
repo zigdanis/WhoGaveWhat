@@ -1,9 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {
-
-    },
     "%lld" : {
 
     },
@@ -130,46 +127,25 @@
         }
       }
     },
-    "Add two people to compare them" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add two people to compare them"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Добавьте двух человек, чтобы сравнить их"
-          }
-        }
-      }
-    },
-    "app-discovery.display-name" : {
-      "comment" : "Public Spotlight launcher name. Keep both English and Russian app names in every translation.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Who Gave · кто че"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Who Gave · кто че"
-          }
-        }
-      }
-    },
-    "₽" : {
-
-    },
     "0" : {
 
+    },
+    "A person with this name already exists." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A person with this name already exists."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Человек с таким именем уже существует."
+          }
+        }
+      }
     },
     "About" : {
       "extractionState" : "manual",
@@ -252,6 +228,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добавить человека"
+          }
+        }
+      }
+    },
+    "Add two people to compare them" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add two people to compare them"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавьте двух человек, чтобы сравнить их"
           }
         }
       }
@@ -494,74 +487,6 @@
         }
       }
     },
-    "Balances for" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Balances for"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Чей баланс"
-          }
-        }
-      }
-    },
-    "Estimated %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Estimated %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Примерно %@"
-          }
-        }
-      }
-    },
-    "No gifts with %@ in %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No gifts with %@ in %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нет подарков с %@ в %@ году"
-          }
-        }
-      }
-    },
-    "No gifts of yours in %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No gifts of yours in %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нет ваших подарков в %@ году"
-          }
-        }
-      }
-    },
     "Balance with each person" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -575,6 +500,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Баланс с каждым"
+          }
+        }
+      }
+    },
+    "Balances for" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Balances for"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Чей баланс"
           }
         }
       }
@@ -715,6 +657,23 @@
         }
       }
     },
+    "Change photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change photo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить фото"
+          }
+        }
+      }
+    },
     "Choose" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -728,6 +687,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать"
+          }
+        }
+      }
+    },
+    "Choose photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose photo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выбрать фото"
           }
         }
       }
@@ -779,6 +755,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Билеты на концерт"
+          }
+        }
+      }
+    },
+    "Could not load that photo." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not load that photo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось загрузить это фото."
+          }
+        }
+      }
+    },
+    "Could not save person changes." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not save person changes."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось сохранить изменения."
           }
         }
       }
@@ -1106,18 +1116,21 @@
         }
       }
     },
-    "Choose photo" : {
+    "Estimated %@" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose photo" } },
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Выбрать фото" } }
-      }
-    },
-    "Change photo" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Change photo" } },
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Изменить фото" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estimated %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Примерно %@"
+          }
+        }
       }
     },
     "Even" : {
@@ -1150,212 +1163,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Поровну 🤝"
-          }
-        }
-      }
-    },
-    "Gifts in %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gifts in %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Подарки в %@ году"
-          }
-        }
-      }
-    },
-    "Net for %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Net for %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Баланс — %@"
-          }
-        }
-      }
-    },
-    "No gifts in %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No gifts in %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нет подарков в %@ году"
-          }
-        }
-      }
-    },
-    "Person A" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Person A"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Человек A"
-          }
-        }
-      }
-    },
-    "Person B" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Person B"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Человек B"
-          }
-        }
-      }
-    },
-    "Photo" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Photo" } },
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Фото" } }
-      }
-    },
-    "Received %@ · Given %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Received %@ · Given %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Получено %@ · Подарено %@"
-          }
-        }
-      }
-    },
-    "Suggested" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Suggested"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "По названию"
-          }
-        }
-      }
-    },
-    "Swap people" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Swap people" } },
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Поменять местами" } }
-      }
-    },
-    "Use photo" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use photo" } },
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Использовать фото" } }
-      }
-    },
-    "A person with this name already exists." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "A person with this name already exists." } },
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Человек с таким именем уже существует." } }
-      }
-    },
-    "Could not save person changes." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not save person changes." } },
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Не удалось сохранить изменения." } }
-      }
-    },
-    "Could not load that photo." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not load that photo." } },
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Не удалось загрузить это фото." } }
-      }
-    },
-    "Photo and name" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Photo and name" } },
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Фото и имя" } }
-      }
-    },
-    "OK" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "OK" } },
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "ОК" } }
-      }
-    },
-    "Remove photo" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove photo" } },
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Удалить фото" } }
-      }
-    },
-    "Shows options to change or remove the photo." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shows options to change or remove the photo." } },
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Показывает варианты: изменить или удалить фото." } }
-      }
-    },
-    "estimated" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "estimated"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "оценка"
           }
         }
       }
@@ -1445,76 +1252,19 @@
         }
       }
     },
-    "person.stat-caption %lld %@" : {
-      "comment" : "Caption under a person's received or given count, which is shown above it; only the plural word and the total value.",
+    "Gifts in %@" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$#@gifts@ · %2$@"
-          },
-          "substitutions" : {
-            "gifts" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "gift"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "gifts"
-                    }
-                  }
-                }
-              }
-            }
+            "value" : "Gifts in %@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$#@gifts@ · %2$@"
-          },
-          "substitutions" : {
-            "gifts" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "few" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "подарка"
-                    }
-                  },
-                  "many" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "подарков"
-                    }
-                  },
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "подарок"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "подарка"
-                    }
-                  }
-                }
-              }
-            }
+            "value" : "Подарки в %@ году"
           }
         }
       }
@@ -1642,23 +1392,6 @@
         }
       }
     },
-    "iCloud sync" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "iCloud sync"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Синхронизация iCloud"
-          }
-        }
-      }
-    },
     "Icon" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1761,6 +1494,23 @@
         }
       }
     },
+    "License information is unavailable." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "License information is unavailable."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Информация о лицензиях недоступна."
+          }
+        }
+      }
+    },
     "Marina" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1829,6 +1579,23 @@
         }
       }
     },
+    "Net for %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Net for %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Баланс — %@"
+          }
+        }
+      }
+    },
     "New Year" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1863,6 +1630,40 @@
         }
       }
     },
+    "No gifts in %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No gifts in %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет подарков в %@ году"
+          }
+        }
+      }
+    },
+    "No gifts of yours in %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No gifts of yours in %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет ваших подарков в %@ году"
+          }
+        }
+      }
+    },
     "No gifts received yet." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1876,6 +1677,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пока нет полученного."
+          }
+        }
+      }
+    },
+    "No gifts with %@ in %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No gifts with %@ in %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет подарков с %@ в %@ году"
           }
         }
       }
@@ -1897,6 +1715,40 @@
         }
       }
     },
+    "Not now" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not now"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не сейчас"
+          }
+        }
+      }
+    },
+    "Not selected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not selected"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не выбрано"
+          }
+        }
+      }
+    },
     "Notifications" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1910,6 +1762,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уведомления"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ОК"
           }
         }
       }
@@ -2012,6 +1881,74 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Люди"
+          }
+        }
+      }
+    },
+    "Person A" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Person A"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Человек A"
+          }
+        }
+      }
+    },
+    "Person B" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Person B"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Человек B"
+          }
+        }
+      }
+    },
+    "Photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фото"
+          }
+        }
+      }
+    },
+    "Photo and name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo and name"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фото и имя"
           }
         }
       }
@@ -2169,6 +2106,23 @@
         }
       }
     },
+    "Received %@ · Given %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Received %@ · Given %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Получено %@ · Подарено %@"
+          }
+        }
+      }
+    },
     "Received from" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2199,6 +2153,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Получено от / Подарено кому"
+          }
+        }
+      }
+    },
+    "Remove photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove photo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить фото"
           }
         }
       }
@@ -2305,19 +2276,19 @@
         }
       }
     },
-    "License information is unavailable." : {
+    "Selected" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "License information is unavailable."
+            "value" : "Selected"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Информация о лицензиях недоступна."
+            "value" : "Выбрано"
           }
         }
       }
@@ -2356,40 +2327,6 @@
         }
       }
     },
-    "Privacy Policy" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Privacy Policy"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Политика конфиденциальности"
-          }
-        }
-      }
-    },
-    "Third-party licenses" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Third-party licenses"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Лицензии сторонних компонентов"
-          }
-        }
-      }
-    },
     "Share usage and crash reports" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2410,6 +2347,23 @@
     "Shown" : {
       "comment" : "A label describing a gift's details are currently being shown.",
       "isCommentAutoGenerated" : true
+    },
+    "Shows options to change or remove the photo." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows options to change or remove the photo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показывает варианты: изменить или удалить фото."
+          }
+        }
+      }
     },
     "Sign out" : {
       "extractionState" : "manual",
@@ -2479,6 +2433,40 @@
         }
       }
     },
+    "Suggested" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suggested"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "По названию"
+          }
+        }
+      }
+    },
+    "Swap people" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swap people"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поменять местами"
+          }
+        }
+      }
+    },
     "Tap to reveal" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2530,19 +2518,19 @@
         }
       }
     },
-    "thinking…" : {
+    "Third-party licenses" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "thinking…"
+            "value" : "Third-party licenses"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "думаю…"
+            "value" : "Лицензии сторонних компонентов"
           }
         }
       }
@@ -2615,23 +2603,6 @@
         }
       }
     },
-    "to %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "to %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "для %@"
-          }
-        }
-      }
-    },
     "Today" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2700,6 +2671,23 @@
         }
       }
     },
+    "Use photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use photo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Использовать фото"
+          }
+        }
+      }
+    },
     "Use this date" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2730,23 +2718,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Версия"
-          }
-        }
-      }
-    },
-    "we guessed" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "we guessed"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "наша оценка"
           }
         }
       }
@@ -2887,57 +2858,6 @@
         }
       }
     },
-    "Not now" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not now"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Не сейчас"
-          }
-        }
-      }
-    },
-    "Not selected" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not selected"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Не выбрано"
-          }
-        }
-      }
-    },
-    "Selected" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Selected"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Выбрано"
-          }
-        }
-      }
-    },
     "You" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2985,6 +2905,183 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вы получили %@"
+          }
+        }
+      }
+    },
+    "app-discovery.display-name" : {
+      "comment" : "Public Spotlight launcher name. Keep both English and Russian app names in every translation.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Who Gave · кто че"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Who Gave · кто че"
+          }
+        }
+      }
+    },
+    "estimated" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "estimated"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "оценка"
+          }
+        }
+      }
+    },
+    "iCloud sync" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud sync"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Синхронизация iCloud"
+          }
+        }
+      }
+    },
+    "person.stat-caption %lld %@" : {
+      "comment" : "Caption under a person's received or given count, which is shown above it; only the plural word and the total value.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@gifts@ · %2$@"
+          },
+          "substitutions" : {
+            "gifts" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "gift"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "gifts"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@gifts@ · %2$@"
+          },
+          "substitutions" : {
+            "gifts" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "подарка"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "подарков"
+                    }
+                  },
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "подарок"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "подарка"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "thinking…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "thinking…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "думаю…"
+          }
+        }
+      }
+    },
+    "to %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "to %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "для %@"
+          }
+        }
+      }
+    },
+    "we guessed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "we guessed"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "наша оценка"
           }
         }
       }

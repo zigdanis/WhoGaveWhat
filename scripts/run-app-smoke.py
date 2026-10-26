@@ -8,6 +8,7 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import time
 import uuid
 from pathlib import Path
@@ -61,7 +62,7 @@ GENERATED_LOG_LABELS = (
     "language-shutdown", "language-preferences-before", "language-preferences-languages", "language-preferences-locale",
     "language-preferences-after", "language-boot", "language-bootstatus", "language-device-state",
     "app-discovery-index-log", "spotlight-pipeline-log", "xcodebuild-clip",
-    "simulator-signing-info", "simulator-signing-display", "simulator-signing-verify",
+    "simulator-signing-info", "simulator-signing-display", "simulator-signing-verify", "localization-check",
 )
 COLD_BOOT_TIMEOUT_SECONDS = 600
 # Used only when no model is requested and no iPhone is booted.
@@ -501,7 +502,7 @@ def prepare_disposable_languages(directory, simulator, metadata):
 
 
 def run(directory, verify_app_names=False, discovery_only=False, runtime=None, fresh_ci_simulator=False,
-        video_test=None, device_name=None):
+        video_test=None, device_name=None, check_localizations=False):
     """Run the native XCTest journey, preserving diagnostics and real evidence."""
     if discovery_only and not verify_app_names:
         raise ValueError("Discovery-only diagnostics require --verify-app-names")
@@ -586,6 +587,10 @@ def run(directory, verify_app_names=False, discovery_only=False, runtime=None, f
             run_command(directory, "xcodebuild-test", command, 900 if discovery_only else 1800)
             if verify_app_names:
                 verify_built_app_names(directory, metadata)
+            if check_localizations:
+                run_command(directory, "localization-check", [
+                    sys.executable, "scripts/sync-localizations.py", "--derived-data",
+                    str(directory / "DerivedData"), "--check"], 60)
             test_succeeded = True
             if discovery_only:
                 metadata["spotlight_search_outcome"] = "passed-diagnostic"
@@ -689,6 +694,8 @@ if __name__ == "__main__":
                         "on the explicit runtime")
     parser.add_argument("--video-test", help="After the suite passes, record a clip of this one UI test "
                         "(WhoGaveWhatUITests/Class/testMethod); no video is recorded otherwise")
+    parser.add_argument("--check-localizations", action="store_true",
+                        help="Check String Catalog synchronization before cleaning up compiler output")
     args = parser.parse_args()
     run(args.directory, args.verify_app_names, args.discovery_only, args.runtime, args.fresh_ci_simulator,
-        args.video_test or None, args.device)
+        args.video_test or None, args.device, args.check_localizations)

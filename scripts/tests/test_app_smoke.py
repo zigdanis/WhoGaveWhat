@@ -686,6 +686,42 @@ class NativeCommandTests(unittest.TestCase):
 
 
 class EvidenceExportTests(unittest.TestCase):
+    def test_localization_drift_fails_acceptance_before_derived_data_cleanup(self):
+        for drift in (False, True):
+            with self.subTest(drift=drift), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary).resolve()
+                labels = []
+
+                def native(_directory, label, command, timeout, **kwargs):
+                    labels.append(label)
+                    if label == 'simulator-list':
+                        return subprocess.CompletedProcess(command, 0, json.dumps({'devices': {
+                            'com.apple.CoreSimulator.SimRuntime.iOS-27-0': [
+                                dict(name='iPhone 17 Pro', udid='sim-id', state='Booted', isAvailable=True)]}}), '')
+                    if label == 'xcodebuild-test':
+                        (directory / 'DerivedData').mkdir()
+                        (directory / 'attachments').mkdir()
+                    if label == 'localization-check':
+                        self.assertTrue((directory / 'DerivedData').is_dir())
+                        self.assertEqual(str(directory / 'DerivedData'), command[command.index('--derived-data') + 1])
+                        self.assertIn('--check', command)
+                        if drift:
+                            raise smoke.NativeCommandError('String Catalog is out of sync')
+                    return subprocess.CompletedProcess(command, 0, signing_fixture(label), '')
+
+                with patch.object(smoke.subprocess, 'check_output', return_value='a' * 40), \
+                        patch.object(smoke, 'run_command', side_effect=native), \
+                        patch.object(smoke, '_export_named_checkpoints', return_value=[]):
+                    if drift:
+                        with self.assertRaisesRegex(smoke.NativeCommandError, 'String Catalog is out of sync'):
+                            smoke.run(directory, check_localizations=True)
+                    else:
+                        smoke.run(directory, check_localizations=True)
+                self.assertLess(labels.index('xcodebuild-test'), labels.index('localization-check'))
+                self.assertFalse((directory / 'DerivedData').exists())
+                metadata = json.loads((directory / 'metadata.json').read_text())
+                self.assertEqual('failure' if drift else 'success', metadata['export_outcome'])
+
     def test_repeated_run_clears_stale_evidence_and_preserves_unrelated_files(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
