@@ -64,16 +64,20 @@ class UnitTestRunTests(unittest.TestCase):
             (directory / 'DerivedData').mkdir()
             runner.run(directory, runtime='iOS 27.1', device_name='iPhone Duo')
             labels = [call.args[1] for call in native.call_args_list]
-            self.assertEqual(['simulator-list', 'simulator-bootstatus', 'xcodebuild-test', 'bundle-names-en',
-                              'bundle-spotlight-name-en', 'bundle-names-ru', 'bundle-spotlight-name-ru',
-                              'bundle-info', 'localization-check'], labels)
-            test_call = native.call_args_list[2]
+            self.assertEqual(['simulator-list', 'simulator-bootstatus', 'xcodebuild-build', 'xcodebuild-test',
+                              'bundle-names-en', 'bundle-spotlight-name-en', 'bundle-names-ru',
+                              'bundle-spotlight-name-ru', 'bundle-info', 'localization-check'], labels)
+            build_call, test_call = native.call_args_list[2:4]
+            build = build_call.args[2]
+            # The whole scheme builds, so the UI test target keeps compiling without running.
+            self.assertEqual(['xcodebuild', 'build-for-testing'], build[:2])
+            self.assertFalse(any(argument.startswith(('-only-testing', '-skip-testing')) for argument in build))
             command = test_call.args[2]
-            self.assertEqual(['xcodebuild', 'test'], command[:2])
+            self.assertEqual(['xcodebuild', 'test-without-building'], command[:2])
             self.assertIn(f'platform=iOS Simulator,id={SIMULATOR_ID}', command)
             self.assertIn('-only-testing:WhoGaveWhatTests', command)
-            self.assertNotIn('-skip-testing:WhoGaveWhatUITests', command)
             self.assertFalse(any('WhoGaveWhatUITests' in argument for argument in command))
+            self.assertEqual(ROOT, build_call.kwargs['cwd'])
             self.assertEqual(ROOT, test_call.kwargs['cwd'])
             localization = native.call_args_list[-1].args[2]
             self.assertEqual(str(ROOT / 'scripts/sync-localizations.py'), localization[1])
@@ -95,12 +99,12 @@ class UnitTestRunTests(unittest.TestCase):
             runner.run(Path(temporary), runtime='iOS 27.1', device_name='iPhone Duo', fresh_ci_simulator=True)
             self.assertEqual(('iOS 27.1', 'iPhone Duo'), (create.call_args.args[2], create.call_args.args[4]))
             labels = [call.args[1] for call in native.call_args_list]
-            self.assertEqual(['simulator-list', 'simulator-boot', 'simulator-bootstatus', 'xcodebuild-test'], labels[:4])
+            self.assertEqual(['simulator-list', 'simulator-boot', 'simulator-bootstatus', 'xcodebuild-build', 'xcodebuild-test'], labels[:5])
             self.assertEqual([SIMULATOR_ID], [call.args[2][-1] for call in native.call_args_list if call.args[1] == 'simulator-boot'])
             cleanup.assert_called_once()
 
     def test_native_failure_keeps_the_error_metadata_and_owned_teardown(self):
-        for failed_label in ('xcodebuild-test', 'localization-check'):
+        for failed_label in ('xcodebuild-build', 'xcodebuild-test', 'localization-check'):
             with self.subTest(failure=failed_label), tempfile.TemporaryDirectory() as temporary, \
                     patch.object(runner.tools, 'run_command', side_effect=native_outputs(failures=(failed_label,))) as native, \
                     patch.object(runner.tools, 'cleanup_ci_simulator') as cleanup:
@@ -126,11 +130,14 @@ class UnitTestRunTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             (directory / 'Tests.xcresult').mkdir()
-            (directory / 'stale.log').write_text('old')
+            (directory / 'xcodebuild-test.log').write_text('old')
+            (directory / 'simulator-list-processes.log').write_text('old')
             (directory / 'metadata.json').write_text('{}')
             (directory / 'keep.txt').write_text('unrelated')
+            (directory / 'other-tool.log').write_text('unrelated')
+            (directory / 'DerivedData').symlink_to(directory / 'keep.txt')
             runner.clear_previous_outputs(directory)
-            self.assertEqual(['keep.txt'], [path.name for path in directory.iterdir()])
+            self.assertEqual(['keep.txt', 'other-tool.log'], sorted(path.name for path in directory.iterdir()))
 
 
 class WorkflowTests(unittest.TestCase):

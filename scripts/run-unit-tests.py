@@ -16,20 +16,20 @@ _spec.loader.exec_module(tools)
 
 ROOT = Path(__file__).resolve().parents[1]
 UNIT_TEST_TARGET = "WhoGaveWhatTests"
-TEST_TIMEOUT_SECONDS = 1800
+BUILD_TIMEOUT_SECONDS = 1200
+TEST_TIMEOUT_SECONDS = 900
 # Only this invocation's outputs are cleared, so unrelated files in the directory survive.
 GENERATED_OUTPUTS = ("Tests.xcresult", "DerivedData", "metadata.json")
+GENERATED_LOG_PREFIXES = ("simulator-", "xcodebuild-", "bundle-", "localization-check")
 
 
 def clear_previous_outputs(directory):
-    for name in GENERATED_OUTPUTS:
-        path = directory / name
-        if path.is_dir():
-            shutil.rmtree(path)
-        elif path.exists():
+    logs = [path for path in directory.glob("*.log") if path.name.startswith(GENERATED_LOG_PREFIXES)]
+    for path in [directory / name for name in GENERATED_OUTPUTS] + logs:
+        if path.is_symlink() or path.is_file():
             path.unlink()
-    for log in directory.glob("*.log"):
-        log.unlink()
+        elif path.is_dir():
+            shutil.rmtree(path)
 
 
 def verify_built_app_names(directory, metadata):
@@ -86,23 +86,25 @@ def run(directory, runtime=None, device_name=None, fresh_ci_simulator=False):
             tools.run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
         tools.run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
                           tools.COLD_BOOT_TIMEOUT_SECONDS)
-        # The UI test target still builds, so the store screenshot test cannot rot, but only the
-        # unit suite runs: XCUITest journeys hang on Simulator keyboard and animation stalls.
+        target = ["-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
+                  "-destination", f"platform=iOS Simulator,id={simulator_id}",
+                  "-derivedDataPath", str(directory / "DerivedData"), "-parallel-testing-enabled", "NO"]
+        signing = ["CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-"]
+        # Building the whole scheme keeps the UI test target (store screenshots) compiling, but only
+        # the unit suite runs: XCUITest journeys hang on Simulator keyboard and animation stalls.
+        tools.run_command(directory, "xcodebuild-build", ["xcodebuild", "build-for-testing", *target, *signing],
+                          BUILD_TIMEOUT_SECONDS, cwd=ROOT)
         # Default diagnostics collection (sysdiagnose) can outlive the tests and lose the result bundle.
         tools.run_command(directory, "xcodebuild-test", [
-            "xcodebuild", "test", "-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
-            "-destination", f"platform=iOS Simulator,id={simulator_id}",
-            "-derivedDataPath", str(directory / "DerivedData"), "-parallel-testing-enabled", "NO",
-            "-resultBundlePath", str(result_bundle), "-collect-test-diagnostics", "never",
-            f"-only-testing:{UNIT_TEST_TARGET}", "CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-"],
+            "xcodebuild", "test-without-building", *target, "-resultBundlePath", str(result_bundle),
+            "-collect-test-diagnostics", "never", f"-only-testing:{UNIT_TEST_TARGET}", *signing],
             TEST_TIMEOUT_SECONDS, cwd=ROOT)
         verify_built_app_names(directory, metadata)
         tools.run_command(directory, "localization-check", [
             sys.executable, str(ROOT / "scripts/sync-localizations.py"), "--derived-data",
             str(directory / "DerivedData"), "--check"], 60, cwd=ROOT)
         metadata["outcome"] = "success"
-    except (tools.NativeCommandError, OSError, ValueError, json.JSONDecodeError, subprocess.SubprocessError,
-            plistlib.InvalidFileException) as error:
+    except (tools.NativeCommandError, OSError, ValueError, json.JSONDecodeError, subprocess.SubprocessError) as error:
         metadata["error"] = str(error)
         raise
     finally:
