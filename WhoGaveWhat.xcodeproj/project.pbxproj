@@ -339,7 +339,7 @@
 				POSTHOG_HOST = "https://eu.i.posthog.com";
 				PRODUCT_BUNDLE_IDENTIFIER = pro.ziganshin.WhoGaveWhat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SENTRY_DSN = "";
+				SENTRY_DSN = "https://fa1b84bc80cfaf27766e9aaa62b92913@o4512321120632832.ingest.de.sentry.io/4512321154449488";
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -372,7 +372,7 @@
 				POSTHOG_HOST = "https://eu.i.posthog.com";
 				PRODUCT_BUNDLE_IDENTIFIER = pro.ziganshin.WhoGaveWhat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SENTRY_DSN = "";
+				SENTRY_DSN = "https://fa1b84bc80cfaf27766e9aaa62b92913@o4512321120632832.ingest.de.sentry.io/4512321154449488";
 				PROVISIONING_PROFILE_SPECIFIER = "match AppStore pro.ziganshin.WhoGaveWhat";
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;

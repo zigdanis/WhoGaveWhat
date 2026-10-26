@@ -69,7 +69,7 @@ Debug and Release, exposed through `Info.plist`:
 |---------------|----------------|-------|
 | `POSTHOG_API_KEY` | `PostHogAPIKey` | The project API key (`phc_…`); set to the EU Cloud project |
 | `POSTHOG_HOST` | `PostHogHost` | `https://eu.i.posthog.com` (set); empty would also mean EU |
-| `SENTRY_DSN` | `SentryDSN` | The project DSN; still empty |
+| `SENTRY_DSN` | `SentryDSN` | The DSN of the `whogavewhat-ios` project in the `danis-ziganshin` org (Sentry EU) |
 
 Set them in `WhoGaveWhat.xcodeproj/project.pbxproj` (or Xcode → target → Build Settings → User-Defined)
 and commit; the TestFlight lane builds from the committed project.
@@ -86,7 +86,10 @@ the `testflight` environment:
 
 - secret `SENTRY_AUTH_TOKEN`, an organization auth token with the `project:releases` and
   `project:write` scopes;
-- variables `SENTRY_ORG` and `SENTRY_PROJECT`.
+- variables `SENTRY_ORG` (`danis-ziganshin`) and `SENTRY_PROJECT` (`whogavewhat-ios`), already set.
+
+Only Error Monitoring is used: tracing, profiling and session replay stay off (the SDK defaults;
+`SentryCrashReportingGateway` never sets a sample rate).
 
 The step runs whenever the run archived a build, even if a later distribution step failed, and
 the archive's dSYMs are also kept as the `dsyms-RUN_ID-ATTEMPT` workflow artifact for 90 days. It
