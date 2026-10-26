@@ -5,7 +5,7 @@ description: Capture, inspect and attach WhoGaveWhat Simulator screenshots (and 
 
 # Visual acceptance
 
-- **Capture** and inspect screenshots that show the requested UI change, then attach them to the PR. For non-UI changes, report functional checks instead. CI runs no UI tests and produces no screenshots; every capture is manual.
+- **Capture** and inspect screenshots that show the requested UI change, then attach them to the PR. For non-UI changes, report functional checks instead. The `Tests` workflow runs no UI tests (only the `Store screenshots` workflow drives the UI, for the App Store set), so every PR capture is manual.
 - **App:** wait for the PR head's `Simulator app` workflow, then `scripts/simulator-app.sh PR_NUMBER` prints the Release `WhoGaveWhat.app` for it (the Release build ignores `KS_SAMPLE_DATA`, so enter the data the scenario needs). On Linux, install and drive it on an Expo cloud simulator with the `eas-simulator` skill; on a Mac, use a local simulator.
 - **Show:** walk the changed scenario by hand and screenshot each state that proves it.
 - **Limit:** use 2–6 screenshots. Skip duplicates and unrelated screens.

@@ -30,7 +30,7 @@ description: Deliver WhoGaveWhat features, fixes, improvements and new builds th
 
 ## Verify and merge
 
-- **Verify:** the `Checks`, `Tests` and `Simulator app` workflows run automatically on the PR. `Tests` runs only the unit suite; nothing in CI exercises the UI.
+- **Verify:** the `Checks`, `Tests` and `Simulator app` workflows run automatically on the PR. `Tests` runs only the unit suite; no PR check exercises the UI.
 - **Show:** for user-visible changes, capture the PR head's Simulator app by hand (`scripts/simulator-app.sh` with the `eas-simulator` skill on Linux) and attach inspected screenshots with `visual-acceptance`; a clip only on request. Non-UI changes report functional checks instead.
 - **Fix:** address real review issues, test the fixes and reply before resolving comments. Batch them into one push.
 - **Watch:** while PR checks or reviews are pending, call T3 Code's `watch_pull_request` and end the turn. Recheck when notified. Don't poll, sleep or run your own watcher.
