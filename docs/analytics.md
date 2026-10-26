@@ -84,8 +84,10 @@ the `testflight` environment:
   `project:write` scopes;
 - variables `SENTRY_ORG` and `SENTRY_PROJECT`.
 
-The step downloads the pinned `sentry-cli` release binary and checks its SHA-256 before running it.
-Without the secret and variables it prints a skip notice and the release continues; crashes then show
+The step runs whenever the run archived a build, even if a later distribution step failed, and
+the archive's dSYMs are also kept as the `dsyms-RUN_ID-ATTEMPT` workflow artifact for 90 days. It
+downloads the pinned `sentry-cli` release binary and checks its SHA-256 before running it. Without
+the secret and variables it prints a skip notice and the release continues; crashes then show
 unsymbolicated frames until the symbols are uploaded by hand with
 `sentry-cli debug-files upload PATH/dSYMs`. Release builds produce dSYMs
 (`DEBUG_INFORMATION_FORMAT = dwarf-with-dsym`).

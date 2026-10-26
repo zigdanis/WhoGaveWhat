@@ -24,6 +24,9 @@ final class SentryCrashReportingGateway: AnalyticsGateway {
             options.sendDefaultPii = false
             options.attachScreenshot = false
             options.attachViewHierarchy = false
+            // Automatic breadcrumbs record navigation titles, and a person screen is titled with
+            // their name. Only the gateway's fixed product events become breadcrumbs.
+            options.enableAutoBreadcrumbTracking = false
         }
         if let context { apply(context) }
     }

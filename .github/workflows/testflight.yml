@@ -137,8 +137,17 @@ jobs:
             notes) bundle exec fastlane ios release_notes ;;
             deploy|resume) bundle exec fastlane ios app_store ;;
           esac
+      - name: Keep debug symbols for a later Sentry upload
+        if: always() && env.RELEASE_TEMP != '' && (env.OPERATION == 'deploy' || env.OPERATION == 'resume')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: dsyms-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.RELEASE_TEMP }}/WhoGaveWhat.xcarchive/dSYMs
+          if-no-files-found: ignore
+          retention-days: 90
       - name: Upload debug symbols to Sentry
-        if: success() && (env.OPERATION == 'deploy' || env.OPERATION == 'resume')
+        # A build that reached Apple keeps its symbols even when a later distribution step failed.
+        if: always() && env.RELEASE_TEMP != '' && (env.OPERATION == 'deploy' || env.OPERATION == 'resume')
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}

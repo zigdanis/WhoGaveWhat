@@ -16,6 +16,7 @@ final class AddGiftState {
     /// Applies a cloud icon choice through the composition root, which records and publishes it.
     private let applyCloudIconConsent: ((CloudIconConsent) -> Void)?
     private var hasEditedName = false
+    private var hasEditedPrice = false
     private(set) var suggestionTask: Task<Void, Never>?
     /// The automatically chosen emoji a gift being edited already has; kept until a rename yields a better guess.
     private var storedEmoji: String?
@@ -129,9 +130,10 @@ final class AddGiftState {
         }
         set {
             let digits = newValue.filter(\.isNumber)
-            // The first edit says whether the user overrode an estimate or typed from scratch.
-            if !draft.valueTouched {
-                analytics.track(.giftPriceEdited(hadEstimate: draft.estimatedValue != nil))
+            // The first edit in this sheet says whether the user overrode an estimate or a stored value.
+            if !hasEditedPrice {
+                hasEditedPrice = true
+                analytics.track(.giftPriceEdited(hadEstimate: showsEstimate))
             }
             draft.value = digits.isEmpty ? nil : Int(digits)
             draft.valueTouched = true

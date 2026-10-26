@@ -305,6 +305,19 @@ struct AddGiftStateAnalyticsTests {
             ])
     }
 
+    @Test func editingAStoredPriceIsTrackedOnceWithoutAnEstimate() throws {
+        let analytics = RecordingAnalyticsGateway()
+        let composition = try makeTestComposition()
+        let gift = try #require(composition.data.gifts.first)
+        let state = AddGiftState(
+            route: .edit(giftID: gift.id), data: composition.data, suggestGift: composition.suggestGift, analytics: analytics)
+
+        state.valueText = "7"
+        state.valueText = "70"
+
+        #expect(analytics.events == [.giftPriceEdited(hadEstimate: false)])
+    }
+
     @Test func savingClosesTheSheetAsSaved() throws {
         let analytics = RecordingAnalyticsGateway()
         let composition = try makeTestComposition(analytics: analytics)
