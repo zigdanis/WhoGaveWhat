@@ -99,6 +99,35 @@ unsymbolicated frames until the symbols are uploaded by hand with
 `sentry-cli debug-files upload PATH/dSYMs`. Release builds produce dSYMs
 (`DEBUG_INFORMATION_FORMAT = dwarf-with-dsym`).
 
+## Checking live data
+
+Agents and humans read PostHog and Sentry from the terminal with the vendors' own CLIs; neither
+tool's credentials are in the repository.
+
+PostHog: `scripts/posthog-cli.sh` wraps [posthog-cli](https://github.com/PostHog/posthog-cli)
+(`npm install -g @posthog/cli`, or the script falls back to `npx`). It reads a personal API key
+(PostHog → Settings → User → Personal API keys, preset "MCP Server", scoped to the WhoGaveWhat
+project; the value starts with `phx_`) from `~/.config/posthog/whogavewhat.env`; the script header
+shows the three lines that file needs, with project id `320692` and host `https://eu.posthog.com`.
+`scripts/posthog-cli.sh api --agent-help` prints the agent guide; `execute-sql` runs HogQL, for
+example the events of the last day:
+
+```bash
+scripts/posthog-cli.sh api call --json execute-sql \
+  '{"query":"SELECT event, properties.app_environment AS env, count() FROM events WHERE timestamp > now() - INTERVAL 1 DAY GROUP BY event, env ORDER BY 3 DESC"}'
+```
+
+Sentry: the [`sentry` CLI](https://cli.sentry.dev) (`curl https://cli.sentry.dev/install -fsS | bash`,
+or `npm install -g sentry`) with the `sentry-cli` skill in `.agents/skills` and `.claude/skills`.
+Authenticate once per machine with `sentry auth` (browser device flow) or
+`sentry auth --token TOKEN`, where the token is a User Auth Token (Sentry → User settings → User
+Auth Tokens) with `org:read`, `project:read`, `event:read` and `team:read`; the organization token
+used by CI has only `org:ci` and cannot read events. `.sentryclirc` carries the org and project, so
+`sentry issue list` and `sentry event list` need no arguments.
+
+Keep both keys in a password manager (Danis: the Passwords app on the Mac). They are personal
+read keys, separate from the public client keys above and from `SENTRY_AUTH_TOKEN` in CI.
+
 ## App Store privacy
 
 `WhoGaveWhat/PrivacyInfo.xcprivacy` declares Product Interaction, Crash Data, Performance Data and
