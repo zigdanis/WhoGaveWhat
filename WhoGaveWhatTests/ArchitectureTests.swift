@@ -204,6 +204,20 @@ struct SelfPersonTests {
         gateway.setSelfPersonID(nil)
         #expect(UserDefaultsPreferencesGateway(defaults: defaults).selfPersonID == nil)
     }
+
+    @Test func userDefaultsGatewayEnablesAnalyticsUntilTheUserOptsOut() {
+        let suiteName = "AnalyticsConsentTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let gateway = UserDefaultsPreferencesGateway(defaults: defaults)
+        #expect(gateway.analyticsEnabled)
+
+        gateway.setAnalyticsEnabled(false)
+        #expect(UserDefaultsPreferencesGateway(defaults: defaults).analyticsEnabled == false)
+
+        gateway.setAnalyticsEnabled(true)
+        #expect(UserDefaultsPreferencesGateway(defaults: defaults).analyticsEnabled)
+    }
 }
 
 struct GiftDirectionResolverTests {

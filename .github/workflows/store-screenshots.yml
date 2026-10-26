@@ -9,6 +9,7 @@ on:
       - 'WhoGaveWhatUITests/StoreScreenshotsUITests.swift'
       - 'WhoGaveWhat/Infrastructure/Persistence/SwiftDataStore.swift'
       - 'scripts/store-screenshots.py'
+      - 'scripts/simulator_tools.py'
       - 'scripts/install-simulator-runtime.sh'
       - '.github/workflows/store-screenshots.yml'
 

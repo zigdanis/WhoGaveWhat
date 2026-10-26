@@ -24,14 +24,14 @@ description: Deliver WhoGaveWhat features, fixes, improvements and new builds th
 ## Implement and review
 
 - **Assign:** give the implementer a focused task, expected result and file ownership. If delegation is unavailable, implement it yourself.
-- **Implement:** make the requested change, add appropriate tests and run `scripts/check-formatting.sh` and `python3 -m unittest discover -s scripts/tests`. SwiftLint and native tests run in macOS CI when no Mac is available.
+- **Implement:** make the requested change, add appropriate unit tests (no XCUITest journeys; they stalled on Simulator keyboard and animation waits and were removed from CI) and run `scripts/check-formatting.sh` and `python3 -m unittest discover -s scripts/tests`. SwiftLint and native tests run in macOS CI when no Mac is available.
 - **Review:** have an independent reviewer check correctness against `.macroscope/correctness/correctness.md` and the requested behavior. Fix confirmed issues before pushing.
 - **Sync and push:** batch reviewed fixes, fetch `origin/master` and integrate it before pushing. Run relevant local checks on the combined result, then push once. Create or update the PR, register it with `link_pull_request`, and let the automatic CI run.
 
 ## Verify and merge
 
-- **Verify:** the `Checks` and `Tests` workflows run automatically on the PR. Retrieve native screenshots with `scripts/pr-evidence.sh PR_NUMBER` when needed.
-- **Show:** for user-visible changes, attach inspected current-head screenshots with `visual-acceptance`; a clip only on request. Non-UI changes report functional checks instead.
+- **Verify:** the `Checks`, `Tests` and `Simulator app` workflows run automatically on the PR. `Tests` runs only the unit suite; nothing in CI exercises the UI.
+- **Show:** for user-visible changes, capture the PR head's Simulator app by hand (`scripts/simulator-app.sh` with the `eas-simulator` skill on Linux) and attach inspected screenshots with `visual-acceptance`; a clip only on request. Non-UI changes report functional checks instead.
 - **Fix:** address real review issues, test the fixes and reply before resolving comments. Batch them into one push.
 - **Watch:** while PR checks or reviews are pending, call T3 Code's `watch_pull_request` and end the turn. Recheck when notified. Don't poll, sleep or run your own watcher.
 - **Merge:** when the current head has green checks, independent review is clean and no actionable comment is open, merge. Then confirm the `Tests` run on the merged master commit passed before TestFlight. If that commit skipped `Tests` (docs or agent files only), dispatch `gh workflow run tests.yml --repo zigdanis/WhoGaveWhat --ref master` once while it is still master's head.

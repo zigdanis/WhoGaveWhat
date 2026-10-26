@@ -6,6 +6,6 @@ Describe the problem and resulting behavior.
 
 Describe the relevant checks and their results.
 
-## Visual evidence
+## Screenshots
 
-For user-visible changes, publish inspected current-head screenshots with `scripts/pr-visual-evidence.py` (a clip only when requested). Non-UI changes can remove this section.
+For user-visible changes, install the PR's Simulator app (`scripts/simulator-app.sh PR_NUMBER`) on a simulator, capture the changed screens and attach them with `gh pr comment PR_NUMBER --attach`. Non-UI changes can remove this section.
