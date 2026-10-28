@@ -166,3 +166,35 @@ The final full run scored **73.3% accept / 62.5% top-1**, versus the aligned old
 estimated cost including unknown attempts was **$1.005 per 1,000 uncached gifts** (old direct replay:
 7,952 tokens and $0.334). **The 85%+ quality target remains unmet**, so this change is a draft for
 quality review. The 83% model-selection pilot is exploratory and does not replace the full result.
+
+
+### Prompt experiments without deploying
+
+The **Icon Worker deploy** workflow also has a `benchmark` selector. `compare-prompts` runs the
+current prompt and two simpler variants on the same 200 names chosen by a seeded shuffle.
+`full-current`, `full-short` and `full-compact` run all 969 cases with the selected variant.
+Every benchmark mode skips the deploy job and uses only the existing repository `JEV_API_KEY`;
+Cloudflare credentials are not supplied to that job. `none` keeps the usual deploy behavior.
+
+```sh
+gh workflow run icon-worker.yml --ref feature/jev-two-stage-cldr -f benchmark=compare-prompts
+# Or locally with a privately supplied key:
+node --experimental-strip-types eval/prompt-study.ts --out-dir eval/results/2026-10-28/new-study
+node --experimental-strip-types eval/prompt-study.ts --dry-run
+```
+
+`eval/prompt-study.ts` calls production `chooseIcon`; variants only replace question text and
+criteria descriptions, preserving every choice key and the gift-name state. Gold labels are used
+only after the reply. It records stage-one reachability, stage-two choices, confidence rejections,
+provider failures, tokens, cost and latency. Output directories must be new dated run folders;
+results are checkpointed and partial artifacts are uploaded on failure. Download the
+`icon-prompt-study` artifact and commit it under `eval/results/<date>/` after each run.
+
+The study includes the app's price question by default (`--currency RUB`); `USD` and `none` are also
+available and the choice is saved in the configuration. Regular `bench.ts` keeps its historical
+icon-only default and accepts `--currency RUB|USD` when measuring the current app request.
+
+The regular benchmark now counts failed provider requests separately from intentional `null`
+answers. `--compare` re-scores the last saved answer per name against the current case names and
+labels, and rejects incomplete runs, so old 1,000-row runs can be compared with the current 969.
+Historical raw files and their original reports stay unchanged.

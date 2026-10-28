@@ -1,7 +1,7 @@
 // Icon-picking benchmark over eval/cases1000/*.json (gold emoji per gift name, unrestricted Unicode set).
 //
 // Usage: node --experimental-strip-types eval/bench.ts --picker ceiling|cldr|worker|jev-two-stage
-//          [--limit N] [--out results.json] [--base URL] [--pause-ms 2100] [--concurrency 1|2|3|4]
+//          [--limit N] [--out results.json] [--base URL] [--pause-ms 2100] [--concurrency 1|2|3|4] [--currency RUB|USD|none]
 //        node --experimental-strip-types eval/bench.ts --compare a.json b.json ...
 //
 // Pickers:
@@ -16,7 +16,9 @@
 // `top1` is the stricter share where the pick equals the first (best) accepted emoji.
 import { readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { randomUUID } from "node:crypto";
+import { normalize, failedPick, scoreResult, alignResults } from "./scoring.ts";
 import { ICONS, GENERIC_KEY, CATALOG_VERSION } from "../src/cldr-catalog.ts";
+import type { Currency } from "../src/prices.ts";
 import { chooseIcon, JevError, PICKER_VERSION } from "../src/jev.ts";
 
 interface Case {
@@ -32,6 +34,7 @@ interface Pick {
   status?: number;
   inputTokens?: number;
   unknownUsageAttempts?: number;
+  failed?: boolean;
 }
 interface Result extends Case {
   pick: Pick;
@@ -44,9 +47,12 @@ const option = (flag: string) => {
   const index = args.indexOf(flag);
   return index >= 0 ? args[index + 1] : undefined;
 };
+const currencyOption = option("--currency") ?? "none";
+if (!["RUB", "USD", "none"].includes(currencyOption)) throw new Error("--currency must be RUB, USD or none");
+const currency: Currency | undefined = currencyOption === "none" ? undefined : (currencyOption as Currency);
 const dir = new URL("./cases1000/", import.meta.url);
 
-export const normalize = (emoji: string | null) => (emoji ?? "🎁").replace(/️/g, "");
+export { normalize } from "./scoring.ts";
 
 function loadCases(): Case[] {
   const files = readdirSync(dir)
@@ -135,19 +141,41 @@ function makeWorkerPicker() {
     used += 1;
     const started = performance.now();
     let status = 0;
-    let body: { emoji?: string | null; confidence?: number } = {};
+    let body: { emoji?: string | null; confidence?: number } | null = {};
+    let failed = false;
     try {
       const response = await fetch(`${base}/v1/gift-icon`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Install-ID": installId },
-        body: JSON.stringify({ name: item.name }),
+        body: JSON.stringify({ name: item.name, ...(currency && { currency }) }),
       });
       status = response.status;
-      body = (await response.json()) as typeof body;
+      if (status !== 200) {
+        await response.body?.cancel();
+        failed = true;
+        body = null;
+      } else {
+        body = (await response.json()) as typeof body;
+        if (
+          !body ||
+          !(body.emoji === null || typeof body.emoji === "string") ||
+          typeof body.confidence !== "number" ||
+          !(body.confidence >= 0 && body.confidence <= 1)
+        ) {
+          throw new Error("Malformed Worker reply");
+        }
+      }
     } catch {
-      status = 0;
+      failed = true; // Preserve an HTTP status even when JSON parsing fails.
+      body = null; // Never forward an invalid emoji value into scoring.
     }
-    return { emoji: body.emoji ?? null, confidence: body.confidence ?? null, ms: performance.now() - started, status };
+    return {
+      emoji: body?.emoji ?? null,
+      confidence: body?.confidence ?? null,
+      ms: performance.now() - started,
+      status,
+      ...(failed && { failed }),
+    };
   };
 }
 
@@ -161,6 +189,7 @@ function makeJevTwoStagePicker() {
       const { answer, unknownUsageAttempts } = await chooseIcon(item.name, {
         apiKey,
         model: option("--model") ?? "jev-1.14.0",
+        currency,
         attemptTimeoutMs: 3_000,
         maxAttempts: 2,
       });
@@ -189,7 +218,7 @@ function makeJevTwoStagePicker() {
 function summarize(label: string, results: Result[]) {
   const pct = (n: number, d: number) => (d === 0 ? "-" : `${((100 * n) / d).toFixed(1)}%`);
   const row = (name: string, rows: Result[]) =>
-    `| ${name} | ${rows.length} | ${pct(rows.filter((r) => r.pass).length, rows.length)} | ${pct(rows.filter((r) => r.top1).length, rows.length)} | ${pct(rows.filter((r) => r.pick.emoji === null).length, rows.length)} |`;
+    `| ${name} | ${rows.length} | ${pct(rows.filter((r) => r.pass).length, rows.length)} | ${pct(rows.filter((r) => r.top1).length, rows.length)} | ${pct(rows.filter((r) => !failedPick(r.pick) && r.pick.emoji === null).length, rows.length)} |`;
   const lines = [
     `### ${label}`,
     "",
@@ -219,11 +248,12 @@ function summarize(label: string, results: Result[]) {
   if (results.some((r) => r.pick.inputTokens !== undefined))
     lines.push(`mean input tokens ${(tokens.reduce((a, b) => a + b, 0) / tokens.length).toFixed(0)}`);
   const unknown = results.reduce((n, r) => n + (r.pick.unknownUsageAttempts ?? 0), 0);
-  const failed = results.filter((r) => r.pick.status !== undefined && r.pick.status !== 200).length;
+  const failed = results.filter((r) => failedPick(r.pick)).length;
+  lines.push(`failed requests ${failed}`);
   if (tokens.some(Boolean)) {
     const billed = tokens.reduce((a, b) => a + b, 0) + unknown * 65_536;
     lines.push(
-      `unknown-usage attempts ${unknown}; failed requests ${failed}; estimated USD per 1000 requests ${(((billed / results.length) * 1000 * 0.042) / 1_000_000).toFixed(4)} (unknown usage at 65,536 tokens/attempt)`,
+      `unknown-usage attempts ${unknown}; estimated USD per 1000 requests ${(((billed / results.length) * 1000 * 0.042) / 1_000_000).toFixed(4)} (unknown usage at 65,536 tokens/attempt)`,
     );
   }
   const misses = results.filter((r) => !r.pass);
@@ -237,7 +267,14 @@ async function main() {
   if (compareIndex >= 0) {
     for (const file of args.slice(compareIndex + 1)) {
       const saved = JSON.parse(readFileSync(file, "utf8")) as { picker: string; results: Result[] };
-      console.log(summarize(`${saved.picker} (${file})`, saved.results).split("\nMisses")[0].trimEnd() + "\n");
+      console.log(
+        summarize(
+          `${saved.picker} (${file}; aligned to ${loadCases().length} current cases)`,
+          alignResults(loadCases(), saved.results),
+        )
+          .split("\nMisses")[0]
+          .trimEnd() + "\n",
+      );
     }
     return;
   }
@@ -273,6 +310,7 @@ async function main() {
         JSON.stringify(
           {
             picker,
+            currency: currency ?? null,
             catalogVersion: CATALOG_VERSION,
             pickerVersion: PICKER_VERSION,
             minConfidence: 0.35,
@@ -293,13 +331,7 @@ async function main() {
       const i = nextIndex++;
       const item = cases[i];
       const result = await pick(item);
-      const accepted = new Set(item.accept.map(normalize));
-      results[i] = {
-        ...item,
-        pick: result,
-        pass: accepted.has(normalize(result.emoji)),
-        top1: normalize(result.emoji) === normalize(item.accept[0]),
-      };
+      results[i] = scoreResult(item, result);
       completed++;
       checkpoint();
       if (completed % 100 === 0) console.error(`${completed}/${cases.length}`);

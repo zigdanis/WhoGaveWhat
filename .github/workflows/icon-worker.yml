@@ -11,6 +11,16 @@ on:
         description: Jev model ID for this deployment (the default comes from wrangler.jsonc)
         type: string
         default: ''
+      benchmark:
+        description: Run a direct Jev benchmark instead of deploying (uses only JEV_API_KEY)
+        type: choice
+        default: none
+        options:
+          - none
+          - compare-prompts
+          - full-current
+          - full-short
+          - full-compact
       run_eval:
         description: Run the multilingual icon and price evaluation after deploying
         type: boolean
@@ -20,11 +30,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: icon-worker-deploy
+  group: ${{ inputs.benchmark != 'none' && inputs.benchmark != '' && format('icon-worker-benchmark-{0}', github.ref) || 'icon-worker-deploy' }}
   cancel-in-progress: false
 
 jobs:
   deploy:
+    if: inputs.benchmark == 'none' || inputs.benchmark == ''
     name: Deploy and evaluate
     runs-on: ubuntu-latest
     # Priced cases are asked once per currency (about 200 paced requests, around 10 minutes), plus deploy and probe.
@@ -150,4 +161,58 @@ jobs:
             ${{ runner.temp }}/eval.json
             ${{ runner.temp }}/eval.txt
             ${{ runner.temp }}/summary.md
+          if-no-files-found: ignore
+
+  benchmark:
+    name: Jev prompt benchmark (no deploy)
+    if: inputs.benchmark != 'none' && inputs.benchmark != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: icon-worker
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: icon-worker/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+      - name: Compare prompts or run full benchmark
+        env:
+          JEV_API_KEY: ${{ secrets.JEV_API_KEY }}
+          BENCHMARK_MODE: ${{ inputs.benchmark }}
+        run: |
+          set -euo pipefail
+          if [ -z "$JEV_API_KEY" ]; then
+            echo "::error::JEV_API_KEY repository secret is required."
+            exit 1
+          fi
+          output_root="eval/results/$(date -u +%F)/actions-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          echo "BENCHMARK_OUTPUT=$output_root" >> "$GITHUB_ENV"
+          case "$BENCHMARK_MODE" in
+            compare-prompts) variants=baseline,short,compact; sample_limit=200 ;;
+            full-current) variants=baseline; sample_limit=0 ;;
+            full-short) variants=short; sample_limit=0 ;;
+            full-compact) variants=compact; sample_limit=0 ;;
+            *) echo "::error::Unexpected benchmark mode"; exit 1 ;;
+          esac
+          benchmark_status=0
+          node --experimental-strip-types eval/prompt-study.ts --variants "$variants" --limit "$sample_limit" \
+            --out-dir "$output_root" --concurrency 2 --pause-ms 300 || benchmark_status=$?
+          for report in "$output_root"/*.md; do
+            if [ -f "$report" ]; then cat "$report" >> "$GITHUB_STEP_SUMMARY"; fi
+          done
+          exit "$benchmark_status"
+      - name: Upload every benchmark result, including partial failures
+        if: always() && env.BENCHMARK_OUTPUT != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: icon-prompt-study
+          path: icon-worker/${{ env.BENCHMARK_OUTPUT }}
           if-no-files-found: ignore
