@@ -1,0 +1,1504 @@
+[
+ {
+  "name": "букет роз",
+  "accept": [
+   "🌹",
+   "💐"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "тюльпаны",
+  "accept": [
+   "🌷"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "орхидея в горшке",
+  "accept": [
+   "🌸",
+   "🪴"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "пионы",
+  "accept": [
+   "🌸",
+   "💐"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "букет полевых цветов",
+  "accept": [
+   "💐",
+   "🌼"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кактус",
+  "accept": [
+   "🌵"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "фикус",
+  "accept": [
+   "🪴"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "подсолнухи",
+  "accept": [
+   "🌻"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ромашки",
+  "accept": [
+   "🌼"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "гортензия",
+  "accept": [
+   "💐",
+   "🌸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "монстера",
+  "accept": [
+   "🪴",
+   "🌿"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "суккуленты",
+  "accept": [
+   "🪴",
+   "🌵"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "лаванда в горшочке",
+  "accept": [
+   "🪻",
+   "🪴"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "семена цветов",
+  "accept": [
+   "🌱"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "саженец яблони",
+  "accept": [
+   "🌱",
+   "🌳"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "бонсай",
+  "accept": [
+   "🪴",
+   "🌳"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мимоза",
+  "accept": [
+   "🌼",
+   "💐"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "цветы в коробке",
+  "accept": [
+   "💐"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "101 роза",
+  "accept": [
+   "🌹",
+   "💐"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "рождественский венок",
+  "accept": [
+   "🎄"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "торт Наполеон",
+  "accept": [
+   "🍰",
+   "🎂"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "медовик",
+  "accept": [
+   "🍰"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шоколадка",
+  "accept": [
+   "🍫"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "коробка конфет",
+  "accept": [
+   "🍬",
+   "🍫"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "зефир",
+  "accept": [
+   "🍬",
+   "🍡"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "макаруны",
+  "accept": [
+   "🍪",
+   "🧁"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "капкейки",
+  "accept": [
+   "🧁"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "тульские пряники",
+  "accept": [
+   "🍪"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "домашнее печенье",
+  "accept": [
+   "🍪"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мармелад",
+  "accept": [
+   "🍬"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "чак-чак",
+  "accept": [
+   "🍯",
+   "🍪"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шоколадные трюфели",
+  "accept": [
+   "🍫"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "пончики",
+  "accept": [
+   "🍩"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "чизкейк",
+  "accept": [
+   "🍰"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "тирамису",
+  "accept": [
+   "🍰"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мороженое",
+  "accept": [
+   "🍦",
+   "🍨"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "леденцы на палочке",
+  "accept": [
+   "🍭"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сладкий бокс",
+  "accept": [
+   "🍬",
+   "🎁"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шоколад ручной работы",
+  "accept": [
+   "🍫"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "пахлава",
+  "accept": [
+   "🍯",
+   "🥮"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "малиновое варенье",
+  "accept": [
+   "🫙",
+   "🍓"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мёд с пасеки",
+  "accept": [
+   "🍯"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сгущёнка",
+  "accept": [
+   "🥫"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "пирог с вишней",
+  "accept": [
+   "🥧",
+   "🍒"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "штоллен",
+  "accept": [
+   "🍞",
+   "🎄"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "имбирные пряники",
+  "accept": [
+   "🍪",
+   "🎄"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шарлотка",
+  "accept": [
+   "🥧",
+   "🍎"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "пармезан",
+  "accept": [
+   "🧀"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сырная тарелка",
+  "accept": [
+   "🧀"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "хамон",
+  "accept": [
+   "🍖",
+   "🥩"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "домашняя колбаса",
+  "accept": [
+   "🍖",
+   "🥩"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "красная икра",
+  "accept": [
+   "🐟",
+   "🫙"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "оливковое масло",
+  "accept": [
+   "🫒"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "орехи ассорти",
+  "accept": [
+   "🥜",
+   "🌰"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "корзина фруктов",
+  "accept": [
+   "🧺",
+   "🍎"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "арбуз",
+  "accept": [
+   "🍉"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "манго",
+  "accept": [
+   "🥭"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "клубника в шоколаде",
+  "accept": [
+   "🍓",
+   "🍫"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "авокадо",
+  "accept": [
+   "🥑"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "домашние соленья",
+  "accept": [
+   "🥒",
+   "🫙"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "квашеная капуста",
+  "accept": [
+   "🥬",
+   "🫙"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сушёные грибы",
+  "accept": [
+   "🍄"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "баночка аджики",
+  "accept": [
+   "🌶",
+   "🫙"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "набор специй",
+  "accept": [
+   "🧂",
+   "🌶"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сало",
+  "accept": [
+   "🥓"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "домашние пельмени",
+  "accept": [
+   "🥟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "хлеб ручной выпечки",
+  "accept": [
+   "🍞"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "круассаны",
+  "accept": [
+   "🥐"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "блины",
+  "accept": [
+   "🥞"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "суши сет",
+  "accept": [
+   "🍣"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шаурма",
+  "accept": [
+   "🌯"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мясо для стейков",
+  "accept": [
+   "🥩"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "креветки",
+  "accept": [
+   "🦐"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "устрицы",
+  "accept": [
+   "🦪"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "перепелиные яйца",
+  "accept": [
+   "🥚"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "черешня",
+  "accept": [
+   "🍒"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "острый соус",
+  "accept": [
+   "🌶"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "хумус",
+  "accept": [
+   "🧆",
+   "🫘"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "рамен",
+  "accept": [
+   "🍜"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ягоды",
+  "accept": [
+   "🫐",
+   "🍓"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шампанское",
+  "accept": [
+   "🍾",
+   "🥂"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "красное вино",
+  "accept": [
+   "🍷"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "виски",
+  "accept": [
+   "🥃"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "коньяк",
+  "accept": [
+   "🥃"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "водка",
+  "accept": [
+   "🍾",
+   "🥃"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "домашняя настойка",
+  "accept": [
+   "🍶",
+   "🥃"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "крафтовое пиво",
+  "accept": [
+   "🍺"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ящик пива",
+  "accept": [
+   "🍻",
+   "🍺"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "саке",
+  "accept": [
+   "🍶"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "набор для коктейлей",
+  "accept": [
+   "🍸",
+   "🍹"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кофе в зёрнах",
+  "accept": [
+   "☕",
+   "🫘"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "пуэр",
+  "accept": [
+   "🍵"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "травяной сбор",
+  "accept": [
+   "🌿",
+   "🍵"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "свежевыжатый сок",
+  "accept": [
+   "🧃",
+   "🍊"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "лимонад",
+  "accept": [
+   "🥤",
+   "🍋"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "морс",
+  "accept": [
+   "🧃",
+   "🫐"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "смузи",
+  "accept": [
+   "🥤",
+   "🍓"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "бабл ти",
+  "accept": [
+   "🧋"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "капсулы для кофемашины",
+  "accept": [
+   "☕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "глинтвейн",
+  "accept": [
+   "🍷",
+   "🎄"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "медовуха",
+  "accept": [
+   "🍯",
+   "🍺"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "продуктовая корзина",
+  "accept": [
+   "🧺",
+   "🛒"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "новогодний подарочный набор",
+  "accept": [
+   "🎁",
+   "🎄"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "корзина с деликатесами",
+  "accept": [
+   "🧺",
+   "🎁"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ящик мандаринов",
+  "accept": [
+   "🍊"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мешок картошки",
+  "accept": [
+   "🥔"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "деревенские яйца",
+  "accept": [
+   "🥚"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "домашнее молоко",
+  "accept": [
+   "🥛"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "итальянская паста",
+  "accept": [
+   "🍝"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ящик вина",
+  "accept": [
+   "🍷",
+   "📦"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "чайный сервиз",
+  "accept": [
+   "🫖",
+   "🍵"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "заварочный чайник",
+  "accept": [
+   "🫖"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "френч-пресс",
+  "accept": [
+   "☕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "турка для кофе",
+  "accept": [
+   "☕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кофемолка",
+  "accept": [
+   "☕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "бокалы для вина",
+  "accept": [
+   "🍷"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "штопор",
+  "accept": [
+   "🍾"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "набор для суши",
+  "accept": [
+   "🍣",
+   "🥢"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "самовар",
+  "accept": [
+   "🫖"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ужин в ресторане",
+  "accept": [
+   "🍽"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сертификат в ресторан",
+  "accept": [
+   "🎫",
+   "🍽"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "поход в кафе",
+  "accept": [
+   "☕",
+   "🍰"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "романтический ужин",
+  "accept": [
+   "🍽",
+   "🥂",
+   "🕯"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "завтрак в кафе",
+  "accept": [
+   "🥐",
+   "☕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кулинарный мастер-класс",
+  "accept": [
+   "🍳",
+   "🔪"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "дегустация вин",
+  "accept": [
+   "🍷"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "дегустация сыров",
+  "accept": [
+   "🧀"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "бар с друзьями",
+  "accept": [
+   "🍻"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шашлыки на даче",
+  "accept": [
+   "🍖",
+   "🔥"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "пикник",
+  "accept": [
+   "🧺",
+   "🥪"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "bouquet of roses",
+  "accept": [
+   "💐",
+   "🌹"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "peonies",
+  "accept": [
+   "🌸",
+   "💐"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "succulent",
+  "accept": [
+   "🪴",
+   "🌵"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "houseplant",
+  "accept": [
+   "🪴"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "sunflower bouquet",
+  "accept": [
+   "🌻",
+   "💐"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "chocolate box",
+  "accept": [
+   "🍫",
+   "🎁"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "birthday cake",
+  "accept": [
+   "🎂"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "muffins",
+  "accept": [
+   "🧁"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "brownies",
+  "accept": [
+   "🍫"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "cookies",
+  "accept": [
+   "🍪"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "donut box",
+  "accept": [
+   "🍩"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "gingerbread house",
+  "accept": [
+   "🍪",
+   "🏠"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "ice cream",
+  "accept": [
+   "🍦",
+   "🍨"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "jelly beans",
+  "accept": [
+   "🍬"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "honey jar",
+  "accept": [
+   "🍯"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "cheese board",
+  "accept": [
+   "🧀"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "charcuterie board",
+  "accept": [
+   "🥓",
+   "🧀"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "caviar",
+  "accept": [
+   "🐟",
+   "🫙"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "fruit basket",
+  "accept": [
+   "🧺",
+   "🍎"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "maple syrup",
+  "accept": [
+   "🍁",
+   "🥞"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "peanut butter",
+  "accept": [
+   "🥜",
+   "🫙"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "pretzels",
+  "accept": [
+   "🥨"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "dumplings",
+  "accept": [
+   "🥟"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "lobster",
+  "accept": [
+   "🦞"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "bento box",
+  "accept": [
+   "🍱"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "bottle of wine",
+  "accept": [
+   "🍷",
+   "🍾"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "craft beer",
+  "accept": [
+   "🍺"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "gin set",
+  "accept": [
+   "🍸"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "coffee beans",
+  "accept": [
+   "☕",
+   "🫘"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "tea sampler",
+  "accept": [
+   "🍵"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "matcha set",
+  "accept": [
+   "🍵"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "hot chocolate",
+  "accept": [
+   "☕",
+   "🍫"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "kombucha",
+  "accept": [
+   "🧃",
+   "🍵"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "cold brew",
+  "accept": [
+   "☕",
+   "🧊"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "gift hamper",
+  "accept": [
+   "🧺",
+   "🎁"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "snack box",
+  "accept": [
+   "📦",
+   "🍿"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "whiskey glasses",
+  "accept": [
+   "🥃"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "cheese knife set",
+  "accept": [
+   "🧀",
+   "🔪"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "restaurant gift card",
+  "accept": [
+   "🎫",
+   "🍽"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "afternoon tea",
+  "accept": [
+   "🍵",
+   "🫖"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "Алёнка",
+  "accept": [
+   "🍫"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Raffaello",
+  "accept": [
+   "🍬",
+   "🍫"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Ferrero Rocher",
+  "accept": [
+   "🍫"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Kinder Surprise",
+  "accept": [
+   "🥚",
+   "🍫"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Коркунов",
+  "accept": [
+   "🍫"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Nutella",
+  "accept": [
+   "🍫",
+   "🫙"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Oreo",
+  "accept": [
+   "🍪"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Абрау-Дюрсо",
+  "accept": [
+   "🍾",
+   "🥂"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Lavazza",
+  "accept": [
+   "☕"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Jack Daniel's",
+  "accept": [
+   "🥃"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Moët & Chandon",
+  "accept": [
+   "🍾",
+   "🥂"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "набор чая Greenfield",
+  "accept": [
+   "🍵"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Red Bull",
+  "accept": [
+   "🥤",
+   "⚡"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "ВкусВилл",
+  "accept": [
+   "🛒",
+   "🥬"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Starbucks gift card",
+  "accept": [
+   "☕",
+   "🎫"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Додо Пицца",
+  "accept": [
+   "🍕"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "шоколдка",
+  "accept": [
+   "🍫"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "конфетки",
+  "accept": [
+   "🍬"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "пиченье",
+  "accept": [
+   "🍪"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "мароженое",
+  "accept": [
+   "🍦",
+   "🍨"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "шампусик",
+  "accept": [
+   "🍾",
+   "🥂"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "винишко",
+  "accept": [
+   "🍷"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "кофэ",
+  "accept": [
+   "☕"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "цвиты",
+  "accept": [
+   "💐"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "что-то вкусное",
+  "accept": [
+   "🎁",
+   "🍽"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "вкусняшки",
+  "accept": [
+   "🍬",
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "сладости",
+  "accept": [
+   "🍬",
+   "🍫"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "еда",
+  "accept": [
+   "🍽",
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "вкусный подарок",
+  "accept": [
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "что-то к чаю",
+  "accept": [
+   "🍪",
+   "🍵",
+   "🎁"
+  ],
+  "tag": "vague"
+ }
+]

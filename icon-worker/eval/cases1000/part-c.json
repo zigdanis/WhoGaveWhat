@@ -1,0 +1,1460 @@
+[
+ {
+  "name": "носки",
+  "accept": [
+   "🧦"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "носки с принтом",
+  "accept": [
+   "🧦"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "свитер",
+  "accept": [
+   "🧥",
+   "👕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "платье",
+  "accept": [
+   "👗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "вечернее платье",
+  "accept": [
+   "👗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "куртка зимняя",
+  "accept": [
+   "🧥"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "пуховик",
+  "accept": [
+   "🧥"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "пальто",
+  "accept": [
+   "🧥"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "пижама",
+  "accept": [
+   "👘",
+   "🛌"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "халат махровый",
+  "accept": [
+   "👘",
+   "🧖"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "футболка",
+  "accept": [
+   "👕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "джинсы",
+  "accept": [
+   "👖"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "юбка",
+  "accept": [
+   "👗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "блузка",
+  "accept": [
+   "👚"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "рубашка",
+  "accept": [
+   "👔"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "галстук",
+  "accept": [
+   "👔"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "костюм мужской",
+  "accept": [
+   "👔",
+   "🤵"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кофта",
+  "accept": [
+   "👚",
+   "🧥"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "худи",
+  "accept": [
+   "🧥",
+   "👕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шорты",
+  "accept": [
+   "🩳"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "колготки",
+  "accept": [
+   "🧦"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "нижнее белье",
+  "accept": [
+   "🩲",
+   "👙"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "комплект белья кружевной",
+  "accept": [
+   "👙",
+   "🩲"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "купальник",
+  "accept": [
+   "👙"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "жилетка",
+  "accept": [
+   "🦺",
+   "🧥"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сарафан летний",
+  "accept": [
+   "👗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "леггинсы для йоги",
+  "accept": [
+   "🧘",
+   "👖"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "спортивный костюм",
+  "accept": [
+   "🏃",
+   "👕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "домашние тапочки",
+  "accept": [
+   "🩴",
+   "🥿"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "варежки",
+  "accept": [
+   "🧤"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шапка зимняя",
+  "accept": [
+   "🧢",
+   "🧣"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шарф вязаный",
+  "accept": [
+   "🧣"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "перчатки кожаные",
+  "accept": [
+   "🧤"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кроссовки",
+  "accept": [
+   "👟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ботинки зимние",
+  "accept": [
+   "🥾"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "туфли на каблуке",
+  "accept": [
+   "👠"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "босоножки",
+  "accept": [
+   "👡"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сапоги",
+  "accept": [
+   "👢"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "балетки",
+  "accept": [
+   "🥿"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шлепки",
+  "accept": [
+   "🩴"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кеды",
+  "accept": [
+   "👟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "туфли мужские",
+  "accept": [
+   "👞"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "угги",
+  "accept": [
+   "🥾",
+   "👢"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "резиновые сапоги",
+  "accept": [
+   "👢"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сумка",
+  "accept": [
+   "👜"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "рюкзак",
+  "accept": [
+   "🎒"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кошелек",
+  "accept": [
+   "👛"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "портмоне кожаное",
+  "accept": [
+   "👛"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ремень",
+  "accept": [
+   "👖",
+   "🎁"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "клатч",
+  "accept": [
+   "👝"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "зонтик складной",
+  "accept": [
+   "☂",
+   "🌂"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "солнцезащитные очки",
+  "accept": [
+   "🕶"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "часы наручные",
+  "accept": [
+   "⌚"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шляпа соломенная",
+  "accept": [
+   "👒"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "бейсболка",
+  "accept": [
+   "🧢"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "визитница",
+  "accept": [
+   "👛",
+   "💳"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "обложка на паспорт",
+  "accept": [
+   "📘",
+   "🛂"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "брелок",
+  "accept": [
+   "🔑"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "косметичка",
+  "accept": [
+   "👝",
+   "💄"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "чемодан",
+  "accept": [
+   "🧳"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "галстук-бабочка",
+  "accept": [
+   "🎀",
+   "👔"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кольцо",
+  "accept": [
+   "💍"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кольцо с бриллиантом",
+  "accept": [
+   "💍"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "обручальное кольцо",
+  "accept": [
+   "💍"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "серьги",
+  "accept": [
+   "💎"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "цепочка золотая",
+  "accept": [
+   "📿",
+   "⛓"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кулон",
+  "accept": [
+   "📿",
+   "💎"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "подвеска сердечко",
+  "accept": [
+   "📿",
+   "❤"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "браслет",
+  "accept": [
+   "📿",
+   "💎"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "бусы",
+  "accept": [
+   "📿"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "жемчужное ожерелье",
+  "accept": [
+   "📿",
+   "💎"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "брошь",
+  "accept": [
+   "💎",
+   "🎀"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шкатулка для украшений",
+  "accept": [
+   "💎",
+   "🎁"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "колечко",
+  "accept": [
+   "💍"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "духи",
+  "accept": [
+   "🧴",
+   "🌸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "помада",
+  "accept": [
+   "💄"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "тушь для ресниц",
+  "accept": [
+   "💄",
+   "👁"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "палетка теней",
+  "accept": [
+   "💄",
+   "🎨"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "крем для лица",
+  "accept": [
+   "🧴"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "лак для ногтей",
+  "accept": [
+   "💅"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "набор гель-лаков",
+  "accept": [
+   "💅"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "маска для лица",
+  "accept": [
+   "🧖",
+   "🧴"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сыворотка для лица",
+  "accept": [
+   "🧴"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шампунь",
+  "accept": [
+   "🧴",
+   "🧼"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "гель для душа",
+  "accept": [
+   "🧴",
+   "🛁",
+   "🫧"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "бомбочки для ванны",
+  "accept": [
+   "🛁",
+   "🫧"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мыло ручной работы",
+  "accept": [
+   "🧼"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "фен",
+  "accept": [
+   "💇",
+   "🪮"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "плойка",
+  "accept": [
+   "💇"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "выпрямитель для волос",
+  "accept": [
+   "💇"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "расческа",
+  "accept": [
+   "🪮"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "бритва",
+  "accept": [
+   "🪒"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "набор для бритья",
+  "accept": [
+   "🪒"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кисти для макияжа",
+  "accept": [
+   "🖌",
+   "💄"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "зеркало с подсветкой",
+  "accept": [
+   "🪞"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "бальзам для губ",
+  "accept": [
+   "💋",
+   "💄"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "туалетная вода",
+  "accept": [
+   "🧴",
+   "🌸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "масло для бороды",
+  "accept": [
+   "🧔"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "триммер для бороды",
+  "accept": [
+   "🪒",
+   "🧔"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "маникюрный набор",
+  "accept": [
+   "💅"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "витамины",
+  "accept": [
+   "💊"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "омега-3",
+  "accept": [
+   "💊",
+   "🐟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "массажер для шеи",
+  "accept": [
+   "💆"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сертификат на массаж",
+  "accept": [
+   "💆",
+   "🎫"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сертификат в спа",
+  "accept": [
+   "🧖",
+   "🎫"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "термометр",
+  "accept": [
+   "🌡"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "тонометр",
+  "accept": [
+   "🩺"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "очки для зрения",
+  "accept": [
+   "👓"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "грелка",
+  "accept": [
+   "♨",
+   "🔥"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "весы напольные",
+  "accept": [
+   "⚖"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "фитнес-браслет",
+  "accept": [
+   "⌚",
+   "🏃"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ортопедическая подушка",
+  "accept": [
+   "🛏",
+   "😴"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "массажный коврик",
+  "accept": [
+   "🧘"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "соль для ванны",
+  "accept": [
+   "🛁"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мелатонин",
+  "accept": [
+   "💊",
+   "😴"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "боди для малыша",
+  "accept": [
+   "👶"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "пинетки",
+  "accept": [
+   "👶",
+   "🧦"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "соска",
+  "accept": [
+   "👶",
+   "🍼"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "бутылочка для кормления",
+  "accept": [
+   "🍼"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "слюнявчик",
+  "accept": [
+   "👶"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "подгузники",
+  "accept": [
+   "👶"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "погремушка",
+  "accept": [
+   "👶",
+   "🧸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "детский плед",
+  "accept": [
+   "👶"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "набор для новорожденного",
+  "accept": [
+   "👶",
+   "🍼"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "слинг",
+  "accept": [
+   "👶"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "подушка для беременных",
+  "accept": [
+   "🤰"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "крем от растяжек",
+  "accept": [
+   "🤰",
+   "🧴"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "конверт на выписку",
+  "accept": [
+   "👶"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "socks",
+  "accept": [
+   "🧦"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "hoodie",
+  "accept": [
+   "🧥",
+   "👕"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "t-shirt",
+  "accept": [
+   "👕"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "cardigan",
+  "accept": [
+   "🧥"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "lingerie set",
+  "accept": [
+   "👙",
+   "🩲"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "pajamas",
+  "accept": [
+   "👘",
+   "🛌"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "beanie",
+  "accept": [
+   "🧢"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "leather jacket",
+  "accept": [
+   "🧥"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "sneakers",
+  "accept": [
+   "👟"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "hiking boots",
+  "accept": [
+   "🥾"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "flip flops",
+  "accept": [
+   "🩴"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "high heels",
+  "accept": [
+   "👠"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "tote bag",
+  "accept": [
+   "👜"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "wallet",
+  "accept": [
+   "👛"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "umbrella",
+  "accept": [
+   "☂",
+   "🌂"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "sunglasses",
+  "accept": [
+   "🕶"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "smart watch",
+  "accept": [
+   "⌚",
+   "📱"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "bow tie",
+  "accept": [
+   "🎀",
+   "👔"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "diamond earrings",
+  "accept": [
+   "💎"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "gold chain",
+  "accept": [
+   "⛓",
+   "📿"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "charm bracelet",
+  "accept": [
+   "📿"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "perfume",
+  "accept": [
+   "🧴",
+   "🌸"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "lipstick",
+  "accept": [
+   "💄"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "skincare set",
+  "accept": [
+   "🧴"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "nail polish",
+  "accept": [
+   "💅"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "hair dryer",
+  "accept": [
+   "💇",
+   "🪮"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "beard trimmer",
+  "accept": [
+   "🪒",
+   "🧔"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "bath bombs",
+  "accept": [
+   "🛁",
+   "🫧"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "makeup palette",
+  "accept": [
+   "💄",
+   "🎨"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "vitamins",
+  "accept": [
+   "💊"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "massage gun",
+  "accept": [
+   "💆"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "spa day",
+  "accept": [
+   "🧖"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "blood pressure monitor",
+  "accept": [
+   "🩺"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "reading glasses",
+  "accept": [
+   "👓"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "first aid kit",
+  "accept": [
+   "🩹"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "yoga mat",
+  "accept": [
+   "🧘"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "baby onesie",
+  "accept": [
+   "👶"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "pacifier",
+  "accept": [
+   "👶",
+   "🍼"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "nursing pillow",
+  "accept": [
+   "🤰",
+   "🍼"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "diapers",
+  "accept": [
+   "👶"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "Chanel No 5",
+  "accept": [
+   "🧴",
+   "🌸"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "духи Dior",
+  "accept": [
+   "🧴",
+   "🌸"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "L'Occitane",
+  "accept": [
+   "🧴"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "кроссовки Nike",
+  "accept": [
+   "👟"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Pandora",
+  "accept": [
+   "📿",
+   "💍"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Tiffany кольцо",
+  "accept": [
+   "💍"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Swarovski серьги",
+  "accept": [
+   "💎"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Ray-Ban",
+  "accept": [
+   "🕶"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Dyson Airwrap",
+  "accept": [
+   "💇"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "MAC помада",
+  "accept": [
+   "💄"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Lush бомбочки",
+  "accept": [
+   "🛁",
+   "🫧"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Oral-B щетка",
+  "accept": [
+   "🪥"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Omron тонометр",
+  "accept": [
+   "🩺"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Pampers",
+  "accept": [
+   "👶"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Levi's 501",
+  "accept": [
+   "👖"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "кросовки",
+  "accept": [
+   "👟"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "серёжки",
+  "accept": [
+   "💎"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "туш для ресниц",
+  "accept": [
+   "💄",
+   "👁"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "ожирелье",
+  "accept": [
+   "📿",
+   "💎"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "басаножки",
+  "accept": [
+   "👡"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "витамини",
+  "accept": [
+   "💊"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "тапачки",
+  "accept": [
+   "🩴",
+   "🥿"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "кальцо",
+  "accept": [
+   "💍"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "что-то красивое",
+  "accept": [
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "одежда",
+  "accept": [
+   "👕",
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "косметика",
+  "accept": [
+   "💄",
+   "🧴"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "украшение",
+  "accept": [
+   "💎",
+   "💍",
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "что-то для малыша",
+  "accept": [
+   "👶",
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "обувь",
+  "accept": [
+   "👟",
+   "🎁"
+  ],
+  "tag": "vague"
+ }
+]

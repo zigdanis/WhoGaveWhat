@@ -96,3 +96,19 @@ while the icon is judged once per case. The job summary shows icon accuracy, pri
 input tokens from `wrangler tail`. Requests stay paced under the per-IP limit. The `jev_model`
 and `russian_hints` inputs override the configured values for that deployment, so
 variants can be compared; the next plain deploy restores `wrangler.jsonc`.
+
+## Icon benchmark (unrestricted emoji)
+
+`eval/cases1000/*.json` holds ~1,000 gift names with the ideal emoji from the whole Unicode set (not
+only the catalog), so the score also shows what the catalog cannot express. `eval/bench.ts` runs a
+picker over them and prints accuracy by part and tag; `eval/baselines/<date>/` keeps committed reference runs (`eval/results/` is ignored for scratch runs).
+
+```sh
+node --experimental-strip-types eval/bench.ts --picker ceiling          # best the current catalog could do, no requests
+node --experimental-strip-types eval/bench.ts --picker cldr             # local CLDR keyword match (ru + en)
+node --experimental-strip-types eval/bench.ts --picker worker --out eval/results/worker.json   # the deployed Worker, paced under its limits
+JEV_API_KEY=… node --experimental-strip-types eval/bench.ts --picker jev-two-stage   # Jev over ~1,100 CLDR-described emoji
+node --experimental-strip-types eval/bench.ts --compare eval/baselines/2026-10-27/2026-10-27-worker.json eval/results/worker.json
+```
+
+`eval/data/` has the CLDR `ru` and `en` emoji annotations and Unicode `emoji-test.txt` the local pickers use.
