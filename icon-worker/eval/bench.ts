@@ -249,7 +249,7 @@ function summarize(label: string, results: Result[]) {
     lines.push(`mean input tokens ${(tokens.reduce((a, b) => a + b, 0) / tokens.length).toFixed(0)}`);
   const unknown = results.reduce((n, r) => n + (r.pick.unknownUsageAttempts ?? 0), 0);
   const failed = results.filter((r) => failedPick(r.pick)).length;
-  lines.push(`failed requests ${failed}`);
+  lines.push(`failed requests ${failed}; client validation rejections (HTTP 400) ${results.filter((r) => r.pick.status === 400).length}`);
   if (tokens.some(Boolean)) {
     const billed = tokens.reduce((a, b) => a + b, 0) + unknown * 65_536;
     lines.push(

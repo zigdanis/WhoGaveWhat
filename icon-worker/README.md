@@ -164,8 +164,8 @@ The [2026-10-28 report](eval/results/2026-10-28/README.md) contains all runs and
 The final full run scored **73.3% accept / 62.5% top-1**, versus the aligned old Worker's
 **70.3% / 59.0%**. Mean input was 23,665 tokens; direct latency p50/p90 was 526/628 ms;
 estimated cost including unknown attempts was **$1.005 per 1,000 uncached gifts** (old direct replay:
-7,952 tokens and $0.334). **The 85%+ quality target remains unmet**, so this change is a draft for
-quality review. The 83% model-selection pilot is exploratory and does not replace the full result.
+7,952 tokens and $0.334). **The 85%+ quality target remains unmet**. Danis has accepted the current result for a production
+trial; 85% remains an improvement target rather than a deployment gate. The 83% model-selection pilot is exploratory and does not replace the full result.
 
 
 ### Prompt experiments without deploying
@@ -198,3 +198,15 @@ The regular benchmark now counts failed provider requests separately from intent
 answers. `--compare` re-scores the last saved answer per name against the current case names and
 labels, and rejects incomplete runs, so old 1,000-row runs can be compared with the current 969.
 Historical raw files and their original reports stay unchanged.
+
+
+The [200-case prompt comparison](eval/results/2026-10-28/actions-40660807139-1/study.md)
+uses the same random sample and RUB price question for all variants: current 74.0%, short 69.0%,
+compact 68.5%. Stage-one reachability falls from 88.0% to 83.5% / 82.0%, so the current production
+prompt is retained. All prompts, requests, results and selection reasoning are saved alongside the report.
+
+
+[Production-trial validation](eval/results/2026-10-28/production-trial.md) confirms **73.4% accept /
+62.4% top-1** on all 969 cases with the app's RUB price question, no provider errors, and an estimated
+**$1.015 per 1,000 uncached gifts**. Simpler prompts were measured and rejected; the production prompt
+stays unchanged. The full request/trace data is in the linked Actions run folder.

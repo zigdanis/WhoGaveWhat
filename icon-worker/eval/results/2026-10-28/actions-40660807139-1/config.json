@@ -1,0 +1,1245 @@
+{
+ "variants": [
+  {
+   "name": "baseline",
+   "description": "Current production prompt, unaltered.",
+   "instructions": {
+    "stage1": "The state is the name of a present someone gave or received, written by the user in any language (often Russian), possibly with typos or brand names. Choose the closest recognizable emoji representation of the gift item or experience. Use a literal depiction when available; otherwise use its function, what it produces, or a related object or activity. The exact object does not need its own emoji: appliances can be represented by the food or drink they make, services by the activity, branded products by their product type, and a gift certificate by what it buys. Prefer the gift contents over generic packaging. Among similar variants prefer a common general depiction. Use none only for an unknown, vague or abstract gift without a meaningful visual association. Choose the subgroup containing that closest recognizable representation, even when the gift itself is not a literal member of the subgroup.",
+    "stage2": "The state is the name of a present someone gave or received, written by the user in any language (often Russian), possibly with typos or brand names. Choose the closest recognizable emoji representation of the gift item or experience. Use a literal depiction when available; otherwise use its function, what it produces, or a related object or activity. The exact object does not need its own emoji: appliances can be represented by the food or drink they make, services by the activity, branded products by their product type, and a gift certificate by what it buys. Prefer the gift contents over generic packaging. Among similar variants prefer a common general depiction. Use none only for an unknown, vague or abstract gift without a meaningful visual association."
+   }
+  },
+  {
+   "name": "short",
+   "description": "Very short task-specific instructions per stage; production criteria unchanged.",
+   "instructions": {
+    "stage1": "The state is a gift name, usually Russian, maybe with typos or brands. Choose the subgroup holding the emoji that best depicts the gift: the item itself, otherwise what it makes, does or is for. The gift need not literally belong to the subgroup. Choose none only for a vague or abstract gift.",
+    "stage2": "The state is a gift name, usually Russian, maybe with typos or brands. Choose the emoji that best depicts the gift: the item itself, otherwise what it makes, does or is for. Prefer the common general depiction. Choose none only for a vague or abstract gift."
+   }
+  },
+  {
+   "name": "compact",
+   "description": "Short instructions; stage 1 criteria keep includes/excludes/examples (EN+RU) with at most 5 spread CLDR examples; stage 2 criteria are the bilingual CLDR name plus at most 4 keywords.",
+   "instructions": {
+    "stage1": "The state is a gift name, usually Russian, maybe with typos or brands. Choose the subgroup holding the emoji that best depicts the gift: the item itself, otherwise what it makes, does or is for. The gift need not literally belong to the subgroup. Choose none only for a vague or abstract gift.",
+    "stage2": "The state is a gift name, usually Russian, maybe with typos or brands. Choose the emoji that best depicts the gift: the item itself, otherwise what it makes, does or is for. Prefer the common general depiction. Choose none only for a vague or abstract gift."
+   }
+  }
+ ],
+ "model": "jev-1.14.0",
+ "currency": "RUB",
+ "pickerVersion": "jev-two-stage-v2",
+ "catalogVersion": "cldr-e074edda57dd",
+ "minConfidence": 0.35,
+ "attemptTimeoutMs": 3000,
+ "maxAttempts": 2,
+ "totalTimeoutMs": 7000,
+ "concurrency": 2,
+ "pauseMs": 300,
+ "seed": "prompt-study-1",
+ "limit": 200,
+ "totalCases": 969,
+ "sampleSize": 200,
+ "sampleCeiling": 1,
+ "sample": [
+  {
+   "index": 488,
+   "name": "выпрямитель для волос",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 909,
+   "name": "шарики",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 415,
+   "name": "костюм мужской",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 511,
+   "name": "массажный коврик",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 337,
+   "name": "drone",
+   "tag": "en",
+   "part": "b"
+  },
+  {
+   "index": 215,
+   "name": "зарядка для телефона",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 643,
+   "name": "Moleskine",
+   "tag": "brand",
+   "part": "d"
+  },
+  {
+   "index": 195,
+   "name": "вкусняшки",
+   "tag": "vague",
+   "part": "a"
+  },
+  {
+   "index": 286,
+   "name": "топор",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 261,
+   "name": "микроволновка",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 655,
+   "name": "bullet journal",
+   "tag": "en",
+   "part": "d"
+  },
+  {
+   "index": 308,
+   "name": "утюг",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 107,
+   "name": "домашнее молоко",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 487,
+   "name": "плойка",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 828,
+   "name": "волейбольный мяч",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 275,
+   "name": "контейнеры для еды",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 12,
+   "name": "лаванда в горшочке",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 580,
+   "name": "Pampers",
+   "tag": "brand",
+   "part": "c"
+  },
+  {
+   "index": 568,
+   "name": "духи Dior",
+   "tag": "brand",
+   "part": "c"
+  },
+  {
+   "index": 868,
+   "name": "skydiving",
+   "tag": "en",
+   "part": "e"
+  },
+  {
+   "index": 470,
+   "name": "брошь",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 168,
+   "name": "restaurant gift card",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 241,
+   "name": "постельное белье",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 879,
+   "name": "парашут",
+   "tag": "typo",
+   "part": "e"
+  },
+  {
+   "index": 299,
+   "name": "видеорегистратор",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 486,
+   "name": "фен",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 449,
+   "name": "зонтик складной",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 324,
+   "name": "метеостанция",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 597,
+   "name": "Барби",
+   "tag": "brand",
+   "part": "d"
+  },
+  {
+   "index": 586,
+   "name": "басаножки",
+   "tag": "typo",
+   "part": "c"
+  },
+  {
+   "index": 684,
+   "name": "банджо",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 537,
+   "name": "flip flops",
+   "tag": "en",
+   "part": "c"
+  },
+  {
+   "index": 139,
+   "name": "cookies",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 825,
+   "name": "скакалка",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 726,
+   "name": "настольная игра",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 620,
+   "name": "набор мыльных пузырей",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 632,
+   "name": "набор солдатиков",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 685,
+   "name": "саксофон",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 211,
+   "name": "объектив",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 333,
+   "name": "wireless charger",
+   "tag": "en",
+   "part": "b"
+  },
+  {
+   "index": 198,
+   "name": "вкусный подарок",
+   "tag": "vague",
+   "part": "a"
+  },
+  {
+   "index": 267,
+   "name": "термокружка",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 824,
+   "name": "ракетка",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 191,
+   "name": "винишко",
+   "tag": "typo",
+   "part": "a"
+  },
+  {
+   "index": 450,
+   "name": "солнцезащитные очки",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 635,
+   "name": "санки",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 924,
+   "name": "fireworks",
+   "tag": "en",
+   "part": "e"
+  },
+  {
+   "index": 535,
+   "name": "sneakers",
+   "tag": "en",
+   "part": "c"
+  },
+  {
+   "index": 897,
+   "name": "акции",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 663,
+   "name": "подписка на аудиокниги",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 898,
+   "name": "cash",
+   "tag": "en",
+   "part": "e"
+  },
+  {
+   "index": 34,
+   "name": "тирамису",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 89,
+   "name": "набор для коктейлей",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 186,
+   "name": "шоколдка",
+   "tag": "typo",
+   "part": "a"
+  },
+  {
+   "index": 583,
+   "name": "серёжки",
+   "tag": "typo",
+   "part": "c"
+  },
+  {
+   "index": 91,
+   "name": "пуэр",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 791,
+   "name": "коврик для йоги",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 783,
+   "name": "улитка ахатина",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 844,
+   "name": "конная прогулка",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 251,
+   "name": "шторы",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 850,
+   "name": "экскурсия по Москве",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 190,
+   "name": "шампусик",
+   "tag": "typo",
+   "part": "a"
+  },
+  {
+   "index": 160,
+   "name": "matcha set",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 705,
+   "name": "набор для вязания",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 694,
+   "name": "JBL колонка",
+   "tag": "brand",
+   "part": "d"
+  },
+  {
+   "index": 553,
+   "name": "beard trimmer",
+   "tag": "en",
+   "part": "c"
+  },
+  {
+   "index": 94,
+   "name": "лимонад",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 263,
+   "name": "набор кастрюль",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 369,
+   "name": "AirPods Pro",
+   "tag": "brand",
+   "part": "b"
+  },
+  {
+   "index": 765,
+   "name": "аквариумные рыбки",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 278,
+   "name": "дрель",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 910,
+   "name": "фейерверк",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 312,
+   "name": "коробки для хранения",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 417,
+   "name": "худи",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 857,
+   "name": "стендап",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 471,
+   "name": "шкатулка для украшений",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 373,
+   "name": "Яндекс Станция",
+   "tag": "brand",
+   "part": "b"
+  },
+  {
+   "index": 702,
+   "name": "мольберт",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 866,
+   "name": "cinema tickets",
+   "tag": "en",
+   "part": "e"
+  },
+  {
+   "index": 750,
+   "name": "модель самолёта",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 733,
+   "name": "видеоигра",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 20,
+   "name": "торт Наполеон",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 1,
+   "name": "тюльпаны",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 393,
+   "name": "что-то для дома",
+   "tag": "vague",
+   "part": "b"
+  },
+  {
+   "index": 582,
+   "name": "кросовки",
+   "tag": "typo",
+   "part": "c"
+  },
+  {
+   "index": 482,
+   "name": "шампунь",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 561,
+   "name": "first aid kit",
+   "tag": "en",
+   "part": "c"
+  },
+  {
+   "index": 664,
+   "name": "курс английского",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 9,
+   "name": "гортензия",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 499,
+   "name": "витамины",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 532,
+   "name": "pajamas",
+   "tag": "en",
+   "part": "c"
+  },
+  {
+   "index": 919,
+   "name": "бенгальские огни",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 696,
+   "name": "струны для гитары",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 874,
+   "name": "Аэрофлот билеты",
+   "tag": "brand",
+   "part": "e"
+  },
+  {
+   "index": 355,
+   "name": "car phone mount",
+   "tag": "en",
+   "part": "b"
+  },
+  {
+   "index": 463,
+   "name": "серьги",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 948,
+   "name": "банка",
+   "tag": "vague",
+   "part": "e"
+  },
+  {
+   "index": 896,
+   "name": "акции Сбера",
+   "tag": "brand",
+   "part": "e"
+  },
+  {
+   "index": 956,
+   "name": "1000",
+   "tag": "vague",
+   "part": "e"
+  },
+  {
+   "index": 830,
+   "name": "очки для плавания",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 881,
+   "name": "деньги в конверте",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 138,
+   "name": "brownies",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 905,
+   "name": "копилка",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 258,
+   "name": "тостер",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 693,
+   "name": "колонка",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 224,
+   "name": "умная лампочка",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 175,
+   "name": "Nutella",
+   "tag": "brand",
+   "part": "a"
+  },
+  {
+   "index": 908,
+   "name": "Spotify подписка",
+   "tag": "brand",
+   "part": "e"
+  },
+  {
+   "index": 728,
+   "name": "Монополия",
+   "tag": "brand",
+   "part": "d"
+  },
+  {
+   "index": 401,
+   "name": "свитер",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 859,
+   "name": "парк аттракционов",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 126,
+   "name": "дегустация сыров",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 405,
+   "name": "пуховик",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 806,
+   "name": "баскетбольный мяч",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 104,
+   "name": "ящик мандаринов",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 371,
+   "name": "PlayStation 5",
+   "tag": "brand",
+   "part": "b"
+  },
+  {
+   "index": 184,
+   "name": "Starbucks gift card",
+   "tag": "brand",
+   "part": "a"
+  },
+  {
+   "index": 959,
+   "name": "вино и сыр",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 576,
+   "name": "MAC помада",
+   "tag": "brand",
+   "part": "c"
+  },
+  {
+   "index": 441,
+   "name": "угги",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 204,
+   "name": "ноутбук",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 536,
+   "name": "hiking boots",
+   "tag": "en",
+   "part": "c"
+  },
+  {
+   "index": 254,
+   "name": "блендер",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 145,
+   "name": "cheese board",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 433,
+   "name": "ботинки зимние",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 459,
+   "name": "галстук-бабочка",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 76,
+   "name": "острый соус",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 349,
+   "name": "knife set",
+   "tag": "en",
+   "part": "b"
+  },
+  {
+   "index": 606,
+   "name": "детский велосипед",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 118,
+   "name": "самовар",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 255,
+   "name": "чайник электрический",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 942,
+   "name": "ракета",
+   "tag": "vague",
+   "part": "e"
+  },
+  {
+   "index": 260,
+   "name": "аэрогриль",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 777,
+   "name": "cat toy",
+   "tag": "en",
+   "part": "d"
+  },
+  {
+   "index": 288,
+   "name": "стремянка",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 760,
+   "name": "паводок для сабаки",
+   "tag": "typo",
+   "part": "d"
+  },
+  {
+   "index": 137,
+   "name": "muffins",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 826,
+   "name": "горный велосипед",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 375,
+   "name": "iPad",
+   "tag": "brand",
+   "part": "b"
+  },
+  {
+   "index": 385,
+   "name": "пауэрбанк",
+   "tag": "typo",
+   "part": "b"
+  },
+  {
+   "index": 740,
+   "name": "дартс",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 52,
+   "name": "оливковое масло",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 938,
+   "name": "e-scooter",
+   "tag": "en",
+   "part": "e"
+  },
+  {
+   "index": 762,
+   "name": "домик для кошки",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 209,
+   "name": "телевизор",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 752,
+   "name": "Pokémon cards",
+   "tag": "brand",
+   "part": "d"
+  },
+  {
+   "index": 158,
+   "name": "coffee beans",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 149,
+   "name": "maple syrup",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 812,
+   "name": "bike helmet",
+   "tag": "en",
+   "part": "e"
+  },
+  {
+   "index": 695,
+   "name": "микрофон",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 541,
+   "name": "umbrella",
+   "tag": "en",
+   "part": "c"
+  },
+  {
+   "index": 166,
+   "name": "whiskey glasses",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 567,
+   "name": "Chanel No 5",
+   "tag": "brand",
+   "part": "c"
+  },
+  {
+   "index": 618,
+   "name": "дрон для ребёнка",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 579,
+   "name": "Omron тонометр",
+   "tag": "brand",
+   "part": "c"
+  },
+  {
+   "index": 28,
+   "name": "домашнее печенье",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 965,
+   "name": "подарок",
+   "tag": "vague",
+   "part": "e"
+  },
+  {
+   "index": 904,
+   "name": "деньги на карту",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 152,
+   "name": "dumplings",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 545,
+   "name": "diamond earrings",
+   "tag": "en",
+   "part": "c"
+  },
+  {
+   "index": 534,
+   "name": "leather jacket",
+   "tag": "en",
+   "part": "c"
+  },
+  {
+   "index": 101,
+   "name": "продуктовая корзина",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 660,
+   "name": "что-то почитать",
+   "tag": "vague",
+   "part": "d"
+  },
+  {
+   "index": 843,
+   "name": "прыжок с парашютом",
+   "tag": "ru",
+   "part": "e"
+  },
+  {
+   "index": 727,
+   "name": "настолная игра",
+   "tag": "typo",
+   "part": "d"
+  },
+  {
+   "index": 142,
+   "name": "ice cream",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 0,
+   "name": "букет роз",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 864,
+   "name": "flight tickets",
+   "tag": "en",
+   "part": "e"
+  },
+  {
+   "index": 7,
+   "name": "подсолнухи",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 264,
+   "name": "набор ножей",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 814,
+   "name": "fishing rod",
+   "tag": "en",
+   "part": "e"
+  },
+  {
+   "index": 271,
+   "name": "заварочный чайничек",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 607,
+   "name": "самокат",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 100,
+   "name": "медовуха",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 148,
+   "name": "fruit basket",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 611,
+   "name": "канструктор",
+   "tag": "typo",
+   "part": "d"
+  },
+  {
+   "index": 521,
+   "name": "детский плед",
+   "tag": "ru",
+   "part": "c"
+  },
+  {
+   "index": 665,
+   "name": "онлайн курс",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 335,
+   "name": "e-reader",
+   "tag": "en",
+   "part": "b"
+  },
+  {
+   "index": 135,
+   "name": "chocolate box",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 382,
+   "name": "Nespresso",
+   "tag": "brand",
+   "part": "b"
+  },
+  {
+   "index": 811,
+   "name": "dumbbells",
+   "tag": "en",
+   "part": "e"
+  },
+  {
+   "index": 395,
+   "name": "что-то в машину",
+   "tag": "vague",
+   "part": "b"
+  },
+  {
+   "index": 347,
+   "name": "espresso machine",
+   "tag": "en",
+   "part": "b"
+  },
+  {
+   "index": 119,
+   "name": "ужин в ресторане",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 669,
+   "name": "курсы вождения",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 284,
+   "name": "строительный уровень",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 69,
+   "name": "суши сет",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 78,
+   "name": "рамен",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 637,
+   "name": "книга",
+   "tag": "ru",
+   "part": "d"
+  },
+  {
+   "index": 361,
+   "name": "noise cancelling headphones",
+   "tag": "en",
+   "part": "b"
+  },
+  {
+   "index": 378,
+   "name": "Dyson",
+   "tag": "brand",
+   "part": "b"
+  },
+  {
+   "index": 221,
+   "name": "фитнес браслет",
+   "tag": "ru",
+   "part": "b"
+  },
+  {
+   "index": 625,
+   "name": "plush bunny",
+   "tag": "en",
+   "part": "d"
+  },
+  {
+   "index": 46,
+   "name": "шарлотка",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 4,
+   "name": "букет полевых цветов",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 360,
+   "name": "bluetooth speaker",
+   "tag": "en",
+   "part": "b"
+  },
+  {
+   "index": 122,
+   "name": "романтический ужин",
+   "tag": "ru",
+   "part": "a"
+  },
+  {
+   "index": 161,
+   "name": "hot chocolate",
+   "tag": "en",
+   "part": "a"
+  },
+  {
+   "index": 294,
+   "name": "секатор",
+   "tag": "ru",
+   "part": "b"
+  }
+ ]
+}
