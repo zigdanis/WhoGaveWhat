@@ -237,7 +237,7 @@ async function main() {
   if (compareIndex >= 0) {
     for (const file of args.slice(compareIndex + 1)) {
       const saved = JSON.parse(readFileSync(file, "utf8")) as { picker: string; results: Result[] };
-      console.log(summarize(`${saved.picker} (${file})`, saved.results).split("\nMisses")[0], "\n");
+      console.log(summarize(`${saved.picker} (${file})`, saved.results).split("\nMisses")[0].trimEnd() + "\n");
     }
     return;
   }

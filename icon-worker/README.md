@@ -158,3 +158,11 @@ Production confidence thresholds apply to direct `jev-two-stage` runs too. Input
 stages; failures keep reported usage plus unknown attempts. Cost uses
 [TypeSafe's $0.042 per million input tokens](https://docs.typesafe.ai/models), with output tokens free;
 unknown usage is conservatively charged at 65,536 tokens per attempt. Cache hits cost no Jev tokens.
+
+
+The [2026-10-28 report](eval/results/2026-10-28/README.md) contains all runs and their limits.
+The final full run scored **73.3% accept / 62.5% top-1**, versus the aligned old Worker's
+**70.3% / 59.0%**. Mean input was 23,665 tokens; direct latency p50/p90 was 526/628 ms;
+estimated cost including unknown attempts was **$1.005 per 1,000 uncached gifts** (old direct replay:
+7,952 tokens and $0.334). **The 85%+ quality target remains unmet**, so this change is a draft for
+quality review. The 83% model-selection pilot is exploratory and does not replace the full result.
