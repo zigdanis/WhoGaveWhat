@@ -11,14 +11,14 @@
     "eval": "node --experimental-strip-types eval/run.ts"
   },
   "devDependencies": {
-    "@cloudflare/vitest-plugin": "1.4.3",
-    "@cloudflare/workers-types": "5.20261016.1",
+    "@cloudflare/vitest-plugin": "1.4.9",
+    "@cloudflare/workers-types": "5.20261028.1",
     "typescript": "7.0.2",
     "vitest": "4.1.12",
-    "wrangler": "4.151.0"
+    "wrangler": "4.154.0"
   },
   "allowScripts": {
     "esbuild@0.28.2": true,
-    "workerd@1.20261012.1": true
+    "workerd@1.20261023.1": true
   }
 }
