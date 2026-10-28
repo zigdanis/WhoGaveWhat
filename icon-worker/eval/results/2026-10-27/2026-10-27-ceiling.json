@@ -1,0 +1,14505 @@
+{
+ "picker": "ceiling",
+ "at": "2026-10-27T20:05:41.228Z",
+ "results": [
+  {
+   "name": "букет роз",
+   "accept": [
+    "🌹",
+    "💐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "тюльпаны",
+   "accept": [
+    "🌷"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "орхидея в горшке",
+   "accept": [
+    "🌸",
+    "🪴"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "пионы",
+   "accept": [
+    "🌸",
+    "💐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "букет полевых цветов",
+   "accept": [
+    "💐",
+    "🌼"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "💐",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кактус",
+   "accept": [
+    "🌵"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "фикус",
+   "accept": [
+    "🪴"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🪴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "подсолнухи",
+   "accept": [
+    "🌻"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌻",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ромашки",
+   "accept": [
+    "🌼"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "гортензия",
+   "accept": [
+    "💐",
+    "🌸"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "💐",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "монстера",
+   "accept": [
+    "🪴",
+    "🌿"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🪴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "суккуленты",
+   "accept": [
+    "🪴",
+    "🌵"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🪴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "лаванда в горшочке",
+   "accept": [
+    "🪻",
+    "🪴"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🪴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "семена цветов",
+   "accept": [
+    "🌱"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "саженец яблони",
+   "accept": [
+    "🌱",
+    "🌳"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "бонсай",
+   "accept": [
+    "🪴",
+    "🌳"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🪴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мимоза",
+   "accept": [
+    "🌼",
+    "💐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "💐",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "цветы в коробке",
+   "accept": [
+    "💐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "💐",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "101 роза",
+   "accept": [
+    "🌹",
+    "💐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "рождественский венок",
+   "accept": [
+    "🎄"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🎄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "торт Наполеон",
+   "accept": [
+    "🍰",
+    "🎂"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🎂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "медовик",
+   "accept": [
+    "🍰"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "шоколадка",
+   "accept": [
+    "🍫"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍫",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "коробка конфет",
+   "accept": [
+    "🍬",
+    "🍫"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "зефир",
+   "accept": [
+    "🍬",
+    "🍡"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "макаруны",
+   "accept": [
+    "🍪",
+    "🧁"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "капкейки",
+   "accept": [
+    "🧁"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "тульские пряники",
+   "accept": [
+    "🍪"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "домашнее печенье",
+   "accept": [
+    "🍪"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мармелад",
+   "accept": [
+    "🍬"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "чак-чак",
+   "accept": [
+    "🍯",
+    "🍪"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍯",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шоколадные трюфели",
+   "accept": [
+    "🍫"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍫",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "пончики",
+   "accept": [
+    "🍩"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍩",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "чизкейк",
+   "accept": [
+    "🍰"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "тирамису",
+   "accept": [
+    "🍰"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "мороженое",
+   "accept": [
+    "🍦",
+    "🍨"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "леденцы на палочке",
+   "accept": [
+    "🍭"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍭",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сладкий бокс",
+   "accept": [
+    "🍬",
+    "🎁"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шоколад ручной работы",
+   "accept": [
+    "🍫"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍫",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "пахлава",
+   "accept": [
+    "🍯",
+    "🥮"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍯",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "малиновое варенье",
+   "accept": [
+    "🫙",
+    "🍓"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🫙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мёд с пасеки",
+   "accept": [
+    "🍯"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍯",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сгущёнка",
+   "accept": [
+    "🥫"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "пирог с вишней",
+   "accept": [
+    "🥧",
+    "🍒"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥧",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "штоллен",
+   "accept": [
+    "🍞",
+    "🎄"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍞",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "имбирные пряники",
+   "accept": [
+    "🍪",
+    "🎄"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шарлотка",
+   "accept": [
+    "🥧",
+    "🍎"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥧",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "пармезан",
+   "accept": [
+    "🧀"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧀",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сырная тарелка",
+   "accept": [
+    "🧀"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧀",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "хамон",
+   "accept": [
+    "🍖",
+    "🥩"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥩",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "домашняя колбаса",
+   "accept": [
+    "🍖",
+    "🥩"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥩",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "красная икра",
+   "accept": [
+    "🐟",
+    "🫙"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🐟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "оливковое масло",
+   "accept": [
+    "🫒"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "орехи ассорти",
+   "accept": [
+    "🥜",
+    "🌰"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥜",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "корзина фруктов",
+   "accept": [
+    "🧺",
+    "🍎"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "арбуз",
+   "accept": [
+    "🍉"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "манго",
+   "accept": [
+    "🥭"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "клубника в шоколаде",
+   "accept": [
+    "🍓",
+    "🍫"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍓",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "авокадо",
+   "accept": [
+    "🥑"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "домашние соленья",
+   "accept": [
+    "🥒",
+    "🫙"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🫙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "квашеная капуста",
+   "accept": [
+    "🥬",
+    "🫙"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🫙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "сушёные грибы",
+   "accept": [
+    "🍄"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "баночка аджики",
+   "accept": [
+    "🌶",
+    "🫙"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🫙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "набор специй",
+   "accept": [
+    "🧂",
+    "🌶"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "сало",
+   "accept": [
+    "🥓"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "домашние пельмени",
+   "accept": [
+    "🥟"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "хлеб ручной выпечки",
+   "accept": [
+    "🍞"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍞",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "круассаны",
+   "accept": [
+    "🥐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "блины",
+   "accept": [
+    "🥞"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "суши сет",
+   "accept": [
+    "🍣"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍣",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шаурма",
+   "accept": [
+    "🌯"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "мясо для стейков",
+   "accept": [
+    "🥩"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥩",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "креветки",
+   "accept": [
+    "🦐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "устрицы",
+   "accept": [
+    "🦪"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "перепелиные яйца",
+   "accept": [
+    "🥚"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "черешня",
+   "accept": [
+    "🍒"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "острый соус",
+   "accept": [
+    "🌶"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "хумус",
+   "accept": [
+    "🧆",
+    "🫘"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "рамен",
+   "accept": [
+    "🍜"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "ягоды",
+   "accept": [
+    "🫐",
+    "🍓"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍓",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "шампанское",
+   "accept": [
+    "🍾",
+    "🥂"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍾",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "красное вино",
+   "accept": [
+    "🍷"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "виски",
+   "accept": [
+    "🥃"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥃",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "коньяк",
+   "accept": [
+    "🥃"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥃",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "водка",
+   "accept": [
+    "🍾",
+    "🥃"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍾",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "домашняя настойка",
+   "accept": [
+    "🍶",
+    "🥃"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥃",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "крафтовое пиво",
+   "accept": [
+    "🍺"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ящик пива",
+   "accept": [
+    "🍻",
+    "🍺"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "саке",
+   "accept": [
+    "🍶"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "набор для коктейлей",
+   "accept": [
+    "🍸",
+    "🍹"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кофе в зёрнах",
+   "accept": [
+    "☕",
+    "🫘"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "пуэр",
+   "accept": [
+    "🍵"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "травяной сбор",
+   "accept": [
+    "🌿",
+    "🍵"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "свежевыжатый сок",
+   "accept": [
+    "🧃",
+    "🍊"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧃",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "лимонад",
+   "accept": [
+    "🥤",
+    "🍋"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "морс",
+   "accept": [
+    "🧃",
+    "🫐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧃",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "смузи",
+   "accept": [
+    "🥤",
+    "🍓"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍓",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "бабл ти",
+   "accept": [
+    "🧋"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "капсулы для кофемашины",
+   "accept": [
+    "☕"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "глинтвейн",
+   "accept": [
+    "🍷",
+    "🎄"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "медовуха",
+   "accept": [
+    "🍯",
+    "🍺"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍯",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "продуктовая корзина",
+   "accept": [
+    "🧺",
+    "🛒"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "новогодний подарочный набор",
+   "accept": [
+    "🎁",
+    "🎄"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "корзина с деликатесами",
+   "accept": [
+    "🧺",
+    "🎁"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ящик мандаринов",
+   "accept": [
+    "🍊"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мешок картошки",
+   "accept": [
+    "🥔"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "деревенские яйца",
+   "accept": [
+    "🥚"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "домашнее молоко",
+   "accept": [
+    "🥛"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "итальянская паста",
+   "accept": [
+    "🍝"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "ящик вина",
+   "accept": [
+    "🍷",
+    "📦"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "чайный сервиз",
+   "accept": [
+    "🫖",
+    "🍵"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🫖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "заварочный чайник",
+   "accept": [
+    "🫖"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🫖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "френч-пресс",
+   "accept": [
+    "☕"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "турка для кофе",
+   "accept": [
+    "☕"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кофемолка",
+   "accept": [
+    "☕"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "бокалы для вина",
+   "accept": [
+    "🍷"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "штопор",
+   "accept": [
+    "🍾"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍾",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор для суши",
+   "accept": [
+    "🍣",
+    "🥢"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍣",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "самовар",
+   "accept": [
+    "🫖"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🫖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ужин в ресторане",
+   "accept": [
+    "🍽"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сертификат в ресторан",
+   "accept": [
+    "🎫",
+    "🍽"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "поход в кафе",
+   "accept": [
+    "☕",
+    "🍰"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "романтический ужин",
+   "accept": [
+    "🍽",
+    "🥂",
+    "🕯"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "завтрак в кафе",
+   "accept": [
+    "🥐",
+    "☕"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "кулинарный мастер-класс",
+   "accept": [
+    "🍳",
+    "🔪"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍳",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "дегустация вин",
+   "accept": [
+    "🍷"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "дегустация сыров",
+   "accept": [
+    "🧀"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧀",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "бар с друзьями",
+   "accept": [
+    "🍻"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "шашлыки на даче",
+   "accept": [
+    "🍖",
+    "🔥"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "пикник",
+   "accept": [
+    "🧺",
+    "🥪"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "bouquet of roses",
+   "accept": [
+    "💐",
+    "🌹"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "💐",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "peonies",
+   "accept": [
+    "🌸",
+    "💐"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🌸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "succulent",
+   "accept": [
+    "🪴",
+    "🌵"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🪴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "houseplant",
+   "accept": [
+    "🪴"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🪴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "sunflower bouquet",
+   "accept": [
+    "🌻",
+    "💐"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🌻",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "chocolate box",
+   "accept": [
+    "🍫",
+    "🎁"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍫",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "birthday cake",
+   "accept": [
+    "🎂"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🎂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "muffins",
+   "accept": [
+    "🧁"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🧁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "brownies",
+   "accept": [
+    "🍫"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍫",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "cookies",
+   "accept": [
+    "🍪"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "donut box",
+   "accept": [
+    "🍩"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍩",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "gingerbread house",
+   "accept": [
+    "🍪",
+    "🏠"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ice cream",
+   "accept": [
+    "🍦",
+    "🍨"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "jelly beans",
+   "accept": [
+    "🍬"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "honey jar",
+   "accept": [
+    "🍯"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍯",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "cheese board",
+   "accept": [
+    "🧀"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🧀",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "charcuterie board",
+   "accept": [
+    "🥓",
+    "🧀"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🧀",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "caviar",
+   "accept": [
+    "🐟",
+    "🫙"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🐟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "fruit basket",
+   "accept": [
+    "🧺",
+    "🍎"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🧺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "maple syrup",
+   "accept": [
+    "🍁",
+    "🥞"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "peanut butter",
+   "accept": [
+    "🥜",
+    "🫙"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🥜",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "pretzels",
+   "accept": [
+    "🥨"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "dumplings",
+   "accept": [
+    "🥟"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🥟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "lobster",
+   "accept": [
+    "🦞"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "bento box",
+   "accept": [
+    "🍱"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "bottle of wine",
+   "accept": [
+    "🍷",
+    "🍾"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "craft beer",
+   "accept": [
+    "🍺"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "gin set",
+   "accept": [
+    "🍸"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "coffee beans",
+   "accept": [
+    "☕",
+    "🫘"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "tea sampler",
+   "accept": [
+    "🍵"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "matcha set",
+   "accept": [
+    "🍵"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "hot chocolate",
+   "accept": [
+    "☕",
+    "🍫"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "kombucha",
+   "accept": [
+    "🧃",
+    "🍵"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🧃",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "cold brew",
+   "accept": [
+    "☕",
+    "🧊"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "gift hamper",
+   "accept": [
+    "🧺",
+    "🎁"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🧺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "snack box",
+   "accept": [
+    "📦",
+    "🍿"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "whiskey glasses",
+   "accept": [
+    "🥃"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🥃",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "cheese knife set",
+   "accept": [
+    "🧀",
+    "🔪"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🧀",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "restaurant gift card",
+   "accept": [
+    "🎫",
+    "🍽"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "afternoon tea",
+   "accept": [
+    "🍵",
+    "🫖"
+   ],
+   "tag": "en",
+   "part": "a",
+   "pick": {
+    "emoji": "🍵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Алёнка",
+   "accept": [
+    "🍫"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "🍫",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Raffaello",
+   "accept": [
+    "🍬",
+    "🍫"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Ferrero Rocher",
+   "accept": [
+    "🍫"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "🍫",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Kinder Surprise",
+   "accept": [
+    "🥚",
+    "🍫"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "🥚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Коркунов",
+   "accept": [
+    "🍫"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "🍫",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Nutella",
+   "accept": [
+    "🍫",
+    "🫙"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "🍫",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Oreo",
+   "accept": [
+    "🍪"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Абрау-Дюрсо",
+   "accept": [
+    "🍾",
+    "🥂"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "🍾",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Lavazza",
+   "accept": [
+    "☕"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Jack Daniel's",
+   "accept": [
+    "🥃"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "🥃",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Moët & Chandon",
+   "accept": [
+    "🍾",
+    "🥂"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "🍾",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор чая Greenfield",
+   "accept": [
+    "🍵"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "🍵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Red Bull",
+   "accept": [
+    "🥤",
+    "⚡"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "ВкусВилл",
+   "accept": [
+    "🛒",
+    "🥬"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "🛒",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Starbucks gift card",
+   "accept": [
+    "☕",
+    "🎫"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Додо Пицца",
+   "accept": [
+    "🍕"
+   ],
+   "tag": "brand",
+   "part": "a",
+   "pick": {
+    "emoji": "🍕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шоколдка",
+   "accept": [
+    "🍫"
+   ],
+   "tag": "typo",
+   "part": "a",
+   "pick": {
+    "emoji": "🍫",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "конфетки",
+   "accept": [
+    "🍬"
+   ],
+   "tag": "typo",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "пиченье",
+   "accept": [
+    "🍪"
+   ],
+   "tag": "typo",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мароженое",
+   "accept": [
+    "🍦",
+    "🍨"
+   ],
+   "tag": "typo",
+   "part": "a",
+   "pick": {
+    "emoji": "🍨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "шампусик",
+   "accept": [
+    "🍾",
+    "🥂"
+   ],
+   "tag": "typo",
+   "part": "a",
+   "pick": {
+    "emoji": "🍾",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "винишко",
+   "accept": [
+    "🍷"
+   ],
+   "tag": "typo",
+   "part": "a",
+   "pick": {
+    "emoji": "🍷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кофэ",
+   "accept": [
+    "☕"
+   ],
+   "tag": "typo",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "цвиты",
+   "accept": [
+    "💐"
+   ],
+   "tag": "typo",
+   "part": "a",
+   "pick": {
+    "emoji": "💐",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "что-то вкусное",
+   "accept": [
+    "🎁",
+    "🍽"
+   ],
+   "tag": "vague",
+   "part": "a",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "вкусняшки",
+   "accept": [
+    "🍬",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сладости",
+   "accept": [
+    "🍬",
+    "🍫"
+   ],
+   "tag": "vague",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "еда",
+   "accept": [
+    "🍽",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "a",
+   "pick": {
+    "emoji": "🍽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "вкусный подарок",
+   "accept": [
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "a",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "что-то к чаю",
+   "accept": [
+    "🍪",
+    "🍵",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "айфон",
+   "accept": [
+    "📱"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "📱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "чехол на айфон",
+   "accept": [
+    "📱"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "📱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "наушники",
+   "accept": [
+    "🎧"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🎧",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "беспроводные наушники",
+   "accept": [
+    "🎧"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🎧",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ноутбук",
+   "accept": [
+    "💻"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "💻",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "геймпад",
+   "accept": [
+    "🎮"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🎮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "игровая мышка",
+   "accept": [
+    "🖱",
+    "🎮"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🖱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "клавиатура механическая",
+   "accept": [
+    "⌨",
+    "💻"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "⌨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "монитор",
+   "accept": [
+    "🖥",
+    "💻"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🖥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "телевизор",
+   "accept": [
+    "📺"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "📺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "фотоаппарат",
+   "accept": [
+    "📷",
+    "📸"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "📷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "объектив",
+   "accept": [
+    "📷"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "📷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "штатив",
+   "accept": [
+    "📷",
+    "📸"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "📷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "умная колонка",
+   "accept": [
+    "🔊"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🔊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "портативная колонка",
+   "accept": [
+    "🔊",
+    "🎵"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🔊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "зарядка для телефона",
+   "accept": [
+    "🔌",
+    "🔋"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🔌",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кабель type-c",
+   "accept": [
+    "🔌"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🔌",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "беспроводная зарядка",
+   "accept": [
+    "🔌",
+    "🔋"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🔌",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "планшет",
+   "accept": [
+    "📱"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "📱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "электронная книга",
+   "accept": [
+    "📖",
+    "📚",
+    "📱"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "📖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "смарт часы",
+   "accept": [
+    "⌚"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "⌚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "фитнес браслет",
+   "accept": [
+    "⌚",
+    "🏃"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "⌚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "квадрокоптер",
+   "accept": [
+    "🚁"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "VR очки",
+   "accept": [
+    "🥽",
+    "🎮"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🥽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "умная лампочка",
+   "accept": [
+    "💡"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "💡",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "умная розетка",
+   "accept": [
+    "🔌"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🔌",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "робот-пылесос",
+   "accept": [
+    "🤖",
+    "🧹"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🤖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "флешка",
+   "accept": [
+    "💾"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "внешний жесткий диск",
+   "accept": [
+    "💾",
+    "💽"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "wifi роутер",
+   "accept": [
+    "📡"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "принтер",
+   "accept": [
+    "🖨"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🖨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "проектор",
+   "accept": [
+    "📽",
+    "🎬"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🎬",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "настольная лампа",
+   "accept": [
+    "💡"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "💡",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "лампа ночник",
+   "accept": [
+    "💡",
+    "🌙"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "💡",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "торшер",
+   "accept": [
+    "💡"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "💡",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "гирлянда",
+   "accept": [
+    "✨",
+    "💡"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "💡",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "свечи",
+   "accept": [
+    "🕯"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🕯",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ароматическая свеча",
+   "accept": [
+    "🕯"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🕯",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "аромадиффузор",
+   "accept": [
+    "🌸",
+    "🕯"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🌸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "плед",
+   "accept": [
+    "🧶",
+    "🛋",
+    "🛏"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🧶",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "одеяло",
+   "accept": [
+    "🛏"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🛏",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "постельное белье",
+   "accept": [
+    "🛏"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🛏",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "подушка",
+   "accept": [
+    "🛏"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🛏",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "декоративные подушки",
+   "accept": [
+    "🛋",
+    "🛏"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🛋",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ваза",
+   "accept": [
+    "🏺",
+    "💐"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🏺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "фоторамка",
+   "accept": [
+    "🖼"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🖼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "зеркало",
+   "accept": [
+    "🪞"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🪞",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ковер",
+   "accept": [
+    "🧶",
+    "🏠"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🧶",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кресло",
+   "accept": [
+    "🪑",
+    "🛋"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🪑",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "диван",
+   "accept": [
+    "🛋"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🛋",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "книжная полка",
+   "accept": [
+    "📚"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "📚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шторы",
+   "accept": [
+    "🪟"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "настенные часы",
+   "accept": [
+    "🕰",
+    "⏰"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🕰",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "комнатное растение",
+   "accept": [
+    "🪴"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🪴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "блендер",
+   "accept": [
+    "🥤",
+    "🍹"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "чайник электрический",
+   "accept": [
+    "🫖"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🫖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "миксер",
+   "accept": [
+    "🧁",
+    "🎂"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🧁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кофемашина",
+   "accept": [
+    "☕"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кофемолка",
+   "accept": [
+    "☕"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "тостер",
+   "accept": [
+    "🍞"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🍞",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мультиварка",
+   "accept": [
+    "🍲",
+    "🥘"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🍲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "аэрогриль",
+   "accept": [
+    "🍟",
+    "🍗"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "микроволновка",
+   "accept": [
+    "🍲",
+    "🔥"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🍲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сковородка",
+   "accept": [
+    "🍳"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🍳",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор кастрюль",
+   "accept": [
+    "🍲",
+    "🥘"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🍲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор ножей",
+   "accept": [
+    "🔪"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🔪",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "разделочная доска",
+   "accept": [
+    "🔪",
+    "🥒"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🔪",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кружка",
+   "accept": [
+    "☕"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "термокружка",
+   "accept": [
+    "☕"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор бокалов",
+   "accept": [
+    "🥂",
+    "🍷"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🍷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "тарелки",
+   "accept": [
+    "🍽"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🍽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сервиз",
+   "accept": [
+    "🍽",
+    "🍵"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🍽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "заварочный чайничек",
+   "accept": [
+    "🫖",
+    "🍵"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🫖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кухонные весы",
+   "accept": [
+    "⚖"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "соковыжималка",
+   "accept": [
+    "🧃",
+    "🍊"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🧃",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "вафельница",
+   "accept": [
+    "🧇"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "контейнеры для еды",
+   "accept": [
+    "🥡",
+    "🍱"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "банки для хранения",
+   "accept": [
+    "🫙"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🫙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шуруповерт",
+   "accept": [
+    "🪛",
+    "🔧"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "дрель",
+   "accept": [
+    "🔧",
+    "🛠"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "набор инструментов",
+   "accept": [
+    "🧰",
+    "🛠"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🧰",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "молоток",
+   "accept": [
+    "🔨"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🔨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор отверток",
+   "accept": [
+    "🪛"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "гаечные ключи",
+   "accept": [
+    "🔧"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "рулетка",
+   "accept": [
+    "📏"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "строительный уровень",
+   "accept": [
+    "📐",
+    "📏"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "ножовка",
+   "accept": [
+    "🪚"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "топор",
+   "accept": [
+    "🪓"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "мультитул",
+   "accept": [
+    "🔧",
+    "🧰"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🧰",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "стремянка",
+   "accept": [
+    "🪜"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "паяльник",
+   "accept": [
+    "🛠",
+    "🔥"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "фонарик",
+   "accept": [
+    "🔦"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "газонокосилка",
+   "accept": [
+    "🌱",
+    "🏡"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🌱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "лопата",
+   "accept": [
+    "🪏",
+    "🌱"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🌱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "садовые перчатки",
+   "accept": [
+    "🧤",
+    "🌱"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🧤",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "секатор",
+   "accept": [
+    "✂",
+    "🌿"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "✂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шланг для полива",
+   "accept": [
+    "🚿",
+    "🌱"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🌱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "лейка",
+   "accept": [
+    "🌱",
+    "🪣",
+    "🚿"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🌱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "семена",
+   "accept": [
+    "🌱"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🌱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мангал",
+   "accept": [
+    "🍖",
+    "🔥"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "видеорегистратор",
+   "accept": [
+    "📹",
+    "🚗"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🚗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "автодержатель",
+   "accept": [
+    "📱",
+    "🚗"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "📱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "автомобильный пылесос",
+   "accept": [
+    "🧹",
+    "🚗"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🧹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "чехлы на сиденья",
+   "accept": [
+    "🚗"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🚗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ароматизатор в машину",
+   "accept": [
+    "🚗",
+    "🌸"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🚗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "пусковое устройство",
+   "accept": [
+    "🔋",
+    "🚗"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🔋",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "автохолодильник",
+   "accept": [
+    "🧊",
+    "🚗"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🚗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "компрессор для шин",
+   "accept": [
+    "🛞",
+    "🚗"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🚗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "пылесос",
+   "accept": [
+    "🧹"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🧹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "утюг",
+   "accept": [
+    "👕"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "👕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "отпариватель",
+   "accept": [
+    "👕",
+    "💨"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "👕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сушилка для белья",
+   "accept": [
+    "👕",
+    "🧺"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "👕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "корзина для белья",
+   "accept": [
+    "🧺"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🧺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "коробки для хранения",
+   "accept": [
+    "📦"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "органайзер",
+   "accept": [
+    "🗂",
+    "📦"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "вешалки",
+   "accept": [
+    "🧥",
+    "👗"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🧥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "полотенца",
+   "accept": [
+    "🛁",
+    "🧺"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🛁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мусорное ведро",
+   "accept": [
+    "🗑"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "швабра",
+   "accept": [
+    "🧹",
+    "🪣"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🧹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "губки для посуды",
+   "accept": [
+    "🧽"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "увлажнитель воздуха",
+   "accept": [
+    "💧",
+    "💨"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "вентилятор",
+   "accept": [
+    "💨",
+    "🪭"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "обогреватель",
+   "accept": [
+    "🔥",
+    "♨"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "огнетушитель",
+   "accept": [
+    "🧯"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "аптечка",
+   "accept": [
+    "🩹",
+    "💊"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🩹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "метеостанция",
+   "accept": [
+    "🌡"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🌡",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "фильтр для воды",
+   "accept": [
+    "💧",
+    "🚰"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "ключница",
+   "accept": [
+    "🔑"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "🔑",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "полка для обуви",
+   "accept": [
+    "👟"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "👟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ножницы",
+   "accept": [
+    "✂"
+   ],
+   "tag": "ru",
+   "part": "b",
+   "pick": {
+    "emoji": "✂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "powerbank",
+   "accept": [
+    "🔋"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🔋",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "gaming headset",
+   "accept": [
+    "🎧",
+    "🎮"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🎧",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "mechanical keyboard",
+   "accept": [
+    "⌨"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "⌨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "smart speaker",
+   "accept": [
+    "🔊"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🔊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "wireless charger",
+   "accept": [
+    "🔌",
+    "🔋"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🔌",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "phone case",
+   "accept": [
+    "📱"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "📱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "e-reader",
+   "accept": [
+    "📖",
+    "📱"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "📖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "smartwatch",
+   "accept": [
+    "⌚"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "⌚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "drone",
+   "accept": [
+    "🚁"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "usb hub",
+   "accept": [
+    "🔌"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🔌",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "smart plug",
+   "accept": [
+    "🔌"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🔌",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "mesh wifi",
+   "accept": [
+    "📡"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "blanket",
+   "accept": [
+    "🧶",
+    "🛏",
+    "🛋"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🧶",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "scented candle",
+   "accept": [
+    "🕯"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🕯",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "throw pillow",
+   "accept": [
+    "🛋",
+    "🛏"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🛋",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "wall art",
+   "accept": [
+    "🖼"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🖼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "table lamp",
+   "accept": [
+    "💡"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "💡",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "air fryer",
+   "accept": [
+    "🍟",
+    "🍗"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "espresso machine",
+   "accept": [
+    "☕"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "cast iron skillet",
+   "accept": [
+    "🍳"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🍳",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "knife set",
+   "accept": [
+    "🔪"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🔪",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "stand mixer",
+   "accept": [
+    "🎂",
+    "🧁"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🎂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "cordless drill",
+   "accept": [
+    "🪛",
+    "🔧"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "tool set",
+   "accept": [
+    "🧰"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🧰",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "garden tools",
+   "accept": [
+    "🌱",
+    "🧰"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🌱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "dash cam",
+   "accept": [
+    "📹",
+    "🚗"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🚗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "car phone mount",
+   "accept": [
+    "📱",
+    "🚗"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "📱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "vacuum cleaner",
+   "accept": [
+    "🧹"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🧹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "storage boxes",
+   "accept": [
+    "📦"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "laundry basket",
+   "accept": [
+    "🧺"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🧺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "humidifier",
+   "accept": [
+    "💧",
+    "💨"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "bluetooth speaker",
+   "accept": [
+    "🔊",
+    "🎵"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🔊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "noise cancelling headphones",
+   "accept": [
+    "🎧"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🎧",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "laptop stand",
+   "accept": [
+    "💻"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "💻",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "webcam",
+   "accept": [
+    "📹",
+    "💻"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "💻",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "robot vacuum",
+   "accept": [
+    "🤖",
+    "🧹"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🤖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "coffee grinder",
+   "accept": [
+    "☕"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "french press",
+   "accept": [
+    "☕"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "led strip lights",
+   "accept": [
+    "💡",
+    "✨"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "💡",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "picture frame",
+   "accept": [
+    "🖼"
+   ],
+   "tag": "en",
+   "part": "b",
+   "pick": {
+    "emoji": "🖼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "AirPods Pro",
+   "accept": [
+    "🎧"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "🎧",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "MacBook Air",
+   "accept": [
+    "💻"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "💻",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "PlayStation 5",
+   "accept": [
+    "🎮"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "🎮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Nintendo Switch",
+   "accept": [
+    "🎮"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "🎮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Яндекс Станция",
+   "accept": [
+    "🔊"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "🔊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "JBL",
+   "accept": [
+    "🔊",
+    "🎧"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "🔊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "iPad",
+   "accept": [
+    "📱"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "📱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Kindle",
+   "accept": [
+    "📖",
+    "📱"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "📖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Apple Watch",
+   "accept": [
+    "⌚"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "⌚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Dyson",
+   "accept": [
+    "🧹",
+    "💨"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "🧹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Meta Quest 3",
+   "accept": [
+    "🥽",
+    "🎮"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "🥽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Steam Deck",
+   "accept": [
+    "🎮"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "🎮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "KitchenAid",
+   "accept": [
+    "🎂",
+    "🧁"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "🎂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Nespresso",
+   "accept": [
+    "☕"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Bosch",
+   "accept": [
+    "🔧",
+    "🛠"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "IKEA",
+   "accept": [
+    "🏠",
+    "🪑",
+    "🛋"
+   ],
+   "tag": "brand",
+   "part": "b",
+   "pick": {
+    "emoji": "🪑",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "пауэрбанк",
+   "accept": [
+    "🔋"
+   ],
+   "tag": "typo",
+   "part": "b",
+   "pick": {
+    "emoji": "🔋",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "наушнки",
+   "accept": [
+    "🎧"
+   ],
+   "tag": "typo",
+   "part": "b",
+   "pick": {
+    "emoji": "🎧",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "клавиатра",
+   "accept": [
+    "⌨"
+   ],
+   "tag": "typo",
+   "part": "b",
+   "pick": {
+    "emoji": "⌨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "падушка",
+   "accept": [
+    "🛏"
+   ],
+   "tag": "typo",
+   "part": "b",
+   "pick": {
+    "emoji": "🛏",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "блендр",
+   "accept": [
+    "🥤",
+    "🍹"
+   ],
+   "tag": "typo",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "шурупаверт",
+   "accept": [
+    "🪛",
+    "🔧"
+   ],
+   "tag": "typo",
+   "part": "b",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "пылисос",
+   "accept": [
+    "🧹"
+   ],
+   "tag": "typo",
+   "part": "b",
+   "pick": {
+    "emoji": "🧹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "утюк",
+   "accept": [
+    "👕"
+   ],
+   "tag": "typo",
+   "part": "b",
+   "pick": {
+    "emoji": "👕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "что-то для дома",
+   "accept": [
+    "🎁",
+    "🏠"
+   ],
+   "tag": "vague",
+   "part": "b",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "штука для кухни",
+   "accept": [
+    "🎁",
+    "🍳"
+   ],
+   "tag": "vague",
+   "part": "b",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "что-то в машину",
+   "accept": [
+    "🎁",
+    "🚗"
+   ],
+   "tag": "vague",
+   "part": "b",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "что-нибудь полезное",
+   "accept": [
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "b",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "бытовая техника",
+   "accept": [
+    "🔌",
+    "🏠",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "b",
+   "pick": {
+    "emoji": "🔌",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "штука для уюта",
+   "accept": [
+    "🎁",
+    "🏠"
+   ],
+   "tag": "vague",
+   "part": "b",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "носки",
+   "accept": [
+    "🧦"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧦",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "носки с принтом",
+   "accept": [
+    "🧦"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧦",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "свитер",
+   "accept": [
+    "🧥",
+    "👕"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "платье",
+   "accept": [
+    "👗"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "вечернее платье",
+   "accept": [
+    "👗"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "куртка зимняя",
+   "accept": [
+    "🧥"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "пуховик",
+   "accept": [
+    "🧥"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "пальто",
+   "accept": [
+    "🧥"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "пижама",
+   "accept": [
+    "👘",
+    "🛌"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👘",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "халат махровый",
+   "accept": [
+    "👘",
+    "🧖"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👘",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "футболка",
+   "accept": [
+    "👕"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "джинсы",
+   "accept": [
+    "👖"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "юбка",
+   "accept": [
+    "👗"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "блузка",
+   "accept": [
+    "👚"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "рубашка",
+   "accept": [
+    "👔"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👔",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "галстук",
+   "accept": [
+    "👔"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👔",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "костюм мужской",
+   "accept": [
+    "👔",
+    "🤵"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👔",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кофта",
+   "accept": [
+    "👚",
+    "🧥"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "худи",
+   "accept": [
+    "🧥",
+    "👕"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шорты",
+   "accept": [
+    "🩳"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "колготки",
+   "accept": [
+    "🧦"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧦",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "нижнее белье",
+   "accept": [
+    "🩲",
+    "👙"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🩲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "комплект белья кружевной",
+   "accept": [
+    "👙",
+    "🩲"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "купальник",
+   "accept": [
+    "👙"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "жилетка",
+   "accept": [
+    "🦺",
+    "🧥"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "сарафан летний",
+   "accept": [
+    "👗"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "леггинсы для йоги",
+   "accept": [
+    "🧘",
+    "👖"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧘",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "спортивный костюм",
+   "accept": [
+    "🏃",
+    "👕"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "домашние тапочки",
+   "accept": [
+    "🩴",
+    "🥿"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🩴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "варежки",
+   "accept": [
+    "🧤"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧤",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шапка зимняя",
+   "accept": [
+    "🧢",
+    "🧣"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧢",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шарф вязаный",
+   "accept": [
+    "🧣"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧣",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "перчатки кожаные",
+   "accept": [
+    "🧤"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧤",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кроссовки",
+   "accept": [
+    "👟"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ботинки зимние",
+   "accept": [
+    "🥾"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "туфли на каблуке",
+   "accept": [
+    "👠"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👠",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "босоножки",
+   "accept": [
+    "👡"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "сапоги",
+   "accept": [
+    "👢"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👢",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "балетки",
+   "accept": [
+    "🥿"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "шлепки",
+   "accept": [
+    "🩴"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🩴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кеды",
+   "accept": [
+    "👟"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "туфли мужские",
+   "accept": [
+    "👞"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "угги",
+   "accept": [
+    "🥾",
+    "👢"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👢",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "резиновые сапоги",
+   "accept": [
+    "👢"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👢",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сумка",
+   "accept": [
+    "👜"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👜",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "рюкзак",
+   "accept": [
+    "🎒"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🎒",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кошелек",
+   "accept": [
+    "👛"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👛",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "портмоне кожаное",
+   "accept": [
+    "👛"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👛",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ремень",
+   "accept": [
+    "👖",
+    "🎁"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "клатч",
+   "accept": [
+    "👝"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "зонтик складной",
+   "accept": [
+    "☂",
+    "🌂"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "☂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "солнцезащитные очки",
+   "accept": [
+    "🕶"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🕶",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "часы наручные",
+   "accept": [
+    "⌚"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "⌚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шляпа соломенная",
+   "accept": [
+    "👒"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "бейсболка",
+   "accept": [
+    "🧢"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧢",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "визитница",
+   "accept": [
+    "👛",
+    "💳"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👛",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "обложка на паспорт",
+   "accept": [
+    "📘",
+    "🛂"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "брелок",
+   "accept": [
+    "🔑"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🔑",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "косметичка",
+   "accept": [
+    "👝",
+    "💄"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "чемодан",
+   "accept": [
+    "🧳"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧳",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "галстук-бабочка",
+   "accept": [
+    "🎀",
+    "👔"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🎀",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кольцо",
+   "accept": [
+    "💍"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кольцо с бриллиантом",
+   "accept": [
+    "💍"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "обручальное кольцо",
+   "accept": [
+    "💍"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "серьги",
+   "accept": [
+    "💎"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "цепочка золотая",
+   "accept": [
+    "📿",
+    "⛓"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "📿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кулон",
+   "accept": [
+    "📿",
+    "💎"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "📿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "подвеска сердечко",
+   "accept": [
+    "📿",
+    "❤"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "📿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "браслет",
+   "accept": [
+    "📿",
+    "💎"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "📿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "бусы",
+   "accept": [
+    "📿"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "📿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "жемчужное ожерелье",
+   "accept": [
+    "📿",
+    "💎"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "📿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "брошь",
+   "accept": [
+    "💎",
+    "🎀"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шкатулка для украшений",
+   "accept": [
+    "💎",
+    "🎁"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "колечко",
+   "accept": [
+    "💍"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "духи",
+   "accept": [
+    "🧴",
+    "🌸"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "помада",
+   "accept": [
+    "💄"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "тушь для ресниц",
+   "accept": [
+    "💄",
+    "👁"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "палетка теней",
+   "accept": [
+    "💄",
+    "🎨"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "крем для лица",
+   "accept": [
+    "🧴"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "лак для ногтей",
+   "accept": [
+    "💅"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💅",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор гель-лаков",
+   "accept": [
+    "💅"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💅",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "маска для лица",
+   "accept": [
+    "🧖",
+    "🧴"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "сыворотка для лица",
+   "accept": [
+    "🧴"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шампунь",
+   "accept": [
+    "🧴",
+    "🧼"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "гель для душа",
+   "accept": [
+    "🧴",
+    "🛁",
+    "🫧"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "бомбочки для ванны",
+   "accept": [
+    "🛁",
+    "🫧"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🛁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мыло ручной работы",
+   "accept": [
+    "🧼"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "фен",
+   "accept": [
+    "💇",
+    "🪮"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💇",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "плойка",
+   "accept": [
+    "💇"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💇",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "выпрямитель для волос",
+   "accept": [
+    "💇"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💇",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "расческа",
+   "accept": [
+    "🪮"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🪮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "бритва",
+   "accept": [
+    "🪒"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🪒",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор для бритья",
+   "accept": [
+    "🪒"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🪒",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кисти для макияжа",
+   "accept": [
+    "🖌",
+    "💄"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "зеркало с подсветкой",
+   "accept": [
+    "🪞"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🪞",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "бальзам для губ",
+   "accept": [
+    "💋",
+    "💄"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "туалетная вода",
+   "accept": [
+    "🧴",
+    "🌸"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "масло для бороды",
+   "accept": [
+    "🧔"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "триммер для бороды",
+   "accept": [
+    "🪒",
+    "🧔"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🪒",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "маникюрный набор",
+   "accept": [
+    "💅"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💅",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "витамины",
+   "accept": [
+    "💊"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "омега-3",
+   "accept": [
+    "💊",
+    "🐟"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "массажер для шеи",
+   "accept": [
+    "💆"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сертификат на массаж",
+   "accept": [
+    "💆",
+    "🎫"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сертификат в спа",
+   "accept": [
+    "🧖",
+    "🎫"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "термометр",
+   "accept": [
+    "🌡"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🌡",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "тонометр",
+   "accept": [
+    "🩺"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "очки для зрения",
+   "accept": [
+    "👓"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "👓",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "аптечка",
+   "accept": [
+    "🩹",
+    "💊"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🩹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "грелка",
+   "accept": [
+    "♨",
+    "🔥"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "весы напольные",
+   "accept": [
+    "⚖"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "фитнес-браслет",
+   "accept": [
+    "⌚",
+    "🏃"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "⌚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ортопедическая подушка",
+   "accept": [
+    "🛏",
+    "😴"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🛏",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "массажный коврик",
+   "accept": [
+    "🧘"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧘",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "соль для ванны",
+   "accept": [
+    "🛁"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🛁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "увлажнитель воздуха",
+   "accept": [
+    "💧"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "мелатонин",
+   "accept": [
+    "💊",
+    "😴"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "💊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "боди для малыша",
+   "accept": [
+    "👶"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "пинетки",
+   "accept": [
+    "👶",
+    "🧦"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧦",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "соска",
+   "accept": [
+    "👶",
+    "🍼"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🍼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "бутылочка для кормления",
+   "accept": [
+    "🍼"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🍼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "слюнявчик",
+   "accept": [
+    "👶"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "подгузники",
+   "accept": [
+    "👶"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "погремушка",
+   "accept": [
+    "👶",
+    "🧸"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "детский плед",
+   "accept": [
+    "👶"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "набор для новорожденного",
+   "accept": [
+    "👶",
+    "🍼"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🍼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "слинг",
+   "accept": [
+    "👶"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "подушка для беременных",
+   "accept": [
+    "🤰"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "крем от растяжек",
+   "accept": [
+    "🤰",
+    "🧴"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": "🧴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "конверт на выписку",
+   "accept": [
+    "👶"
+   ],
+   "tag": "ru",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "socks",
+   "accept": [
+    "🧦"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🧦",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "hoodie",
+   "accept": [
+    "🧥",
+    "👕"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🧥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "t-shirt",
+   "accept": [
+    "👕"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "👕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "cardigan",
+   "accept": [
+    "🧥"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🧥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "lingerie set",
+   "accept": [
+    "👙",
+    "🩲"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "👙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "pajamas",
+   "accept": [
+    "👘",
+    "🛌"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "👘",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "beanie",
+   "accept": [
+    "🧢"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🧢",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "leather jacket",
+   "accept": [
+    "🧥"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🧥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "sneakers",
+   "accept": [
+    "👟"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "👟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "hiking boots",
+   "accept": [
+    "🥾"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "flip flops",
+   "accept": [
+    "🩴"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🩴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "high heels",
+   "accept": [
+    "👠"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "👠",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "tote bag",
+   "accept": [
+    "👜"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "👜",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "wallet",
+   "accept": [
+    "👛"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "👛",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "umbrella",
+   "accept": [
+    "☂",
+    "🌂"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "☂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "sunglasses",
+   "accept": [
+    "🕶"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🕶",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "smart watch",
+   "accept": [
+    "⌚",
+    "📱"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "⌚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "bow tie",
+   "accept": [
+    "🎀",
+    "👔"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🎀",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "diamond earrings",
+   "accept": [
+    "💎"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "💎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "gold chain",
+   "accept": [
+    "⛓",
+    "📿"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "📿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "charm bracelet",
+   "accept": [
+    "📿"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "📿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "perfume",
+   "accept": [
+    "🧴",
+    "🌸"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🧴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "lipstick",
+   "accept": [
+    "💄"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "💄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "skincare set",
+   "accept": [
+    "🧴"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🧴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "nail polish",
+   "accept": [
+    "💅"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "💅",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "hair dryer",
+   "accept": [
+    "💇",
+    "🪮"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "💇",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "beard trimmer",
+   "accept": [
+    "🪒",
+    "🧔"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🪒",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "bath bombs",
+   "accept": [
+    "🛁",
+    "🫧"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🛁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "makeup palette",
+   "accept": [
+    "💄",
+    "🎨"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "💄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "vitamins",
+   "accept": [
+    "💊"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "💊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "massage gun",
+   "accept": [
+    "💆"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "💆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "spa day",
+   "accept": [
+    "🧖"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "blood pressure monitor",
+   "accept": [
+    "🩺"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "reading glasses",
+   "accept": [
+    "👓"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "👓",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "first aid kit",
+   "accept": [
+    "🩹"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🩹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "yoga mat",
+   "accept": [
+    "🧘"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🧘",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "baby onesie",
+   "accept": [
+    "👶"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "pacifier",
+   "accept": [
+    "👶",
+    "🍼"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🍼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "nursing pillow",
+   "accept": [
+    "🤰",
+    "🍼"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": "🍼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "diapers",
+   "accept": [
+    "👶"
+   ],
+   "tag": "en",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "Chanel No 5",
+   "accept": [
+    "🧴",
+    "🌸"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "🧴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "духи Dior",
+   "accept": [
+    "🧴",
+    "🌸"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "🧴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "L'Occitane",
+   "accept": [
+    "🧴"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "🧴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кроссовки Nike",
+   "accept": [
+    "👟"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "👟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Pandora",
+   "accept": [
+    "📿",
+    "💍"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "📿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Tiffany кольцо",
+   "accept": [
+    "💍"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "💍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Swarovski серьги",
+   "accept": [
+    "💎"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "💎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Ray-Ban",
+   "accept": [
+    "🕶"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "🕶",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Apple Watch",
+   "accept": [
+    "⌚"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "⌚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Dyson Airwrap",
+   "accept": [
+    "💇"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "💇",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "MAC помада",
+   "accept": [
+    "💄"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "💄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Lush бомбочки",
+   "accept": [
+    "🛁",
+    "🫧"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "🛁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Oral-B щетка",
+   "accept": [
+    "🪥"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "🪥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Omron тонометр",
+   "accept": [
+    "🩺"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "Pampers",
+   "accept": [
+    "👶"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "Levi's 501",
+   "accept": [
+    "👖"
+   ],
+   "tag": "brand",
+   "part": "c",
+   "pick": {
+    "emoji": "👖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кросовки",
+   "accept": [
+    "👟"
+   ],
+   "tag": "typo",
+   "part": "c",
+   "pick": {
+    "emoji": "👟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "серёжки",
+   "accept": [
+    "💎"
+   ],
+   "tag": "typo",
+   "part": "c",
+   "pick": {
+    "emoji": "💎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "туш для ресниц",
+   "accept": [
+    "💄",
+    "👁"
+   ],
+   "tag": "typo",
+   "part": "c",
+   "pick": {
+    "emoji": "💄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ожирелье",
+   "accept": [
+    "📿",
+    "💎"
+   ],
+   "tag": "typo",
+   "part": "c",
+   "pick": {
+    "emoji": "📿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "басаножки",
+   "accept": [
+    "👡"
+   ],
+   "tag": "typo",
+   "part": "c",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "витамини",
+   "accept": [
+    "💊"
+   ],
+   "tag": "typo",
+   "part": "c",
+   "pick": {
+    "emoji": "💊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "тапачки",
+   "accept": [
+    "🩴",
+    "🥿"
+   ],
+   "tag": "typo",
+   "part": "c",
+   "pick": {
+    "emoji": "🩴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кальцо",
+   "accept": [
+    "💍"
+   ],
+   "tag": "typo",
+   "part": "c",
+   "pick": {
+    "emoji": "💍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "что-то красивое",
+   "accept": [
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "c",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "одежда",
+   "accept": [
+    "👕",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "c",
+   "pick": {
+    "emoji": "👕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "косметика",
+   "accept": [
+    "💄",
+    "🧴"
+   ],
+   "tag": "vague",
+   "part": "c",
+   "pick": {
+    "emoji": "💄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "украшение",
+   "accept": [
+    "💎",
+    "💍",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "c",
+   "pick": {
+    "emoji": "💎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "что-то для малыша",
+   "accept": [
+    "👶",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "c",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "обувь",
+   "accept": [
+    "👟",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "c",
+   "pick": {
+    "emoji": "👟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кукла",
+   "accept": [
+    "🪆",
+    "🎎",
+    "👧"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🪆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Барби",
+   "accept": [
+    "🪆",
+    "👗",
+    "💄"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": "🪆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "плюшевый мишка",
+   "accept": [
+    "🧸"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🧸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мишка плюшвый",
+   "accept": [
+    "🧸"
+   ],
+   "tag": "typo",
+   "part": "d",
+   "pick": {
+    "emoji": "🧸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "машинка",
+   "accept": [
+    "🚗",
+    "🏎"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🚗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Hot Wheels",
+   "accept": [
+    "🏎",
+    "🚗"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": "🏎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ракета игрушка",
+   "accept": [
+    "🚀"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "динозавр",
+   "accept": [
+    "🦖",
+    "🦕"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🦖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "фигурка динозавра",
+   "accept": [
+    "🦕",
+    "🦖"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🦖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "пазл 1000 деталий",
+   "accept": [
+    "🧩"
+   ],
+   "tag": "typo",
+   "part": "d",
+   "pick": {
+    "emoji": "🧩",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "детский велосипед",
+   "accept": [
+    "🚲"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🚲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "самокат",
+   "accept": [
+    "🛴"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🛴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "воздушный змей",
+   "accept": [
+    "🪁"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🪁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "LEGO Technic",
+   "accept": [
+    "🧱",
+    "🏗"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": "🧱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "лего",
+   "accept": [
+    "🧱"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🧱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "канструктор",
+   "accept": [
+    "🧱",
+    "🧩"
+   ],
+   "tag": "typo",
+   "part": "d",
+   "pick": {
+    "emoji": "🧱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "магнитный конструктор",
+   "accept": [
+    "🧲",
+    "🧱"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🧲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мягкая игрушка зайка",
+   "accept": [
+    "🐰",
+    "🧸"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🐰",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "плюшевый единорог",
+   "accept": [
+    "🦄",
+    "🧸"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🦄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "йо-йо",
+   "accept": [
+    "🪀"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "кубик Рубика",
+   "accept": [
+    "🧩",
+    "🎲"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🧩",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "погремушка",
+   "accept": [
+    "👶",
+    "🍼"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🍼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "машинка на пульте",
+   "accept": [
+    "🏎",
+    "🎮",
+    "🚗"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🏎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "дрон для ребёнка",
+   "accept": [
+    "🚁"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "железная дорога",
+   "accept": [
+    "🚂",
+    "🚆"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🚂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор мыльных пузырей",
+   "accept": [
+    "🫧"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "водяной пистолет",
+   "accept": [
+    "🔫",
+    "💦"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "кукольный домик",
+   "accept": [
+    "🏠",
+    "🪆"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🪆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "roller skates",
+   "accept": [
+    "🛼"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🛼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "kids scooter",
+   "accept": [
+    "🛴"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🛴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "plush bunny",
+   "accept": [
+    "🐰",
+    "🧸"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🐰",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "teddy bear",
+   "accept": [
+    "🧸"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🧸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "toy robot",
+   "accept": [
+    "🤖"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🤖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "toy dinosaur",
+   "accept": [
+    "🦖",
+    "🦕"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🦖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Nerf blaster",
+   "accept": [
+    "🔫"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "игрушка",
+   "accept": [
+    "🎁",
+    "🧸"
+   ],
+   "tag": "vague",
+   "part": "d",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "что-нибудь для малыша",
+   "accept": [
+    "👶",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "d",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "набор солдатиков",
+   "accept": [
+    "🪖"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "пиратский корабль игрушка",
+   "accept": [
+    "⛵",
+    "🚢"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "⛵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кинетический песок",
+   "accept": [
+    "🏖",
+    "⏳"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🏖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "санки",
+   "accept": [
+    "🛷"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🛷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "детская палатка",
+   "accept": [
+    "⛺"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "⛺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "книга",
+   "accept": [
+    "📖",
+    "📚"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "📖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "книга по фотографии",
+   "accept": [
+    "📷",
+    "📖"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "📷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сборник стихов",
+   "accept": [
+    "📖",
+    "📜"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "📖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "комиксы",
+   "accept": [
+    "📚",
+    "💥"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "📚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "детская энциклопедия",
+   "accept": [
+    "📚",
+    "📖"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "📚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "блокнот",
+   "accept": [
+    "📒",
+    "📓"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "📓",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "Moleskine",
+   "accept": [
+    "📓",
+    "📒"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": "📓",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ежедневник на 2027",
+   "accept": [
+    "📅",
+    "📔"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "📅",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "перьевая ручка",
+   "accept": [
+    "🖋"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "набор гелевых ручек",
+   "accept": [
+    "🖊"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🖊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "закладка для книг",
+   "accept": [
+    "🔖"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "скетчбук",
+   "accept": [
+    "📓",
+    "✏"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "📓",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "цветные карандаши",
+   "accept": [
+    "🖍",
+    "✏"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🖍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "фломастеры",
+   "accept": [
+    "🖍"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🖍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сертификат в книжный",
+   "accept": [
+    "🎟",
+    "📚"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Kindle Paperwhite",
+   "accept": [
+    "📱",
+    "📖"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": "📱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "fountain pen",
+   "accept": [
+    "🖋"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "notebook",
+   "accept": [
+    "📓",
+    "📒"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "📓",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "bullet journal",
+   "accept": [
+    "📔",
+    "📒"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "cookbook",
+   "accept": [
+    "📖",
+    "🍳"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "📖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "novel",
+   "accept": [
+    "📖"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "📖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "bookmark",
+   "accept": [
+    "🔖"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "coloring book",
+   "accept": [
+    "🖍",
+    "📖"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🖍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "что-то почитать",
+   "accept": [
+    "📖",
+    "📚"
+   ],
+   "tag": "vague",
+   "part": "d",
+   "pick": {
+    "emoji": "📖",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "глобус",
+   "accept": [
+    "🌍",
+    "🌎"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🌍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "карта мира настенная",
+   "accept": [
+    "🗺"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🗺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "подписка на аудиокниги",
+   "accept": [
+    "🎧",
+    "📖"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎧",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "курс английского",
+   "accept": [
+    "📚",
+    "🗣"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "📚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "онлайн курс",
+   "accept": [
+    "💻",
+    "🎓"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "💻",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "курс по программированию",
+   "accept": [
+    "💻",
+    "🎓"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "💻",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мастер-класс по керамике",
+   "accept": [
+    "🏺",
+    "🎨"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🏺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "урок игры на гитаре",
+   "accept": [
+    "🎸"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "курсы вождения",
+   "accept": [
+    "🚗",
+    "🪪"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🚗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кулинарный мастер-класс",
+   "accept": [
+    "🍳",
+    "🔪"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🍳",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Duolingo Plus",
+   "accept": [
+    "🦉",
+    "📚"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": "📚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "language course",
+   "accept": [
+    "📚",
+    "🗣"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "📚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "piano lessons",
+   "accept": [
+    "🎹"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🎹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "cooking class",
+   "accept": [
+    "🍳"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🍳",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "online course",
+   "accept": [
+    "💻",
+    "🎓"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "💻",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "урок рисования",
+   "accept": [
+    "🎨",
+    "🖌"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "гитара",
+   "accept": [
+    "🎸"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "гитра",
+   "accept": [
+    "🎸"
+   ],
+   "tag": "typo",
+   "part": "d",
+   "pick": {
+    "emoji": "🎸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ukulele",
+   "accept": [
+    "🎸"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🎸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "синтезатор",
+   "accept": [
+    "🎹"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "скрипка",
+   "accept": [
+    "🎻"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎻",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "барабаны",
+   "accept": [
+    "🥁"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🥁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "drum kit",
+   "accept": [
+    "🥁"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🥁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "аккордеон",
+   "accept": [
+    "🪗"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🪗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "банджо",
+   "accept": [
+    "🪕"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "саксофон",
+   "accept": [
+    "🎷"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "труба",
+   "accept": [
+    "🎺"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "флейта",
+   "accept": [
+    "🪈"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "маракасы",
+   "accept": [
+    "🪇"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "виниловая пластинка",
+   "accept": [
+    "💿",
+    "🎶"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "💿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "виниловый проигрыватель",
+   "accept": [
+    "💿",
+    "🎶"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "💿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "билеты на концерт",
+   "accept": [
+    "🎟",
+    "🎤"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "билет на Земфиру",
+   "accept": [
+    "🎟",
+    "🎤"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "колонка",
+   "accept": [
+    "🔊"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🔊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "JBL колонка",
+   "accept": [
+    "🔊"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": "🔊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "микрофон",
+   "accept": [
+    "🎤"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎤",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "струны для гитары",
+   "accept": [
+    "🎸"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "guitar strings",
+   "accept": [
+    "🎸"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🎸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "vinyl record",
+   "accept": [
+    "💿",
+    "🎵"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "💿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "concert tickets",
+   "accept": [
+    "🎟",
+    "🎤"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "что-то музыкальное",
+   "accept": [
+    "🎵",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "d",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "bluetooth speaker",
+   "accept": [
+    "🔊"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🔊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор акварели",
+   "accept": [
+    "🎨"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мольберт",
+   "accept": [
+    "🖼",
+    "🎨"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🖼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кисти для рисования",
+   "accept": [
+    "🖌"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "пряжа",
+   "accept": [
+    "🧶"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🧶",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор для вязания",
+   "accept": [
+    "🧶",
+    "🪡"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🧶",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор для вышивания",
+   "accept": [
+    "🪡",
+    "🧵"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🧵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "3D принтер",
+   "accept": [
+    "🖨"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🖨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "алмазная мозаика",
+   "accept": [
+    "💎",
+    "🖼"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "💎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "картина по номерам",
+   "accept": [
+    "🎨",
+    "🖼"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "гончарный круг",
+   "accept": [
+    "🏺"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🏺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "швейная машинка",
+   "accept": [
+    "🧵",
+    "🪡"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🧵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор для скрапбукинга",
+   "accept": [
+    "✂",
+    "📒"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "✂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "бисер",
+   "accept": [
+    "📿"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "📿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор для свечей",
+   "accept": [
+    "🕯"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🕯",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "калиграфия набор",
+   "accept": [
+    "🖋",
+    "✒"
+   ],
+   "tag": "typo",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "что-то для творчества",
+   "accept": [
+    "🎨",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "d",
+   "pick": {
+    "emoji": "🎨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "watercolor set",
+   "accept": [
+    "🎨"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🎨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "oil paints",
+   "accept": [
+    "🎨"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🎨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "yarn",
+   "accept": [
+    "🧶"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🧶",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "embroidery kit",
+   "accept": [
+    "🪡",
+    "🧵"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🧵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "cross stitch kit",
+   "accept": [
+    "🪡",
+    "🧵"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🧵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "jigsaw puzzle",
+   "accept": [
+    "🧩"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🧩",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "телескоп",
+   "accept": [
+    "🔭"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🔭",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "детский микроскоп",
+   "accept": [
+    "🔬"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🔬",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор юного химика",
+   "accept": [
+    "🧪",
+    "⚗"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "настольная игра",
+   "accept": [
+    "🎲",
+    "🎯"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "настолная игра",
+   "accept": [
+    "🎲"
+   ],
+   "tag": "typo",
+   "part": "d",
+   "pick": {
+    "emoji": "🎲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Монополия",
+   "accept": [
+    "🎲",
+    "💰"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": "🎲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Каркассон",
+   "accept": [
+    "🎲",
+    "🏰"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": "🎲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шахматы",
+   "accept": [
+    "♟"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "♟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "колода карт",
+   "accept": [
+    "🃏",
+    "♠"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "дженга",
+   "accept": [
+    "🧱",
+    "🎲"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🧱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Nintendo Switch",
+   "accept": [
+    "🎮"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": "🎮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "PlayStation 5",
+   "accept": [
+    "🎮"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": "🎮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Steam Deck",
+   "accept": [
+    "🎮"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": "🎮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "геймпад",
+   "accept": [
+    "🎮"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "видеоигра",
+   "accept": [
+    "🎮"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "игра для Switch",
+   "accept": [
+    "🎮"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "board game",
+   "accept": [
+    "🎲"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🎲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "chess set",
+   "accept": [
+    "♟"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "♟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "gaming mouse",
+   "accept": [
+    "🖱",
+    "🎮"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🖱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "игровая гарнитура",
+   "accept": [
+    "🎧",
+    "🎮"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎧",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мафия настолка",
+   "accept": [
+    "🎲",
+    "🕵"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "дартс",
+   "accept": [
+    "🎯"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎯",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "квест в подарок",
+   "accept": [
+    "🎟",
+    "🗝"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "какая-нибуть игра",
+   "accept": [
+    "🎮",
+    "🎲",
+    "🎁"
+   ],
+   "tag": "typo",
+   "part": "d",
+   "pick": {
+    "emoji": "🎮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "тетрис",
+   "accept": [
+    "🎮",
+    "🧩"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "коллекционная монета",
+   "accept": [
+    "🪙"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🪙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "почтовые марки",
+   "accept": [
+    "📮",
+    "✉"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "Funko Pop Бэтмен",
+   "accept": [
+    "🦇"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "фигурка аниме",
+   "accept": [
+    "🎎"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "постер с автографом",
+   "accept": [
+    "🖼",
+    "✍"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🖼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "vintage camera",
+   "accept": [
+    "📷"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "📷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "модель самолёта",
+   "accept": [
+    "✈"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "✈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сборная модель танка",
+   "accept": [
+    "🪖"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "Pokémon cards",
+   "accept": [
+    "🃏"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "матрёшка",
+   "accept": [
+    "🪆"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🪆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "action figure",
+   "accept": [
+    "🦸",
+    "🎎"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "антиквариат",
+   "accept": [
+    "🏺",
+    "🕰"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🏺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "коллекционный меч",
+   "accept": [
+    "⚔",
+    "🗡"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "корм для собаки",
+   "accept": [
+    "🐕",
+    "🦴"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🦴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "корм для кота",
+   "accept": [
+    "🐈",
+    "🐟"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🐟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "поводок",
+   "accept": [
+    "🐕",
+    "🦮"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "паводок для сабаки",
+   "accept": [
+    "🐕",
+    "🦮"
+   ],
+   "tag": "typo",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "когтеточка",
+   "accept": [
+    "🐈",
+    "🐾"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "домик для кошки",
+   "accept": [
+    "🐈",
+    "🏠"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "игрушка для собаки",
+   "accept": [
+    "🐕",
+    "🎾"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🎾",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "аквариум",
+   "accept": [
+    "🐠"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🐠",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "аквариумные рыбки",
+   "accept": [
+    "🐠",
+    "🐟"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🐠",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "попугай",
+   "accept": [
+    "🦜"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🦜",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "клетка для попугая",
+   "accept": [
+    "🦜"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🦜",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "хомяк",
+   "accept": [
+    "🐹"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🐹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "щенок",
+   "accept": [
+    "🐶",
+    "🐕"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🐶",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "котёнок",
+   "accept": [
+    "🐱",
+    "🐈"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🐱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "черепаха",
+   "accept": [
+    "🐢"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "лакомства для собак",
+   "accept": [
+    "🦴",
+    "🐕"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🦴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "переноска для кошки",
+   "accept": [
+    "🐈",
+    "👜"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "👜",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "миска для собаки",
+   "accept": [
+    "🥣",
+    "🐕"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "Royal Canin",
+   "accept": [
+    "🐈",
+    "🐕"
+   ],
+   "tag": "brand",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "dog leash",
+   "accept": [
+    "🐕",
+    "🦮"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "cat toy",
+   "accept": [
+    "🐈",
+    "🧶"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🧶",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "hamster cage",
+   "accept": [
+    "🐹"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🐹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "fish tank",
+   "accept": [
+    "🐠"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": "🐠",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "bird feeder",
+   "accept": [
+    "🐦"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "pet food",
+   "accept": [
+    "🐾",
+    "🥣"
+   ],
+   "tag": "en",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "террариум",
+   "accept": [
+    "🦎",
+    "🐢"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "улитка ахатина",
+   "accept": [
+    "🐌"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "кролик",
+   "accept": [
+    "🐰",
+    "🐇"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🐰",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "адресник для собаки",
+   "accept": [
+    "🐕",
+    "🏷"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "комбинезон для собаки",
+   "accept": [
+    "🐕",
+    "🧥"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": "🧥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "для питомца",
+   "accept": [
+    "🐾",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "d",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "канарейка",
+   "accept": [
+    "🐤",
+    "🐦"
+   ],
+   "tag": "ru",
+   "part": "d",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "беговая дорожка",
+   "accept": [
+    "🏃"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "гантели",
+   "accept": [
+    "🏋"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏋",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "коврик для йоги",
+   "accept": [
+    "🧘"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🧘",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "велосипед",
+   "accept": [
+    "🚲"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🚲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "лыжи",
+   "accept": [
+    "🎿",
+    "⛷"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎿",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сноуборд",
+   "accept": [
+    "🏂"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "коньки",
+   "accept": [
+    "⛸"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "⛸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "палатка",
+   "accept": [
+    "⛺",
+    "🏕"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "⛺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "рюкзак",
+   "accept": [
+    "🎒"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎒",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор для рыбалки",
+   "accept": [
+    "🎣"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎣",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "футбольный мяч",
+   "accept": [
+    "⚽"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "⚽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "абонемент в зал",
+   "accept": [
+    "🏋",
+    "🎟"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏋",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "абонемент в бассейн",
+   "accept": [
+    "🏊",
+    "🎟"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ролики",
+   "accept": [
+    "🛼"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🛼",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "скейтборд",
+   "accept": [
+    "🛹"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🛹",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "самокат",
+   "accept": [
+    "🛴"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🛴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "велик",
+   "accept": [
+    "🚲"
+   ],
+   "tag": "typo",
+   "part": "e",
+   "pick": {
+    "emoji": "🚲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "гири",
+   "accept": [
+    "🏋"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏋",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "боксёрские перчатки",
+   "accept": [
+    "🥊"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🥊",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "баскетбольный мяч",
+   "accept": [
+    "🏀"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏀",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "теннисная ракетка",
+   "accept": [
+    "🎾"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎾",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "бадминтон",
+   "accept": [
+    "🏸"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "спальник",
+   "accept": [
+    "🛌",
+    "🏕"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "термос",
+   "accept": [
+    "☕",
+    "🏕"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "☕",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "фитнес-браслет",
+   "accept": [
+    "⌚"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "⌚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "yoga mat",
+   "accept": [
+    "🧘"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🧘",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "dumbbells",
+   "accept": [
+    "🏋"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🏋",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "hiking boots",
+   "accept": [
+    "🥾"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "bike helmet",
+   "accept": [
+    "⛑",
+    "🚲"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🚲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "tennis racket",
+   "accept": [
+    "🎾"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🎾",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "fishing rod",
+   "accept": [
+    "🎣"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🎣",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Decathlon",
+   "accept": [
+    "🛍",
+    "🎽",
+    "🎟"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "Nike кроссовки",
+   "accept": [
+    "👟"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "👟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Adidas ветровка",
+   "accept": [
+    "🧥"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🧥",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Garmin часы",
+   "accept": [
+    "⌚"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "⌚",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Decathlon сертификат",
+   "accept": [
+    "🎟",
+    "🛍"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кросовки",
+   "accept": [
+    "👟"
+   ],
+   "tag": "typo",
+   "part": "e",
+   "pick": {
+    "emoji": "👟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ласты и маска",
+   "accept": [
+    "🤿"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "сапборд",
+   "accept": [
+    "🏄"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "каяк",
+   "accept": [
+    "🛶"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🛶",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мяч",
+   "accept": [
+    "⚽",
+    "🏀"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "⚽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ракетка",
+   "accept": [
+    "🎾",
+    "🏓"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎾",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шахматы",
+   "accept": [
+    "♟"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "♟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "скакалка",
+   "accept": [
+    "🤸"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "горный велосипед",
+   "accept": [
+    "🚵",
+    "🚲"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🚲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "хоккейная клюшка",
+   "accept": [
+    "🏒"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "волейбольный мяч",
+   "accept": [
+    "🏐"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏐",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "фонарик",
+   "accept": [
+    "🔦"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "массажный ролик",
+   "accept": [
+    "🧘",
+    "💆"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🧘",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "купальник",
+   "accept": [
+    "👙"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "👙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "очки для плавания",
+   "accept": [
+    "🥽",
+    "🏊"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🥽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "гамак",
+   "accept": [
+    "🏕",
+    "🛌"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "санки",
+   "accept": [
+    "🛷"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🛷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сноуборт",
+   "accept": [
+    "🏂"
+   ],
+   "tag": "typo",
+   "part": "e",
+   "pick": {
+    "emoji": "🏂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "абанемент в зал",
+   "accept": [
+    "🏋",
+    "🎟"
+   ],
+   "tag": "typo",
+   "part": "e",
+   "pick": {
+    "emoji": "🏋",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "поездка в Питер",
+   "accept": [
+    "🚄",
+    "✈",
+    "🧳"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "✈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "путешествие",
+   "accept": [
+    "✈",
+    "🧳"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "✈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "билеты на самолёт",
+   "accept": [
+    "✈",
+    "🎟"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "✈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "отель на выходные",
+   "accept": [
+    "🏨"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "СПА день",
+   "accept": [
+    "💆",
+    "🧖"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сертификат в СПА",
+   "accept": [
+    "🧖",
+    "💆",
+    "🎟"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "билеты на концерт",
+   "accept": [
+    "🎤",
+    "🎟"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎤",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "билеты в театр",
+   "accept": [
+    "🎭",
+    "🎟"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎭",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "поход в кино",
+   "accept": [
+    "🎬",
+    "🍿"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎬",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "квест",
+   "accept": [
+    "🔐",
+    "🕵",
+    "🎟"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "мастер-класс по гончарному делу",
+   "accept": [
+    "🏺"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "прыжок с парашютом",
+   "accept": [
+    "🪂"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🪂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "конная прогулка",
+   "accept": [
+    "🐎",
+    "🏇"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏇",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "круиз",
+   "accept": [
+    "🛳"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "билеты в музей",
+   "accept": [
+    "🏛",
+    "🎟"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏛",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "полёт на воздушном шаре",
+   "accept": [
+    "🎈"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "картинг",
+   "accept": [
+    "🏎"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "дегустация вина",
+   "accept": [
+    "🍷"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🍷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кулинарный мастер-класс",
+   "accept": [
+    "🍳"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🍳",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "экскурсия по Москве",
+   "accept": [
+    "🗺",
+    "🏛"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🗺",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "баня",
+   "accept": [
+    "🧖"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "массаж",
+   "accept": [
+    "💆"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "полёт в аэротрубе",
+   "accept": [
+    "🪂"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🪂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "концерт Басты",
+   "accept": [
+    "🎤",
+    "🎟"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎤",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "билеты на футбол",
+   "accept": [
+    "⚽",
+    "🎟"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "⚽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "билеты в цирк",
+   "accept": [
+    "🎪",
+    "🎟"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎪",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "стендап",
+   "accept": [
+    "🎤"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎤",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "аквапарк",
+   "accept": [
+    "🎢",
+    "🏊"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎢",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "парк аттракционов",
+   "accept": [
+    "🎢",
+    "🎡"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎢",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "дайвинг",
+   "accept": [
+    "🤿"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "сёрфинг на Шри-Ланке",
+   "accept": [
+    "🏄"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "путёвка в Турцию",
+   "accept": [
+    "✈",
+    "🏖"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "✈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "weekend trip",
+   "accept": [
+    "🧳",
+    "✈"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🧳",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "flight tickets",
+   "accept": [
+    "✈",
+    "🎟"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "✈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "spa day",
+   "accept": [
+    "💆",
+    "🧖"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "💆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "concert tickets",
+   "accept": [
+    "🎤",
+    "🎟"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🎤",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "theater tickets",
+   "accept": [
+    "🎭",
+    "🎟"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🎭",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "cinema tickets",
+   "accept": [
+    "🎬",
+    "🎟"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🎬",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "escape room",
+   "accept": [
+    "🔐",
+    "🕵"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "cooking class",
+   "accept": [
+    "🍳"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🍳",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "skydiving",
+   "accept": [
+    "🪂"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🪂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "horse riding",
+   "accept": [
+    "🐎",
+    "🏇"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🏇",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "museum tickets",
+   "accept": [
+    "🏛",
+    "🎟"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🏛",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Disneyland",
+   "accept": [
+    "🏰",
+    "🎢"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🎢",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "Airbnb gift card",
+   "accept": [
+    "🏠",
+    "🎟"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "Booking сертификат",
+   "accept": [
+    "🏨",
+    "🎟"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🏨",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Аэрофлот билеты",
+   "accept": [
+    "✈"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "✈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Большой театр",
+   "accept": [
+    "🎭"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🎭",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Яндекс Афиша сертификат",
+   "accept": [
+    "🎟"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сертефикат на массаж",
+   "accept": [
+    "💆",
+    "🎟"
+   ],
+   "tag": "typo",
+   "part": "e",
+   "pick": {
+    "emoji": "💆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "билеты на канцерт",
+   "accept": [
+    "🎤",
+    "🎟"
+   ],
+   "tag": "typo",
+   "part": "e",
+   "pick": {
+    "emoji": "🎤",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "парашут",
+   "accept": [
+    "🪂"
+   ],
+   "tag": "typo",
+   "part": "e",
+   "pick": {
+    "emoji": "🪂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "деньги",
+   "accept": [
+    "💸",
+    "💰"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "деньги в конверте",
+   "accept": [
+    "💌",
+    "💸"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💌",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "конверт",
+   "accept": [
+    "✉",
+    "💸"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "5000 рублей",
+   "accept": [
+    "💸"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "подарочная карта",
+   "accept": [
+    "🎟",
+    "💳"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сертификат",
+   "accept": [
+    "🎟"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сертификат в Летуаль",
+   "accept": [
+    "💄",
+    "🎟"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "💄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Озон сертификат",
+   "accept": [
+    "🎟",
+    "🛍"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Wildberries",
+   "accept": [
+    "🛍"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "Steam gift card",
+   "accept": [
+    "🎮",
+    "🎟"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🎮",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Apple gift card",
+   "accept": [
+    "🍎",
+    "🎟"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🍎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Amazon voucher",
+   "accept": [
+    "🛍",
+    "🎟"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "сертификат Золотое Яблоко",
+   "accept": [
+    "💄",
+    "🎟"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "💄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Лента сертификат",
+   "accept": [
+    "🛒",
+    "🎟"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🛒",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "крипта",
+   "accept": [
+    "🪙",
+    "💰"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🪙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "биткоин",
+   "accept": [
+    "🪙"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🪙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "акции Сбера",
+   "accept": [
+    "📈"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "📈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "акции",
+   "accept": [
+    "📈",
+    "💹"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "📈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "cash",
+   "accept": [
+    "💸",
+    "💵"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "💸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "gift card",
+   "accept": [
+    "🎟",
+    "💳"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "100 dollars",
+   "accept": [
+    "💵",
+    "💸"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "💵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "crypto",
+   "accept": [
+    "🪙"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🪙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "shares",
+   "accept": [
+    "📈"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "📈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сиртификат",
+   "accept": [
+    "🎟"
+   ],
+   "tag": "typo",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "деньги на карту",
+   "accept": [
+    "💳",
+    "💸"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💳",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "копилка",
+   "accept": [
+    "🐷",
+    "💰"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🐷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "евро",
+   "accept": [
+    "💶"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "доллары",
+   "accept": [
+    "💵"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💵",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Spotify подписка",
+   "accept": [
+    "🎵"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "шарики",
+   "accept": [
+    "🎈"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "фейерверк",
+   "accept": [
+    "🎆"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "салют",
+   "accept": [
+    "🎆",
+    "🎇"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "вечеринка",
+   "accept": [
+    "🎉"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎉",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "торт на день рождения",
+   "accept": [
+    "🎂"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "свадебный подарок",
+   "accept": [
+    "💍",
+    "🎁"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "конверт на свадьбу",
+   "accept": [
+    "💌",
+    "💸"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💌",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "постельное бельё на свадьбу",
+   "accept": [
+    "🛏"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🛏",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "новогодний подарок",
+   "accept": [
+    "🎄",
+    "🎁"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ёлка",
+   "accept": [
+    "🎄"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "гирлянда",
+   "accept": [
+    "✨",
+    "🎄"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "бенгальские огни",
+   "accept": [
+    "🎇"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "хлопушка",
+   "accept": [
+    "🎊"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "открытка",
+   "accept": [
+    "💌"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💌",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "открытка с деньгами",
+   "accept": [
+    "💌",
+    "💸"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💌",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "balloons",
+   "accept": [
+    "🎈"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🎈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "fireworks",
+   "accept": [
+    "🎆"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🎆",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "party",
+   "accept": [
+    "🎉"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🎉",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "birthday cake",
+   "accept": [
+    "🎂"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🎂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Christmas gift",
+   "accept": [
+    "🎄",
+    "🎁"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🎄",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "wedding gift",
+   "accept": [
+    "💍",
+    "🎁"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "💍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "валентинка",
+   "accept": [
+    "💝"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "букет на 8 марта",
+   "accept": [
+    "💐"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💐",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "подарок на 23 февраля",
+   "accept": [
+    "🎁"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "машина",
+   "accept": [
+    "🚗"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🚗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ключи от машины",
+   "accept": [
+    "🔑",
+    "🚗"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🔑",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мотоцикл",
+   "accept": [
+    "🏍"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🏍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "электросамокат",
+   "accept": [
+    "🛴"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🛴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Xiaomi самокат",
+   "accept": [
+    "🛴"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🛴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "car",
+   "accept": [
+    "🚗"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🚗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "motorbike",
+   "accept": [
+    "🏍"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🏍",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "e-scooter",
+   "accept": [
+    "🛴"
+   ],
+   "tag": "en",
+   "part": "e",
+   "pick": {
+    "emoji": "🛴",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Tesla",
+   "accept": [
+    "🚗",
+    "⚡"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🚗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "Лада Гранта",
+   "accept": [
+    "🚗"
+   ],
+   "tag": "brand",
+   "part": "e",
+   "pick": {
+    "emoji": "🚗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "машинка",
+   "accept": [
+    "🚗",
+    "🧸"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🚗",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "дорожка",
+   "accept": [
+    "🏃",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "ракета",
+   "accept": [
+    "🚀",
+    "🎾"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🎾",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "ice",
+   "accept": [
+    "🧊",
+    "💎"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "💎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "лёд",
+   "accept": [
+    "🧊"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": null,
+    "ms": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "ключ",
+   "accept": [
+    "🔑",
+    "🗝"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🔑",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мышка",
+   "accept": [
+    "🖱",
+    "🐭"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🖱",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "яблоко",
+   "accept": [
+    "🍎",
+    "📱"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🍎",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "банка",
+   "accept": [
+    "🫙",
+    "🏦"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🫙",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сюрприз",
+   "accept": [
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ничего",
+   "accept": [
+    "🎁",
+    "🤷"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "не помню",
+   "accept": [
+    "🎁",
+    "🤷"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "что-то",
+   "accept": [
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "что-то для дома",
+   "accept": [
+    "🏠",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "🎂 торт",
+   "accept": [
+    "🎂"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🎂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "цветы 💐",
+   "accept": [
+    "💐"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💐",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "🚲",
+   "accept": [
+    "🚲"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🚲",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "1000",
+   "accept": [
+    "💸"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "💸",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "цветы и конфеты",
+   "accept": [
+    "💐",
+    "🍬"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "💐",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шампанское и торт",
+   "accept": [
+    "🍾",
+    "🎂"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🍾",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "вино и сыр",
+   "accept": [
+    "🍷",
+    "🧀"
+   ],
+   "tag": "ru",
+   "part": "e",
+   "pick": {
+    "emoji": "🍷",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "билет",
+   "accept": [
+    "🎟"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "абонемент",
+   "accept": [
+    "🎟",
+    "🏋"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "что то спортивное",
+   "accept": [
+    "🏃",
+    "⚽",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "⚽",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "хз",
+   "accept": [
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "впечатление",
+   "accept": [
+    "🎟",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🎟",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "подарок",
+   "accept": [
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🎁",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "коврик",
+   "accept": [
+    "🧘",
+    "🎁"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🧘",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "доска",
+   "accept": [
+    "🏂",
+    "🛹"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🏂",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шар",
+   "accept": [
+    "🎈",
+    "🔮"
+   ],
+   "tag": "vague",
+   "part": "e",
+   "pick": {
+    "emoji": "🎈",
+    "ms": 0
+   },
+   "pass": true,
+   "top1": true
+  }
+ ]
+}

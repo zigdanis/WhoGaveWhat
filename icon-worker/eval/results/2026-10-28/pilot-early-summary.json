@@ -1,0 +1,19 @@
+{
+ "note": "Earlier exploratory 100-name model pilot after related-function instructions and the first body-care expansion, before all-TTS subgroup examples and the final eligibility expansion. Raw pilot files were overwritten by the later pilot before the instruction to retain every run; these aggregates are transcribed from the recorded console summaries. They are not used in the final comparison.",
+ "sample": "100 evenly spaced indices floor(i*968/99)",
+ "minConfidence": 0.35,
+ "models": [
+  {
+   "model": "jev-1.13.0",
+   "n": 100,
+   "accept": 73,
+   "failedRequests": 1
+  },
+  {
+   "model": "jev-1.14.0",
+   "n": 100,
+   "accept": 77,
+   "failedRequests": 0
+  }
+ ]
+}

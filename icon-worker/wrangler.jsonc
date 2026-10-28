@@ -2,17 +2,17 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "whogavewhat-icons",
   "main": "src/index.ts",
+  "build": { "command": "npm run build:catalog" },
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
   "preview_urls": false,
   // The account comes from CLOUDFLARE_ACCOUNT_ID in the deploy workflow; this repository is public.
   "vars": {
-    "JEV_MODEL": "jev-1.13.0",
+    "JEV_MODEL": "jev-1.14.0",
     // Jev rejects requests above its default 64k-token context (the long-context header is never sent),
     // so this bounds the cost of any attempt, including ones whose usage is never reported.
     "JEV_MAX_REQUEST_TOKENS": "65536",
     "JEV_PRICE_PER_MTOK_USD": "0.042",
-    "JEV_RUSSIAN_HINTS": "true",
     "MIN_CONFIDENCE": "0.35",
     // How concentrated Jev's price probability is around the estimate: 0 for an even spread, 1 for all of it nearby.
     "MIN_PRICE_CONFIDENCE": "0.05",

@@ -1,0 +1,1355 @@
+[
+ {
+  "name": "беговая дорожка",
+  "accept": [
+   "🏃"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "гантели",
+  "accept": [
+   "🏋"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "коврик для йоги",
+  "accept": [
+   "🧘"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "велосипед",
+  "accept": [
+   "🚲"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "лыжи",
+  "accept": [
+   "🎿",
+   "⛷"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сноуборд",
+  "accept": [
+   "🏂"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "коньки",
+  "accept": [
+   "⛸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "палатка",
+  "accept": [
+   "⛺",
+   "🏕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "набор для рыбалки",
+  "accept": [
+   "🎣"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "футбольный мяч",
+  "accept": [
+   "⚽"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "абонемент в зал",
+  "accept": [
+   "🏋",
+   "🎟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "абонемент в бассейн",
+  "accept": [
+   "🏊",
+   "🎟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ролики",
+  "accept": [
+   "🛼"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "скейтборд",
+  "accept": [
+   "🛹"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "велик",
+  "accept": [
+   "🚲"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "гири",
+  "accept": [
+   "🏋"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "боксёрские перчатки",
+  "accept": [
+   "🥊"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "баскетбольный мяч",
+  "accept": [
+   "🏀"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "теннисная ракетка",
+  "accept": [
+   "🎾"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "бадминтон",
+  "accept": [
+   "🏸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "спальник",
+  "accept": [
+   "🛌",
+   "🏕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "термос",
+  "accept": [
+   "☕",
+   "🏕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "dumbbells",
+  "accept": [
+   "🏋"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "bike helmet",
+  "accept": [
+   "⛑",
+   "🚲"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "tennis racket",
+  "accept": [
+   "🎾"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "fishing rod",
+  "accept": [
+   "🎣"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "Decathlon",
+  "accept": [
+   "🛍",
+   "🎽",
+   "🎟"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Nike кроссовки",
+  "accept": [
+   "👟"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Adidas ветровка",
+  "accept": [
+   "🧥"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Garmin часы",
+  "accept": [
+   "⌚"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Decathlon сертификат",
+  "accept": [
+   "🎟",
+   "🛍"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "ласты и маска",
+  "accept": [
+   "🤿"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сапборд",
+  "accept": [
+   "🏄"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "каяк",
+  "accept": [
+   "🛶"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мяч",
+  "accept": [
+   "⚽",
+   "🏀"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ракетка",
+  "accept": [
+   "🎾",
+   "🏓"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "скакалка",
+  "accept": [
+   "🤸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "горный велосипед",
+  "accept": [
+   "🚵",
+   "🚲"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "хоккейная клюшка",
+  "accept": [
+   "🏒"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "волейбольный мяч",
+  "accept": [
+   "🏐"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "массажный ролик",
+  "accept": [
+   "🧘",
+   "💆"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "очки для плавания",
+  "accept": [
+   "🥽",
+   "🏊"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "гамак",
+  "accept": [
+   "🏕",
+   "🛌"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сноуборт",
+  "accept": [
+   "🏂"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "абанемент в зал",
+  "accept": [
+   "🏋",
+   "🎟"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "поездка в Питер",
+  "accept": [
+   "🚄",
+   "✈",
+   "🧳"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "путешествие",
+  "accept": [
+   "✈",
+   "🧳"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "билеты на самолёт",
+  "accept": [
+   "✈",
+   "🎟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "отель на выходные",
+  "accept": [
+   "🏨"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "СПА день",
+  "accept": [
+   "💆",
+   "🧖"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "билеты в театр",
+  "accept": [
+   "🎭",
+   "🎟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "поход в кино",
+  "accept": [
+   "🎬",
+   "🍿"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "квест",
+  "accept": [
+   "🔐",
+   "🕵",
+   "🎟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мастер-класс по гончарному делу",
+  "accept": [
+   "🏺"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "прыжок с парашютом",
+  "accept": [
+   "🪂"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "конная прогулка",
+  "accept": [
+   "🐎",
+   "🏇"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "круиз",
+  "accept": [
+   "🛳"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "билеты в музей",
+  "accept": [
+   "🏛",
+   "🎟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "полёт на воздушном шаре",
+  "accept": [
+   "🎈"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "картинг",
+  "accept": [
+   "🏎"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "дегустация вина",
+  "accept": [
+   "🍷"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "экскурсия по Москве",
+  "accept": [
+   "🗺",
+   "🏛"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "баня",
+  "accept": [
+   "🧖"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "массаж",
+  "accept": [
+   "💆"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "полёт в аэротрубе",
+  "accept": [
+   "🪂"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "концерт Басты",
+  "accept": [
+   "🎤",
+   "🎟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "билеты на футбол",
+  "accept": [
+   "⚽",
+   "🎟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "билеты в цирк",
+  "accept": [
+   "🎪",
+   "🎟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "стендап",
+  "accept": [
+   "🎤"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "аквапарк",
+  "accept": [
+   "🎢",
+   "🏊"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "парк аттракционов",
+  "accept": [
+   "🎢",
+   "🎡"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "дайвинг",
+  "accept": [
+   "🤿"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сёрфинг на Шри-Ланке",
+  "accept": [
+   "🏄"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "путёвка в Турцию",
+  "accept": [
+   "✈",
+   "🏖"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "weekend trip",
+  "accept": [
+   "🧳",
+   "✈"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "flight tickets",
+  "accept": [
+   "✈",
+   "🎟"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "theater tickets",
+  "accept": [
+   "🎭",
+   "🎟"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "cinema tickets",
+  "accept": [
+   "🎬",
+   "🎟"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "escape room",
+  "accept": [
+   "🔐",
+   "🕵"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "skydiving",
+  "accept": [
+   "🪂"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "horse riding",
+  "accept": [
+   "🐎",
+   "🏇"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "museum tickets",
+  "accept": [
+   "🏛",
+   "🎟"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "Disneyland",
+  "accept": [
+   "🏰",
+   "🎢"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Airbnb gift card",
+  "accept": [
+   "🏠",
+   "🎟"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Booking сертификат",
+  "accept": [
+   "🏨",
+   "🎟"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Аэрофлот билеты",
+  "accept": [
+   "✈"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Большой театр",
+  "accept": [
+   "🎭"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Яндекс Афиша сертификат",
+  "accept": [
+   "🎟"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "сертефикат на массаж",
+  "accept": [
+   "💆",
+   "🎟"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "билеты на канцерт",
+  "accept": [
+   "🎤",
+   "🎟"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "парашут",
+  "accept": [
+   "🪂"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "деньги",
+  "accept": [
+   "💸",
+   "💰"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "деньги в конверте",
+  "accept": [
+   "💌",
+   "💸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "конверт",
+  "accept": [
+   "✉",
+   "💸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "5000 рублей",
+  "accept": [
+   "💸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "подарочная карта",
+  "accept": [
+   "🎟",
+   "💳"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сертификат",
+  "accept": [
+   "🎟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сертификат в Летуаль",
+  "accept": [
+   "💄",
+   "🎟"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Озон сертификат",
+  "accept": [
+   "🎟",
+   "🛍"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Wildberries",
+  "accept": [
+   "🛍"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Steam gift card",
+  "accept": [
+   "🎮",
+   "🎟"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Apple gift card",
+  "accept": [
+   "🍎",
+   "🎟"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Amazon voucher",
+  "accept": [
+   "🛍",
+   "🎟"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "сертификат Золотое Яблоко",
+  "accept": [
+   "💄",
+   "🎟"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Лента сертификат",
+  "accept": [
+   "🛒",
+   "🎟"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "крипта",
+  "accept": [
+   "🪙",
+   "💰"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "биткоин",
+  "accept": [
+   "🪙"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "акции Сбера",
+  "accept": [
+   "📈"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "акции",
+  "accept": [
+   "📈",
+   "💹"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "cash",
+  "accept": [
+   "💸",
+   "💵"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "gift card",
+  "accept": [
+   "🎟",
+   "💳"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "100 dollars",
+  "accept": [
+   "💵",
+   "💸"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "crypto",
+  "accept": [
+   "🪙"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "shares",
+  "accept": [
+   "📈"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "сиртификат",
+  "accept": [
+   "🎟"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "деньги на карту",
+  "accept": [
+   "💳",
+   "💸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "копилка",
+  "accept": [
+   "🐷",
+   "💰"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "евро",
+  "accept": [
+   "💶"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "доллары",
+  "accept": [
+   "💵"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "Spotify подписка",
+  "accept": [
+   "🎵"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "шарики",
+  "accept": [
+   "🎈"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "фейерверк",
+  "accept": [
+   "🎆"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "салют",
+  "accept": [
+   "🎆",
+   "🎇"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "вечеринка",
+  "accept": [
+   "🎉"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "торт на день рождения",
+  "accept": [
+   "🎂"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "свадебный подарок",
+  "accept": [
+   "💍",
+   "🎁"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "конверт на свадьбу",
+  "accept": [
+   "💌",
+   "💸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "постельное бельё на свадьбу",
+  "accept": [
+   "🛏"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "новогодний подарок",
+  "accept": [
+   "🎄",
+   "🎁"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ёлка",
+  "accept": [
+   "🎄"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "бенгальские огни",
+  "accept": [
+   "🎇"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "хлопушка",
+  "accept": [
+   "🎊"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "открытка",
+  "accept": [
+   "💌"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "открытка с деньгами",
+  "accept": [
+   "💌",
+   "💸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "balloons",
+  "accept": [
+   "🎈"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "fireworks",
+  "accept": [
+   "🎆"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "party",
+  "accept": [
+   "🎉"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "Christmas gift",
+  "accept": [
+   "🎄",
+   "🎁"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "wedding gift",
+  "accept": [
+   "💍",
+   "🎁"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "валентинка",
+  "accept": [
+   "💝"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "букет на 8 марта",
+  "accept": [
+   "💐"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "подарок на 23 февраля",
+  "accept": [
+   "🎁"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "машина",
+  "accept": [
+   "🚗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ключи от машины",
+  "accept": [
+   "🔑",
+   "🚗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мотоцикл",
+  "accept": [
+   "🏍"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "электросамокат",
+  "accept": [
+   "🛴"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "Xiaomi самокат",
+  "accept": [
+   "🛴"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "car",
+  "accept": [
+   "🚗"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "motorbike",
+  "accept": [
+   "🏍"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "e-scooter",
+  "accept": [
+   "🛴"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "Tesla",
+  "accept": [
+   "🚗",
+   "⚡"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Лада Гранта",
+  "accept": [
+   "🚗"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "дорожка",
+  "accept": [
+   "🏃",
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "ракета",
+  "accept": [
+   "🚀",
+   "🎾"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "ice",
+  "accept": [
+   "🧊",
+   "💎"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "лёд",
+  "accept": [
+   "🧊"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "ключ",
+  "accept": [
+   "🔑",
+   "🗝"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "мышка",
+  "accept": [
+   "🖱",
+   "🐭"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "яблоко",
+  "accept": [
+   "🍎",
+   "📱"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "банка",
+  "accept": [
+   "🫙",
+   "🏦"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "сюрприз",
+  "accept": [
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "ничего",
+  "accept": [
+   "🎁",
+   "🤷"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "не помню",
+  "accept": [
+   "🎁",
+   "🤷"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "что-то",
+  "accept": [
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "🎂 торт",
+  "accept": [
+   "🎂"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "цветы 💐",
+  "accept": [
+   "💐"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "🚲",
+  "accept": [
+   "🚲"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "1000",
+  "accept": [
+   "💸"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "цветы и конфеты",
+  "accept": [
+   "💐",
+   "🍬"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шампанское и торт",
+  "accept": [
+   "🍾",
+   "🎂"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "вино и сыр",
+  "accept": [
+   "🍷",
+   "🧀"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "билет",
+  "accept": [
+   "🎟"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "абонемент",
+  "accept": [
+   "🎟",
+   "🏋"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "что то спортивное",
+  "accept": [
+   "🏃",
+   "⚽",
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "хз",
+  "accept": [
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "впечатление",
+  "accept": [
+   "🎟",
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "подарок",
+  "accept": [
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "коврик",
+  "accept": [
+   "🧘",
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "доска",
+  "accept": [
+   "🏂",
+   "🛹"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "шар",
+  "accept": [
+   "🎈",
+   "🔮"
+  ],
+  "tag": "vague"
+ }
+]

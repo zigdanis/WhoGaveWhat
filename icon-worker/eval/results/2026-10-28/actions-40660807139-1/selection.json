@@ -1,0 +1,1074 @@
+{
+ "sourceWorkflowRun": 40660807139,
+ "decision": "Keep the baseline production prompt. Both simpler variants lose accuracy and stage-one reachability on the same seeded 200-case sample. 85% is an aspiration, not a deployment gate after Danis accepted the current solution.",
+ "note": "A further offline hybrid estimate uses only cases where baseline and compact chose the same subgroup. It combines baseline stage-one confidence and compact stage-two candidate/confidence; this is not a fresh end-to-end measurement and is not used as a final benchmark. It gives no reason to run another variant.",
+ "sameRouteHybridEstimate": {
+  "n": 177,
+  "baselinePasses": 134,
+  "estimatedPasses": 132,
+  "cases": [
+   {
+    "caseIndex": 488,
+    "name": "выпрямитель для волос",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 909,
+    "name": "шарики",
+    "baselinePass": true,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 415,
+    "name": "костюм мужской",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 511,
+    "name": "массажный коврик",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 337,
+    "name": "drone",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 215,
+    "name": "зарядка для телефона",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 643,
+    "name": "Moleskine",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 195,
+    "name": "вкусняшки",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 286,
+    "name": "топор",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 261,
+    "name": "микроволновка",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 655,
+    "name": "bullet journal",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 308,
+    "name": "утюг",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 107,
+    "name": "домашнее молоко",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 487,
+    "name": "плойка",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 828,
+    "name": "волейбольный мяч",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 275,
+    "name": "контейнеры для еды",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 12,
+    "name": "лаванда в горшочке",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 580,
+    "name": "Pampers",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 568,
+    "name": "духи Dior",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 868,
+    "name": "skydiving",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 470,
+    "name": "брошь",
+    "baselinePass": true,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 168,
+    "name": "restaurant gift card",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 241,
+    "name": "постельное белье",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 879,
+    "name": "парашут",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 299,
+    "name": "видеорегистратор",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 486,
+    "name": "фен",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 449,
+    "name": "зонтик складной",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 324,
+    "name": "метеостанция",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 597,
+    "name": "Барби",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 586,
+    "name": "басаножки",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 684,
+    "name": "банджо",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 537,
+    "name": "flip flops",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 139,
+    "name": "cookies",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 825,
+    "name": "скакалка",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 726,
+    "name": "настольная игра",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 632,
+    "name": "набор солдатиков",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 685,
+    "name": "саксофон",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 211,
+    "name": "объектив",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 333,
+    "name": "wireless charger",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 198,
+    "name": "вкусный подарок",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 824,
+    "name": "ракетка",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 191,
+    "name": "винишко",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 450,
+    "name": "солнцезащитные очки",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 635,
+    "name": "санки",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 924,
+    "name": "fireworks",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 535,
+    "name": "sneakers",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 897,
+    "name": "акции",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 663,
+    "name": "подписка на аудиокниги",
+    "baselinePass": true,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 898,
+    "name": "cash",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 34,
+    "name": "тирамису",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 89,
+    "name": "набор для коктейлей",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 186,
+    "name": "шоколдка",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 583,
+    "name": "серёжки",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 91,
+    "name": "пуэр",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 791,
+    "name": "коврик для йоги",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 783,
+    "name": "улитка ахатина",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 844,
+    "name": "конная прогулка",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 251,
+    "name": "шторы",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 190,
+    "name": "шампусик",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 705,
+    "name": "набор для вязания",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 694,
+    "name": "JBL колонка",
+    "baselinePass": false,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 553,
+    "name": "beard trimmer",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 94,
+    "name": "лимонад",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 263,
+    "name": "набор кастрюль",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 369,
+    "name": "AirPods Pro",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 765,
+    "name": "аквариумные рыбки",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 278,
+    "name": "дрель",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 910,
+    "name": "фейерверк",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 312,
+    "name": "коробки для хранения",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 417,
+    "name": "худи",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 857,
+    "name": "стендап",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 373,
+    "name": "Яндекс Станция",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 702,
+    "name": "мольберт",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 866,
+    "name": "cinema tickets",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 750,
+    "name": "модель самолёта",
+    "baselinePass": false,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 733,
+    "name": "видеоигра",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 20,
+    "name": "торт Наполеон",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 1,
+    "name": "тюльпаны",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 393,
+    "name": "что-то для дома",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 582,
+    "name": "кросовки",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 482,
+    "name": "шампунь",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 561,
+    "name": "first aid kit",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 9,
+    "name": "гортензия",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 499,
+    "name": "витамины",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 532,
+    "name": "pajamas",
+    "baselinePass": true,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 919,
+    "name": "бенгальские огни",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 696,
+    "name": "струны для гитары",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 874,
+    "name": "Аэрофлот билеты",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 355,
+    "name": "car phone mount",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 463,
+    "name": "серьги",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 948,
+    "name": "банка",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 896,
+    "name": "акции Сбера",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 830,
+    "name": "очки для плавания",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 881,
+    "name": "деньги в конверте",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 138,
+    "name": "brownies",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 905,
+    "name": "копилка",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 258,
+    "name": "тостер",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 693,
+    "name": "колонка",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 224,
+    "name": "умная лампочка",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 175,
+    "name": "Nutella",
+    "baselinePass": false,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 908,
+    "name": "Spotify подписка",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 728,
+    "name": "Монополия",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 401,
+    "name": "свитер",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 859,
+    "name": "парк аттракционов",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 126,
+    "name": "дегустация сыров",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 405,
+    "name": "пуховик",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 806,
+    "name": "баскетбольный мяч",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 104,
+    "name": "ящик мандаринов",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 371,
+    "name": "PlayStation 5",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 959,
+    "name": "вино и сыр",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 576,
+    "name": "MAC помада",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 441,
+    "name": "угги",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 204,
+    "name": "ноутбук",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 536,
+    "name": "hiking boots",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 145,
+    "name": "cheese board",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 433,
+    "name": "ботинки зимние",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 459,
+    "name": "галстук-бабочка",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 349,
+    "name": "knife set",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 606,
+    "name": "детский велосипед",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 118,
+    "name": "самовар",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 942,
+    "name": "ракета",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 777,
+    "name": "cat toy",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 288,
+    "name": "стремянка",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 826,
+    "name": "горный велосипед",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 375,
+    "name": "iPad",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 385,
+    "name": "пауэрбанк",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 740,
+    "name": "дартс",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 52,
+    "name": "оливковое масло",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 938,
+    "name": "e-scooter",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 209,
+    "name": "телевизор",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 752,
+    "name": "Pokémon cards",
+    "baselinePass": true,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 158,
+    "name": "coffee beans",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 149,
+    "name": "maple syrup",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 812,
+    "name": "bike helmet",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 695,
+    "name": "микрофон",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 541,
+    "name": "umbrella",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 166,
+    "name": "whiskey glasses",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 618,
+    "name": "дрон для ребёнка",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 579,
+    "name": "Omron тонометр",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 28,
+    "name": "домашнее печенье",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 904,
+    "name": "деньги на карту",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 152,
+    "name": "dumplings",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 545,
+    "name": "diamond earrings",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 534,
+    "name": "leather jacket",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 101,
+    "name": "продуктовая корзина",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 660,
+    "name": "что-то почитать",
+    "baselinePass": true,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 843,
+    "name": "прыжок с парашютом",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 727,
+    "name": "настолная игра",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 142,
+    "name": "ice cream",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 0,
+    "name": "букет роз",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 864,
+    "name": "flight tickets",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 7,
+    "name": "подсолнухи",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 264,
+    "name": "набор ножей",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 814,
+    "name": "fishing rod",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 607,
+    "name": "самокат",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 100,
+    "name": "медовуха",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 148,
+    "name": "fruit basket",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 611,
+    "name": "канструктор",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 335,
+    "name": "e-reader",
+    "baselinePass": true,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 135,
+    "name": "chocolate box",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 382,
+    "name": "Nespresso",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 811,
+    "name": "dumbbells",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 395,
+    "name": "что-то в машину",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 347,
+    "name": "espresso machine",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 669,
+    "name": "курсы вождения",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 284,
+    "name": "строительный уровень",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   },
+   {
+    "caseIndex": 69,
+    "name": "суши сет",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 78,
+    "name": "рамен",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 637,
+    "name": "книга",
+    "baselinePass": false,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 361,
+    "name": "noise cancelling headphones",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 378,
+    "name": "Dyson",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 625,
+    "name": "plush bunny",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 46,
+    "name": "шарлотка",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 4,
+    "name": "букет полевых цветов",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 360,
+    "name": "bluetooth speaker",
+    "baselinePass": false,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 161,
+    "name": "hot chocolate",
+    "baselinePass": true,
+    "estimatedHybridPass": true
+   },
+   {
+    "caseIndex": 294,
+    "name": "секатор",
+    "baselinePass": false,
+    "estimatedHybridPass": false
+   }
+  ]
+ }
+}

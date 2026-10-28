@@ -1,0 +1,2099 @@
+{
+ "note": "Exploratory model comparison: 100 evenly spaced names from the 969 unique cases, indices floor(i*968/99). Same final CLDR catalog, instructions, confidence threshold .35. Complete benchmark is reported separately.",
+ "models": [
+  {
+   "model": "jev-1.13.0",
+   "catalogVersion": "cldr-e074edda57dd",
+   "pickerVersion": "jev-two-stage-v2",
+   "results": [
+    {
+     "name": "букет роз",
+     "accept": [
+      "🌹",
+      "💐"
+     ],
+     "emoji": "💐",
+     "confidence": 0.87,
+     "pass": true,
+     "tokens": 22775
+    },
+    {
+     "name": "гортензия",
+     "accept": [
+      "💐",
+      "🌸"
+     ],
+     "emoji": "💐",
+     "confidence": 0.33,
+     "pass": false,
+     "tokens": 22781
+    },
+    {
+     "name": "рождественский венок",
+     "accept": [
+      "🎄"
+     ],
+     "emoji": "🎍",
+     "confidence": 0.49,
+     "pass": false,
+     "tokens": 23472
+    },
+    {
+     "name": "мармелад",
+     "accept": [
+      "🍬"
+     ],
+     "emoji": "🍬",
+     "confidence": 0.97,
+     "pass": true,
+     "tokens": 23161
+    },
+    {
+     "name": "пахлава",
+     "accept": [
+      "🍯",
+      "🥮"
+     ],
+     "emoji": "🥧",
+     "confidence": 0.39,
+     "pass": false,
+     "tokens": 23159
+    },
+    {
+     "name": "сырная тарелка",
+     "accept": [
+      "🧀"
+     ],
+     "emoji": "🧀",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 24486
+    },
+    {
+     "name": "авокадо",
+     "accept": [
+      "🥑"
+     ],
+     "emoji": "🥑",
+     "confidence": 0.92,
+     "pass": true,
+     "tokens": 23051
+    },
+    {
+     "name": "блины",
+     "accept": [
+      "🥞"
+     ],
+     "emoji": "🥞",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 24470
+    },
+    {
+     "name": "рамен",
+     "accept": [
+      "🍜"
+     ],
+     "emoji": "🍜",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 23253
+    },
+    {
+     "name": "саке",
+     "accept": [
+      "🍶"
+     ],
+     "emoji": "🍶",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 23816
+    },
+    {
+     "name": "бабл ти",
+     "accept": [
+      "🧋"
+     ],
+     "emoji": "🧋",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 23818
+    },
+    {
+     "name": "домашнее молоко",
+     "accept": [
+      "🥛"
+     ],
+     "emoji": "🥛",
+     "confidence": 0.98,
+     "pass": true,
+     "tokens": 23836
+    },
+    {
+     "name": "набор для суши",
+     "accept": [
+      "🍣",
+      "🥢"
+     ],
+     "emoji": "🍣",
+     "confidence": 0.98,
+     "pass": true,
+     "tokens": 23263
+    },
+    {
+     "name": "бар с друзьями",
+     "accept": [
+      "🍻"
+     ],
+     "emoji": "🍻",
+     "confidence": 0.65,
+     "pass": true,
+     "tokens": 23828
+    },
+    {
+     "name": "birthday cake",
+     "accept": [
+      "🎂"
+     ],
+     "emoji": "🎂",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 23149
+    },
+    {
+     "name": "charcuterie board",
+     "accept": [
+      "🥓",
+      "🧀"
+     ],
+     "emoji": "🧀",
+     "confidence": 0.76,
+     "pass": true,
+     "tokens": 24468
+    },
+    {
+     "name": "craft beer",
+     "accept": [
+      "🍺"
+     ],
+     "emoji": "🍺",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 23812
+    },
+    {
+     "name": "whiskey glasses",
+     "accept": [
+      "🥃"
+     ],
+     "emoji": "🥃",
+     "confidence": 0.97,
+     "pass": true,
+     "tokens": 23814
+    },
+    {
+     "name": "Oreo",
+     "accept": [
+      "🍪"
+     ],
+     "emoji": "🍪",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 23149
+    },
+    {
+     "name": "Додо Пицца",
+     "accept": [
+      "🍕"
+     ],
+     "emoji": "🍕",
+     "confidence": 0.92,
+     "pass": true,
+     "tokens": 24478
+    },
+    {
+     "name": "вкусняшки",
+     "accept": [
+      "🍬",
+      "🎁"
+     ],
+     "emoji": null,
+     "confidence": 0.49,
+     "pass": true,
+     "tokens": 23163
+    },
+    {
+     "name": "геймпад",
+     "accept": [
+      "🎮"
+     ],
+     "emoji": "🎮",
+     "confidence": 0.55,
+     "pass": true,
+     "tokens": 23720
+    },
+    {
+     "name": "зарядка для телефона",
+     "accept": [
+      "🔌",
+      "🔋"
+     ],
+     "emoji": "🔌",
+     "confidence": 0.64,
+     "pass": true,
+     "tokens": 22751
+    },
+    {
+     "name": "умная лампочка",
+     "accept": [
+      "💡"
+     ],
+     "emoji": "💡",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 23214
+    },
+    {
+     "name": "торшер",
+     "accept": [
+      "💡"
+     ],
+     "emoji": "🛋️",
+     "confidence": 0.88,
+     "pass": false,
+     "tokens": 23837
+    },
+    {
+     "name": "ваза",
+     "accept": [
+      "🏺",
+      "💐"
+     ],
+     "emoji": "🏺",
+     "confidence": 0.87,
+     "pass": true,
+     "tokens": 22495
+    },
+    {
+     "name": "блендер",
+     "accept": [
+      "🥤",
+      "🍹"
+     ],
+     "emoji": "🥤",
+     "confidence": 0.29,
+     "pass": false,
+     "tokens": 23822
+    },
+    {
+     "name": "набор ножей",
+     "accept": [
+      "🔪"
+     ],
+     "emoji": "🔪",
+     "confidence": 0.94,
+     "pass": true,
+     "tokens": 22507
+    },
+    {
+     "name": "соковыжималка",
+     "accept": [
+      "🧃",
+      "🍊"
+     ],
+     "emoji": "🥤",
+     "confidence": 0.66,
+     "pass": false,
+     "tokens": 23834
+    },
+    {
+     "name": "рулетка",
+     "accept": [
+      "📏"
+     ],
+     "emoji": "🎰",
+     "confidence": 0.71,
+     "pass": false,
+     "tokens": 23720
+    },
+    {
+     "name": "садовые перчатки",
+     "accept": [
+      "🧤",
+      "🌱"
+     ],
+     "emoji": "🧤",
+     "confidence": 0.98,
+     "pass": true,
+     "tokens": 25703
+    },
+    {
+     "name": "ароматизатор в машину",
+     "accept": [
+      "🚗",
+      "🌸"
+     ],
+     "emoji": null,
+     "confidence": 0.44,
+     "pass": false,
+     "tokens": 25785
+    },
+    {
+     "name": "коробки для хранения",
+     "accept": [
+      "📦"
+     ],
+     "emoji": null,
+     "confidence": 0.34,
+     "pass": false,
+     "tokens": 23843
+    },
+    {
+     "name": "огнетушитель",
+     "accept": [
+      "🧯"
+     ],
+     "emoji": "🧯",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 23849
+    },
+    {
+     "name": "smart speaker",
+     "accept": [
+      "🔊"
+     ],
+     "emoji": "🔉",
+     "confidence": 0.5,
+     "pass": false,
+     "tokens": 22648
+    },
+    {
+     "name": "scented candle",
+     "accept": [
+      "🕯"
+     ],
+     "emoji": "🕯️",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 23196
+    },
+    {
+     "name": "tool set",
+     "accept": [
+      "🧰"
+     ],
+     "emoji": "🧰",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 23903
+    },
+    {
+     "name": "noise cancelling headphones",
+     "accept": [
+      "🎧"
+     ],
+     "emoji": "🎧",
+     "confidence": 0.98,
+     "pass": true,
+     "tokens": 22420
+    },
+    {
+     "name": "PlayStation 5",
+     "accept": [
+      "🎮"
+     ],
+     "emoji": "🎮",
+     "confidence": 0.75,
+     "pass": true,
+     "tokens": 23716
+    },
+    {
+     "name": "KitchenAid",
+     "accept": [
+      "🎂",
+      "🧁"
+     ],
+     "emoji": null,
+     "confidence": 0.54,
+     "pass": false,
+     "tokens": 23831
+    },
+    {
+     "name": "пылисос",
+     "accept": [
+      "🧹"
+     ],
+     "emoji": "🧹",
+     "confidence": 0.77,
+     "pass": true,
+     "tokens": 23839
+    },
+    {
+     "name": "носки с принтом",
+     "accept": [
+      "🧦"
+     ],
+     "emoji": "🧦",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 25699
+    },
+    {
+     "name": "джинсы",
+     "accept": [
+      "👖"
+     ],
+     "emoji": "👖",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 25685
+    },
+    {
+     "name": "нижнее белье",
+     "accept": [
+      "🩲",
+      "👙"
+     ],
+     "emoji": "🩲",
+     "confidence": 0.56,
+     "pass": true,
+     "tokens": 25695
+    },
+    {
+     "name": "шарф вязаный",
+     "accept": [
+      "🧣"
+     ],
+     "emoji": "🧣",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 25695
+    },
+    {
+     "name": "туфли мужские",
+     "accept": [
+      "👞"
+     ],
+     "emoji": "👞",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 25697
+    },
+    {
+     "name": "зонтик складной",
+     "accept": [
+      "☂",
+      "🌂"
+     ],
+     "emoji": "🌂",
+     "confidence": 0.46,
+     "pass": true,
+     "tokens": 25549
+    },
+    {
+     "name": "галстук-бабочка",
+     "accept": [
+      "🎀",
+      "👔"
+     ],
+     "emoji": "👔",
+     "confidence": 0.97,
+     "pass": true,
+     "tokens": 25703
+    },
+    {
+     "name": "жемчужное ожерелье",
+     "accept": [
+      "📿",
+      "💎"
+     ],
+     "emoji": "📿",
+     "confidence": 0.68,
+     "pass": true,
+     "tokens": 25707
+    },
+    {
+     "name": "набор гель-лаков",
+     "accept": [
+      "💅"
+     ],
+     "emoji": "💅",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 22038
+    },
+    {
+     "name": "выпрямитель для волос",
+     "accept": [
+      "💇"
+     ],
+     "emoji": "💇",
+     "confidence": 0.76,
+     "pass": true,
+     "tokens": 22286
+    },
+    {
+     "name": "маникюрный набор",
+     "accept": [
+      "💅"
+     ],
+     "emoji": "💅",
+     "confidence": 0.98,
+     "pass": true,
+     "tokens": 22030
+    },
+    {
+     "name": "весы напольные",
+     "accept": [
+      "⚖"
+     ],
+     "emoji": "⚖️",
+     "confidence": 0.96,
+     "pass": true,
+     "tokens": 23925
+    },
+    {
+     "name": "слюнявчик",
+     "accept": [
+      "👶"
+     ],
+     "emoji": "👶",
+     "confidence": 0.77,
+     "pass": true,
+     "tokens": 21997
+    },
+    {
+     "name": "hoodie",
+     "accept": [
+      "🧥",
+      "👕"
+     ],
+     "emoji": "🧥",
+     "confidence": 0.8,
+     "pass": true,
+     "tokens": 25677
+    },
+    {
+     "name": "flip flops",
+     "accept": [
+      "🩴"
+     ],
+     "emoji": "🩴",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 25679
+    },
+    {
+     "name": "charm bracelet",
+     "accept": [
+      "📿"
+     ],
+     "emoji": "📿",
+     "confidence": 0.35,
+     "pass": true,
+     "tokens": 25679
+    },
+    {
+     "name": "massage gun",
+     "accept": [
+      "💆"
+     ],
+     "emoji": "💆",
+     "confidence": 0.8,
+     "pass": true,
+     "tokens": 22264
+    },
+    {
+     "name": "Chanel No 5",
+     "accept": [
+      "🧴",
+      "🌸"
+     ],
+     "emoji": "🧴",
+     "confidence": 0.78,
+     "pass": true,
+     "tokens": 23835
+    },
+    {
+     "name": "MAC помада",
+     "accept": [
+      "💄"
+     ],
+     "emoji": "💄",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 25687
+    },
+    {
+     "name": "басаножки",
+     "accept": [
+      "👡"
+     ],
+     "emoji": "👡",
+     "confidence": 0.68,
+     "pass": true,
+     "tokens": 25691
+    },
+    {
+     "name": "кукла",
+     "accept": [
+      "🪆",
+      "🎎",
+      "👧"
+     ],
+     "emoji": "🪆",
+     "confidence": 0.85,
+     "pass": true,
+     "tokens": 23716
+    },
+    {
+     "name": "детский велосипед",
+     "accept": [
+      "🚲"
+     ],
+     "emoji": "🚲",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 25789
+    },
+    {
+     "name": "кубик Рубика",
+     "accept": [
+      "🧩",
+      "🎲"
+     ],
+     "emoji": "🧩",
+     "confidence": 0.69,
+     "pass": true,
+     "tokens": 23728
+    },
+    {
+     "name": "plush bunny",
+     "accept": [
+      "🐰",
+      "🧸"
+     ],
+     "emoji": "🧸",
+     "confidence": 0.91,
+     "pass": true,
+     "tokens": 23712
+    },
+    {
+     "name": "санки",
+     "accept": [
+      "🛷"
+     ],
+     "emoji": "🛷",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 23762
+    },
+    {
+     "name": "перьевая ручка",
+     "accept": [
+      "🖋"
+     ],
+     "emoji": "🖋️",
+     "confidence": 0.9,
+     "pass": true,
+     "tokens": 22424
+    },
+    {
+     "name": "bullet journal",
+     "accept": [
+      "📔",
+      "📒"
+     ],
+     "emoji": "📔",
+     "confidence": 0.45,
+     "pass": true,
+     "tokens": 23195
+    },
+    {
+     "name": "курс английского",
+     "accept": [
+      "📚",
+      "🗣"
+     ],
+     "emoji": "📚",
+     "confidence": 0.34,
+     "pass": false,
+     "tokens": 23215
+    },
+    {
+     "name": "online course",
+     "accept": [
+      "💻",
+      "🎓"
+     ],
+     "emoji": "💻",
+     "confidence": 0.66,
+     "pass": true,
+     "tokens": 22737
+    },
+    {
+     "name": "банджо",
+     "accept": [
+      "🪕"
+     ],
+     "emoji": "🪕",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 22891
+    },
+    {
+     "name": "JBL колонка",
+     "accept": [
+      "🔊"
+     ],
+     "emoji": "🔉",
+     "confidence": 0.4,
+     "pass": false,
+     "tokens": 22662
+    },
+    {
+     "name": "пряжа",
+     "accept": [
+      "🧶"
+     ],
+     "emoji": "🧶",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 22534
+    },
+    {
+     "name": "бисер",
+     "accept": [
+      "📿"
+     ],
+     "emoji": "🧵",
+     "confidence": 0.52,
+     "pass": false,
+     "tokens": 22534
+    },
+    {
+     "name": "телескоп",
+     "accept": [
+      "🔭"
+     ],
+     "emoji": "🔭",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 22554
+    },
+    {
+     "name": "видеоигра",
+     "accept": [
+      "🎮"
+     ],
+     "emoji": "🎮",
+     "confidence": 0.66,
+     "pass": true,
+     "tokens": 23724
+    },
+    {
+     "name": "тетрис",
+     "accept": [
+      "🎮",
+      "🧩"
+     ],
+     "emoji": "🎮",
+     "confidence": 0.53,
+     "pass": true,
+     "tokens": 23718
+    },
+    {
+     "name": "Pokémon cards",
+     "accept": [
+      "🃏"
+     ],
+     "emoji": "🃏",
+     "confidence": 0.52,
+     "pass": true,
+     "tokens": 23714
+    },
+    {
+     "name": "домик для кошки",
+     "accept": [
+      "🐈",
+      "🏠"
+     ],
+     "emoji": "🏠",
+     "confidence": 0.5,
+     "pass": true,
+     "tokens": 23740
+    },
+    {
+     "name": "лакомства для собак",
+     "accept": [
+      "🦴",
+      "🐕"
+     ],
+     "emoji": null,
+     "confidence": 0.28,
+     "pass": false,
+     "tokens": 23167
+    },
+    {
+     "name": "террариум",
+     "accept": [
+      "🦎",
+      "🐢"
+     ],
+     "emoji": "🪴",
+     "confidence": 0.75,
+     "pass": false,
+     "tokens": 23005
+    },
+    {
+     "name": "велосипед",
+     "accept": [
+      "🚲"
+     ],
+     "emoji": "🚲",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 25775
+    },
+    {
+     "name": "ролики",
+     "accept": [
+      "🛼"
+     ],
+     "emoji": "🛼",
+     "confidence": 0.92,
+     "pass": true,
+     "tokens": 25769
+    },
+    {
+     "name": "dumbbells",
+     "accept": [
+      "🏋"
+     ],
+     "emoji": null,
+     "confidence": 0.57,
+     "pass": false,
+     "tokens": 23758
+    },
+    {
+     "name": "сапборд",
+     "accept": [
+      "🏄"
+     ],
+     "emoji": "🛶",
+     "confidence": 0.49,
+     "pass": false,
+     "tokens": 22532
+    },
+    {
+     "name": "гамак",
+     "accept": [
+      "🏕",
+      "🛌"
+     ],
+     "emoji": "🛌",
+     "confidence": 0.43,
+     "pass": true,
+     "tokens": 22172
+    },
+    {
+     "name": "поход в кино",
+     "accept": [
+      "🎬",
+      "🍿"
+     ],
+     "emoji": "🎞️",
+     "confidence": 0.31,
+     "pass": false,
+     "tokens": 23202
+    },
+    {
+     "name": "экскурсия по Москве",
+     "accept": [
+      "🗺",
+      "🏛"
+     ],
+     "emoji": "🏙️",
+     "confidence": 0.54,
+     "pass": false,
+     "tokens": 23176
+    },
+    {
+     "name": "дайвинг",
+     "accept": [
+      "🤿"
+     ],
+     "emoji": "🤿",
+     "confidence": 0.94,
+     "pass": true,
+     "tokens": 23766
+    },
+    {
+     "name": "museum tickets",
+     "accept": [
+      "🏛",
+      "🎟"
+     ],
+     "emoji": "🎟️",
+     "confidence": 0.49,
+     "pass": true,
+     "tokens": 23438
+    },
+    {
+     "name": "деньги",
+     "accept": [
+      "💸",
+      "💰"
+     ],
+     "emoji": "💰",
+     "confidence": 0.69,
+     "pass": true,
+     "tokens": 22846
+    },
+    {
+     "name": "Steam gift card",
+     "accept": [
+      "🎮",
+      "🎟"
+     ],
+     "emoji": "🎮",
+     "confidence": 0.59,
+     "pass": true,
+     "tokens": 23712
+    },
+    {
+     "name": "gift card",
+     "accept": [
+      "🎟",
+      "💳"
+     ],
+     "emoji": "💳",
+     "confidence": 0.85,
+     "pass": true,
+     "tokens": 22838
+    },
+    {
+     "name": "шарики",
+     "accept": [
+      "🎈"
+     ],
+     "emoji": "🎈",
+     "confidence": 0.78,
+     "pass": true,
+     "tokens": 23446
+    },
+    {
+     "name": "бенгальские огни",
+     "accept": [
+      "🎇"
+     ],
+     "emoji": "🎇",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 23464
+    },
+    {
+     "name": "валентинка",
+     "accept": [
+      "💝"
+     ],
+     "emoji": "💌",
+     "confidence": 0.59,
+     "pass": false,
+     "tokens": 22284
+    },
+    {
+     "name": "e-scooter",
+     "accept": [
+      "🛴"
+     ],
+     "emoji": "🛵",
+     "confidence": 0.67,
+     "pass": false,
+     "tokens": 25765
+    },
+    {
+     "name": "банка",
+     "accept": [
+      "🫙",
+      "🏦"
+     ],
+     "emoji": "🫙",
+     "confidence": 0.89,
+     "pass": true,
+     "tokens": 22497
+    },
+    {
+     "name": "шампанское и торт",
+     "accept": [
+      "🍾",
+      "🎂"
+     ],
+     "emoji": "🍾",
+     "confidence": 0.47,
+     "pass": true,
+     "tokens": 23838
+    },
+    {
+     "name": "шар",
+     "accept": [
+      "🎈",
+      "🔮"
+     ],
+     "emoji": "🎈",
+     "confidence": 0.62,
+     "pass": true,
+     "tokens": 23440
+    }
+   ]
+  },
+  {
+   "model": "jev-1.14.0",
+   "catalogVersion": "cldr-e074edda57dd",
+   "pickerVersion": "jev-two-stage-v2",
+   "results": [
+    {
+     "name": "букет роз",
+     "accept": [
+      "🌹",
+      "💐"
+     ],
+     "emoji": "💐",
+     "confidence": 0.92,
+     "pass": true,
+     "tokens": 22775
+    },
+    {
+     "name": "гортензия",
+     "accept": [
+      "💐",
+      "🌸"
+     ],
+     "emoji": "🪻",
+     "confidence": 0.3,
+     "pass": false,
+     "tokens": 22781
+    },
+    {
+     "name": "рождественский венок",
+     "accept": [
+      "🎄"
+     ],
+     "emoji": "🎄",
+     "confidence": 0.47,
+     "pass": true,
+     "tokens": 23472
+    },
+    {
+     "name": "мармелад",
+     "accept": [
+      "🍬"
+     ],
+     "emoji": "🍬",
+     "confidence": 0.97,
+     "pass": true,
+     "tokens": 23161
+    },
+    {
+     "name": "пахлава",
+     "accept": [
+      "🍯",
+      "🥮"
+     ],
+     "emoji": "🥧",
+     "confidence": 0.35,
+     "pass": false,
+     "tokens": 23159
+    },
+    {
+     "name": "сырная тарелка",
+     "accept": [
+      "🧀"
+     ],
+     "emoji": "🧀",
+     "confidence": 0.98,
+     "pass": true,
+     "tokens": 24486
+    },
+    {
+     "name": "авокадо",
+     "accept": [
+      "🥑"
+     ],
+     "emoji": "🥑",
+     "confidence": 0.93,
+     "pass": true,
+     "tokens": 23051
+    },
+    {
+     "name": "блины",
+     "accept": [
+      "🥞"
+     ],
+     "emoji": "🥞",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 24470
+    },
+    {
+     "name": "рамен",
+     "accept": [
+      "🍜"
+     ],
+     "emoji": "🍜",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 23253
+    },
+    {
+     "name": "саке",
+     "accept": [
+      "🍶"
+     ],
+     "emoji": "🍶",
+     "confidence": 0.98,
+     "pass": true,
+     "tokens": 23816
+    },
+    {
+     "name": "бабл ти",
+     "accept": [
+      "🧋"
+     ],
+     "emoji": "🧋",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 23818
+    },
+    {
+     "name": "домашнее молоко",
+     "accept": [
+      "🥛"
+     ],
+     "emoji": "🥛",
+     "confidence": 0.97,
+     "pass": true,
+     "tokens": 23836
+    },
+    {
+     "name": "набор для суши",
+     "accept": [
+      "🍣",
+      "🥢"
+     ],
+     "emoji": "🍣",
+     "confidence": 0.96,
+     "pass": true,
+     "tokens": 23263
+    },
+    {
+     "name": "бар с друзьями",
+     "accept": [
+      "🍻"
+     ],
+     "emoji": "🍻",
+     "confidence": 0.57,
+     "pass": true,
+     "tokens": 23828
+    },
+    {
+     "name": "birthday cake",
+     "accept": [
+      "🎂"
+     ],
+     "emoji": "🎂",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 23149
+    },
+    {
+     "name": "charcuterie board",
+     "accept": [
+      "🥓",
+      "🧀"
+     ],
+     "emoji": "🧀",
+     "confidence": 0.74,
+     "pass": true,
+     "tokens": 24468
+    },
+    {
+     "name": "craft beer",
+     "accept": [
+      "🍺"
+     ],
+     "emoji": "🍺",
+     "confidence": 0.96,
+     "pass": true,
+     "tokens": 23812
+    },
+    {
+     "name": "whiskey glasses",
+     "accept": [
+      "🥃"
+     ],
+     "emoji": "🥃",
+     "confidence": 0.97,
+     "pass": true,
+     "tokens": 23814
+    },
+    {
+     "name": "Oreo",
+     "accept": [
+      "🍪"
+     ],
+     "emoji": "🍪",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 23149
+    },
+    {
+     "name": "Додо Пицца",
+     "accept": [
+      "🍕"
+     ],
+     "emoji": "🍕",
+     "confidence": 0.91,
+     "pass": true,
+     "tokens": 24478
+    },
+    {
+     "name": "вкусняшки",
+     "accept": [
+      "🍬",
+      "🎁"
+     ],
+     "emoji": null,
+     "confidence": 0.39,
+     "pass": true,
+     "tokens": 23163
+    },
+    {
+     "name": "геймпад",
+     "accept": [
+      "🎮"
+     ],
+     "emoji": "🎮",
+     "confidence": 0.56,
+     "pass": true,
+     "tokens": 23720
+    },
+    {
+     "name": "зарядка для телефона",
+     "accept": [
+      "🔌",
+      "🔋"
+     ],
+     "emoji": "🔌",
+     "confidence": 0.58,
+     "pass": true,
+     "tokens": 22751
+    },
+    {
+     "name": "умная лампочка",
+     "accept": [
+      "💡"
+     ],
+     "emoji": "💡",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 23214
+    },
+    {
+     "name": "торшер",
+     "accept": [
+      "💡"
+     ],
+     "emoji": "🛋️",
+     "confidence": 0.87,
+     "pass": false,
+     "tokens": 23837
+    },
+    {
+     "name": "ваза",
+     "accept": [
+      "🏺",
+      "💐"
+     ],
+     "emoji": "🏺",
+     "confidence": 0.84,
+     "pass": true,
+     "tokens": 22495
+    },
+    {
+     "name": "блендер",
+     "accept": [
+      "🥤",
+      "🍹"
+     ],
+     "emoji": "🍸",
+     "confidence": 0.34,
+     "pass": false,
+     "tokens": 23822
+    },
+    {
+     "name": "набор ножей",
+     "accept": [
+      "🔪"
+     ],
+     "emoji": "🔪",
+     "confidence": 0.93,
+     "pass": true,
+     "tokens": 22507
+    },
+    {
+     "name": "соковыжималка",
+     "accept": [
+      "🧃",
+      "🍊"
+     ],
+     "emoji": "🥤",
+     "confidence": 0.46,
+     "pass": false,
+     "tokens": 23834
+    },
+    {
+     "name": "рулетка",
+     "accept": [
+      "📏"
+     ],
+     "emoji": "🎰",
+     "confidence": 0.79,
+     "pass": false,
+     "tokens": 23720
+    },
+    {
+     "name": "садовые перчатки",
+     "accept": [
+      "🧤",
+      "🌱"
+     ],
+     "emoji": "🧤",
+     "confidence": 0.96,
+     "pass": true,
+     "tokens": 25703
+    },
+    {
+     "name": "ароматизатор в машину",
+     "accept": [
+      "🚗",
+      "🌸"
+     ],
+     "emoji": "🚗",
+     "confidence": 0.42,
+     "pass": true,
+     "tokens": 25785
+    },
+    {
+     "name": "коробки для хранения",
+     "accept": [
+      "📦"
+     ],
+     "emoji": "🧺",
+     "confidence": 0.44,
+     "pass": false,
+     "tokens": 23843
+    },
+    {
+     "name": "огнетушитель",
+     "accept": [
+      "🧯"
+     ],
+     "emoji": "🧯",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 23849
+    },
+    {
+     "name": "smart speaker",
+     "accept": [
+      "🔊"
+     ],
+     "emoji": "🔉",
+     "confidence": 0.58,
+     "pass": false,
+     "tokens": 22648
+    },
+    {
+     "name": "scented candle",
+     "accept": [
+      "🕯"
+     ],
+     "emoji": "🕯️",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 23196
+    },
+    {
+     "name": "tool set",
+     "accept": [
+      "🧰"
+     ],
+     "emoji": "🧰",
+     "confidence": 0.96,
+     "pass": true,
+     "tokens": 23903
+    },
+    {
+     "name": "noise cancelling headphones",
+     "accept": [
+      "🎧"
+     ],
+     "emoji": "🎧",
+     "confidence": 0.97,
+     "pass": true,
+     "tokens": 22420
+    },
+    {
+     "name": "PlayStation 5",
+     "accept": [
+      "🎮"
+     ],
+     "emoji": "🎮",
+     "confidence": 0.77,
+     "pass": true,
+     "tokens": 23716
+    },
+    {
+     "name": "KitchenAid",
+     "accept": [
+      "🎂",
+      "🧁"
+     ],
+     "emoji": null,
+     "confidence": 0.43,
+     "pass": false,
+     "tokens": 23831
+    },
+    {
+     "name": "пылисос",
+     "accept": [
+      "🧹"
+     ],
+     "emoji": "🧹",
+     "confidence": 0.83,
+     "pass": true,
+     "tokens": 23839
+    },
+    {
+     "name": "носки с принтом",
+     "accept": [
+      "🧦"
+     ],
+     "emoji": "🧦",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 25699
+    },
+    {
+     "name": "джинсы",
+     "accept": [
+      "👖"
+     ],
+     "emoji": "👖",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 25685
+    },
+    {
+     "name": "нижнее белье",
+     "accept": [
+      "🩲",
+      "👙"
+     ],
+     "emoji": "🩲",
+     "confidence": 0.59,
+     "pass": true,
+     "tokens": 25695
+    },
+    {
+     "name": "шарф вязаный",
+     "accept": [
+      "🧣"
+     ],
+     "emoji": "🧣",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 25695
+    },
+    {
+     "name": "туфли мужские",
+     "accept": [
+      "👞"
+     ],
+     "emoji": "👞",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 25697
+    },
+    {
+     "name": "зонтик складной",
+     "accept": [
+      "☂",
+      "🌂"
+     ],
+     "emoji": "🌂",
+     "confidence": 0.45,
+     "pass": true,
+     "tokens": 25549
+    },
+    {
+     "name": "галстук-бабочка",
+     "accept": [
+      "🎀",
+      "👔"
+     ],
+     "emoji": "👔",
+     "confidence": 0.96,
+     "pass": true,
+     "tokens": 25703
+    },
+    {
+     "name": "жемчужное ожерелье",
+     "accept": [
+      "📿",
+      "💎"
+     ],
+     "emoji": "📿",
+     "confidence": 0.67,
+     "pass": true,
+     "tokens": 25707
+    },
+    {
+     "name": "набор гель-лаков",
+     "accept": [
+      "💅"
+     ],
+     "emoji": "💅",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 22038
+    },
+    {
+     "name": "выпрямитель для волос",
+     "accept": [
+      "💇"
+     ],
+     "emoji": "💇",
+     "confidence": 0.63,
+     "pass": true,
+     "tokens": 22286
+    },
+    {
+     "name": "маникюрный набор",
+     "accept": [
+      "💅"
+     ],
+     "emoji": "💅",
+     "confidence": 0.96,
+     "pass": true,
+     "tokens": 22030
+    },
+    {
+     "name": "весы напольные",
+     "accept": [
+      "⚖"
+     ],
+     "emoji": "⚖️",
+     "confidence": 0.87,
+     "pass": true,
+     "tokens": 23925
+    },
+    {
+     "name": "слюнявчик",
+     "accept": [
+      "👶"
+     ],
+     "emoji": "👶",
+     "confidence": 0.64,
+     "pass": true,
+     "tokens": 21997
+    },
+    {
+     "name": "hoodie",
+     "accept": [
+      "🧥",
+      "👕"
+     ],
+     "emoji": "🧥",
+     "confidence": 0.84,
+     "pass": true,
+     "tokens": 25677
+    },
+    {
+     "name": "flip flops",
+     "accept": [
+      "🩴"
+     ],
+     "emoji": "🩴",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 25679
+    },
+    {
+     "name": "charm bracelet",
+     "accept": [
+      "📿"
+     ],
+     "emoji": "📿",
+     "confidence": 0.35,
+     "pass": true,
+     "tokens": 25679
+    },
+    {
+     "name": "massage gun",
+     "accept": [
+      "💆"
+     ],
+     "emoji": "💆",
+     "confidence": 0.76,
+     "pass": true,
+     "tokens": 22264
+    },
+    {
+     "name": "Chanel No 5",
+     "accept": [
+      "🧴",
+      "🌸"
+     ],
+     "emoji": "🧴",
+     "confidence": 0.66,
+     "pass": true,
+     "tokens": 23835
+    },
+    {
+     "name": "MAC помада",
+     "accept": [
+      "💄"
+     ],
+     "emoji": "💄",
+     "confidence": 1,
+     "pass": true,
+     "tokens": 25687
+    },
+    {
+     "name": "басаножки",
+     "accept": [
+      "👡"
+     ],
+     "emoji": "👡",
+     "confidence": 0.81,
+     "pass": true,
+     "tokens": 25691
+    },
+    {
+     "name": "кукла",
+     "accept": [
+      "🪆",
+      "🎎",
+      "👧"
+     ],
+     "emoji": "🪆",
+     "confidence": 0.78,
+     "pass": true,
+     "tokens": 23716
+    },
+    {
+     "name": "детский велосипед",
+     "accept": [
+      "🚲"
+     ],
+     "emoji": "🚲",
+     "confidence": 0.97,
+     "pass": true,
+     "tokens": 25789
+    },
+    {
+     "name": "кубик Рубика",
+     "accept": [
+      "🧩",
+      "🎲"
+     ],
+     "emoji": "🧩",
+     "confidence": 0.6,
+     "pass": true,
+     "tokens": 23728
+    },
+    {
+     "name": "plush bunny",
+     "accept": [
+      "🐰",
+      "🧸"
+     ],
+     "emoji": "🧸",
+     "confidence": 0.8,
+     "pass": true,
+     "tokens": 23712
+    },
+    {
+     "name": "санки",
+     "accept": [
+      "🛷"
+     ],
+     "emoji": "🛷",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 23762
+    },
+    {
+     "name": "перьевая ручка",
+     "accept": [
+      "🖋"
+     ],
+     "emoji": "🖋️",
+     "confidence": 0.97,
+     "pass": true,
+     "tokens": 22424
+    },
+    {
+     "name": "bullet journal",
+     "accept": [
+      "📔",
+      "📒"
+     ],
+     "emoji": "📔",
+     "confidence": 0.49,
+     "pass": true,
+     "tokens": 23195
+    },
+    {
+     "name": "курс английского",
+     "accept": [
+      "📚",
+      "🗣"
+     ],
+     "emoji": "📚",
+     "confidence": 0.38,
+     "pass": true,
+     "tokens": 23215
+    },
+    {
+     "name": "online course",
+     "accept": [
+      "💻",
+      "🎓"
+     ],
+     "emoji": "💻",
+     "confidence": 0.61,
+     "pass": true,
+     "tokens": 22737
+    },
+    {
+     "name": "банджо",
+     "accept": [
+      "🪕"
+     ],
+     "emoji": "🪕",
+     "confidence": 0.98,
+     "pass": true,
+     "tokens": 22891
+    },
+    {
+     "name": "JBL колонка",
+     "accept": [
+      "🔊"
+     ],
+     "emoji": "🔉",
+     "confidence": 0.5,
+     "pass": false,
+     "tokens": 22662
+    },
+    {
+     "name": "пряжа",
+     "accept": [
+      "🧶"
+     ],
+     "emoji": "🧶",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 22534
+    },
+    {
+     "name": "бисер",
+     "accept": [
+      "📿"
+     ],
+     "emoji": "📿",
+     "confidence": 0.58,
+     "pass": true,
+     "tokens": 25683
+    },
+    {
+     "name": "телескоп",
+     "accept": [
+      "🔭"
+     ],
+     "emoji": "🔭",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 22554
+    },
+    {
+     "name": "видеоигра",
+     "accept": [
+      "🎮"
+     ],
+     "emoji": "🎮",
+     "confidence": 0.68,
+     "pass": true,
+     "tokens": 23724
+    },
+    {
+     "name": "тетрис",
+     "accept": [
+      "🎮",
+      "🧩"
+     ],
+     "emoji": "🧩",
+     "confidence": 0.44,
+     "pass": true,
+     "tokens": 23718
+    },
+    {
+     "name": "Pokémon cards",
+     "accept": [
+      "🃏"
+     ],
+     "emoji": "🃏",
+     "confidence": 0.38,
+     "pass": true,
+     "tokens": 23714
+    },
+    {
+     "name": "домик для кошки",
+     "accept": [
+      "🐈",
+      "🏠"
+     ],
+     "emoji": "🏠",
+     "confidence": 0.45,
+     "pass": true,
+     "tokens": 23740
+    },
+    {
+     "name": "лакомства для собак",
+     "accept": [
+      "🦴",
+      "🐕"
+     ],
+     "emoji": "🍪",
+     "confidence": 0.48,
+     "pass": false,
+     "tokens": 23167
+    },
+    {
+     "name": "террариум",
+     "accept": [
+      "🦎",
+      "🐢"
+     ],
+     "emoji": "🪴",
+     "confidence": 0.59,
+     "pass": false,
+     "tokens": 23005
+    },
+    {
+     "name": "велосипед",
+     "accept": [
+      "🚲"
+     ],
+     "emoji": "🚲",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 25775
+    },
+    {
+     "name": "ролики",
+     "accept": [
+      "🛼"
+     ],
+     "emoji": "🛼",
+     "confidence": 0.89,
+     "pass": true,
+     "tokens": 25769
+    },
+    {
+     "name": "dumbbells",
+     "accept": [
+      "🏋"
+     ],
+     "emoji": null,
+     "confidence": 0.6,
+     "pass": false,
+     "tokens": 23758
+    },
+    {
+     "name": "сапборд",
+     "accept": [
+      "🏄"
+     ],
+     "emoji": "🏄",
+     "confidence": 0.43,
+     "pass": true,
+     "tokens": 23446
+    },
+    {
+     "name": "гамак",
+     "accept": [
+      "🏕",
+      "🛌"
+     ],
+     "emoji": "🛌",
+     "confidence": 0.46,
+     "pass": true,
+     "tokens": 22172
+    },
+    {
+     "name": "поход в кино",
+     "accept": [
+      "🎬",
+      "🍿"
+     ],
+     "emoji": "🎞️",
+     "confidence": 0.38,
+     "pass": false,
+     "tokens": 23202
+    },
+    {
+     "name": "экскурсия по Москве",
+     "accept": [
+      "🗺",
+      "🏛"
+     ],
+     "emoji": "🏙️",
+     "confidence": 0.52,
+     "pass": false,
+     "tokens": 23176
+    },
+    {
+     "name": "дайвинг",
+     "accept": [
+      "🤿"
+     ],
+     "emoji": "🤿",
+     "confidence": 0.87,
+     "pass": true,
+     "tokens": 23766
+    },
+    {
+     "name": "museum tickets",
+     "accept": [
+      "🏛",
+      "🎟"
+     ],
+     "emoji": "🎟️",
+     "confidence": 0.6,
+     "pass": true,
+     "tokens": 23438
+    },
+    {
+     "name": "деньги",
+     "accept": [
+      "💸",
+      "💰"
+     ],
+     "emoji": "💰",
+     "confidence": 0.63,
+     "pass": true,
+     "tokens": 22846
+    },
+    {
+     "name": "Steam gift card",
+     "accept": [
+      "🎮",
+      "🎟"
+     ],
+     "emoji": "🎮",
+     "confidence": 0.62,
+     "pass": true,
+     "tokens": 23712
+    },
+    {
+     "name": "gift card",
+     "accept": [
+      "🎟",
+      "💳"
+     ],
+     "emoji": "💳",
+     "confidence": 0.79,
+     "pass": true,
+     "tokens": 22838
+    },
+    {
+     "name": "шарики",
+     "accept": [
+      "🎈"
+     ],
+     "emoji": "🎈",
+     "confidence": 0.59,
+     "pass": true,
+     "tokens": 23446
+    },
+    {
+     "name": "бенгальские огни",
+     "accept": [
+      "🎇"
+     ],
+     "emoji": "🎇",
+     "confidence": 0.99,
+     "pass": true,
+     "tokens": 23464
+    },
+    {
+     "name": "валентинка",
+     "accept": [
+      "💝"
+     ],
+     "emoji": "💌",
+     "confidence": 0.64,
+     "pass": false,
+     "tokens": 22284
+    },
+    {
+     "name": "e-scooter",
+     "accept": [
+      "🛴"
+     ],
+     "emoji": "🛵",
+     "confidence": 0.64,
+     "pass": false,
+     "tokens": 25765
+    },
+    {
+     "name": "банка",
+     "accept": [
+      "🫙",
+      "🏦"
+     ],
+     "emoji": "🫙",
+     "confidence": 0.87,
+     "pass": true,
+     "tokens": 22497
+    },
+    {
+     "name": "шампанское и торт",
+     "accept": [
+      "🍾",
+      "🎂"
+     ],
+     "emoji": "🎂",
+     "confidence": 0.43,
+     "pass": true,
+     "tokens": 23175
+    },
+    {
+     "name": "шар",
+     "accept": [
+      "🎈",
+      "🔮"
+     ],
+     "emoji": "🎈",
+     "confidence": 0.57,
+     "pass": true,
+     "tokens": 23440
+    }
+   ]
+  }
+ ]
+}

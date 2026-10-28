@@ -1,0 +1,1293 @@
+# Jev prompt study
+
+Status: **complete**. 2026-10-28T09:06:59.354Z → 2026-10-28T09:11:34.690Z.
+
+- currency RUB (price question included)
+- model `jev-1.14.0`, picker `jev-two-stage-v2`, catalog `cldr-e074edda57dd`, min confidence 0.35
+- production semantics: 2 attempts × 3000 ms per stage, 7000 ms shared deadline
+- sample: 969 of 969 cases (seed `prompt-study-1`, limit 0); catalog ceiling of the sample 99.8%
+- concurrency 2, pause 300 ms; every provider failure counts as a failed case
+
+## Results
+
+| variant | n | accuracy (95% CI) | top-1 | pre-threshold | failed | null→🎁 | stage 1 reachable | stage 2 hit | in tokens (s1+s2) | USD/1000 | p50 / p90 ms |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| baseline | 969 | 73.4% (70.5%–76.1%) | 62.4% | 75.0% | 0 | 124 | 87.0% (841/967) | 86.4% (727/841) | 24163 (21743+2420) | 1.0149 | 262 / 303 |
+
+Stage 1 reachable: among answered cases whose gold glyph is in the catalog, stage 1 chose a subgroup that holds an accepted glyph. Stage 2 hit: among those, the final candidate is accepted (before the threshold).
+
+## Failure causes
+
+| cause | baseline |
+|---|---:|
+| below-threshold | 17 |
+| not-in-catalog | 2 |
+| stage1-misrouted | 124 |
+| stage1-none | 2 |
+| stage2-none | 8 |
+| stage2-wrong | 105 |
+
+## Accuracy by tag
+
+| tag | baseline |
+|---|---:|
+| brand | 58.3% (84) |
+| en | 75.0% (184) |
+| ru | 74.0% (615) |
+| typo | 74.4% (39) |
+| vague | 85.1% (47) |
+
+## Variants
+
+### baseline
+
+Current production prompt, unaltered.
+
+Stage 1 instructions:
+
+> The state is the name of a present someone gave or received, written by the user in any language (often Russian), possibly with typos or brand names. Choose the closest recognizable emoji representation of the gift item or experience. Use a literal depiction when available; otherwise use its function, what it produces, or a related object or activity. The exact object does not need its own emoji: appliances can be represented by the food or drink they make, services by the activity, branded products by their product type, and a gift certificate by what it buys. Prefer the gift contents over generic packaging. Among similar variants prefer a common general depiction. Use none only for an unknown, vague or abstract gift without a meaningful visual association. Choose the subgroup containing that closest recognizable representation, even when the gift itself is not a literal member of the subgroup.
+
+Stage 2 instructions:
+
+> The state is the name of a present someone gave or received, written by the user in any language (often Russian), possibly with typos or brand names. Choose the closest recognizable emoji representation of the gift item or experience. Use a literal depiction when available; otherwise use its function, what it produces, or a related object or activity. The exact object does not need its own emoji: appliances can be represented by the food or drink they make, services by the activity, branded products by their product type, and a gift certificate by what it buys. Prefer the gift contents over generic packaging. Among similar variants prefer a common general depiction. Use none only for an unknown, vague or abstract gift without a meaningful visual association.
+
+Full criteria for every question are in `prompts.json`.
+
+## Misses
+
+<details><summary>baseline (258)</summary>
+
+- массажный коврик → 💆 [stage1-misrouted] (want 🧘)
+- костюм мужской → 🧥 [stage2-wrong] (want 👔 🤵)
+- микроволновка → null [stage1-misrouted] (want 🍲 🔥)
+- утюг → null [stage1-misrouted] (want 👕)
+- restaurant gift card → 💳 [stage1-misrouted] (want 🎫 🍽)
+- фен → null [stage1-misrouted] (want 💇 🪮)
+- набор солдатиков → ♟️ [stage1-misrouted] (want 🪖)
+- wireless charger → 📱 [stage1-misrouted] (want 🔌 🔋)
+- cash → 💰 [stage2-wrong] (want 💸 💵)
+- серёжки → null [below-threshold] (want 💎)
+- экскурсия по Москве → 🏙️ [stage1-misrouted] (want 🗺 🏛)
+- шампусик → 🧴 [stage1-misrouted] (want 🍾 🥂)
+- JBL колонка → 🔉 [stage2-wrong] (want 🔊)
+- набор кастрюль → 🪣 [stage1-misrouted] (want 🍲 🥘)
+- дрель → null [stage2-wrong] (want 🔧 🛠)
+- коробки для хранения → 🧺 [stage1-misrouted] (want 📦)
+- Яндекс Станция → 🔉 [stage2-wrong] (want 🔊)
+- cinema tickets → 🎫 [stage2-wrong] (want 🎬 🎟)
+- модель самолёта → 🛩️ [stage2-wrong] (want ✈)
+- гортензия → 🪻 [stage2-wrong] (want 💐 🌸)
+- Аэрофлот билеты → 🎫 [stage1-misrouted] (want ✈)
+- серьги → null [below-threshold] (want 💎)
+- акции Сбера → 💹 [stage1-misrouted] (want 📈)
+- 1000 → null [stage2-none] (want 💸)
+- деньги в конверте → 💰 [stage2-wrong] (want 💌 💸)
+- brownies → 🍪 [stage2-wrong] (want 🍫)
+- копилка → 🪙 [stage2-wrong] (want 🐷 💰)
+- колонка → null [stage2-wrong] (want 🔊)
+- Nutella → 🍯 [stage2-wrong] (want 🍫 🫙)
+- Spotify подписка → null [stage2-wrong] (want 🎵)
+- свитер → null [below-threshold] (want 🧥 👕)
+- блендер → null [stage2-wrong] (want 🥤 🍹)
+- ботинки зимние → 👞 [stage2-wrong] (want 🥾)
+- аэрогриль → 🍳 [stage2-wrong] (want 🍟 🍗)
+- cat toy → 🧸 [stage1-misrouted] (want 🐈 🧶)
+- паводок для сабаки → null [stage1-misrouted] (want 🐕 🦮)
+- muffins → 🍞 [stage1-misrouted] (want 🧁)
+- iPad → 💻 [stage1-misrouted] (want 📱)
+- e-scooter → 🛵 [stage2-wrong] (want 🛴)
+- maple syrup → 🍯 [stage1-misrouted] (want 🍁 🥞)
+- bike helmet → 🪖 [stage2-wrong] (want ⛑ 🚲)
+- что-то почитать → null [stage2-none] (want 📖 📚)
+- flight tickets → 🎫 [stage2-wrong] (want ✈ 🎟)
+- медовуха → 🍷 [stage2-wrong] (want 🍯 🍺)
+- fruit basket → null [stage2-none] (want 🧺 🍎)
+- детский плед → 🛏️ [stage1-misrouted] (want 👶)
+- chocolate box → 🍬 [stage2-wrong] (want 🍫 🎁)
+- dumbbells → null [stage1-misrouted] (want 🏋)
+- ужин в ресторане → null [stage1-misrouted] (want 🍽)
+- строительный уровень → null [stage1-misrouted] (want 📐 📏)
+- книга → 📕 [stage2-wrong] (want 📖 📚)
+- bluetooth speaker → 🔉 [stage2-wrong] (want 🔊 🎵)
+- романтический ужин → 💕 [stage1-misrouted] (want 🍽 🥂 🕯)
+- секатор → 🪚 [stage1-misrouted] (want ✂ 🌿)
+- когтеточка → null [stage1-misrouted] (want 🐈 🐾)
+- кружка → 🍺 [stage2-wrong] (want ☕)
+- аквапарк → 🛝 [stage2-wrong] (want 🎢 🏊)
+- открытка → ✉️ [stage1-misrouted] (want 💌)
+- coloring book → null [stage2-wrong] (want 🖍 📖)
+- спортивный костюм → 👟 [stage2-wrong] (want 🏃 👕)
+- garden tools → 🪏 [stage2-wrong] (want 🌱 🧰)
+- антиквариат → null [stage1-none] (want 🏺 🕰)
+- nursing pillow → 👶 [stage1-misrouted] (want 🤰 🍼)
+- планшет → 📋 [stage1-misrouted] (want 📱)
+- Airbnb gift card → null [stage1-misrouted] (want 🏠 🎟)
+- билет на Земфиру → 🎫 [stage2-wrong] (want 🎟 🎤)
+- weekend trip → null [stage1-misrouted] (want 🧳 ✈)
+- валентинка → 💌 [stage2-wrong] (want 💝)
+- ромашки → 💮 [stage2-wrong] (want 🌼)
+- автохолодильник → null [stage1-misrouted] (want 🧊 🚗)
+- компрессор для шин → 🗜️ [stage1-misrouted] (want 🛞 🚗)
+- Royal Canin → 🥫 [stage1-misrouted] (want 🐈 🐕)
+- сертификат в ресторан → null [stage1-misrouted] (want 🎫 🍽)
+- свежевыжатый сок → 🥤 [stage2-wrong] (want 🧃 🍊)
+- террариум → 🪴 [stage1-misrouted] (want 🦎 🐢)
+- Ferrero Rocher → 🍬 [stage2-wrong] (want 🍫)
+- переноска для кошки → null [stage1-misrouted] (want 🐈 👜)
+- мастер-класс по гончарному делу → 🎨 [stage1-misrouted] (want 🏺)
+- Disneyland → null [below-threshold] (want 🏰 🎢)
+- конверт на выписку → ✉️ [stage1-misrouted] (want 👶)
+- косметичка → 🪞 [stage1-misrouted] (want 👝 💄)
+- ВкусВилл → 🏪 [stage1-misrouted] (want 🛒 🥬)
+- открытка с деньгами → 💵 [stage2-wrong] (want 💌 💸)
+- боди для малыша → 👕 [stage1-misrouted] (want 👶)
+- газонокосилка → null [stage1-misrouted] (want 🌱 🏡)
+- bath bombs → 🧼 [stage2-wrong] (want 🛁 🫧)
+- поездка в Питер → 🚆 [stage2-wrong] (want 🚄 ✈ 🧳)
+- домашняя колбаса → 🌭 [stage2-wrong] (want 🍖 🥩)
+- купальник → 🩱 [stage2-wrong] (want 👙)
+- хлопушка → 🎉 [stage2-wrong] (want 🎊)
+- KitchenAid → null [stage1-misrouted] (want 🎂 🧁)
+- корзина фруктов → null [stage2-none] (want 🧺 🍎)
+- соковыжималка → 🥤 [stage2-wrong] (want 🧃 🍊)
+- погремушка → 🪇 [stage1-misrouted] (want 👶 🧸)
+- Decathlon → null [stage2-none] (want 🛍 🎽 🎟)
+- cookbook → 📕 [stage2-wrong] (want 📖 🍳)
+- клубника в шоколаде → 🍬 [stage2-wrong] (want 🍓 🍫)
+- LEGO Technic → 🧩 [stage1-misrouted] (want 🧱 🏗)
+- фигурка аниме → 🪆 [stage1-misrouted] (want 🎎)
+- билеты на самолёт → 🎫 [stage2-wrong] (want ✈ 🎟)
+- колода карт → null [below-threshold] (want 🃏 ♠)
+- квест → 🧩 [stage1-misrouted] (want 🔐 🕵 🎟)
+- разделочная доска → null [stage1-misrouted] (want 🔪 🥒)
+- дженга → 🧩 [stage2-wrong] (want 🧱 🎲)
+- Apple gift card → 💳 [stage1-misrouted] (want 🍎 🎟)
+- крипта → null [below-threshold] (want 🪙 💰)
+- humidifier → 🌫️ [stage2-wrong] (want 💧 💨)
+- Lush бомбочки → 🧼 [stage2-wrong] (want 🛁 🫧)
+- сборная модель танка → null [stage1-misrouted] (want 🪖)
+- глобус → null [stage2-wrong] (want 🌍 🌎)
+- мафия настолка → 🃏 [stage2-wrong] (want 🎲 🕵)
+- Funko Pop Бэтмен → 🧸 [stage1-misrouted] (want 🦇)
+- поводок → ⛓️ [stage1-misrouted] (want 🐕 🦮)
+- книжная полка → null [stage1-misrouted] (want 📚)
+- кофта → 🧆 [stage1-misrouted] (want 👚 🧥)
+- fish tank → 🐟 [stage2-wrong] (want 🐠)
+- концерт Басты → 🎫 [stage2-wrong] (want 🎤 🎟)
+- theater tickets → 🎫 [stage2-wrong] (want 🎭 🎟)
+- торшер → 🛋️ [stage1-misrouted] (want 💡)
+- baby onesie → 👕 [stage1-misrouted] (want 👶)
+- полотенца → 🧻 [stage2-wrong] (want 🛁 🧺)
+- рулетка → 🎰 [stage1-misrouted] (want 📏)
+- tea sampler → ☕ [stage2-wrong] (want 🍵)
+- конверт на свадьбу → ✉️ [stage1-misrouted] (want 💌 💸)
+- морс → 🥤 [stage2-wrong] (want 🧃 🫐)
+- Duolingo Plus → null [stage1-misrouted] (want 🦉 📚)
+- путешествие → 🧭 [stage1-misrouted] (want ✈ 🧳)
+- падушка → null [stage1-misrouted] (want 🛏)
+- лакомства для собак → 🍪 [stage1-misrouted] (want 🦴 🐕)
+- книга по фотографии → 📕 [stage2-wrong] (want 📷 📖)
+- мимоза → 🥚 [stage1-misrouted] (want 🌼 💐)
+- аквариум → null [stage2-wrong] (want 🐠)
+- Booking сертификат → 🎫 [stage2-wrong] (want 🏨 🎟)
+- умная колонка → 🔉 [stage2-wrong] (want 🔊)
+- виниловый проигрыватель → null [stage2-wrong] (want 💿 🎶)
+- малиновое варенье → 🍯 [stage1-misrouted] (want 🫙 🍓)
+- штопор → 🪛 [stage1-misrouted] (want 🍾)
+- hair dryer → null [stage1-misrouted] (want 💇 🪮)
+- пикник → null [stage1-misrouted] (want 🧺 🥪)
+- игрушка для собаки → 🧸 [stage1-misrouted] (want 🐕 🎾)
+- мангал → null [stage2-wrong] (want 🍖 🔥)
+- одежда → 👚 [stage2-wrong] (want 👕 🎁)
+- юбка → 👚 [stage2-wrong] (want 👗)
+- обувь → 👞 [stage2-wrong] (want 👟 🎁)
+- подушка для беременных → null [below-threshold] (want 🤰)
+- сертификат → null [stage1-misrouted] (want 🎟)
+- сиртификат → null [stage1-misrouted] (want 🎟)
+- сборник стихов → 📕 [stage2-wrong] (want 📖 📜)
+- поход в кино → 🎞️ [stage2-wrong] (want 🎬 🍿)
+- пинетки → null [stage2-wrong] (want 👶 🧦)
+- комиксы → null [below-threshold] (want 📚 💥)
+- wifi роутер → null [stage1-misrouted] (want 📡)
+- mesh wifi → null [stage1-misrouted] (want 📡)
+- storage boxes → 🧺 [stage1-misrouted] (want 📦)
+- snack box → 🍱 [stage1-misrouted] (want 📦 🍿)
+- визитница → 📇 [stage1-misrouted] (want 👛 💳)
+- рубашка → 👚 [stage2-wrong] (want 👔)
+- пусковое устройство → null [stage1-misrouted] (want 🔋 🚗)
+- билет → 🎫 [stage2-wrong] (want 🎟)
+- шоколадные трюфели → 🍬 [stage2-wrong] (want 🍫)
+- ковер → null [stage1-misrouted] (want 🧶 🏠)
+- webcam → 📷 [stage2-wrong] (want 📹 💻)
+- курс по программированию → null [stage2-none] (want 💻 🎓)
+- language course → 📖 [stage2-wrong] (want 📚 🗣)
+- Wildberries → 🫐 [stage1-misrouted] (want 🛍)
+- кинетический песок → null [stage1-misrouted] (want 🏖 ⏳)
+- грелка → null [stage1-misrouted] (want ♨ 🔥)
+- escape room → null [below-threshold] (want 🔐 🕵)
+- Pandora → null [below-threshold] (want 📿 💍)
+- gin set → 🥃 [stage2-wrong] (want 🍸)
+- afternoon tea → ☕ [stage2-wrong] (want 🍵 🫖)
+- ягоды → null [below-threshold] (want 🫐 🍓)
+- action figure → 🧸 [stage1-misrouted] (want 🦸 🎎)
+- завтрак в кафе → null [stage2-none] (want 🥐 ☕)
+- Bosch → null [stage2-none] (want 🔧 🛠)
+- чехлы на сиденья → 🪑 [stage1-misrouted] (want 🚗)
+- лего → 🧩 [stage1-misrouted] (want 🧱)
+- гири → 🍞 [stage1-misrouted] (want 🏋)
+- обложка на паспорт → 🪪 [stage1-misrouted] (want 📘 🛂)
+- аромадиффузор → 🧴 [stage1-misrouted] (want 🌸 🕯)
+- блендр → null [stage2-wrong] (want 🥤 🍹)
+- билеты на футбол → 🎫 [stage2-wrong] (want ⚽ 🎟)
+- набор чая Greenfield → ☕ [stage2-wrong] (want 🍵)
+- виниловая пластинка → null [stage2-wrong] (want 💿 🎶)
+- Лента сертификат → null [stage1-misrouted] (want 🛒 🎟)
+- vinyl record → null [stage2-wrong] (want 💿 🎵)
+- smart speaker → 🔉 [stage2-wrong] (want 🔊)
+- IKEA → 🛒 [stage2-wrong] (want 🏠 🪑 🛋)
+- расческа → 🪥 [stage1-misrouted] (want 🪮)
+- квест в подарок → 🧩 [stage1-misrouted] (want 🎟 🗝)
+- шашлыки на даче → 🥩 [stage2-wrong] (want 🍖 🔥)
+- вешалки → null [stage1-misrouted] (want 🧥 👗)
+- сертификат в спа → 💆 [stage2-wrong] (want 🧖 🎫)
+- чак-чак → null [below-threshold] (want 🍯 🍪)
+- cast iron skillet → null [stage1-misrouted] (want 🍳)
+- Озон сертификат → 💳 [stage1-misrouted] (want 🎟 🛍)
+- бальзам для губ → 🧴 [stage1-misrouted] (want 💋 💄)
+- туш для ресниц → null [stage2-wrong] (want 💄 👁)
+- пионы → null [below-threshold] (want 🌸 💐)
+- чайный сервиз → 🥄 [stage1-misrouted] (want 🫖 🍵)
+- железная дорога → 🛤️ [stage2-wrong] (want 🚂 🚆)
+- халат махровый → 🥼 [stage2-wrong] (want 👘 🧖)
+- stand mixer → null [stage2-wrong] (want 🎂 🧁)
+- магнитный конструктор → 🧩 [stage1-misrouted] (want 🧲 🧱)
+- паяльник → null [stage2-wrong] (want 🛠 🔥)
+- набор специй → 🫚 [stage2-wrong] (want 🧂 🌶)
+- постер с автографом → 🪧 [stage1-misrouted] (want 🖼 ✍)
+- доска → null [stage1-misrouted] (want 🏂 🛹)
+- dog leash → ⛓️ [stage1-misrouted] (want 🐕 🦮)
+- набор для скрапбукинга → 🖼️ [stage1-misrouted] (want ✂ 📒)
+- Amazon voucher → 💳 [stage1-misrouted] (want 🛍 🎟)
+- корм для кота → 🥫 [stage1-misrouted] (want 🐈 🐟)
+- масло для бороды → 🧴 [not-in-catalog] (want 🧔)
+- Каркассон → 🧩 [stage2-wrong] (want 🎲 🏰)
+- органайзер → 📇 [stage2-wrong] (want 🗂 📦)
+- корм для собаки → 🥣 [stage1-misrouted] (want 🐕 🦴)
+- абонемент → 🎫 [stage2-wrong] (want 🎟 🏋)
+- утюк → null [stage1-misrouted] (want 👕)
+- Яндекс Афиша сертификат → 🎫 [stage2-wrong] (want 🎟)
+- бомбочки для ванны → null [stage2-wrong] (want 🛁 🫧)
+- отпариватель → null [stage1-misrouted] (want 👕 💨)
+- сгущёнка → 🍯 [stage1-misrouted] (want 🥫)
+- гамак → 🛏️ [stage1-misrouted] (want 🏕 🛌)
+- шаурма → 🥙 [stage2-wrong] (want 🌯)
+- пахлава → 🥧 [stage2-wrong] (want 🍯 🥮)
+- Коркунов → null [stage1-none] (want 🍫)
+- миска для собаки → 🍽️ [stage1-misrouted] (want 🥣 🐕)
+- тушь для ресниц → 👀 [stage2-wrong] (want 💄 👁)
+- шланг для полива → 🪏 [stage1-misrouted] (want 🚿 🌱)
+- пижама → null [below-threshold] (want 👘 🛌)
+- полка для обуви → null [stage1-misrouted] (want 👟)
+- настенные часы → null [below-threshold] (want 🕰 ⏰)
+- браслет → null [below-threshold] (want 📿 💎)
+- адресник для собаки → null [below-threshold] (want 🐕 🏷)
+- Decathlon сертификат → null [stage1-misrouted] (want 🎟 🛍)
+- клавиатра → 🎹 [stage1-misrouted] (want ⌨)
+- полёт в аэротрубе → null [stage1-misrouted] (want 🪂)
+- сертификат Золотое Яблоко → null [stage1-misrouted] (want 💄 🎟)
+- pet food → 🥫 [stage2-wrong] (want 🐾 🥣)
+- tote bag → 🛍️ [stage2-wrong] (want 👜)
+- гончарный круг → 🎨 [stage1-misrouted] (want 🏺)
+- фильтр для воды → 🚿 [stage1-misrouted] (want 💧 🚰)
+- беговая дорожка → null [not-in-catalog] (want 🏃)
+- VR очки → 👓 [stage2-wrong] (want 🥽 🎮)
+- поход в кафе → null [stage1-misrouted] (want ☕ 🍰)
+- kombucha → null [stage2-wrong] (want 🧃 🍵)
+- путёвка в Турцию → null [stage1-misrouted] (want ✈ 🏖)
+- тапачки → null [stage1-misrouted] (want 🩴 🥿)
+- Kinder Surprise → 🍬 [stage2-wrong] (want 🥚 🍫)
+- хамон → 🥓 [stage2-wrong] (want 🍖 🥩)
+- миксер → null [stage1-misrouted] (want 🧁 🎂)
+- 5000 рублей → 💰 [stage2-wrong] (want 💸)
+- гантели → null [stage1-misrouted] (want 🏋)
+- Большой театр → 🏛️ [stage1-misrouted] (want 🎭)
+- shares → 💹 [stage1-misrouted] (want 📈)
+- concert tickets → 🎫 [stage2-wrong] (want 🎟 🎤)
+- вентилятор → 🌬️ [stage1-misrouted] (want 💨 🪭)
+- семена цветов → null [stage1-misrouted] (want 🌱)
+
+</details>
+
+<details><summary>Sample (969 cases)</summary>
+
+- выпрямитель для волос
+- шарики
+- костюм мужской
+- массажный коврик
+- drone
+- зарядка для телефона
+- Moleskine
+- вкусняшки
+- топор
+- микроволновка
+- bullet journal
+- утюг
+- домашнее молоко
+- плойка
+- волейбольный мяч
+- контейнеры для еды
+- лаванда в горшочке
+- Pampers
+- духи Dior
+- skydiving
+- брошь
+- restaurant gift card
+- постельное белье
+- парашут
+- видеорегистратор
+- фен
+- зонтик складной
+- метеостанция
+- Барби
+- басаножки
+- банджо
+- flip flops
+- cookies
+- скакалка
+- настольная игра
+- набор мыльных пузырей
+- набор солдатиков
+- саксофон
+- объектив
+- wireless charger
+- вкусный подарок
+- термокружка
+- ракетка
+- винишко
+- солнцезащитные очки
+- санки
+- fireworks
+- sneakers
+- акции
+- подписка на аудиокниги
+- cash
+- тирамису
+- набор для коктейлей
+- шоколдка
+- серёжки
+- пуэр
+- коврик для йоги
+- улитка ахатина
+- конная прогулка
+- шторы
+- экскурсия по Москве
+- шампусик
+- matcha set
+- набор для вязания
+- JBL колонка
+- beard trimmer
+- лимонад
+- набор кастрюль
+- AirPods Pro
+- аквариумные рыбки
+- дрель
+- фейерверк
+- коробки для хранения
+- худи
+- стендап
+- шкатулка для украшений
+- Яндекс Станция
+- мольберт
+- cinema tickets
+- модель самолёта
+- видеоигра
+- торт Наполеон
+- тюльпаны
+- что-то для дома
+- кросовки
+- шампунь
+- first aid kit
+- курс английского
+- гортензия
+- витамины
+- pajamas
+- бенгальские огни
+- струны для гитары
+- Аэрофлот билеты
+- car phone mount
+- серьги
+- банка
+- акции Сбера
+- 1000
+- очки для плавания
+- деньги в конверте
+- brownies
+- копилка
+- тостер
+- колонка
+- умная лампочка
+- Nutella
+- Spotify подписка
+- Монополия
+- свитер
+- парк аттракционов
+- дегустация сыров
+- пуховик
+- баскетбольный мяч
+- ящик мандаринов
+- PlayStation 5
+- Starbucks gift card
+- вино и сыр
+- MAC помада
+- угги
+- ноутбук
+- hiking boots
+- блендер
+- cheese board
+- ботинки зимние
+- галстук-бабочка
+- острый соус
+- knife set
+- детский велосипед
+- самовар
+- чайник электрический
+- ракета
+- аэрогриль
+- cat toy
+- стремянка
+- паводок для сабаки
+- muffins
+- горный велосипед
+- iPad
+- пауэрбанк
+- дартс
+- оливковое масло
+- e-scooter
+- домик для кошки
+- телевизор
+- Pokémon cards
+- coffee beans
+- maple syrup
+- bike helmet
+- микрофон
+- umbrella
+- whiskey glasses
+- Chanel No 5
+- дрон для ребёнка
+- Omron тонометр
+- домашнее печенье
+- подарок
+- деньги на карту
+- dumplings
+- diamond earrings
+- leather jacket
+- продуктовая корзина
+- что-то почитать
+- прыжок с парашютом
+- настолная игра
+- ice cream
+- букет роз
+- flight tickets
+- подсолнухи
+- набор ножей
+- fishing rod
+- заварочный чайничек
+- самокат
+- медовуха
+- fruit basket
+- канструктор
+- детский плед
+- онлайн курс
+- e-reader
+- chocolate box
+- Nespresso
+- dumbbells
+- что-то в машину
+- espresso machine
+- ужин в ресторане
+- курсы вождения
+- строительный уровень
+- суши сет
+- рамен
+- книга
+- noise cancelling headphones
+- Dyson
+- фитнес браслет
+- plush bunny
+- шарлотка
+- букет полевых цветов
+- bluetooth speaker
+- романтический ужин
+- hot chocolate
+- секатор
+- что-то красивое
+- увлажнитель воздуха
+- палетка теней
+- когтеточка
+- пазл 1000 деталий
+- кружка
+- фломастеры
+- не помню
+- евро
+- bottle of wine
+- Adidas ветровка
+- шар
+- корзина с деликатесами
+- аквапарк
+- кеды
+- reading glasses
+- вечернее платье
+- открытка
+- gold chain
+- калиграфия набор
+- квадрокоптер
+- комбинезон для собаки
+- coloring book
+- френч-пресс
+- бисер
+- тонометр
+- мелатонин
+- vacuum cleaner
+- цветы 💐
+- йо-йо
+- квашеная капуста
+- спортивный костюм
+- garden tools
+- подвеска сердечко
+- антиквариат
+- бритва
+- пармезан
+- зефир
+- diapers
+- абанемент в зал
+- сладости
+- воздушный змей
+- домашние соленья
+- Ray-Ban
+- smart watch
+- чемодан
+- nursing pillow
+- сыворотка для лица
+- мармелад
+- планшет
+- барабаны
+- bow tie
+- соска
+- Christmas gift
+- коллекционный меч
+- набор гель-лаков
+- бокалы для вина
+- шоколадка
+- Airbnb gift card
+- Kindle
+- торт на день рождения
+- билет на Земфиру
+- Apple Watch
+- cooking class
+- socks
+- набор инструментов
+- кольцо с бриллиантом
+- weekend trip
+- валентинка
+- Nintendo Switch
+- ромашки
+- гаечные ключи
+- bookmark
+- 101 роза
+- шампанское
+- мешок картошки
+- штоллен
+- цепочка золотая
+- laptop stand
+- свадебный подарок
+- телескоп
+- автохолодильник
+- компрессор для шин
+- витамини
+- блузка
+- yarn
+- плюшевый мишка
+- Royal Canin
+- сертификат в ресторан
+- велик
+- набор бокалов
+- колечко
+- слинг
+- орехи ассорти
+- что то спортивное
+- свежевыжатый сок
+- фикус
+- террариум
+- pacifier
+- robot vacuum
+- корзина для белья
+- картина по номерам
+- blanket
+- Ferrero Rocher
+- party
+- переноска для кошки
+- мастер-класс по гончарному делу
+- хомяк
+- ukulele
+- Disneyland
+- устрицы
+- cross stitch kit
+- конверт на выписку
+- бабл ти
+- варежки
+- косметичка
+- что-нибудь для малыша
+- бусы
+- Garmin часы
+- ВкусВилл
+- открытка с деньгами
+- обручальное кольцо
+- gaming mouse
+- билеты на концерт
+- боди для малыша
+- skincare set
+- губки для посуды
+- проектор
+- круассаны
+- makeup palette
+- мишка плюшвый
+- сёрфинг на Шри-Ланке
+- L'Occitane
+- 3D принтер
+- газонокосилка
+- bath bombs
+- садовые перчатки
+- поездка в Питер
+- туфли мужские
+- кресло
+- детский микроскоп
+- сертефикат на массаж
+- домашняя колбаса
+- купальник
+- заварочный чайник
+- комнатное растение
+- Moët & Chandon
+- хлопушка
+- мясо для стейков
+- айфон
+- водяной пистолет
+- омега-3
+- биткоин
+- туалетная вода
+- коробка конфет
+- piano lessons
+- KitchenAid
+- корзина фруктов
+- соковыжималка
+- коллекционная монета
+- погремушка
+- сертификат в Летуаль
+- Decathlon
+- туфли на каблуке
+- штука для кухни
+- матрёшка
+- флейта
+- хоккейная клюшка
+- электронная книга
+- носки с принтом
+- cookbook
+- Tiffany кольцо
+- клатч
+- клубника в шоколаде
+- шуруповерт
+- MacBook Air
+- LEGO Technic
+- фигурка аниме
+- тетрис
+- наушнки
+- кроссовки
+- швабра
+- билеты на самолёт
+- кофе в зёрнах
+- колода карт
+- билеты на канцерт
+- что-то музыкальное
+- квест
+- air fryer
+- сарафан летний
+- машинка
+- косметика
+- машина
+- разделочная доска
+- peanut butter
+- вафельница
+- дженга
+- ароматическая свеча
+- внешний жесткий диск
+- мусорное ведро
+- настольная лампа
+- Apple gift card
+- гитра
+- набор акварели
+- крипта
+- крем для лица
+- humidifier
+- Nerf blaster
+- мультиварка
+- мороженое
+- шампанское и торт
+- Lush бомбочки
+- сборная модель танка
+- cardigan
+- глобус
+- мафия настолка
+- Funko Pop Бэтмен
+- беспроводная зарядка
+- high heels
+- соль для ванны
+- деревенские яйца
+- embroidery kit
+- саженец яблони
+- поводок
+- книжная полка
+- кофта
+- fish tank
+- одеяло
+- ножовка
+- sunflower bouquet
+- концерт Басты
+- автомобильный пылесос
+- пиратский корабль игрушка
+- theater tickets
+- что-то к чаю
+- торшер
+- кроссовки Nike
+- игрушка
+- декоративные подушки
+- 100 dollars
+- билеты в музей
+- очки для зрения
+- зеркало с подсветкой
+- кальцо
+- 🎂 торт
+- шляпа соломенная
+- фоторамка
+- ключница
+- лак для ногтей
+- baby onesie
+- карта мира настенная
+- лопата
+- брелок
+- полотенца
+- watercolor set
+- капсулы для кофемашины
+- beanie
+- рулетка
+- tea sampler
+- детская палатка
+- конверт на свадьбу
+- морс
+- набор для суши
+- бадминтон
+- тульские пряники
+- аккордеон
+- novel
+- roller skates
+- Duolingo Plus
+- конверт
+- капкейки
+- билеты в театр
+- Swarovski серьги
+- семена
+- кофемолка
+- путешествие
+- принтер
+- конфетки
+- носки
+- урок рисования
+- теннисная ракетка
+- штука для уюта
+- шапка зимняя
+- падушка
+- birthday cake
+- massage gun
+- маракасы
+- абонемент в зал
+- лакомства для собак
+- СПА день
+- крафтовое пиво
+- книга по фотографии
+- мимоза
+- аквариум
+- Booking сертификат
+- дорожка
+- букет на 8 марта
+- шорты
+- craft beer
+- bird feeder
+- ласты и маска
+- Nike кроссовки
+- медовик
+- гель для душа
+- джинсы
+- toy dinosaur
+- балетки
+- бейсболка
+- постельное бельё на свадьбу
+- кухонные весы
+- слюнявчик
+- кольцо
+- умная колонка
+- виниловый проигрыватель
+- online course
+- какая-нибуть игра
+- gaming headset
+- малиновое варенье
+- штопор
+- Kindle Paperwhite
+- gift hamper
+- набор отверток
+- table lamp
+- коньки
+- смузи
+- hair dryer
+- алмазная мозаика
+- пикник
+- ящик пива
+- игрушка для собаки
+- мангал
+- беспроводные наушники
+- crypto
+- подгузники
+- balloons
+- gingerbread house
+- креветки
+- wall art
+- cordless drill
+- лёд
+- horse riding
+- футболка
+- smartwatch
+- коврик
+- одежда
+- макаруны
+- монстера
+- умная розетка
+- детская энциклопедия
+- perfume
+- wallet
+- Oral-B щетка
+- водка
+- юбка
+- перчатки кожаные
+- gift card
+- Алёнка
+- орхидея в горшке
+- набор для свечей
+- обувь
+- кукла
+- подушка для беременных
+- сертификат
+- урок игры на гитаре
+- сиртификат
+- скетчбук
+- красное вино
+- сборник стихов
+- laundry basket
+- spa day
+- наушники
+- массажер для шеи
+- drum kit
+- клетка для попугая
+- рюкзак
+- поход в кино
+- канарейка
+- итальянская паста
+- пинетки
+- led strip lights
+- черешня
+- подарочная карта
+- набор гелевых ручек
+- tool set
+- комиксы
+- абонемент в бассейн
+- ортопедическая подушка
+- билеты в цирк
+- кофэ
+- wifi роутер
+- робот-пылесос
+- cheese knife set
+- электросамокат
+- oil paints
+- nail polish
+- куртка зимняя
+- notebook
+- mesh wifi
+- зеркало
+- обогреватель
+- storage boxes
+- свечи
+- плюшевый единорог
+- snack box
+- колготки
+- визитница
+- попугай
+- часы наручные
+- рубашка
+- футбольный мяч
+- коньяк
+- мёд с пасеки
+- пусковое устройство
+- молоток
+- билет
+- шоколадные трюфели
+- ковер
+- vitamins
+- аптечка
+- webcam
+- курс по программированию
+- guitar strings
+- диван
+- авокадо
+- language course
+- Wildberries
+- бар с друзьями
+- cold brew
+- Tesla
+- кинетический песок
+- грелка
+- виски
+- jelly beans
+- кролик
+- фигурка динозавра
+- термос
+- новогодний подарочный набор
+- суккуленты
+- игровая мышка
+- плед
+- сюрприз
+- charcuterie board
+- board game
+- escape room
+- kids scooter
+- ремень
+- жемчужное ожерелье
+- шахматы
+- пылесос
+- Pandora
+- gin set
+- мышка
+- блины
+- afternoon tea
+- car
+- ягоды
+- ожирелье
+- кулон
+- гитара
+- чизкейк
+- tennis racket
+- труба
+- action figure
+- завтрак в кафе
+- Bosch
+- ножницы
+- гирлянда
+- хумус
+- чехлы на сиденья
+- Meta Quest 3
+- лего
+- портмоне кожаное
+- спальник
+- гири
+- что-то
+- обложка на паспорт
+- аромадиффузор
+- Steam gift card
+- хлеб ручной выпечки
+- блендр
+- билеты на футбол
+- мотоцикл
+- дегустация вина
+- набор чая Greenfield
+- перьевая ручка
+- красная икра
+- отель на выходные
+- виниловая пластинка
+- Лента сертификат
+- vinyl record
+- smart speaker
+- IKEA
+- домашние пельмени
+- расческа
+- комплект белья кружевной
+- кофемашина
+- кошелек
+- smart plug
+- игра для Switch
+- museum tickets
+- щенок
+- квест в подарок
+- набор для бритья
+- чехол на айфон
+- coffee grinder
+- саке
+- шашлыки на даче
+- motorbike
+- jigsaw puzzle
+- ракета игрушка
+- лыжи
+- маска для лица
+- вешалки
+- пончики
+- houseplant
+- лейка
+- сертификат в спа
+- массажный ролик
+- чак-чак
+- cast iron skillet
+- Озон сертификат
+- ничего
+- подарок на 23 февраля
+- french press
+- сапборд
+- throw pillow
+- Лада Гранта
+- смарт часы
+- бальзам для губ
+- кубик Рубика
+- кисти для макияжа
+- что-нибудь полезное
+- fountain pen
+- машинка на пульте
+- Red Bull
+- доллары
+- травяной сбор
+- игровая гарнитура
+- триммер для бороды
+- туш для ресниц
+- полёт на воздушном шаре
+- пионы
+- чайный сервиз
+- мароженое
+- железная дорога
+- халат махровый
+- мяч
+- phone case
+- яблоко
+- весы напольные
+- ваза
+- Xiaomi самокат
+- портативная колонка
+- stand mixer
+- магнитный конструктор
+- Hot Wheels
+- ключи от машины
+- lobster
+- паяльник
+- набор специй
+- динозавр
+- vintage camera
+- Oreo
+- постер с автографом
+- доска
+- сушёные грибы
+- dog leash
+- новогодний подарок
+- почтовые марки
+- набор для скрапбукинга
+- набор для новорожденного
+- картинг
+- Amazon voucher
+- вечеринка
+- массаж
+- леденцы на палочке
+- синтезатор
+- деньги
+- закладка для книг
+- цветные карандаши
+- фотоаппарат
+- арбуз
+- баня
+- сноуборт
+- баночка аджики
+- автодержатель
+- нижнее белье
+- сертификат на массаж
+- корм для кота
+- сало
+- hoodie
+- банки для хранения
+- wedding gift
+- масло для бороды
+- блокнот
+- круиз
+- платье
+- огнетушитель
+- pretzels
+- caviar
+- кактус
+- котёнок
+- манго
+- пряжа
+- bouquet of roses
+- Каркассон
+- bento box
+- кабель type-c
+- впечатление
+- швейная машинка
+- имбирные пряники
+- органайзер
+- велосипед
+- мягкая игрушка зайка
+- сумка
+- сушилка для белья
+- picture frame
+- сноуборд
+- lingerie set
+- бытовая техника
+- цветы в коробке
+- корм для собаки
+- charm bracelet
+- абонемент
+- турка для кофе
+- утюк
+- жилетка
+- скейтборд
+- домашняя настойка
+- scented candle
+- Яндекс Афиша сертификат
+- бомбочки для ванны
+- honey jar
+- powerbank
+- hamster cage
+- отпариватель
+- для питомца
+- ежедневник на 2027
+- сгущёнка
+- Додо Пицца
+- лампа ночник
+- геймпад
+- ароматизатор в машину
+- гамак
+- салют
+- шаурма
+- тарелки
+- набор юного химика
+- сладкий бокс
+- пахлава
+- Коркунов
+- что-то вкусное
+- сертификат в книжный
+- бонсай
+- клавиатура механическая
+- фонарик
+- украшение
+- миска для собаки
+- Jack Daniel's
+- dash cam
+- сапоги
+- термометр
+- тушь для ресниц
+- шланг для полива
+- леггинсы для йоги
+- духи
+- пижама
+- галстук
+- mechanical keyboard
+- полка для обуви
+- настенные часы
+- мыло ручной работы
+- черепаха
+- цветы и конфеты
+- succulent
+- сковородка
+- браслет
+- адресник для собаки
+- хз
+- шурупаверт
+- глинтвейн
+- Lavazza
+- дегустация вин
+- скрипка
+- пирог с вишней
+- Decathlon сертификат
+- toy robot
+- blood pressure monitor
+- клавиатра
+- маникюрный набор
+- боксёрские перчатки
+- 🚲
+- пальто
+- кукольный домик
+- что-то для малыша
+- yoga mat
+- сырная тарелка
+- штатив
+- полёт в аэротрубе
+- сертификат Золотое Яблоко
+- pet food
+- usb hub
+- бутылочка для кормления
+- ролики
+- кулинарный мастер-класс
+- Steam Deck
+- Dyson Airwrap
+- сервиз
+- еда
+- peonies
+- кисти для рисования
+- tote bag
+- монитор
+- гончарный круг
+- фильтр для воды
+- chess set
+- donut box
+- цвиты
+- набор для вышивания
+- шоколад ручной работы
+- беговая дорожка
+- Raffaello
+- фитнес-браслет
+- VR очки
+- поход в кафе
+- kombucha
+- что-то для творчества
+- каяк
+- палатка
+- путёвка в Турцию
+- босоножки
+- JBL
+- ice
+- флешка
+- тапачки
+- набор для рыбалки
+- lipstick
+- пылисос
+- мастер-класс по керамике
+- teddy bear
+- шарф вязаный
+- Kinder Surprise
+- ящик вина
+- хамон
+- Levi's 501
+- миксер
+- 5000 рублей
+- гантели
+- подушка
+- помада
+- Большой театр
+- shares
+- concert tickets
+- рождественский венок
+- дайвинг
+- пиченье
+- домашние тапочки
+- ёлка
+- перепелиные яйца
+- шлепки
+- мультитул
+- резиновые сапоги
+- вентилятор
+- крем от растяжек
+- sunglasses
+- Абрау-Дюрсо
+- семена цветов
+- t-shirt
+- ключ
+
+</details>

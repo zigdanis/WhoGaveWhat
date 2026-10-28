@@ -1,0 +1,218 @@
+{
+ "model": "jev-1.13.0",
+ "sourceCommit": "f4ccc7f731aed7df7f62b82e511ca5b2ce26eee3",
+ "note": "30 evenly spaced unique benchmark names; original single-stage criteria(true). Direct replay for token/cost measurement, not a replacement accuracy baseline.",
+ "at": "2026-10-28T07:15:29.201Z",
+ "results": [
+  {
+   "name": "букет роз",
+   "emoji": "💐",
+   "confidence": 0.79,
+   "inputTokens": 7949,
+   "ms": 574.856593
+  },
+  {
+   "name": "чизкейк",
+   "emoji": "🎂",
+   "confidence": 0.71,
+   "inputTokens": 7950,
+   "ms": 254.16506199999992
+  },
+  {
+   "name": "хлеб ручной выпечки",
+   "emoji": "🍞",
+   "confidence": 1,
+   "inputTokens": 7960,
+   "ms": 259.371437
+  },
+  {
+   "name": "медовуха",
+   "emoji": "🥃",
+   "confidence": 0.3,
+   "inputTokens": 7951,
+   "ms": 297.98357899999974
+  },
+  {
+   "name": "houseplant",
+   "emoji": "🪴",
+   "confidence": 1,
+   "inputTokens": 7946,
+   "ms": 263.9418820000001
+  },
+  {
+   "name": "whiskey glasses",
+   "emoji": "🥃",
+   "confidence": 0.84,
+   "inputTokens": 7946,
+   "ms": 251.51151800000025
+  },
+  {
+   "name": "айфон",
+   "emoji": "📱",
+   "confidence": 1,
+   "inputTokens": 7948,
+   "ms": 249.5391380000001
+  },
+  {
+   "name": "лампа ночник",
+   "emoji": "💡",
+   "confidence": 1,
+   "inputTokens": 7954,
+   "ms": 235.45166900000004
+  },
+  {
+   "name": "термокружка",
+   "emoji": "☕",
+   "confidence": 1,
+   "inputTokens": 7954,
+   "ms": 249.15116299999954
+  },
+  {
+   "name": "автодержатель",
+   "emoji": "🚗",
+   "confidence": 0.88,
+   "inputTokens": 7956,
+   "ms": 237.3286590000007
+  },
+  {
+   "name": "wireless charger",
+   "emoji": "🔌",
+   "confidence": 1,
+   "inputTokens": 7946,
+   "ms": 237.53730499999983
+  },
+  {
+   "name": "led strip lights",
+   "emoji": "🏮",
+   "confidence": 0.6,
+   "inputTokens": 7946,
+   "ms": 245.94837199999984
+  },
+  {
+   "name": "носки с принтом",
+   "emoji": "🧦",
+   "confidence": 1,
+   "inputTokens": 7956,
+   "ms": 259.0631679999997
+  },
+  {
+   "name": "ботинки зимние",
+   "emoji": "👢",
+   "confidence": 1,
+   "inputTokens": 7956,
+   "ms": 240.57766600000014
+  },
+  {
+   "name": "браслет",
+   "emoji": "💎",
+   "confidence": 1,
+   "inputTokens": 7950,
+   "ms": 246.6415739999993
+  },
+  {
+   "name": "омега-3",
+   "emoji": "💊",
+   "confidence": 0.96,
+   "inputTokens": 7950,
+   "ms": 243.75995400000102
+  },
+  {
+   "name": "leather jacket",
+   "emoji": "🧥",
+   "confidence": 1,
+   "inputTokens": 7946,
+   "ms": 246.17302500000005
+  },
+  {
+   "name": "Chanel No 5",
+   "emoji": "🌸",
+   "confidence": 1,
+   "inputTokens": 7948,
+   "ms": 248.6516589999992
+  },
+  {
+   "name": "машинка",
+   "emoji": "🏎️",
+   "confidence": 0.97,
+   "inputTokens": 7950,
+   "ms": 237.67580499999895
+  },
+  {
+   "name": "кинетический песок",
+   "emoji": "🧱",
+   "confidence": 0.43,
+   "inputTokens": 7960,
+   "ms": 243.8198629999988
+  },
+  {
+   "name": "мастер-класс по керамике",
+   "emoji": "🎓",
+   "confidence": 0.96,
+   "inputTokens": 7964,
+   "ms": 243.34554000000026
+  },
+  {
+   "name": "что-то музыкальное",
+   "emoji": "🎁",
+   "confidence": 0.27,
+   "inputTokens": 7958,
+   "ms": 252.08805400000165
+  },
+  {
+   "name": "игра для Switch",
+   "emoji": "🎮",
+   "confidence": 1,
+   "inputTokens": 7949,
+   "ms": 246.83496300000115
+  },
+  {
+   "name": "клетка для попугая",
+   "emoji": "🦜",
+   "confidence": 0.58,
+   "inputTokens": 7957,
+   "ms": 271.7950729999993
+  },
+  {
+   "name": "ролики",
+   "emoji": "🛼",
+   "confidence": 0.95,
+   "inputTokens": 7949,
+   "ms": 250.52162099999987
+  },
+  {
+   "name": "поездка в Питер",
+   "emoji": "🚆",
+   "confidence": 0.87,
+   "inputTokens": 7956,
+   "ms": 230.8752599999989
+  },
+  {
+   "name": "escape room",
+   "emoji": "🧩",
+   "confidence": 0.34,
+   "inputTokens": 7945,
+   "ms": 300.85854800000016
+  },
+  {
+   "name": "crypto",
+   "emoji": "🪙",
+   "confidence": 1,
+   "inputTokens": 7944,
+   "ms": 240.12481500000104
+  },
+  {
+   "name": "электросамокат",
+   "emoji": "🛴",
+   "confidence": 1,
+   "inputTokens": 7957,
+   "ms": 249.82168400000046
+  },
+  {
+   "name": "шар",
+   "emoji": "🎈",
+   "confidence": 0.46,
+   "inputTokens": 7946,
+   "ms": 246.81947099999888
+  }
+ ]
+}

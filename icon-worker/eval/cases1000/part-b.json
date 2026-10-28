@@ -1,0 +1,1497 @@
+[
+ {
+  "name": "айфон",
+  "accept": [
+   "📱"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "чехол на айфон",
+  "accept": [
+   "📱"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "наушники",
+  "accept": [
+   "🎧"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "беспроводные наушники",
+  "accept": [
+   "🎧"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ноутбук",
+  "accept": [
+   "💻"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "геймпад",
+  "accept": [
+   "🎮"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "игровая мышка",
+  "accept": [
+   "🖱",
+   "🎮"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "клавиатура механическая",
+  "accept": [
+   "⌨",
+   "💻"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "монитор",
+  "accept": [
+   "🖥",
+   "💻"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "телевизор",
+  "accept": [
+   "📺"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "фотоаппарат",
+  "accept": [
+   "📷",
+   "📸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "объектив",
+  "accept": [
+   "📷"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "штатив",
+  "accept": [
+   "📷",
+   "📸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "умная колонка",
+  "accept": [
+   "🔊"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "портативная колонка",
+  "accept": [
+   "🔊",
+   "🎵"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "зарядка для телефона",
+  "accept": [
+   "🔌",
+   "🔋"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кабель type-c",
+  "accept": [
+   "🔌"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "беспроводная зарядка",
+  "accept": [
+   "🔌",
+   "🔋"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "планшет",
+  "accept": [
+   "📱"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "электронная книга",
+  "accept": [
+   "📖",
+   "📚",
+   "📱"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "смарт часы",
+  "accept": [
+   "⌚"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "фитнес браслет",
+  "accept": [
+   "⌚",
+   "🏃"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "квадрокоптер",
+  "accept": [
+   "🚁"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "VR очки",
+  "accept": [
+   "🥽",
+   "🎮"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "умная лампочка",
+  "accept": [
+   "💡"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "умная розетка",
+  "accept": [
+   "🔌"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "робот-пылесос",
+  "accept": [
+   "🤖",
+   "🧹"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "флешка",
+  "accept": [
+   "💾"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "внешний жесткий диск",
+  "accept": [
+   "💾",
+   "💽"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "wifi роутер",
+  "accept": [
+   "📡"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "принтер",
+  "accept": [
+   "🖨"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "проектор",
+  "accept": [
+   "📽",
+   "🎬"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "настольная лампа",
+  "accept": [
+   "💡"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "лампа ночник",
+  "accept": [
+   "💡",
+   "🌙"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "торшер",
+  "accept": [
+   "💡"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "гирлянда",
+  "accept": [
+   "✨",
+   "💡"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "свечи",
+  "accept": [
+   "🕯"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ароматическая свеча",
+  "accept": [
+   "🕯"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "аромадиффузор",
+  "accept": [
+   "🌸",
+   "🕯"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "плед",
+  "accept": [
+   "🧶",
+   "🛋",
+   "🛏"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "одеяло",
+  "accept": [
+   "🛏"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "постельное белье",
+  "accept": [
+   "🛏"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "подушка",
+  "accept": [
+   "🛏"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "декоративные подушки",
+  "accept": [
+   "🛋",
+   "🛏"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ваза",
+  "accept": [
+   "🏺",
+   "💐"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "фоторамка",
+  "accept": [
+   "🖼"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "зеркало",
+  "accept": [
+   "🪞"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ковер",
+  "accept": [
+   "🧶",
+   "🏠"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кресло",
+  "accept": [
+   "🪑",
+   "🛋"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "диван",
+  "accept": [
+   "🛋"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "книжная полка",
+  "accept": [
+   "📚"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шторы",
+  "accept": [
+   "🪟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "настенные часы",
+  "accept": [
+   "🕰",
+   "⏰"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "комнатное растение",
+  "accept": [
+   "🪴"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "блендер",
+  "accept": [
+   "🥤",
+   "🍹"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "чайник электрический",
+  "accept": [
+   "🫖"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "миксер",
+  "accept": [
+   "🧁",
+   "🎂"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кофемашина",
+  "accept": [
+   "☕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "тостер",
+  "accept": [
+   "🍞"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мультиварка",
+  "accept": [
+   "🍲",
+   "🥘"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "аэрогриль",
+  "accept": [
+   "🍟",
+   "🍗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "микроволновка",
+  "accept": [
+   "🍲",
+   "🔥"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сковородка",
+  "accept": [
+   "🍳"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "набор кастрюль",
+  "accept": [
+   "🍲",
+   "🥘"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "набор ножей",
+  "accept": [
+   "🔪"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "разделочная доска",
+  "accept": [
+   "🔪",
+   "🥒"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кружка",
+  "accept": [
+   "☕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "термокружка",
+  "accept": [
+   "☕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "набор бокалов",
+  "accept": [
+   "🥂",
+   "🍷"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "тарелки",
+  "accept": [
+   "🍽"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сервиз",
+  "accept": [
+   "🍽",
+   "🍵"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "заварочный чайничек",
+  "accept": [
+   "🫖",
+   "🍵"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "кухонные весы",
+  "accept": [
+   "⚖"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "соковыжималка",
+  "accept": [
+   "🧃",
+   "🍊"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "вафельница",
+  "accept": [
+   "🧇"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "контейнеры для еды",
+  "accept": [
+   "🥡",
+   "🍱"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "банки для хранения",
+  "accept": [
+   "🫙"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шуруповерт",
+  "accept": [
+   "🪛",
+   "🔧"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "дрель",
+  "accept": [
+   "🔧",
+   "🛠"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "набор инструментов",
+  "accept": [
+   "🧰",
+   "🛠"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "молоток",
+  "accept": [
+   "🔨"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "набор отверток",
+  "accept": [
+   "🪛"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "гаечные ключи",
+  "accept": [
+   "🔧"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "рулетка",
+  "accept": [
+   "📏"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "строительный уровень",
+  "accept": [
+   "📐",
+   "📏"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ножовка",
+  "accept": [
+   "🪚"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "топор",
+  "accept": [
+   "🪓"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мультитул",
+  "accept": [
+   "🔧",
+   "🧰"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "стремянка",
+  "accept": [
+   "🪜"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "паяльник",
+  "accept": [
+   "🛠",
+   "🔥"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "фонарик",
+  "accept": [
+   "🔦"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "газонокосилка",
+  "accept": [
+   "🌱",
+   "🏡"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "лопата",
+  "accept": [
+   "🪏",
+   "🌱"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "садовые перчатки",
+  "accept": [
+   "🧤",
+   "🌱"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "секатор",
+  "accept": [
+   "✂",
+   "🌿"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "шланг для полива",
+  "accept": [
+   "🚿",
+   "🌱"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "лейка",
+  "accept": [
+   "🌱",
+   "🪣",
+   "🚿"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "семена",
+  "accept": [
+   "🌱"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мангал",
+  "accept": [
+   "🍖",
+   "🔥"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "видеорегистратор",
+  "accept": [
+   "📹",
+   "🚗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "автодержатель",
+  "accept": [
+   "📱",
+   "🚗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "автомобильный пылесос",
+  "accept": [
+   "🧹",
+   "🚗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "чехлы на сиденья",
+  "accept": [
+   "🚗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ароматизатор в машину",
+  "accept": [
+   "🚗",
+   "🌸"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "пусковое устройство",
+  "accept": [
+   "🔋",
+   "🚗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "автохолодильник",
+  "accept": [
+   "🧊",
+   "🚗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "компрессор для шин",
+  "accept": [
+   "🛞",
+   "🚗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "пылесос",
+  "accept": [
+   "🧹"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "утюг",
+  "accept": [
+   "👕"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "отпариватель",
+  "accept": [
+   "👕",
+   "💨"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "сушилка для белья",
+  "accept": [
+   "👕",
+   "🧺"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "корзина для белья",
+  "accept": [
+   "🧺"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "коробки для хранения",
+  "accept": [
+   "📦"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "органайзер",
+  "accept": [
+   "🗂",
+   "📦"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "вешалки",
+  "accept": [
+   "🧥",
+   "👗"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "полотенца",
+  "accept": [
+   "🛁",
+   "🧺"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "мусорное ведро",
+  "accept": [
+   "🗑"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "швабра",
+  "accept": [
+   "🧹",
+   "🪣"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "губки для посуды",
+  "accept": [
+   "🧽"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "увлажнитель воздуха",
+  "accept": [
+   "💧",
+   "💨"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "вентилятор",
+  "accept": [
+   "💨",
+   "🪭"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "обогреватель",
+  "accept": [
+   "🔥",
+   "♨"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "огнетушитель",
+  "accept": [
+   "🧯"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "аптечка",
+  "accept": [
+   "🩹",
+   "💊"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "метеостанция",
+  "accept": [
+   "🌡"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "фильтр для воды",
+  "accept": [
+   "💧",
+   "🚰"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ключница",
+  "accept": [
+   "🔑"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "полка для обуви",
+  "accept": [
+   "👟"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "ножницы",
+  "accept": [
+   "✂"
+  ],
+  "tag": "ru"
+ },
+ {
+  "name": "powerbank",
+  "accept": [
+   "🔋"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "gaming headset",
+  "accept": [
+   "🎧",
+   "🎮"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "mechanical keyboard",
+  "accept": [
+   "⌨"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "smart speaker",
+  "accept": [
+   "🔊"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "wireless charger",
+  "accept": [
+   "🔌",
+   "🔋"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "phone case",
+  "accept": [
+   "📱"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "e-reader",
+  "accept": [
+   "📖",
+   "📱"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "smartwatch",
+  "accept": [
+   "⌚"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "drone",
+  "accept": [
+   "🚁"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "usb hub",
+  "accept": [
+   "🔌"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "smart plug",
+  "accept": [
+   "🔌"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "mesh wifi",
+  "accept": [
+   "📡"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "blanket",
+  "accept": [
+   "🧶",
+   "🛏",
+   "🛋"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "scented candle",
+  "accept": [
+   "🕯"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "throw pillow",
+  "accept": [
+   "🛋",
+   "🛏"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "wall art",
+  "accept": [
+   "🖼"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "table lamp",
+  "accept": [
+   "💡"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "air fryer",
+  "accept": [
+   "🍟",
+   "🍗"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "espresso machine",
+  "accept": [
+   "☕"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "cast iron skillet",
+  "accept": [
+   "🍳"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "knife set",
+  "accept": [
+   "🔪"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "stand mixer",
+  "accept": [
+   "🎂",
+   "🧁"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "cordless drill",
+  "accept": [
+   "🪛",
+   "🔧"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "tool set",
+  "accept": [
+   "🧰"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "garden tools",
+  "accept": [
+   "🌱",
+   "🧰"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "dash cam",
+  "accept": [
+   "📹",
+   "🚗"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "car phone mount",
+  "accept": [
+   "📱",
+   "🚗"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "vacuum cleaner",
+  "accept": [
+   "🧹"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "storage boxes",
+  "accept": [
+   "📦"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "laundry basket",
+  "accept": [
+   "🧺"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "humidifier",
+  "accept": [
+   "💧",
+   "💨"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "bluetooth speaker",
+  "accept": [
+   "🔊",
+   "🎵"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "noise cancelling headphones",
+  "accept": [
+   "🎧"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "laptop stand",
+  "accept": [
+   "💻"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "webcam",
+  "accept": [
+   "📹",
+   "💻"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "robot vacuum",
+  "accept": [
+   "🤖",
+   "🧹"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "coffee grinder",
+  "accept": [
+   "☕"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "french press",
+  "accept": [
+   "☕"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "led strip lights",
+  "accept": [
+   "💡",
+   "✨"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "picture frame",
+  "accept": [
+   "🖼"
+  ],
+  "tag": "en"
+ },
+ {
+  "name": "AirPods Pro",
+  "accept": [
+   "🎧"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "MacBook Air",
+  "accept": [
+   "💻"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "PlayStation 5",
+  "accept": [
+   "🎮"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Nintendo Switch",
+  "accept": [
+   "🎮"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Яндекс Станция",
+  "accept": [
+   "🔊"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "JBL",
+  "accept": [
+   "🔊",
+   "🎧"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "iPad",
+  "accept": [
+   "📱"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Kindle",
+  "accept": [
+   "📖",
+   "📱"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Apple Watch",
+  "accept": [
+   "⌚"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Dyson",
+  "accept": [
+   "🧹",
+   "💨"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Meta Quest 3",
+  "accept": [
+   "🥽",
+   "🎮"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Steam Deck",
+  "accept": [
+   "🎮"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "KitchenAid",
+  "accept": [
+   "🎂",
+   "🧁"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Nespresso",
+  "accept": [
+   "☕"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "Bosch",
+  "accept": [
+   "🔧",
+   "🛠"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "IKEA",
+  "accept": [
+   "🏠",
+   "🪑",
+   "🛋"
+  ],
+  "tag": "brand"
+ },
+ {
+  "name": "пауэрбанк",
+  "accept": [
+   "🔋"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "наушнки",
+  "accept": [
+   "🎧"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "клавиатра",
+  "accept": [
+   "⌨"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "падушка",
+  "accept": [
+   "🛏"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "блендр",
+  "accept": [
+   "🥤",
+   "🍹"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "шурупаверт",
+  "accept": [
+   "🪛",
+   "🔧"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "пылисос",
+  "accept": [
+   "🧹"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "утюк",
+  "accept": [
+   "👕"
+  ],
+  "tag": "typo"
+ },
+ {
+  "name": "что-то для дома",
+  "accept": [
+   "🎁",
+   "🏠"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "штука для кухни",
+  "accept": [
+   "🎁",
+   "🍳"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "что-то в машину",
+  "accept": [
+   "🎁",
+   "🚗"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "что-нибудь полезное",
+  "accept": [
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "бытовая техника",
+  "accept": [
+   "🔌",
+   "🏠",
+   "🎁"
+  ],
+  "tag": "vague"
+ },
+ {
+  "name": "штука для уюта",
+  "accept": [
+   "🎁",
+   "🏠"
+  ],
+  "tag": "vague"
+ }
+]

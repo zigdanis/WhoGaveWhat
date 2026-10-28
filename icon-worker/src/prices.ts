@@ -1,3 +1,5 @@
+import { ICONS } from "./cldr-catalog.ts";
+
 /**
  * The price question Jev answers next to the icon: one Choice option per round price bucket
  * in the requested currency. The app holds the same bucket lists in `GiftPriceBuckets.swift`;
@@ -14,7 +16,9 @@ export const CURRENCIES: readonly Currency[] = ["RUB", "USD"];
 
 /** Big round steps; the top reaches a motorcycle (about 300k–1M RUB, 5k–20k USD). */
 export const PRICE_BUCKETS: Record<Currency, readonly number[]> = {
-  RUB: [300, 500, 1_000, 2_000, 3_000, 5_000, 10_000, 15_000, 20_000, 30_000, 50_000, 100_000, 200_000, 500_000, 1_000_000],
+  RUB: [
+    300, 500, 1_000, 2_000, 3_000, 5_000, 10_000, 15_000, 20_000, 30_000, 50_000, 100_000, 200_000, 500_000, 1_000_000,
+  ],
   USD: [5, 10, 20, 30, 50, 100, 150, 200, 300, 500, 1_000, 2_000, 5_000, 10_000, 20_000],
 };
 
@@ -58,7 +62,10 @@ export function bucketFromKey(currency: Currency, key: unknown): number | null {
  * Like Jev's, it is 0 for an even spread (or less probability nearby than that) and 1 when all of it
  * is nearby, so one threshold fits both.
  */
-export function medianBucket(currency: Currency, probabilities: unknown): { bucket: number; confidence: number } | null {
+export function medianBucket(
+  currency: Currency,
+  probabilities: unknown,
+): { bucket: number; confidence: number } | null {
   if (typeof probabilities !== "object" || probabilities === null) return null;
   const buckets = PRICE_BUCKETS[currency];
   const weights: number[] = [];
@@ -84,7 +91,7 @@ export function medianBucket(currency: Currency, probabilities: unknown): { buck
 }
 
 /** Icons whose gift is an amount of money, so an amount written in the name beats the estimate. */
-const MONEY_KEYS = new Set(["money", "banknotes", "gift_card", "coins"]);
+const MONEY_EMOJI = new Set(["💸", "💵", "💴", "💶", "💷", "💳", "🪙", "💰"]);
 const MAX_EXPLICIT_AMOUNT = 10_000_000;
 
 // "5000", "5 000", "5,000", "5.000" (thousand groups) or a plain or decimal number, with an
@@ -105,7 +112,8 @@ export function explicitAmount(name: string): number | null {
   const number = Number(grouped ? digits.replace(/[\s  .,]/g, "") : digits.replace(",", "."));
   const thousands = suffix !== undefined || /тысяч?\p{L}*$/u.test(whole);
   const value = thousands ? number * 1_000 : number;
-  if (!thousands && !grouped && looksLikeYear(value) && !hasCurrencyMark(text, matches[0].index!, whole.length)) return null;
+  if (!thousands && !grouped && looksLikeYear(value) && !hasCurrencyMark(text, matches[0].index!, whole.length))
+    return null;
   return Number.isInteger(value) && value > 0 && value <= MAX_EXPLICIT_AMOUNT ? value : null;
 }
 
@@ -135,7 +143,7 @@ export function priceFor(
   confidence: number,
   minConfidence: number,
 ): number | null {
-  if (icon.key !== null && MONEY_KEYS.has(icon.key) && icon.confidence >= icon.minConfidence) {
+  if (icon.key !== null && MONEY_EMOJI.has(ICONS[icon.key]?.emoji) && icon.confidence >= icon.minConfidence) {
     const amount = explicitAmount(name);
     if (amount !== null) return amount;
   }

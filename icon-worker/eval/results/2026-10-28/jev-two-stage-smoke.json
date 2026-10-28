@@ -1,0 +1,1756 @@
+{
+ "picker": "jev-two-stage",
+ "model": "jev-1.13.0",
+ "at": "2026-10-28T07:09:35.371Z",
+ "results": [
+  {
+   "name": "букет роз",
+   "accept": [
+    "🌹",
+    "💐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "💐",
+    "confidence": 0.97,
+    "ms": 932.7864519999999,
+    "inputTokens": 13866,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "тюльпаны",
+   "accept": [
+    "🌷"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌷",
+    "confidence": 0.63,
+    "ms": 495.31294300000013,
+    "inputTokens": 13870,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "орхидея в горшке",
+   "accept": [
+    "🌸",
+    "🪴"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🪴",
+    "confidence": 0.75,
+    "ms": 471.97673699999996,
+    "inputTokens": 14106,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "пионы",
+   "accept": [
+    "🌸",
+    "💐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "💐",
+    "confidence": 0.58,
+    "ms": 498.61276399999997,
+    "inputTokens": 13864,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "букет полевых цветов",
+   "accept": [
+    "💐",
+    "🌼"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "💐",
+    "confidence": 0.98,
+    "ms": 482.56765499999983,
+    "inputTokens": 13880,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кактус",
+   "accept": [
+    "🌵"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌵",
+    "confidence": 1,
+    "ms": 457.3154850000001,
+    "inputTokens": 14090,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "фикус",
+   "accept": [
+    "🪴"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🪴",
+    "confidence": 0.79,
+    "ms": 456.6989229999999,
+    "inputTokens": 14088,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "подсолнухи",
+   "accept": [
+    "🌻"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌻",
+    "confidence": 1,
+    "ms": 430.21998500000063,
+    "inputTokens": 13874,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ромашки",
+   "accept": [
+    "🌼"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "💮",
+    "confidence": 0.39,
+    "ms": 460.68821600000047,
+    "inputTokens": 13868,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "гортензия",
+   "accept": [
+    "💐",
+    "🌸"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "💐",
+    "confidence": 0.38,
+    "ms": 442.26777200000015,
+    "inputTokens": 13872,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "монстера",
+   "accept": [
+    "🪴",
+    "🌿"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🪴",
+    "confidence": 0.96,
+    "ms": 468.8494649999993,
+    "inputTokens": 14094,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "суккуленты",
+   "accept": [
+    "🪴",
+    "🌵"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🪴",
+    "confidence": 0.53,
+    "ms": 461.096438999999,
+    "inputTokens": 14098,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "лаванда в горшочке",
+   "accept": [
+    "🪻",
+    "🪴"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🪴",
+    "confidence": 0.97,
+    "ms": 459.4233289999993,
+    "inputTokens": 14110,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "семена цветов",
+   "accept": [
+    "🌱"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌱",
+    "confidence": 0.51,
+    "ms": 470.09458500000073,
+    "inputTokens": 14092,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "саженец яблони",
+   "accept": [
+    "🌱",
+    "🌳"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌱",
+    "confidence": 0.99,
+    "ms": 482.5407350000005,
+    "inputTokens": 14104,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "бонсай",
+   "accept": [
+    "🪴",
+    "🌳"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🪴",
+    "confidence": 0.79,
+    "ms": 469.0207169999994,
+    "inputTokens": 14090,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мимоза",
+   "accept": [
+    "🌼",
+    "💐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "confidence": 0.33,
+    "ms": 520.3069149999992,
+    "inputTokens": 15563,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "цветы в коробке",
+   "accept": [
+    "💐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "💐",
+    "confidence": 0.91,
+    "ms": 448.05741599999965,
+    "inputTokens": 13880,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "101 роза",
+   "accept": [
+    "🌹",
+    "💐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌹",
+    "confidence": 0.59,
+    "ms": 710.2482289999989,
+    "inputTokens": 13868,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "рождественский венок",
+   "accept": [
+    "🎄"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🎍",
+    "confidence": 0.38,
+    "ms": 484.80083100000047,
+    "inputTokens": 14563,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "торт Наполеон",
+   "accept": [
+    "🍰",
+    "🎂"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🎂",
+    "confidence": 0.62,
+    "ms": 480.6124269999982,
+    "inputTokens": 14260,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "медовик",
+   "accept": [
+    "🍰"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍰",
+    "confidence": 0.42,
+    "ms": 456.9668300000012,
+    "inputTokens": 14250,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шоколадка",
+   "accept": [
+    "🍫"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍫",
+    "confidence": 1,
+    "ms": 458.2869129999999,
+    "inputTokens": 14254,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "коробка конфет",
+   "accept": [
+    "🍬",
+    "🍫"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "confidence": 0.93,
+    "ms": 458.3757460000015,
+    "inputTokens": 14262,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "зефир",
+   "accept": [
+    "🍬",
+    "🍡"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "confidence": 0.72,
+    "ms": 465.3387819999989,
+    "inputTokens": 14246,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "макаруны",
+   "accept": [
+    "🍪",
+    "🧁"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "confidence": 0.93,
+    "ms": 473.83426800000234,
+    "inputTokens": 14252,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "капкейки",
+   "accept": [
+    "🧁"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧁",
+    "confidence": 1,
+    "ms": 478.25093899999774,
+    "inputTokens": 14252,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "тульские пряники",
+   "accept": [
+    "🍪"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "confidence": 0.89,
+    "ms": 429.29874400000335,
+    "inputTokens": 14266,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "домашнее печенье",
+   "accept": [
+    "🍪"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "confidence": 1,
+    "ms": 458.30797800000073,
+    "inputTokens": 14266,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мармелад",
+   "accept": [
+    "🍬"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "confidence": 0.96,
+    "ms": 461.67861300000004,
+    "inputTokens": 14252,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "чак-чак",
+   "accept": [
+    "🍯",
+    "🍪"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "confidence": 0.38,
+    "ms": 459.1402559999988,
+    "inputTokens": 14250,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "шоколадные трюфели",
+   "accept": [
+    "🍫"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "confidence": 0.79,
+    "ms": 459.66045799999847,
+    "inputTokens": 14270,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "пончики",
+   "accept": [
+    "🍩"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍩",
+    "confidence": 1,
+    "ms": 466.15355400000044,
+    "inputTokens": 14250,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "чизкейк",
+   "accept": [
+    "🍰"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍰",
+    "confidence": 0.44,
+    "ms": 505.7282440000017,
+    "inputTokens": 14250,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "тирамису",
+   "accept": [
+    "🍰"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍰",
+    "confidence": 0.56,
+    "ms": 456.4890919999998,
+    "inputTokens": 14252,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "мороженое",
+   "accept": [
+    "🍦",
+    "🍨"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍨",
+    "confidence": 0.91,
+    "ms": 472.4630909999978,
+    "inputTokens": 14254,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "леденцы на палочке",
+   "accept": [
+    "🍭"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍭",
+    "confidence": 1,
+    "ms": 455.2589919999991,
+    "inputTokens": 14266,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сладкий бокс",
+   "accept": [
+    "🍬",
+    "🎁"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "confidence": 0.46,
+    "ms": 469.24149300000136,
+    "inputTokens": 14258,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шоколад ручной работы",
+   "accept": [
+    "🍫"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍫",
+    "confidence": 0.94,
+    "ms": 541.681026000002,
+    "inputTokens": 14264,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "пахлава",
+   "accept": [
+    "🍯",
+    "🥮"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "confidence": 0.29,
+    "ms": 464.0694110000004,
+    "inputTokens": 14250,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "малиновое варенье",
+   "accept": [
+    "🫙",
+    "🍓"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍯",
+    "confidence": 0.89,
+    "ms": 464.4341690000001,
+    "inputTokens": 14268,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "мёд с пасеки",
+   "accept": [
+    "🍯"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍯",
+    "confidence": 1,
+    "ms": 480.04241600000387,
+    "inputTokens": 14256,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сгущёнка",
+   "accept": [
+    "🥫"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍯",
+    "confidence": 0.58,
+    "ms": 457.4306759999963,
+    "inputTokens": 14252,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "пирог с вишней",
+   "accept": [
+    "🥧",
+    "🍒"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥧",
+    "confidence": 0.94,
+    "ms": 459.80996400000004,
+    "inputTokens": 14260,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "штоллен",
+   "accept": [
+    "🍞",
+    "🎄"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥧",
+    "confidence": 0.58,
+    "ms": 444.74751999999717,
+    "inputTokens": 14250,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "имбирные пряники",
+   "accept": [
+    "🍪",
+    "🎄"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍪",
+    "confidence": 0.98,
+    "ms": 442.977844999994,
+    "inputTokens": 14266,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шарлотка",
+   "accept": [
+    "🥧",
+    "🍎"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥧",
+    "confidence": 0.96,
+    "ms": 449.30202799999824,
+    "inputTokens": 14252,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "пармезан",
+   "accept": [
+    "🧀"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧀",
+    "confidence": 1,
+    "ms": 462.55876200000057,
+    "inputTokens": 15567,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сырная тарелка",
+   "accept": [
+    "🧀"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧀",
+    "confidence": 0.96,
+    "ms": 502.8356600000043,
+    "inputTokens": 15577,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "хамон",
+   "accept": [
+    "🍖",
+    "🥩"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥓",
+    "confidence": 0.41,
+    "ms": 663.3501170000018,
+    "inputTokens": 15561,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "домашняя колбаса",
+   "accept": [
+    "🍖",
+    "🥩"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌭",
+    "confidence": 0.86,
+    "ms": 506.30318600000464,
+    "inputTokens": 15581,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "красная икра",
+   "accept": [
+    "🐟",
+    "🫙"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "confidence": 0.51,
+    "ms": 481.4645739999978,
+    "inputTokens": 15573,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "оливковое масло",
+   "accept": [
+    "🫒"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🫒",
+    "confidence": 0.47,
+    "ms": 455.70507100000395,
+    "inputTokens": 14070,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "орехи ассорти",
+   "accept": [
+    "🥜",
+    "🌰"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥜",
+    "confidence": 0.89,
+    "ms": 455.5349270000006,
+    "inputTokens": 14152,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "корзина фруктов",
+   "accept": [
+    "🧺",
+    "🍎"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "confidence": 0.59,
+    "ms": 442.365303999999,
+    "inputTokens": 14078,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "арбуз",
+   "accept": [
+    "🍉"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍉",
+    "confidence": 1,
+    "ms": 465.60135900000023,
+    "inputTokens": 14060,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "манго",
+   "accept": [
+    "🥭"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥭",
+    "confidence": 1,
+    "ms": 441.52930699999706,
+    "inputTokens": 14060,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "клубника в шоколаде",
+   "accept": [
+    "🍓",
+    "🍫"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍬",
+    "confidence": 0.35,
+    "ms": 461.66614500000287,
+    "inputTokens": 14270,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "авокадо",
+   "accept": [
+    "🥑"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥑",
+    "confidence": 0.91,
+    "ms": 465.55788700000267,
+    "inputTokens": 14142,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "домашние соленья",
+   "accept": [
+    "🥒",
+    "🫙"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥒",
+    "confidence": 0.82,
+    "ms": 463.0253789999988,
+    "inputTokens": 14158,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "квашеная капуста",
+   "accept": [
+    "🥬",
+    "🫙"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥬",
+    "confidence": 0.76,
+    "ms": 456.20684099999926,
+    "inputTokens": 14158,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "сушёные грибы",
+   "accept": [
+    "🍄"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍄",
+    "confidence": 0.97,
+    "ms": 491.9286740000025,
+    "inputTokens": 14102,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "баночка аджики",
+   "accept": [
+    "🌶",
+    "🫙"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥫",
+    "confidence": 0.37,
+    "ms": 482.82593500000075,
+    "inputTokens": 15577,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "набор специй",
+   "accept": [
+    "🧂",
+    "🌶"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "confidence": 0.29,
+    "ms": 447.23817899999995,
+    "inputTokens": 14150,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "сало",
+   "accept": [
+    "🥓"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥓",
+    "confidence": 0.89,
+    "ms": 499.32040399999823,
+    "inputTokens": 15559,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "домашние пельмени",
+   "accept": [
+    "🥟"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥟",
+    "confidence": 0.98,
+    "ms": 455.47734599999967,
+    "inputTokens": 14366,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "хлеб ручной выпечки",
+   "accept": [
+    "🍞"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍞",
+    "confidence": 1,
+    "ms": 499.5807280000008,
+    "inputTokens": 15585,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "круассаны",
+   "accept": [
+    "🥐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥐",
+    "confidence": 1,
+    "ms": 484.095018,
+    "inputTokens": 15569,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "блины",
+   "accept": [
+    "🥞"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥞",
+    "confidence": 1,
+    "ms": 469.9789579999997,
+    "inputTokens": 15561,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "суши сет",
+   "accept": [
+    "🍣"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍣",
+    "confidence": 0.95,
+    "ms": 466.6057230000006,
+    "inputTokens": 14344,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "шаурма",
+   "accept": [
+    "🌯"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥙",
+    "confidence": 1,
+    "ms": 480.4371739999988,
+    "inputTokens": 15563,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "мясо для стейков",
+   "accept": [
+    "🥩"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥩",
+    "confidence": 0.96,
+    "ms": 468.77315799999633,
+    "inputTokens": 15575,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "креветки",
+   "accept": [
+    "🦐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "confidence": 0.55,
+    "ms": 463.76227800000197,
+    "inputTokens": 15567,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "устрицы",
+   "accept": [
+    "🦪"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "confidence": 0.47,
+    "ms": 435.76420099999814,
+    "inputTokens": 15565,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "перепелиные яйца",
+   "accept": [
+    "🥚"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥚",
+    "confidence": 0.99,
+    "ms": 452.87856000000465,
+    "inputTokens": 15575,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "черешня",
+   "accept": [
+    "🍒"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍒",
+    "confidence": 1,
+    "ms": 447.2655320000049,
+    "inputTokens": 14064,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "острый соус",
+   "accept": [
+    "🌶"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌶️",
+    "confidence": 0.49,
+    "ms": 468.4924239999964,
+    "inputTokens": 14148,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "хумус",
+   "accept": [
+    "🧆",
+    "🫘"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": null,
+    "confidence": 0.35,
+    "ms": 450.8992670000007,
+    "inputTokens": 15561,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "рамен",
+   "accept": [
+    "🍜"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍜",
+    "confidence": 1,
+    "ms": 445.5982770000046,
+    "inputTokens": 14344,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ягоды",
+   "accept": [
+    "🫐",
+    "🍓"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍓",
+    "confidence": 0.45,
+    "ms": 468.44801700000244,
+    "inputTokens": 14060,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "шампанское",
+   "accept": [
+    "🍾",
+    "🥂"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍾",
+    "confidence": 0.95,
+    "ms": 455.7055959999998,
+    "inputTokens": 14919,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "красное вино",
+   "accept": [
+    "🍷"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍷",
+    "confidence": 1,
+    "ms": 475.864032999998,
+    "inputTokens": 14921,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "виски",
+   "accept": [
+    "🥃"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥃",
+    "confidence": 1,
+    "ms": 458.965618000002,
+    "inputTokens": 14909,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "коньяк",
+   "accept": [
+    "🥃"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥃",
+    "confidence": 1,
+    "ms": 456.2913219999973,
+    "inputTokens": 14911,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "водка",
+   "accept": [
+    "🍾",
+    "🥃"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥃",
+    "confidence": 0.51,
+    "ms": 475.8361270000023,
+    "inputTokens": 14909,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "домашняя настойка",
+   "accept": [
+    "🍶",
+    "🥃"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥃",
+    "confidence": 0.7,
+    "ms": 474.9096839999984,
+    "inputTokens": 14931,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "крафтовое пиво",
+   "accept": [
+    "🍺"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍺",
+    "confidence": 0.98,
+    "ms": 442.90053199999966,
+    "inputTokens": 14925,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "ящик пива",
+   "accept": [
+    "🍻",
+    "🍺"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍺",
+    "confidence": 0.64,
+    "ms": 432.58952000000863,
+    "inputTokens": 14915,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": false
+  },
+  {
+   "name": "саке",
+   "accept": [
+    "🍶"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍶",
+    "confidence": 1,
+    "ms": 479.3696079999936,
+    "inputTokens": 14907,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "набор для коктейлей",
+   "accept": [
+    "🍸",
+    "🍹"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍸",
+    "confidence": 0.78,
+    "ms": 464.4168329999957,
+    "inputTokens": 14929,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "кофе в зёрнах",
+   "accept": [
+    "☕",
+    "🫘"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "confidence": 0.78,
+    "ms": 470.01918000000296,
+    "inputTokens": 14921,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "пуэр",
+   "accept": [
+    "🍵"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "confidence": 0.45,
+    "ms": 491.65294300000824,
+    "inputTokens": 14907,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "травяной сбор",
+   "accept": [
+    "🌿",
+    "🍵"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🌿",
+    "confidence": 0.81,
+    "ms": 459.6955250000028,
+    "inputTokens": 14096,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "свежевыжатый сок",
+   "accept": [
+    "🧃",
+    "🍊"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥤",
+    "confidence": 0.88,
+    "ms": 451.81709299999056,
+    "inputTokens": 14925,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "лимонад",
+   "accept": [
+    "🥤",
+    "🍋"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥤",
+    "confidence": 0.99,
+    "ms": 435.47369799998705,
+    "inputTokens": 14913,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "морс",
+   "accept": [
+    "🧃",
+    "🫐"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥤",
+    "confidence": 0.54,
+    "ms": 484.0634160000045,
+    "inputTokens": 14907,
+    "unknownUsageAttempts": 0
+   },
+   "pass": false,
+   "top1": false
+  },
+  {
+   "name": "смузи",
+   "accept": [
+    "🥤",
+    "🍓"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🥤",
+    "confidence": 0.85,
+    "ms": 497.49016400000255,
+    "inputTokens": 14909,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "бабл ти",
+   "accept": [
+    "🧋"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🧋",
+    "confidence": 1,
+    "ms": 488.8450140000059,
+    "inputTokens": 14909,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "капсулы для кофемашины",
+   "accept": [
+    "☕"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "☕",
+    "confidence": 0.87,
+    "ms": 442.6036029999959,
+    "inputTokens": 14935,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  },
+  {
+   "name": "глинтвейн",
+   "accept": [
+    "🍷",
+    "🎄"
+   ],
+   "tag": "ru",
+   "part": "a",
+   "pick": {
+    "emoji": "🍷",
+    "confidence": 0.71,
+    "ms": 459.1800530000037,
+    "inputTokens": 14917,
+    "unknownUsageAttempts": 0
+   },
+   "pass": true,
+   "top1": true
+  }
+ ]
+}
