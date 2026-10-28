@@ -73,23 +73,6 @@ describe("regeneration", () => {
 describe("eligibility", () => {
   const entries = parseEmojiTest(emojiTest);
 
-  it("keeps exactly the benchmark's filter: single fully-qualified emoji, no ZWJ, skin tones, flags, symbols, components", () => {
-    // Independent copy of eval/bench.ts loadEmojiGroups, the baseline for the catalog.
-    const skipGroups = new Set(["Component", "Flags", "Symbols"]);
-    const baseline = new Set<string>();
-    for (const { codepoints, group } of entries) {
-      if (skipGroups.has(group)) continue;
-      if (codepoints.some((c) => c === 0x200d || (c >= 0x1f3fb && c <= 0x1f3ff))) continue;
-      const emoji = String.fromCodePoint(...codepoints);
-      if (group === "Smileys & Emotion" && !/[\u{1F48B}\u{1F48C}\u{1F49D}\u{2764}\u{1F495}]/u.test(emoji)) continue;
-      if (group === "People & Body" && !/^[\u{1F440}-\u{1F450}\u{1F485}]/u.test(emoji) && codepoints[0] !== 0x1f9b6)
-        continue;
-      baseline.add(emoji);
-    }
-    expect(new Set(withoutNone.map(([, icon]) => icon.emoji))).toEqual(baseline);
-    expect(entries.filter(isEligible).map((e) => e.emoji)).toEqual(withoutNone.map(([, icon]) => icon.emoji));
-  });
-
   it("drops what no gift looks like", () => {
     const groups = new Set(withoutNone.map(([, icon]) => icon.group));
     expect([...groups].sort()).toEqual([
@@ -107,8 +90,9 @@ describe("eligibility", () => {
       expect(codepoints.filter((c) => c >= 0x1f3fb && c <= 0x1f3ff)).toEqual([]);
       expect(codepoints.some((c) => c >= 0x1f1e6 && c <= 0x1f1ff)).toBe(false);
     }
-    // Smileys keep the hearts and the kiss only; People & Body only hands and body parts.
+    // Other faces/people are omitted; gift-related care, sports, hearts and a toy robot remain.
     expect(withoutNone.filter(([, i]) => i.group === "Smileys & Emotion").map(([, i]) => i.emoji)).toEqual([
+      "🤖",
       "💌",
       "💝",
       "💕",
@@ -119,7 +103,7 @@ describe("eligibility", () => {
     expect(people.map(([, i]) => i.emoji)).toEqual(
       expect.arrayContaining(["👋", "👌", "👍", "👏", "💅", "👀", "👅", "🦶"]),
     );
-    expect(people.every(([, i]) => /^(hand|body)|^hands$/.test(i.subgroup))).toBe(true);
+    expect(people.every(([, i]) => /^(hand|body)|^hands$|^person($|-)/.test(i.subgroup))).toBe(true);
   });
 
   it("flags the cases directly", () => {
@@ -128,6 +112,7 @@ describe("eligibility", () => {
     expect(isEligible(entry("1F44D 1F3FD", "People & Body"))).toBe(false); // skin tone
     expect(isEligible(entry("2764 FE0F 200D 1F525", "Smileys & Emotion"))).toBe(false); // ZWJ
     expect(isEligible(entry("1F600", "Smileys & Emotion"))).toBe(false); // plain face
+    for (const hex of ["1F486", "1F487", "1F9D6", "1F6C0"]) expect(isEligible(entry(hex, "People & Body"))).toBe(true);
     expect(isEligible(entry("1F9D1", "People & Body"))).toBe(false); // person
     expect(isEligible(entry("1F1E9 1F1EA", "Flags"))).toBe(false);
     expect(isEligible(entry("1F44D", "Component"))).toBe(false);
@@ -158,9 +143,9 @@ describe("entries", () => {
     expect(ICONS.e_2764_fe0f.emoji).toBe("❤️");
     expect(ICONS.e_2708_fe0f.emoji).toBe("✈️");
     expect(ICONS.e_1f381.emoji).toBe("\u{1F381}");
-    // The 119 text-default emoji (✈️, ☀️, ❄️, ...) keep the selector that makes them emoji.
+    // The 123 text-default emoji (✈️, ☀️, ❄️, ...) keep the selector that makes them emoji.
     const selected = withoutNone.filter(([, icon]) => icon.emoji.includes("\uFE0F"));
-    expect(selected.length).toBe(119);
+    expect(selected.length).toBe(123);
     for (const [key, icon] of selected) expect(key, icon.emoji).toMatch(/_fe0f$/);
   });
 
@@ -197,12 +182,12 @@ describe("entries", () => {
 });
 
 describe("counts", () => {
-  it("matches the Unicode 16 data: 873 emoji in 58 subgroups, at most 63 per subgroup", () => {
-    expect(withoutNone.length).toBe(873);
-    expect(Object.keys(ICONS).length).toBe(874);
-    expect(Object.keys(SUBGROUPS).length).toBe(58);
+  it("matches the Unicode 16 data: 899 emoji in 64 subgroups, at most 63 per subgroup", () => {
+    expect(withoutNone.length).toBe(899);
+    expect(Object.keys(ICONS).length).toBe(900);
+    expect(Object.keys(SUBGROUPS).length).toBe(64);
     expect(Math.max(...Object.values(SUBGROUPS).map((s) => s.keys.length))).toBe(63);
-    expect(new Set(withoutNone.map(([, i]) => i.subgroup)).size).toBe(58);
+    expect(new Set(withoutNone.map(([, i]) => i.subgroup)).size).toBe(64);
   });
 
   it("puts every icon in exactly one subgroup, in CLDR order", () => {
@@ -232,7 +217,12 @@ describe("subgroup descriptions", () => {
       expect(subgroup.description, id).toMatch(
         /^Includes: [^;|]+; excludes: [^;|]+; examples: [^|]+ \| Включает: [^;|]+; не включает: [^;|]+; примеры: [^|]+$/,
       );
-      expect(subgroup.description.length, id).toBeLessThan(700);
+      expect(subgroup.description, id).toContain(
+        `examples: ${subgroup.keys.map((key) => ICONS[key].en.tts).join(", ")}`,
+      );
+      expect(subgroup.description, id).toContain(
+        `примеры: ${subgroup.keys.map((key) => ICONS[key].ru.tts).join(", ")}`,
+      );
     }
   });
 

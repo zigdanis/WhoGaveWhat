@@ -29,7 +29,7 @@ function request(body: unknown, init: { install?: string; ip?: string; method?: 
 function reply(question: "group" | "icon", choice: string, confidence = 0.9, tokens = 1000, price?: unknown) {
   return new Response(
     JSON.stringify({
-      model: "jev-1.13.0",
+      model: "jev-1.14.0",
       answers: { [question]: { choice, confidence }, ...(price !== undefined && { price }) },
       usage: { input_tokens: tokens },
     }),
@@ -69,7 +69,7 @@ describe("two-stage gift endpoint", () => {
       expect(new Headers(call.init.headers).get("Authorization")).toBe("Bearer test-key");
       const sent = JSON.parse(call.init.body as string);
       expect(sent.state).toBe("электро гитара");
-      expect(sent.model).toBe("jev-1.13.0");
+      expect(sent.model).toBe("jev-1.14.0");
       expect(JSON.stringify(sent)).not.toContain(INSTALL);
     }
     const first = JSON.parse(jev.calls[0].init.body as string);
@@ -582,7 +582,7 @@ describe("shared request deadline", () => {
     await expect(
       chooseIcon("guitar", {
         apiKey: "test-key",
-        model: "jev-1.13.0",
+        model: "jev-1.14.0",
         attemptTimeoutMs: 3000,
         maxAttempts: 2,
         totalTimeoutMs: 50,

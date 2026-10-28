@@ -3,14 +3,19 @@ import { groupCriteria, emojiCriteria } from "./catalog.ts";
 import { bucketFromKey, medianBucket, priceCriteria, priceInstructions, type Currency } from "./prices.ts";
 
 /** Bump when routing, instructions, criteria formatting or confidence semantics change. */
-export const PICKER_VERSION = "jev-two-stage-v1";
+export const PICKER_VERSION = "jev-two-stage-v2";
 
 export const JEV_URL = "https://api.typesafe.ai/v1/systemone";
 
 const INSTRUCTIONS =
   "The state is the name of a present someone gave or received, written by the user " +
   "in any language (often Russian), possibly with typos or brand names. " +
-  "Which icon best depicts the gift item or experience itself?";
+  "Choose the closest recognizable emoji representation of the gift item or experience. " +
+  "Use a literal depiction when available; otherwise use its function, what it produces, or a related object or activity. " +
+  "The exact object does not need its own emoji: appliances can be represented by the food or drink they make, " +
+  "services by the activity, branded products by their product type, and a gift certificate by what it buys. " +
+  "Prefer the gift contents over generic packaging. Among similar variants prefer a common general depiction. " +
+  "Use none only for an unknown, vague or abstract gift without a meaningful visual association.";
 
 export interface JevAnswer {
   key: string;
@@ -68,7 +73,7 @@ export function jevRequestBody(name: string, model: string, currency?: Currency,
               type: "choice",
               instructions:
                 INSTRUCTIONS +
-                " Choose the subgroup containing the best depiction, including experiences. Use none only when no subgroup fits.",
+                " Choose the subgroup containing that closest recognizable representation, even when the gift itself is not a literal member of the subgroup.",
               criteria: groupCriteria(),
             },
             ...(currency && {
@@ -133,7 +138,7 @@ async function requestStage(
       lastError = new JevError("timeout");
       break;
     }
-    if (attempt > 1) await sleep(200 * attempt + Math.floor(Math.random() * 200));
+    if (attempt > 1) await backoff(200 * attempt + Math.floor(Math.random() * 200), sleep, deadline);
     if (deadline.aborted) {
       lastError = new JevError("timeout");
       break;
@@ -180,6 +185,20 @@ async function requestStage(
   lastError.inputTokens = inputTokens;
   lastError.unknownUsageAttempts = unknownUsageAttempts;
   throw lastError;
+}
+
+/** Backoff also stops at the shared deadline; remove the listener when the delay wins. */
+async function backoff(ms: number, sleep: (ms: number) => Promise<void>, deadline: AbortSignal): Promise<void> {
+  let onAbort: () => void = () => {};
+  const aborted = new Promise<void>((resolve) => {
+    onAbort = resolve;
+  });
+  deadline.addEventListener("abort", onAbort, { once: true });
+  try {
+    if (!deadline.aborted) await Promise.race([sleep(ms), aborted]);
+  } finally {
+    deadline.removeEventListener("abort", onAbort);
+  }
 }
 
 function hasUsage(json: unknown): boolean {

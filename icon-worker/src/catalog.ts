@@ -1,7 +1,7 @@
 import { GENERIC_KEY, ICONS, SUBGROUPS, describeIcon } from "./cldr-catalog.ts";
 
 const NONE =
-  "Includes: no suitable depiction or an unclear gift. Excludes: gifts depicted by another option. Examples EN: something, surprise. RU: что-то, сюрприз.";
+  "Includes: unknown, vague or abstract gifts with no meaningful visual association; excludes: a specific gift that can be represented by a related object, function, product or activity, even without an exact emoji; examples: something, an unspecified surprise | Включает: неизвестные, неясные и абстрактные подарки без узнаваемого образа; не включает: конкретный подарок, который можно показать связанным предметом, функцией, результатом или занятием, даже без точного эмодзи; примеры: что-то, неопределённый сюрприз";
 
 /** Every subgroup uses the same includes/excludes/examples structure, generated from CLDR. */
 export function groupCriteria(): Record<string, string> {

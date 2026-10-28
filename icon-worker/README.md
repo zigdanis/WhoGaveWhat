@@ -33,9 +33,9 @@ the app holds no secret.
   emoji list in `eval/data/` and generates committed `src/cldr-catalog.ts`. Wrangler runs it at build
   time; the Worker imports a module and never reads files. It keeps fully-qualified single emoji,
   excluding ZWJ sequences, skin tones, flags, components and Symbols. Smileys and People are limited
-  to gift-related hearts, kisses, hands and body care. Each entry retains its Unicode group/subgroup,
-  both TTS names and all keywords. The pinned data and prototype filter produce **873 emoji in
-  58 subgroups**, rather than the estimated 850/49; stage one has 59 options and the largest stage
+  to gift-related hearts, kisses, a robot toy, hands, body/baby/maternity care, and sporting/rest activities. Each entry retains its Unicode group/subgroup,
+  both TTS names and all keywords. The pinned data and selective gift filter produce **899 emoji in
+  64 subgroups**, rather than the estimated 850/49; stage one has 65 options and the largest stage
   two has 64 (including `none`). Emoji presentation selectors (U+FE0F) are preserved.
 - The manual catalog and `JEV_RUSSIAN_HINTS` switch are removed: the CLDR descriptions always include
   both languages. One catalog and one picker serve production and `eval/bench.ts`, avoiding a fallback
@@ -56,8 +56,10 @@ the app holds no secret.
   "5к", "$100"), that amount is returned as the price instead of a bucket, unsnapped and
   whatever the confidence; the currency is not converted.
 - `src/jev.ts` makes **two sequential requests**. Stage one chooses a Unicode subgroup plus
-  `none`, with uniformly structured includes/excludes/examples in English and Russian; the optional
+  `none`, with uniformly structured includes/excludes/examples in English and Russian (all actual
+  CLDR TTS names appear as examples, so a rare item cannot disappear behind a short sample list); the optional
   `price` question runs alongside it. Stage two chooses only among that subgroup's emoji plus `none`.
+  Instructions allow a recognizable related object, function or activity when no literal emoji exists.
   Each stage validates against exactly the options sent. `none` produces a null emoji, and the final
   confidence is the minimum of the two stage confidences; `MIN_CONFIDENCE` still gates the result.
   The price from stage one survives an icon `none`. Each attempt times out after 3 seconds and gets
@@ -70,8 +72,9 @@ the app holds no secret.
   trip. It would send the whole catalog on every request and charge all those questions, including
   irrelevant groups. Sequential requests keep only the selected group in stage two, stay comfortably
   below the 255-option limit and reduce tokens. The tradeoff is an extra round trip and greedy routing:
-  a wrong first-stage subgroup cannot be recovered in stage two. We keep the pinned `jev-1.13.0` model
-  to compare the catalog/picker change independently of a model upgrade.
+  a wrong first-stage subgroup cannot be recovered in stage two. We pin `jev-1.14.0` after a 100-name pilot spread evenly across all five parts gave
+  83% accept, versus 78% for `jev-1.13.0` with the same catalog and instructions. Both versions
+  have the same published token price. The final comparison therefore includes the model upgrade.
 - `src/limiter.ts` is one SQLite-backed Durable Object that admits each provider call:
   per-IP per minute, global per minute, per-install per day, and daily and monthly
   budgets. Each gift reserves all four possible attempts (two per stage) at Jev's enforced per-request ceiling
@@ -80,7 +83,7 @@ the app holds no secret.
   attempt that may have been billed without reporting usage. Known stage-one usage is charged even
   when stage two fails. `none` at stage one releases the unused second-stage reservation. Without a valid ceiling
   or API key the Worker fails closed.
-  It caches answers for 30 days by a SHA-256 of the normalized name, catalog version,
+  It caches answers for 30 days by a SHA-256 of the normalized name, catalog version, picker/instruction version,
   model (and, with a currency, the price version and currency). A reply that asked for a price but has no usable price answer
   is cached for only an hour, so one bad reply doesn't hide the price for a month. The cache table gained nullable `price` and
   `price_confidence` columns, added on startup to a table that predates them. Install IDs and IP addresses are counted under HMACs with a
@@ -98,7 +101,7 @@ auto-refill off, so the provider also stops at the purchased balance.
 ## Develop
 
 ```sh
-npm ci
+npm ci  # Node 24 (same as CI)
 npm run build:catalog
 npx tsc --noEmit
 npx vitest run
@@ -130,9 +133,13 @@ picker over them and prints accuracy by part and tag; `eval/baselines/<date>/` k
 node --experimental-strip-types eval/bench.ts --picker ceiling          # best the current catalog could do, no requests
 node --experimental-strip-types eval/bench.ts --picker cldr             # local CLDR keyword match (ru + en)
 node --experimental-strip-types eval/bench.ts --picker worker --out eval/results/worker.json   # the deployed Worker, paced under its limits
-JEV_API_KEY=… node --experimental-strip-types eval/bench.ts --picker jev-two-stage   # the exact production two-stage picker
+JEV_API_KEY=… node --experimental-strip-types eval/bench.ts --picker jev-two-stage --concurrency 2 --out eval/results/jev-two-stage.json
 node --experimental-strip-types eval/bench.ts --compare eval/baselines/2026-10-27/2026-10-27-worker.json eval/results/worker.json
 ```
+
+Direct Jev runs default to one concurrent gift; `--concurrency 2` (up to 4) speeds up the run while
+each gift still makes its two stages sequentially. Worker runs require concurrency 1 to respect its
+rate limits. Results are checkpointed after every gift, retaining original case order.
 
 `eval/data/` has the CLDR `ru` and `en` emoji annotations and Unicode `emoji-test.txt` the local pickers use.
 

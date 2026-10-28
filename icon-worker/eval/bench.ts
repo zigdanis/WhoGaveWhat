@@ -1,16 +1,16 @@
 // Icon-picking benchmark over eval/cases1000/*.json (gold emoji per gift name, unrestricted Unicode set).
 //
 // Usage: node --experimental-strip-types eval/bench.ts --picker ceiling|cldr|worker|jev-two-stage
-//          [--limit N] [--out results.json] [--base URL] [--pause-ms 2100]
+//          [--limit N] [--out results.json] [--base URL] [--pause-ms 2100] [--concurrency 1|2|3|4]
 //        node --experimental-strip-types eval/bench.ts --compare a.json b.json ...
 //
 // Pickers:
 //   ceiling        no requests; passes when any accepted emoji exists in the current catalog (src/cldr-catalog.ts).
 //                  This is the best the current approach could ever score.
 //   cldr           local keyword match over Unicode CLDR ru+en emoji annotations (what the iOS keyboard uses).
-//   worker         the deployed Worker (current Jev + curated catalog). Rotates install IDs under the per-install cap.
-//   jev-two-stage  Jev directly, stage 1 picks a Unicode group, stage 2 picks an emoji from that group, described by
-//                  CLDR en+ru keywords (needs JEV_API_KEY). Catalog = all gift-relevant single emoji (~1,100).
+//   worker         the deployed Worker. Rotates install IDs under the per-install cap.
+//   jev-two-stage  Jev directly, stage 1 picks a Unicode subgroup, stage 2 picks an emoji from that subgroup, described by
+//                  CLDR en+ru keywords (needs JEV_API_KEY). Catalog = the same generated CLDR module as the Worker.
 //
 // Scoring: a pick passes when it is in the case's `accept` list (variation selectors ignored). `null` counts as 🎁.
 // `top1` is the stricter share where the pick equals the first (best) accepted emoji.
@@ -160,7 +160,7 @@ function makeJevTwoStagePicker() {
     try {
       const { answer, unknownUsageAttempts } = await chooseIcon(item.name, {
         apiKey,
-        model: option("--model") ?? "jev-1.13.0",
+        model: option("--model") ?? "jev-1.14.0",
         attemptTimeoutMs: 3_000,
         maxAttempts: 2,
       });
@@ -276,7 +276,7 @@ async function main() {
             catalogVersion: CATALOG_VERSION,
             pickerVersion: PICKER_VERSION,
             minConfidence: 0.35,
-            model: option("--model") ?? "jev-1.13.0",
+            model: option("--model") ?? "jev-1.14.0",
             at: new Date().toISOString(),
             results: results.filter(Boolean),
             concurrency,
