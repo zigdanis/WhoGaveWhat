@@ -11,10 +11,6 @@ on:
         description: Jev model ID for this deployment (the default comes from wrangler.jsonc)
         type: string
         default: ''
-      russian_hints:
-        description: Override Russian hints in icon descriptions (true/false; empty keeps wrangler.jsonc)
-        type: string
-        default: ''
       run_eval:
         description: Run the multilingual icon and price evaluation after deploying
         type: boolean
@@ -40,7 +36,6 @@ jobs:
       # The production URL compiled into the app (CloudGiftIconGateway.endpoint).
       APP_ENDPOINT: https://whogavewhat-icons.zigdanis.workers.dev
       JEV_MODEL_INPUT: ${{ inputs.jev_model }}
-      RUSSIAN_HINTS_INPUT: ${{ inputs.russian_hints }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -75,11 +70,6 @@ jobs:
             case "$JEV_MODEL_INPUT" in jev-[a-z0-9.-]*) ;; *) echo "::error::Unexpected model ID"; exit 1 ;; esac
             set -- "$@" --var "JEV_MODEL:$JEV_MODEL_INPUT"
           fi
-          case "$RUSSIAN_HINTS_INPUT" in
-            '') ;;
-            true|false) set -- "$@" --var "JEV_RUSSIAN_HINTS:$RUSSIAN_HINTS_INPUT" ;;
-            *) echo "::error::russian_hints must be true, false or empty"; exit 1 ;;
-          esac
           npx wrangler "$@" | tee "$RUNNER_TEMP/deploy.log"
           deployed_url=$(grep -oE 'https://whogavewhat-icons\.[a-z0-9-]+\.workers\.dev' "$RUNNER_TEMP/deploy.log" | head -n 1)
           if [ -z "$deployed_url" ]; then

@@ -1,5 +1,5 @@
-import { CATALOG_VERSION, GENERIC_KEY, ICONS } from "./icons";
-import { chooseIcon, JevError, type JevOptions } from "./jev";
+import { CATALOG_VERSION, GENERIC_KEY, ICONS } from "./cldr-catalog";
+import { chooseIcon, JevError, PICKER_VERSION, type JevOptions } from "./jev";
 import { CURRENCIES, PRICE_VERSION, priceFor, type Currency } from "./prices";
 import type { IconLimiter, Limits } from "./limiter";
 
@@ -11,7 +11,6 @@ export interface Env {
   JEV_MODEL: string;
   JEV_MAX_REQUEST_TOKENS: string;
   JEV_PRICE_PER_MTOK_USD: string;
-  JEV_RUSSIAN_HINTS: string;
   MIN_CONFIDENCE: string;
   MIN_PRICE_CONFIDENCE: string;
   MONTHLY_BUDGET_USD: string;
@@ -62,12 +61,11 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
   const { maxRequestTokens, pricePerToken, minConfidence, minPriceConfidence } = config;
 
   const limiter = env.LIMITER.get(env.LIMITER.idFromName("global"));
-  const russianHints = env.JEV_RUSSIAN_HINTS === "true";
-  // Requests without a currency keep the key they always had, so their cached answers stay valid.
+  // The generated catalog version invalidates choices from older catalogs.
   const cacheKey = await sha256(
     currency === null
-      ? `${CATALOG_VERSION}\n${env.JEV_MODEL}\n${russianHints}\n${name.toLowerCase()}`
-      : `${CATALOG_VERSION}\n${PRICE_VERSION}\n${env.JEV_MODEL}\n${russianHints}\n${currency}\n${name.toLowerCase()}`,
+      ? `${CATALOG_VERSION}\n${PICKER_VERSION}\n${env.JEV_MODEL}\n${name.toLowerCase()}`
+      : `${CATALOG_VERSION}\n${PICKER_VERSION}\n${PRICE_VERSION}\n${env.JEV_MODEL}\n${currency}\n${name.toLowerCase()}`,
   );
   // Every attempt may be billed, so each is reserved at the provider-enforced request ceiling.
   const attemptMicros = Math.ceil(maxRequestTokens * pricePerToken);
@@ -78,7 +76,7 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
     ip: request.headers.get("CF-Connecting-IP") ?? "unknown",
     now: deps.now(),
     limits: config.limits,
-    reservationMicros: attemptMicros * MAX_ATTEMPTS,
+    reservationMicros: attemptMicros * MAX_ATTEMPTS * 2,
   });
 
   switch (admission.kind) {
@@ -102,7 +100,6 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
   const options: JevOptions = {
     apiKey: env.JEV_API_KEY,
     model: env.JEV_MODEL,
-    russianHints,
     currency: currency ?? undefined,
     attemptTimeoutMs: 3_000,
     maxAttempts: MAX_ATTEMPTS,
@@ -150,10 +147,19 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
     });
   } catch (error) {
     // Attempts that may have been billed without reporting usage are charged at their upper bound.
-    const unknown = error instanceof JevError ? error.unknownUsageAttempts : MAX_ATTEMPTS;
-    await limiter.settle({ reservationId: admission.reservationId, costMicros: unknown * attemptMicros, now: deps.now() });
+    const unknown = error instanceof JevError ? error.unknownUsageAttempts : MAX_ATTEMPTS * 2;
+    const knownTokens = error instanceof JevError ? error.inputTokens : 0;
+    await limiter.settle({
+      reservationId: admission.reservationId,
+      costMicros: Math.ceil(knownTokens * pricePerToken) + unknown * attemptMicros,
+      now: deps.now(),
+    });
     console.log(
-      JSON.stringify({ event: "jev_error", reason: error instanceof Error ? error.message : "unknown", ms: deps.now() - started }),
+      JSON.stringify({
+        event: "jev_error",
+        reason: error instanceof Error ? error.message : "unknown",
+        ms: deps.now() - started,
+      }),
     );
     // A rejected key is a configuration problem that won't pass in seconds.
     const rejected = error instanceof JevError && (error.status === 401 || error.status === 403);
@@ -193,7 +199,10 @@ async function readRequest(request: Request): Promise<GiftRequest | null> {
     currency = code;
   }
   // Control characters are replaced like whitespace so they never reach the provider.
-  const name = raw.normalize("NFC").replace(/[\p{Cc}\p{Z}]+/gu, " ").trim();
+  const name = raw
+    .normalize("NFC")
+    .replace(/[\p{Cc}\p{Z}]+/gu, " ")
+    .trim();
   const length = [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(name)].length;
   return length >= MIN_NAME_LENGTH && length <= MAX_NAME_LENGTH ? { name, currency } : null;
 }
@@ -242,7 +251,13 @@ function answerResponse(answer: Answer): Response {
   const emoji = key !== null && confidence >= minConfidence ? (ICONS[key]?.emoji ?? null) : null;
   const icon = { emoji, confidence: round(confidence) };
   if (answer.currency === null) return json(icon);
-  const price = priceFor({ key, confidence, minConfidence }, answer.name, answer.bucket, answer.priceConfidence, answer.minPriceConfidence);
+  const price = priceFor(
+    { key, confidence, minConfidence },
+    answer.name,
+    answer.bucket,
+    answer.priceConfidence,
+    answer.minPriceConfidence,
+  );
   return json({ ...icon, price, priceConfidence: round(answer.priceConfidence) });
 }
 
