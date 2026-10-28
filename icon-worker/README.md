@@ -125,6 +125,8 @@ variants can be compared; the next plain deploy restores `wrangler.jsonc`.
 
 ## Icon benchmark (unrestricted emoji)
 
+Record icon-selection failures observed in the app in [Real-world misses](eval/real-world-misses.md), with the exact gift name, actual icon and expected result. Keep confirmed fixes there for future regression checks.
+
 `eval/cases1000/*.json` holds ~1,000 gift names with the ideal emoji from the whole Unicode set (not
 only the catalog), so the score also shows what the catalog cannot express. `eval/bench.ts` runs a
 picker over them and prints accuracy by part and tag; `eval/results/<date>/` keeps every run, committed, so changes can be tracked over time.
