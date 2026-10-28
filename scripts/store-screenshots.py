@@ -22,9 +22,9 @@ import sys
 from pathlib import Path
 from urllib.parse import quote
 
-_spec = importlib.util.spec_from_file_location("run_app_smoke", Path(__file__).with_name("run-app-smoke.py"))
-smoke = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(smoke)
+_spec = importlib.util.spec_from_file_location("simulator_tools", Path(__file__).with_name("simulator_tools.py"))
+tools = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(tools)
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCALES = ("en-US", "ru")
@@ -104,7 +104,7 @@ def choose_device(payload, device=None, runtime=None, display=IPHONE_69):
             f"No available {device or '6.9-inch (Pro Max or Plus) iPhone'} Simulator"
             f"{f' on {runtime}' if runtime else ''}; available iPhones: {available}")
     name = names[0]
-    chosen = max(supported[name], key=lambda item: smoke._runtime_version(item["name"]))
+    chosen = max(supported[name], key=lambda item: tools._runtime_version(item["name"]))
     return {"device": name, "runtime": chosen["name"], "runtime_identifier": chosen.get("identifier")}
 
 
@@ -175,7 +175,7 @@ def validate_set(shots_by_locale, display=IPHONE_69):
 def export_locale(directory, locale, result_bundle, display=IPHONE_69):
     """Export one run's attachments and copy its store screenshots to `screenshots/<locale>/`."""
     attachments = directory / f"attachments-{locale}"
-    smoke._export_xcresult_attachments(result_bundle, attachments, directory)
+    tools.export_xcresult_attachments(result_bundle, attachments, directory)
     manifest_path = attachments / "manifest.json"
     if not manifest_path.is_file():
         raise ValueError(f"The {locale} xcresult has no attachment manifest")
@@ -251,11 +251,11 @@ def override_status_bar(directory, simulator_id, attempts=STATUS_BAR_ATTEMPTS):
     """Set the clean 9:41 status bar, or keep the real one when the Simulator never accepts the override."""
     for attempt in range(1, attempts + 1):
         try:
-            smoke.run_command(directory, f"status-bar-{attempt}", [
+            tools.run_command(directory, f"status-bar-{attempt}", [
                 "xcrun", "simctl", "status_bar", simulator_id, "override", *STATUS_BAR_ARGUMENTS],
                 STATUS_BAR_TIMEOUT_SECONDS)
             return "overridden"
-        except smoke.NativeCommandError as error:
+        except tools.NativeCommandError as error:
             print(f"Status bar override attempt {attempt} failed: {error}", flush=True)
     print("::warning::The status bar override failed; screenshots show the Simulator's real status bar", flush=True)
     return "real"
@@ -273,24 +273,24 @@ def run(directory, device=None, runtime=None, locales=LOCALES, display=IPHONE_69
     shots_by_locale = {}
     failed_bundles = []
     try:
-        runtimes = smoke.run_command(directory, "simulator-runtimes-list", [
+        runtimes = tools.run_command(directory, "simulator-runtimes-list", [
             "xcrun", "simctl", "list", "runtimes", "available", "--json"], 30)
         choice = choose_device(json.loads(runtimes.stdout), device, runtime, display)
         metadata.update(device=choice["device"], runtime=choice["runtime"])
-        listing = smoke.run_command(directory, "simulator-list", [
+        listing = tools.run_command(directory, "simulator-list", [
             "xcrun", "simctl", "list", "devices", "available", "--json"], 30)
-        simulator = smoke.create_ci_simulator(
+        simulator = tools.create_ci_simulator(
             directory, json.loads(listing.stdout), choice["runtime"], metadata, choice["device"])
         simulator_id = simulator["udid"]
         metadata["simulator_id"] = simulator_id
-        smoke.run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
-        smoke.run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
-                          smoke.COLD_BOOT_TIMEOUT_SECONDS)
+        tools.run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
+        tools.run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
+                          tools.COLD_BOOT_TIMEOUT_SECONDS)
         target = ["-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
                   "-destination", f"platform=iOS Simulator,id={simulator_id}",
                   "-derivedDataPath", str(directory / "DerivedData"), "-parallel-testing-enabled", "NO"]
         signing = ["CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-"]
-        smoke.run_command(directory, "xcodebuild-build", ["xcodebuild", "build-for-testing", *target, *signing],
+        tools.run_command(directory, "xcodebuild-build", ["xcodebuild", "build-for-testing", *target, *signing],
                           BUILD_TIMEOUT_SECONDS, cwd=ROOT)
         # Overridden after the build: right after a cold boot the override can hang while the Simulator settles.
         metadata["status_bar"] = override_status_bar(directory, simulator_id)
@@ -299,7 +299,7 @@ def run(directory, device=None, runtime=None, locales=LOCALES, display=IPHONE_69
             failed_bundles.append(bundle)
             # The tests attach their own failure screenshots; default diagnostics collection can hang after a failure.
             with environment(TEST_RUNNER_KS_STORE_SCREENSHOTS="1", TEST_RUNNER_KS_STORE_LOCALE=locale):
-                smoke.run_command(directory, f"xcodebuild-test-{locale}", [
+                tools.run_command(directory, f"xcodebuild-test-{locale}", [
                     "xcodebuild", "test-without-building", *target, "-resultBundlePath", str(bundle),
                     "-collect-test-diagnostics", "never", f"-only-testing:{TEST_CLASS}", *signing],
                     TEST_TIMEOUT_SECONDS, cwd=ROOT)
@@ -312,12 +312,12 @@ def run(directory, device=None, runtime=None, locales=LOCALES, display=IPHONE_69
             shots_by_locale, f"WhoGaveWhat App Store screenshots ({display.title})", display.prefix))
         metadata["outcome"] = "success"
         failed_bundles = []
-    except (smoke.NativeCommandError, OSError, ValueError, json.JSONDecodeError, subprocess.SubprocessError) as error:
+    except (tools.NativeCommandError, OSError, ValueError, json.JSONDecodeError, subprocess.SubprocessError) as error:
         metadata["error"] = str(error)
         raise
     finally:
         try:
-            smoke.cleanup_ci_simulator(directory, metadata)
+            tools.cleanup_ci_simulator(directory, metadata)
         finally:
             try:
                 (directory / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
@@ -345,7 +345,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         run(args.directory, args.device, args.runtime, tuple(args.locale or LOCALES), DISPLAYS[args.display])
-    except (smoke.NativeCommandError, ValueError) as error:
+    except (tools.NativeCommandError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
     return 0

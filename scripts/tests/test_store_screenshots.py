@@ -270,10 +270,10 @@ class RunTests(unittest.TestCase):
             commands.append(('cleanup', [metadata['simulator_fixture']['created_simulator_id']]))
             metadata['simulator_fixture']['cleanup_outcome'] = 'success'
 
-        patches = [patch.object(shots.smoke, 'run_command', side_effect=run_command),
-                   patch.object(shots.smoke, 'create_ci_simulator', side_effect=create),
-                   patch.object(shots.smoke, '_export_xcresult_attachments', side_effect=export),
-                   patch.object(shots.smoke, 'cleanup_ci_simulator', side_effect=cleanup),
+        patches = [patch.object(shots.tools, 'run_command', side_effect=run_command),
+                   patch.object(shots.tools, 'create_ci_simulator', side_effect=create),
+                   patch.object(shots.tools, 'export_xcresult_attachments', side_effect=export),
+                   patch.object(shots.tools, 'cleanup_ci_simulator', side_effect=cleanup),
                    patch.dict(os.environ, {'HEAD_SHA': 'a' * 40})]
         return commands, environments, patches
 
@@ -356,16 +356,16 @@ class RunTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             commands, _ = self.run_with(directory)
-            original = shots.smoke.run_command.side_effect
+            original = shots.tools.run_command.side_effect
 
             def failing(directory_, label, command, timeout, *, cwd=None):
                 if label == 'xcodebuild-test-ru':
-                    raise shots.smoke.NativeCommandError('xcodebuild-test-ru exited 65')
+                    raise shots.tools.NativeCommandError('xcodebuild-test-ru exited 65')
                 return original(directory_, label, command, timeout, cwd=cwd)
 
-            shots.smoke.run_command.side_effect = failing
+            shots.tools.run_command.side_effect = failing
 
-            with self.assertRaisesRegex(shots.smoke.NativeCommandError, 'exited 65'):
+            with self.assertRaisesRegex(shots.tools.NativeCommandError, 'exited 65'):
                 shots.run(directory)
 
             self.assertEqual('cleanup', commands[-1][0])
@@ -381,9 +381,9 @@ class StatusBarTests(unittest.TestCase):
 
         def failing(directory, label, command, timeout, **kwargs):
             calls.append(label)
-            raise shots.smoke.NativeCommandError(f'{label} timed out after {timeout}s')
+            raise shots.tools.NativeCommandError(f'{label} timed out after {timeout}s')
 
-        with patch.object(shots.smoke, 'run_command', side_effect=failing):
+        with patch.object(shots.tools, 'run_command', side_effect=failing):
             self.assertEqual(shots.override_status_bar(Path('/tmp'), 'UDID', attempts=3), 'real')
         self.assertEqual(calls, ['status-bar-1', 'status-bar-2', 'status-bar-3'])
 
@@ -393,9 +393,9 @@ class StatusBarTests(unittest.TestCase):
         def flaky(directory, label, command, timeout, **kwargs):
             calls.append(label)
             if len(calls) == 1:
-                raise shots.smoke.NativeCommandError('status-bar-1 timed out after 90s')
+                raise shots.tools.NativeCommandError('status-bar-1 timed out after 90s')
 
-        with patch.object(shots.smoke, 'run_command', side_effect=flaky):
+        with patch.object(shots.tools, 'run_command', side_effect=flaky):
             self.assertEqual(shots.override_status_bar(Path('/tmp'), 'UDID'), 'overridden')
         self.assertEqual(calls, ['status-bar-1', 'status-bar-2'])
 

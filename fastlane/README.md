@@ -16,8 +16,8 @@ no longer supported.
 `BETA_REVIEW_INFO` secret when it holds all four contact fields. With no contact field the upload leaves the
 App Review section (contact and notes) as entered in App Store Connect; with only some of them it fails. They never come from the repository; only `metadata/review_information/notes.txt` is committed.
 
-Native tests and app smoke use direct Apple tools through
-`scripts/run-app-smoke.py`, locally on macOS or in the `Tests` workflow.
+Native unit tests use direct Apple tools through
+`scripts/run-unit-tests.py`, locally on macOS or in the `Tests` workflow.
 Run release helper tests with one Ruby process per file:
 
 ```sh

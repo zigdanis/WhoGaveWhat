@@ -7,8 +7,10 @@ on:
     paths:
       - 'fastlane/metadata/**'
       - 'WhoGaveWhatUITests/StoreScreenshotsUITests.swift'
+      - 'WhoGaveWhatUITests/TabNavigation.swift'
       - 'WhoGaveWhat/Infrastructure/Persistence/SwiftDataStore.swift'
       - 'scripts/store-screenshots.py'
+      - 'scripts/simulator_tools.py'
       - 'scripts/install-simulator-runtime.sh'
       - '.github/workflows/store-screenshots.yml'
 
