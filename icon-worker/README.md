@@ -127,14 +127,15 @@ variants can be compared; the next plain deploy restores `wrangler.jsonc`.
 
 `eval/cases1000/*.json` holds ~1,000 gift names with the ideal emoji from the whole Unicode set (not
 only the catalog), so the score also shows what the catalog cannot express. `eval/bench.ts` runs a
-picker over them and prints accuracy by part and tag; `eval/baselines/<date>/` keeps committed reference runs (`eval/results/` is ignored for scratch runs).
+picker over them and prints accuracy by part and tag; `eval/results/<date>/` keeps every run, committed, so changes can be tracked over time.
 
 ```sh
 node --experimental-strip-types eval/bench.ts --picker ceiling          # best the current catalog could do, no requests
 node --experimental-strip-types eval/bench.ts --picker cldr             # local CLDR keyword match (ru + en)
-node --experimental-strip-types eval/bench.ts --picker worker --out eval/results/worker.json   # the deployed Worker, paced under its limits
-JEV_API_KEY=… node --experimental-strip-types eval/bench.ts --picker jev-two-stage --concurrency 2 --out eval/results/jev-two-stage.json
-node --experimental-strip-types eval/bench.ts --compare eval/baselines/2026-10-27/2026-10-27-worker.json eval/results/worker.json
+mkdir -p eval/results/$(date +%F)
+node --experimental-strip-types eval/bench.ts --picker worker --out eval/results/$(date +%F)/worker.json
+JEV_API_KEY=… node --experimental-strip-types eval/bench.ts --picker jev-two-stage --concurrency 2 --out eval/results/$(date +%F)/jev-two-stage.json
+node --experimental-strip-types eval/bench.ts --compare eval/results/2026-10-27/2026-10-27-worker.json eval/results/<date>/worker.json
 ```
 
 Direct Jev runs default to one concurrent gift; `--concurrency 2` (up to 4) speeds up the run while
