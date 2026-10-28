@@ -39,7 +39,7 @@ node --experimental-strip-types eval/bench.ts --compare eval/results/2026-10-28/
 
 ## Saved runs
 
-Every run is committed under this date; nothing in `eval` is ignored.
+Every available saved run is committed under this date; nothing in `eval` is ignored. Two earlier pilot raw files had already been overwritten before this retention requirement; their recorded aggregates are preserved in `pilot-early-summary.json`, clearly separated from the final evidence.
 
 - `2026-10-28-jev-two-stage.json` / `.md`: final full run, production code/catalog/threshold, 969 cases.
 - `2026-10-28-worker-matched.json` / `.md`: saved old Worker answers aligned to current 969 names/labels.
@@ -47,6 +47,8 @@ Every run is committed under this date; nothing in `eval` is ignored.
 - `2026-10-28-legacy-cost-sample.json`: 30-name direct legacy replay for tokens and provider latency.
 - `pilot-jev-1.13.0.json`, `pilot-jev-1.14.0.json`: 100-name model pilot with both stage distributions. `2026-10-28-model-pilot-100.json` is its compact comparison.
 - `2026-10-28-price-probe.json`: real shared-picker RUB/USD probes. Stage-one price distributions produced RUB 5,000 and USD 200 for “гитара”.
+- `diagnostic-initial-misses-22.json`: exploratory replays of the 22 initial smoke misses with both stage answers.
+- `pilot-early-summary.json`: recorded aggregates of the two earlier 100-name pilots (73% / 77%); raw files are unavailable, as noted above.
 - `jev-two-stage-smoke.json` / `.md`: initial 100-case smoke, 78% accept, before later catalog/instruction/model changes.
 - `jev-two-stage-initial-partial.json`: interrupted exploratory initial run, 282 cases; not used in the final comparison.
 - `jev-two-stage-literal.json` / `.md`: complete earlier literal-depiction configuration, 65.9% accept; retained to show the effect of routing instructions and care/sport eligibility changes.
