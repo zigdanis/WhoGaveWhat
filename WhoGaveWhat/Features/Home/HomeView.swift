@@ -11,6 +11,7 @@ struct HomeView: View {
     var body: some View {
         let year = currentYear
         List {
+            ScreenHeadingSection(title: "Who gave what")
             if composition.data.gifts.isEmpty {
                 Section {
                     HomeWelcome(router: composition.router)
@@ -52,7 +53,7 @@ struct HomeView: View {
         .scrollEdgeEffectStyle(.soft, for: .bottom)
         .background(Color.appBackground)
         // The welcome card carries the only "Add a gift" action until the first gift.
-        .floatingAddButton(composition: composition, isVisible: !composition.data.gifts.isEmpty)
+        .addGiftAction(composition: composition, isVisible: !composition.data.gifts.isEmpty)
         // The first saved gift and the last deleted one swap the welcome, timeline and button smoothly.
         .animation(.default, value: composition.data.gifts.isEmpty)
     }

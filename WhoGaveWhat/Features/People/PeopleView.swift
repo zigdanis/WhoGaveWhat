@@ -6,9 +6,11 @@ import SwiftUI
 struct PeopleView: View {
     let composition: AppComposition
     @State private var isAddingPerson = false
+    @Environment(\.adaptiveLayout) private var layout
 
     var body: some View {
         List {
+            ScreenHeadingSection(title: "People")
             ForEach(sortedPeople) { person in
                 personRow(person)
             }
@@ -19,8 +21,18 @@ struct PeopleView: View {
         .scrollEdgeEffectStyle(.soft, for: .bottom)
         .background(Color.appBackground)
         .safeAreaInset(edge: .bottom) {
-            AddPersonFloatingAction {
-                isAddingPerson = true
+            if !layout.placesAddActionInToolbar {
+                AddPersonFloatingAction {
+                    isAddingPerson = true
+                }
+            }
+        }
+        .toolbar {
+            if layout.placesAddActionInToolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    ToolbarAddButton(title: "Add person") { isAddingPerson = true }
+                        .accessibilityIdentifier("people.add-person")
+                }
             }
         }
         .sheet(isPresented: $isAddingPerson) {

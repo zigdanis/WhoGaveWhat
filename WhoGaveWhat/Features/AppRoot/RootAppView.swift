@@ -13,18 +13,20 @@ struct RootAppView: View {
                 // Home is its own native List (smooth swipe-to-delete), so it
                 // carries its own background and the floating "Add a gift" button.
                 HomeView(composition: composition)
-                    .navigationTitle("Who gave what")
+                    .tabRootTitle("Who gave what")
             }
             stack(.people, "People", image: "People") {
                 // People is its own native List (swipe-to-delete a person), so it
                 // carries its own background + floating button like Home.
                 PeopleView(composition: composition)
-                    .navigationTitle("People")
+                    .tabRootTitle("People")
             }
             stack(.insights, "Insights", image: "Insights") {
                 // Insights is a read-only summary, so it has no floating "Add a gift" button.
-                ScreenScroll { InsightsView(composition: composition) }
-                    .navigationTitle("Insights")
+                ScreenScroll(maxWidth: InsightsLayout.twoColumnMaxWidth) {
+                    InsightsView(composition: composition)
+                }
+                .tabRootTitle("Insights")
             }
             // Settings is a preferences screen, so it has no floating "Add a gift" button.
             Tab("Settings", systemImage: "gearshape", value: AppTab.settings) {
@@ -74,6 +76,7 @@ struct RootAppView: View {
 /// Shared scroll container for a tab's root screen — content scrolls under the
 /// floating glass tab bar.
 struct ScreenScroll<Content: View>: View {
+    var maxWidth: CGFloat = ReadableWidth.content
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -82,7 +85,7 @@ struct ScreenScroll<Content: View>: View {
                 .padding(.top, 4)
                 .padding(.bottom, 12)
         }
-        .readableColumn()
+        .readableColumn(maxWidth: maxWidth)
         .scrollIndicators(.hidden)
         .scrollEdgeEffectStyle(.soft, for: .bottom)
         .background(Color.appBackground)
@@ -90,6 +93,7 @@ struct ScreenScroll<Content: View>: View {
 }
 
 /// The floating "Add a gift" button, pinned just above the tab bar on Home.
+/// A regular-width iPad window shows `ToolbarAddButton` in the top toolbar instead.
 struct AddGiftFAB: View {
     let router: AppRouter
 
@@ -102,10 +106,31 @@ struct AddGiftFAB: View {
 }
 
 extension View {
-    /// Pin the floating "Add a gift" button above the tab bar while `isVisible`.
-    func floatingAddButton(composition: AppComposition, isVisible: Bool = true) -> some View {
-        safeAreaInset(edge: .bottom) {
-            if isVisible { AddGiftFAB(router: composition.router) }
-        }
+    /// The "Add a gift" action while `isVisible`: pinned above the bottom tab bar, or in the top toolbar of a
+    /// regular-width iPad window, where the tab bar sits at the top and the bottom center is out of reach.
+    func addGiftAction(composition: AppComposition, isVisible: Bool = true) -> some View {
+        modifier(AddGiftAction(router: composition.router, isVisible: isVisible))
+    }
+}
+
+private struct AddGiftAction: ViewModifier {
+    let router: AppRouter
+    let isVisible: Bool
+    @Environment(\.adaptiveLayout) private var layout
+
+    func body(content: Content) -> some View {
+        content
+            .safeAreaInset(edge: .bottom) {
+                if isVisible && !layout.placesAddActionInToolbar { AddGiftFAB(router: router) }
+            }
+            .toolbar {
+                if isVisible && layout.placesAddActionInToolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        ToolbarAddButton(title: "Add a gift") {
+                            router.presentNewGift(from: .toolbarButton)
+                        }
+                    }
+                }
+            }
     }
 }

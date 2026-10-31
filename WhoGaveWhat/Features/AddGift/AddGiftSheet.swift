@@ -1,10 +1,12 @@
 import SwiftUI
+import UIKit
 
 /// Native sheet for adding or editing a gift. Both sides of the relationship are
 /// explicit, while less frequent fields remain behind the Details disclosure.
 struct AddGiftSheet: View {
     let composition: AppComposition
     @Environment(\.compactVerticalSpace) private var compactVerticalSpace
+    @Environment(\.adaptiveLayout) private var layout
     @State private var state: AddGiftState
     @State private var showsDetails: Bool
     @State private var sheetHeight: CGFloat = 420
@@ -12,6 +14,10 @@ struct AddGiftSheet: View {
     @State private var lastContentHeight: CGFloat = 0
     @State private var selectedDetent: PresentationDetent
     @FocusState private var focus: AddGiftField?
+    /// The picker shown as a popover. It follows `state.picker` once the software keyboard is down and the sheet
+    /// has settled: a popover presented while the form moves is sized for the whole window and stretches.
+    @State private var popoverPicker: AddGiftPicker?
+    @State private var isKeyboardUp = false
 
     init(route: GiftSheetRoute, composition: AppComposition) {
         self.composition = composition
@@ -42,10 +48,18 @@ struct AddGiftSheet: View {
     var body: some View {
         @Bindable var state = state
 
+        // A regular-width window shows the sheet as a centered form that the keyboard can cover from below,
+        // so Save moves to the header, which always stays above the keyboard.
+        let savesFromHeader = layout.usesFormSheets
         IntrinsicModalScaffold(
             title: state.editingGiftID == nil ? "Add a gift" : "Edit gift",
             leadingActionTitle: "Cancel",
             onLeadingAction: { composition.router.dismissGiftSheet() },
+            trailingActionTitle: savesFromHeader ? "Save" : nil,
+            onTrailingAction: savesFromHeader ? { state.save(using: composition) } : nil,
+            trailingActionIsEnabled: state.input.canSave,
+            trailingActionIsProminent: true,
+            trailingActionAccessibilityIdentifier: "add-gift.save",
             titleAccessibilityIdentifier: "add-gift.title"
         ) {
             ScrollView {
@@ -63,7 +77,8 @@ struct AddGiftSheet: View {
                         fromAccessibilityIdentifier: "add-gift.from",
                         toAccessibilityIdentifier: "add-gift.to",
                         onSelectFrom: { state.open(.from) },
-                        onSelectTo: { state.open(.to) }
+                        onSelectTo: { state.open(.to) },
+                        pickerPopover: pickerPopover
                     )
                     if state.showsCloudIconConsent {
                         CloudIconConsentCard(
@@ -96,15 +111,18 @@ struct AddGiftSheet: View {
                             currencyCode: composition.currencyCode,
                             showsEstimate: state.showsEstimate,
                             onSelectDate: { state.open(.date) },
-                            onSelectOccasion: { state.open(.occasion) }
+                            onSelectOccasion: { state.open(.occasion) },
+                            pickerPopover: pickerPopover
                         )
                         .padding(.top, 10)
                     }
-                    GiftSaveButton(
-                        isEnabled: state.input.canSave,
-                        onSave: { state.save(using: composition) }
-                    )
-                    .padding(.top, compactVerticalSpace ? 12 : 24)
+                    if !savesFromHeader {
+                        GiftSaveButton(
+                            isEnabled: state.input.canSave,
+                            onSave: { state.save(using: composition) }
+                        )
+                        .padding(.top, compactVerticalSpace ? 12 : 24)
+                    }
                 }
                 // A short window tightens only the vertical gaps, so Save stays above the keyboard.
                 .padding(.horizontal, 16)
@@ -146,10 +164,37 @@ struct AddGiftSheet: View {
         // regular width gets a form-sized sheet by default.
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.appBackground)
-        .sheet(item: $state.picker) { kind in
+        // Compact windows stack the picker as a second sheet; regular-width ones use `pickerPopover`.
+        .sheet(item: compactPicker) { kind in
             AddGiftPickerPresentation(kind: kind, state: state, composition: composition)
         }
+        .onChange(of: state.picker) { _, picker in
+            if picker == nil || !isKeyboardUp { popoverPicker = picker }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
+            isKeyboardUp = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidHideNotification)) { _ in
+            isKeyboardUp = false
+            // The form sheet re-centers after the keyboard leaves; a popover anchored mid-move is sized wrong.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                if popoverPicker == nil { popoverPicker = state.picker }
+            }
+        }
         .onDisappear { state.cancel() }
+    }
+
+    private var compactPicker: Binding<AddGiftPicker?> {
+        Binding(
+            get: { layout.usesFormSheets ? nil : state.picker },
+            set: { state.picker = $0 })
+    }
+
+    /// A regular-width window opens each picker as a popover on its row, so the form stays visible behind it.
+    private func pickerPopover(_ kind: AddGiftPicker) -> AddGiftPickerPopover {
+        AddGiftPickerPopover(
+            kind: kind, state: state, composition: composition,
+            isPresented: layout.usesFormSheets && popoverPicker == kind)
     }
 
     private func updateSheetHeight(for contentHeight: CGFloat) {
@@ -245,11 +290,13 @@ private struct GiftBasicsSection: View {
     let toAccessibilityIdentifier: String
     let onSelectFrom: () -> Void
     let onSelectTo: () -> Void
+    let pickerPopover: (AddGiftPicker) -> AddGiftPickerPopover
 
     var body: some View {
         VStack(spacing: 12) {
             HStack(spacing: 10) {
                 emojiSlot
+                    .modifier(pickerPopover(.emoji))
                 nameField
             }
 
@@ -264,6 +311,7 @@ private struct GiftBasicsSection: View {
                         accessibilityIdentifier: fromAccessibilityIdentifier,
                         onTap: onSelectFrom
                     )
+                    .modifier(pickerPopover(.from))
                     RowDivider().padding(.leading, 58)
                     GiftEntryRow(
                         icon: .asset("ArrowRightToLine"),
@@ -274,6 +322,7 @@ private struct GiftBasicsSection: View {
                         accessibilityIdentifier: toAccessibilityIdentifier,
                         onTap: onSelectTo
                     )
+                    .modifier(pickerPopover(.to))
                 }
             }
         }
@@ -383,6 +432,7 @@ private struct GiftDetailsSection: View {
     let showsEstimate: Bool
     let onSelectDate: () -> Void
     let onSelectOccasion: () -> Void
+    let pickerPopover: (AddGiftPicker) -> AddGiftPickerPopover
 
     var body: some View {
         Card {
@@ -396,6 +446,7 @@ private struct GiftDetailsSection: View {
                     accessibilityIdentifier: "add-gift.date",
                     onTap: onSelectDate
                 )
+                .modifier(pickerPopover(.date))
                 RowDivider().padding(.leading, 58)
                 GiftEntryRow(
                     icon: .system("party.popper.fill"),
@@ -406,6 +457,7 @@ private struct GiftDetailsSection: View {
                     accessibilityIdentifier: "add-gift.occasion",
                     onTap: onSelectOccasion
                 )
+                .modifier(pickerPopover(.occasion))
                 RowDivider().padding(.leading, 58)
                 ApproximateValueRow(
                     value: $value,
@@ -533,6 +585,39 @@ private struct ApproximateValueRow: View {
 
 // MARK: - Picker bottom sheets
 
+/// A picker as a popover on the row that opens it, in regular-width windows.
+struct AddGiftPickerPopover: ViewModifier {
+    let kind: AddGiftPicker
+    let state: AddGiftState
+    let composition: AppComposition
+    let isPresented: Bool
+
+    func body(content: Content) -> some View {
+        content.popover(isPresented: presentation) {
+            AddGiftPickerSheet(kind: kind, state: state, composition: composition, isPopover: true)
+                .pickerPopoverFrame(height: height)
+        }
+    }
+
+    private var presentation: Binding<Bool> {
+        Binding(
+            get: { isPresented },
+            set: { isPresented in
+                if !isPresented, state.picker == kind { state.closePicker() }
+            })
+    }
+
+    /// Lists show every option up to a cap, below an add field.
+    private var height: CGFloat {
+        switch kind {
+        case .from, .to: PickerPopover.listHeight(rows: composition.data.people.count, addField: true)
+        case .occasion: PickerPopover.listHeight(rows: composition.rankedOccasions.count, addField: true)
+        case .emoji: 470
+        case .date: PickerPopover.dateHeight
+        }
+    }
+}
+
 /// One tap-to-reveal picker — from / to (a unified person list), occasion, emoji
 /// grid, or date — each with manual-entry support so the user can add a new
 /// option inline.
@@ -550,16 +635,19 @@ private struct AddGiftPickerSheet: View {
     let kind: AddGiftPicker
     let state: AddGiftState
     let composition: AppComposition
+    /// A popover sizes itself from its content, so the sheet detents stay off; a detent would stretch it.
+    var isPopover = false
     @State private var customText = ""
     @State private var fittedHeight: CGFloat = 520
     @State private var headerHeight: CGFloat = 56
     @State private var lastContentHeight: CGFloat = 0
     @State private var selectedDetent: PresentationDetent
 
-    init(kind: AddGiftPicker, state: AddGiftState, composition: AppComposition) {
+    init(kind: AddGiftPicker, state: AddGiftState, composition: AppComposition, isPopover: Bool = false) {
         self.kind = kind
         self.state = state
         self.composition = composition
+        self.isPopover = isPopover
         switch kind {
         case .date:
             _selectedDetent = State(initialValue: .height(520))
@@ -584,7 +672,7 @@ private struct AddGiftPickerSheet: View {
                 }
         }
         // No Cancel button — these sheets are dismissed with a swipe down.
-        .presentationDetents(detents, selection: $selectedDetent)
+        .sheetDetents(isEnabled: !isPopover, detents, selection: $selectedDetent)
         .onPreferenceChange(IntrinsicModalHeaderHeightKey.self) { height in
             headerHeight = height
             guard isDate else { return }
@@ -593,7 +681,6 @@ private struct AddGiftPickerSheet: View {
             fittedHeight = fitted
             selectedDetent = .height(fitted)
         }
-        .presentationDragIndicator(.visible)
         .presentationBackground(Color.appBackground)
     }
 
