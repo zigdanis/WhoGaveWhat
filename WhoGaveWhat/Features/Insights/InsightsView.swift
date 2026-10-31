@@ -67,6 +67,9 @@ struct InsightsView: View {
             }
         }
         .padding(.horizontal, InsightsLayout.horizontalPadding)
+        // Measures the space offered, not the content: fixed-width columns would otherwise keep their width
+        // after a rotation narrows the window.
+        .frame(maxWidth: .infinity)
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.size.width
         } action: { newWidth in
