@@ -10,6 +10,7 @@ struct SettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
+                ScreenHeading(title: "Settings", bottomSpacing: 16)
                 SectionHeader(text: "Preferences").padding(.bottom, 7)
                 Card {
                     NavigationLink {
@@ -111,7 +112,7 @@ struct SettingsView: View {
         .scrollIndicators(.hidden)
         .background(Color.appBackground)
         .accessibilityIdentifier("settings.screen")
-        .navigationTitle("Settings")
+        .tabRootTitle("Settings")
     }
 
     private var currencyDisplayName: String {
@@ -214,6 +215,7 @@ private struct CurrencyPickerView: View {
             .accessibilityValue(option.code)
         }
         .listStyle(.insetGrouped)
+        .readableColumn()
         .accessibilityIdentifier("settings.currency.list")
         .scrollContentBackground(.hidden)
         .background(Color.appBackground)

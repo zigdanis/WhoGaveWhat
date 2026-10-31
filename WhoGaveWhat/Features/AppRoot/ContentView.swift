@@ -10,6 +10,7 @@ struct ContentView: View {
         }
         // Set at the root so every screen and sheet sees the same short-window signal.
         .measuresCompactVerticalSpace()
+        .measuresAdaptiveLayout()
         .overlay(alignment: .topLeading) {
             // Verification launches expose the applied scheme so the journey can
             // confirm a dark capture really is dark.

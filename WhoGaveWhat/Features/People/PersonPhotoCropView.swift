@@ -123,6 +123,7 @@ struct PersonPhotoCropView: View {
     @State private var lastOffset = CGSize.zero
 
     private let maximumZoom: CGFloat = 6
+    static let maximumCropSide: CGFloat = 520
 
     var body: some View {
         // The outer reader stays inside the safe area; the inner one is full-bleed and lays out
@@ -153,7 +154,7 @@ struct PersonPhotoCropView: View {
                             .accessibilityIdentifier("person-photo-crop.image")
                         cropGuide(frame: frame, size: size)
                             .allowsHitTesting(false)
-                        cropControls(size: size, safeRect: safeRect)
+                        cropControls(size: size, safeRect: safeRect, circle: frame)
                     }
                     .onAppear {
                         viewportSize = size
@@ -186,10 +187,11 @@ struct PersonPhotoCropView: View {
         lastOffset = offset
     }
 
-    /// The largest crop circle, with a margin, centered in the safe region.
+    /// The largest crop circle, with a margin, centered in the safe region. An iPad caps it, so the photo
+    /// isn't upscaled past its pixels and the buttons stay near the circle.
     private func cropFrame(in safeRect: CGRect) -> CGRect {
         guard safeRect.width > 0, safeRect.height > 0 else { return .zero }
-        let side = max(0, min(safeRect.width - 36, safeRect.height - 48))
+        let side = max(0, min(safeRect.width - 36, safeRect.height - 48, Self.maximumCropSide))
         return CGRect(x: safeRect.midX - side / 2, y: safeRect.midY - side / 2, width: side, height: side)
     }
 
@@ -214,7 +216,7 @@ struct PersonPhotoCropView: View {
     /// Cancel and confirm sit in the bottom corners above the Home indicator, like the system's
     /// photo crop. A regular iPhone can report zero safe-area insets while the status bar is
     /// hidden, so the bottom gap never drops below the Home indicator's height.
-    private func cropControls(size: CGSize, safeRect: CGRect) -> some View {
+    private func cropControls(size: CGSize, safeRect: CGRect, circle: CGRect) -> some View {
         let bottomGap = max(size.height - safeRect.maxY, 34) + 12
         return HStack {
             cropButton(symbol: "xmark", label: "Cancel", identifier: "crop.cancel", prominent: false) {
@@ -234,7 +236,8 @@ struct PersonPhotoCropView: View {
             }
         }
         .padding(.horizontal, 24)
-        .frame(width: safeRect.width)
+        // Under the circle's corners on a wide screen, the screen's corners on a phone.
+        .frame(width: min(safeRect.width, circle.width + 2 * 24 + 2 * 48))
         .position(x: safeRect.midX, y: size.height - bottomGap - 24)
     }
 

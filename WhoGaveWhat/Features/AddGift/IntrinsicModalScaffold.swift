@@ -18,6 +18,7 @@ struct IntrinsicModalScaffold<Content: View>: View {
     let trailingActionTitle: LocalizedStringResource?
     let onTrailingAction: (() -> Void)?
     let trailingActionIsEnabled: Bool
+    let trailingActionIsProminent: Bool
     let trailingActionAccessibilityIdentifier: String?
     let titleAccessibilityIdentifier: String?
     @ViewBuilder let content: Content
@@ -30,6 +31,7 @@ struct IntrinsicModalScaffold<Content: View>: View {
         trailingActionTitle: LocalizedStringResource? = nil,
         onTrailingAction: (() -> Void)? = nil,
         trailingActionIsEnabled: Bool = true,
+        trailingActionIsProminent: Bool = false,
         trailingActionAccessibilityIdentifier: String? = nil,
         titleAccessibilityIdentifier: String? = nil,
         @ViewBuilder content: () -> Content
@@ -41,6 +43,7 @@ struct IntrinsicModalScaffold<Content: View>: View {
         self.trailingActionTitle = trailingActionTitle
         self.onTrailingAction = onTrailingAction
         self.trailingActionIsEnabled = trailingActionIsEnabled
+        self.trailingActionIsProminent = trailingActionIsProminent
         self.trailingActionAccessibilityIdentifier = trailingActionAccessibilityIdentifier
         self.titleAccessibilityIdentifier = titleAccessibilityIdentifier
         self.content = content()
@@ -56,6 +59,7 @@ struct IntrinsicModalScaffold<Content: View>: View {
                 trailingActionTitle: trailingActionTitle,
                 onTrailingAction: onTrailingAction,
                 trailingActionIsEnabled: trailingActionIsEnabled,
+                trailingActionIsProminent: trailingActionIsProminent,
                 trailingActionAccessibilityIdentifier: trailingActionAccessibilityIdentifier,
                 titleAccessibilityIdentifier: titleAccessibilityIdentifier
             )
@@ -74,6 +78,7 @@ private struct IntrinsicModalHeader: View {
     let trailingActionTitle: LocalizedStringResource?
     let onTrailingAction: (() -> Void)?
     let trailingActionIsEnabled: Bool
+    let trailingActionIsProminent: Bool
     let trailingActionAccessibilityIdentifier: String?
     let titleAccessibilityIdentifier: String?
     @Environment(\.compactVerticalSpace) private var compactVerticalSpace
@@ -185,7 +190,9 @@ private struct IntrinsicModalHeader: View {
             headerAction(
                 title: trailingActionTitle,
                 action: onTrailingAction,
-                accessibilityIdentifier: trailingActionAccessibilityIdentifier
+                accessibilityIdentifier: trailingActionAccessibilityIdentifier,
+                isProminent: trailingActionIsProminent,
+                isEnabled: trailingActionIsEnabled
             )
             .disabled(!trailingActionIsEnabled)
             .fixedSize(horizontal: true, vertical: false)
@@ -208,17 +215,33 @@ private struct IntrinsicModalHeader: View {
             .accessibilityIdentifier(titleAccessibilityIdentifier ?? "")
     }
 
+    @ViewBuilder
     private func headerAction(
         title: LocalizedStringResource,
         action: @escaping () -> Void,
-        accessibilityIdentifier: String?
+        accessibilityIdentifier: String?,
+        isProminent: Bool = false,
+        isEnabled: Bool = true
     ) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.body)
+        if isProminent {
+            // The form's primary action, like its bottom Save button: brand-filled once it can run.
+            Button(action: action) {
+                Text(title)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(isEnabled ? Color.onFill : Color.textSecondary)
+            }
+            .buttonStyle(.glassProminent)
+            .buttonBorderShape(.capsule)
+            .tint(Color.brandFill)
+            .accessibilityIdentifier(accessibilityIdentifier ?? "")
+        } else {
+            Button(action: action) {
+                Text(title)
+                    .font(.body)
+            }
+            .buttonStyle(.glass)
+            .buttonBorderShape(.capsule)
+            .accessibilityIdentifier(accessibilityIdentifier ?? "")
         }
-        .buttonStyle(.glass)
-        .buttonBorderShape(.capsule)
-        .accessibilityIdentifier(accessibilityIdentifier ?? "")
     }
 }

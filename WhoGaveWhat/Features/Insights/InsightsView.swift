@@ -1,41 +1,111 @@
 import SwiftUI
 
+enum InsightsLayout {
+    /// One column is as wide as the cards on the other tabs.
+    static let columnWidth = ReadableWidth.content - 2 * horizontalPadding
+    static let columnSpacing: CGFloat = 24
+    static let horizontalPadding: CGFloat = 16
+    /// Narrower columns would wrap the compare card's names and amounts.
+    static let minColumnWidth: CGFloat = 420
+    static let twoColumnMaxWidth = 2 * columnWidth + columnSpacing + 2 * horizontalPadding
+    static let twoColumnMinWidth = 2 * minColumnWidth + columnSpacing + 2 * horizontalPadding
+
+    /// Two columns once both fit at their minimum width, except at accessibility text sizes.
+    static func usesTwoColumns(width: CGFloat, dynamicTypeSize: DynamicTypeSize) -> Bool {
+        width >= twoColumnMinWidth && !dynamicTypeSize.isAccessibilitySize
+    }
+}
+
 /// Year summary, the balance with each person, and a two-person comparison.
+/// A wide window shows the summary and comparison beside the balances, which grow with every person.
 struct InsightsView: View {
     let composition: AppComposition
+    @Environment(\.adaptiveLayout) private var layout
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var selectedYear: Int?
     /// Person whose balances are listed when no one is marked as "You".
     @State private var subjectID: String?
     @State private var compareAID: String?
     @State private var compareBID: String?
     @State private var picker: InsightsPickerSlot?
+    @State private var width: CGFloat = 0
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            YearSummaryCard(
-                summary: useCase.summary(gifts: data.gifts, relativeTo: selfPerson?.id, year: year),
-                hasViewpoint: selfPerson != nil,
-                currencyCode: composition.currencyCode,
-                years: useCase.availableYears(gifts: data.gifts),
-                selectedYear: yearBinding,
-                onMarkSelf: selfPerson == nil ? { composition.router.tab = .people } : nil,
-                owner: selfPerson)
-            balancesSection
-            compareSection
+        Group {
+            if InsightsLayout.usesTwoColumns(width: width, dynamicTypeSize: dynamicTypeSize) {
+                VStack(alignment: .leading, spacing: 16) {
+                    ScreenHeading(title: "Insights")
+                    HStack(alignment: .top, spacing: InsightsLayout.columnSpacing) {
+                        VStack(alignment: .leading, spacing: 24) {
+                            summaryCard
+                            compareSection
+                        }
+                        .frame(maxWidth: .infinity)
+                        balancesSection
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 24) {
+                    ScreenHeading(title: "Insights", bottomSpacing: 0)
+                    summaryCard
+                    balancesSection
+                    compareSection
+                }
+                // The scroll view allows two columns' width, so a single column keeps the other tabs' width.
+                .frame(maxWidth: InsightsLayout.columnWidth)
+                .frame(maxWidth: .infinity)
+            }
         }
-        .padding(.horizontal, 16)
-        .sheet(item: $picker) { slot in
-            InsightsPersonPicker(
-                title: pickerTitle(for: slot),
-                people: composition.insightsPickerPeople(for: slot, selectedID: selectedID(for: slot)),
-                selectedID: selectedID(for: slot),
-                onSelect: { id in
-                    if id != selectedID(for: slot) { composition.haptics.play(.selection) }
-                    composition.recordInsightsPick(id, for: slot)
-                    select(id, for: slot)
-                    picker = nil
-                })
+        .padding(.horizontal, InsightsLayout.horizontalPadding)
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.size.width
+        } action: { newWidth in
+            width = newWidth
         }
+        .sheet(item: compactPicker) { slot in
+            picker(for: slot)
+        }
+    }
+
+    private var summaryCard: some View {
+        YearSummaryCard(
+            summary: useCase.summary(gifts: data.gifts, relativeTo: selfPerson?.id, year: year),
+            hasViewpoint: selfPerson != nil,
+            currencyCode: composition.currencyCode,
+            years: useCase.availableYears(gifts: data.gifts),
+            selectedYear: yearBinding,
+            onMarkSelf: selfPerson == nil ? { composition.router.tab = .people } : nil,
+            owner: selfPerson)
+    }
+
+    private func picker(for slot: InsightsPickerSlot) -> InsightsPersonPicker {
+        InsightsPersonPicker(
+            title: pickerTitle(for: slot),
+            people: composition.insightsPickerPeople(for: slot, selectedID: selectedID(for: slot)),
+            selectedID: selectedID(for: slot),
+            onSelect: { id in
+                if id != selectedID(for: slot) { composition.haptics.play(.selection) }
+                composition.recordInsightsPick(id, for: slot)
+                select(id, for: slot)
+                picker = nil
+            })
+    }
+
+    /// Compact windows choose a person in a sheet.
+    private var compactPicker: Binding<InsightsPickerSlot?> {
+        Binding(
+            get: { layout.usesFormSheets ? nil : picker },
+            set: { picker = $0 })
+    }
+
+    /// Regular-width windows choose a person in a popover on the button that opened it.
+    private func popoverIsPresented(for slot: InsightsPickerSlot) -> Binding<Bool> {
+        Binding(
+            get: { layout.usesFormSheets && picker == slot },
+            set: { isPresented in
+                if !isPresented, picker == slot { picker = nil }
+            })
     }
 
     // MARK: State
@@ -281,6 +351,11 @@ struct InsightsView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .popover(isPresented: popoverIsPresented(for: slot)) {
+            picker(for: slot)
+                .frame(width: PickerPopover.width, height: PickerPopover.listHeight(rows: data.people.count))
+                .presentationCompactAdaptation(.popover)
+        }
     }
 }
 

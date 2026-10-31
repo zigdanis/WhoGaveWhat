@@ -17,6 +17,7 @@ enum GiftSheetMode: String, Equatable {
 enum GiftSheetSource: String, Equatable {
     case welcomeCard = "welcome_card"
     case floatingButton = "floating_button"
+    case toolbarButton = "toolbar_button"
     case giftDetail = "gift_detail"
 }
 

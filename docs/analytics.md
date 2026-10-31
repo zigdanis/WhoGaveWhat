@@ -15,7 +15,7 @@ suggestion still sends the typed gift name, as described in Settings.) The full 
 | Event | Properties | Fires when |
 |-------|------------|------------|
 | `tab_selected` | `tab` | A tab bar tap changes the tab |
-| `gift_sheet_opened` | `mode` create/edit, `source` welcome_card/floating_button/gift_detail | The Add or Edit gift sheet opens |
+| `gift_sheet_opened` | `mode` create/edit, `source` welcome_card/floating_button/toolbar_button/gift_detail | The Add or Edit gift sheet opens |
 | `gift_sheet_closed` | `mode`, `outcome` saved/cancelled/failed | The sheet closes |
 | `gift_picker_opened` | `picker` giver/recipient/occasion/icon/date | A picker opens inside the sheet |
 | `gift_icon_picked` | `source` list/custom | The user overrides the inferred icon |

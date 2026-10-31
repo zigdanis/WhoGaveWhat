@@ -13,6 +13,7 @@ struct PersonEditorSheet: View {
 
     /// On a short window the hero photo would push Delete under the keyboard, so the photo card shrinks.
     @Environment(\.compactVerticalSpace) private var isCompact
+    @Environment(\.adaptiveLayout) private var layout
     @Environment(\.analytics) private var analytics
     @Environment(\.haptics) private var haptics
     @State private var name: String
@@ -24,6 +25,9 @@ struct PersonEditorSheet: View {
     @State private var photoSessionID = UUID()
     @State private var cropSession: PersonPhotoCropSession?
     @State private var errorMessage: String?
+    @State private var headerHeight: CGFloat = 0
+    @State private var formHeight: CGFloat = 0
+    @State private var selectedDetent: PresentationDetent = .large
     @FocusState private var nameIsFocused: Bool
 
     init(
@@ -58,6 +62,12 @@ struct PersonEditorSheet: View {
                 onCancel: onCancel,
                 onSave: save
             )
+            .onGeometryChange(for: CGFloat.self) { geometry in
+                geometry.size.height
+            } action: { height in
+                headerHeight = height
+                fitSheetHeight()
+            }
             ScrollView {
                 VStack(spacing: isCompact ? 16 : 20) {
                     PersonEditorNameField(name: $name, isFocused: $nameIsFocused)
@@ -83,6 +93,12 @@ struct PersonEditorSheet: View {
                 .padding(.top, 24)
                 .padding(.bottom, 28)
                 .frame(maxWidth: .infinity)
+                .onGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.size.height
+                } action: { height in
+                    formHeight = height
+                    fitSheetHeight()
+                }
             }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
@@ -90,7 +106,7 @@ struct PersonEditorSheet: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.appBackground)
-        .presentationDetents([.large])
+        .presentationDetents(detents, selection: $selectedDetent)
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.appBackground)
         .interactiveDismissDisabled(isLoadingPhoto)
@@ -137,6 +153,22 @@ struct PersonEditorSheet: View {
             photoSessionID = UUID()
             isLoadingPhoto = false
         }
+    }
+
+    /// A regular-width window shows the editor as a centered form sized to its content, so Add person is a
+    /// small card rather than a tall empty sheet. Compact windows keep the full-height sheet.
+    private var fittedHeight: CGFloat? {
+        guard layout.usesFormSheets, headerHeight > 0, formHeight > 0 else { return nil }
+        return headerHeight + formHeight
+    }
+
+    private var detents: Set<PresentationDetent> {
+        fittedHeight.map { [.height($0)] } ?? [.large]
+    }
+
+    private func fitSheetHeight() {
+        guard let fittedHeight, selectedDetent != .height(fittedHeight) else { return }
+        selectedDetent = .height(fittedHeight)
     }
 
     private var canSave: Bool {
