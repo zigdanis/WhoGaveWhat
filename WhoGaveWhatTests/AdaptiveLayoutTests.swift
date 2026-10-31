@@ -42,8 +42,8 @@ struct AdaptiveLayoutTests {
     }
 
     @Test func pickerPopoversFitShortListsAndCapLongOnes() {
-        #expect(PickerPopover.listHeight(rows: 2) == 56 + 32 + 2 * 57)
-        #expect(PickerPopover.listHeight(rows: 2, addField: true) == 56 + 32 + 76 + 2 * 57)
+        #expect(PickerPopover.listHeight(rows: 2) == CGFloat(56 + 32 + 2 * 57))
+        #expect(PickerPopover.listHeight(rows: 2, addField: true) == CGFloat(56 + 32 + 76 + 2 * 57))
         #expect(PickerPopover.listHeight(rows: 40, addField: true) == 540)
     }
 }
