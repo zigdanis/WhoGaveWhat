@@ -7,6 +7,10 @@ struct ContentView: View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
             RootAppView(composition: composition)
+                // The tab screens have no text fields; only sheets do, and they get their own keyboard inset.
+                // A sheet dismissed with the keyboard up in landscape on iPad can leave a stale keyboard inset on
+                // the other tabs, which then end their background at the keyboard's top edge.
+                .ignoresSafeArea(.keyboard)
         }
         // Set at the root so every screen and sheet sees the same short-window signal.
         .measuresCompactVerticalSpace()
