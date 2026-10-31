@@ -10,11 +10,14 @@ struct Segmented: View {
     let selected: String
     let onSelect: (String) -> Void
 
+    @Environment(\.haptics) private var haptics
+
     var body: some View {
         HStack(spacing: 2) {
             ForEach(options, id: \.key) { option in
                 let isSelected = option.key == selected
                 Button {
+                    if option.key != selected { haptics.play(.selection) }
                     onSelect(option.key)
                 } label: {
                     Text(option.label)

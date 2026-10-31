@@ -18,6 +18,7 @@ struct ContentView: View {
         .foregroundColor(Color.textPrimary)
         .preferredColorScheme(launchColorScheme)
         .environment(\.analytics, composition.analytics)
+        .environment(\.haptics, composition.haptics)
     }
 
     /// Follows the system unless a verification launch sets `KS_APPEARANCE=dark|light`.

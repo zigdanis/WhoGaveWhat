@@ -43,6 +43,7 @@ struct HomeWelcome: View {
 private struct WelcomeCard: View {
     let router: AppRouter
     let isCompact: Bool
+    @Environment(\.haptics) private var haptics
 
     var body: some View {
         Card {
@@ -51,6 +52,7 @@ private struct WelcomeCard: View {
                 IconMark(size: isCompact ? 48 : 56)
                     .accessibilityHidden(true)
                 Button {
+                    haptics.play(.softImpact)
                     router.presentNewGift(from: .welcomeCard)
                 } label: {
                     Label("Add a gift", systemImage: "plus")

@@ -7,8 +7,13 @@ struct FloatingActionButton: View {
     let systemImage: String
     let action: () -> Void
 
+    @Environment(\.haptics) private var haptics
+
     var body: some View {
-        Button(action: action) {
+        Button {
+            haptics.play(.softImpact)
+            action()
+        } label: {
             Label(title, systemImage: systemImage)
                 .font(Font.app(16, .semibold))
                 .foregroundStyle(Color.onFill)

@@ -49,6 +49,14 @@ final class RecordingAnalyticsGateway: AnalyticsGateway {
     var eventNames: [String] { events.map(\.name) }
 }
 
+/// Remembers every haptic request for assertions.
+@MainActor
+final class RecordingHapticsGateway: HapticsGateway {
+    var played: [HapticFeedback] = []
+
+    func play(_ feedback: HapticFeedback) { played.append(feedback) }
+}
+
 @MainActor
 final class TestIntelligenceGateway: GiftIntelligenceGateway {
     var isAvailable = false
@@ -73,7 +81,8 @@ final class TestGiftGateway: GiftGateway {
 @MainActor
 func makeTestComposition(
     selfPersonID: String? = SwiftDataStore.seedSelfPersonID,
-    analytics: AnalyticsGateway = NoopAnalyticsGateway()
+    analytics: AnalyticsGateway = NoopAnalyticsGateway(),
+    haptics: HapticsGateway = NoopHapticsGateway()
 ) throws -> AppComposition {
     let preferences = TestPreferencesGateway()
     preferences.selfPersonID = selfPersonID
@@ -81,7 +90,8 @@ func makeTestComposition(
         store: try SwiftDataStore(inMemory: true, seed: true),
         preferences: preferences,
         intelligence: TestIntelligenceGateway(),
-        analytics: analytics
+        analytics: analytics,
+        haptics: haptics
     )
 }
 
