@@ -138,11 +138,14 @@ enum PickerPopover {
 }
 
 extension View {
-    /// A picker's popover size: fixed width, `height` (or the content's own when nil), content from the top.
+    /// A picker's popover size: a fixed width and an ideal `height` (the content's own when nil). The system
+    /// may still make a popover shorter, above a keyboard, or taller, beside its row in landscape, so the
+    /// content stays flexible and starts at the top instead of being centered and clipped.
     func pickerPopoverFrame(height: CGFloat?) -> some View {
-        frame(width: PickerPopover.width, height: height, alignment: .top)
+        frame(width: PickerPopover.width)
             // The date picker's calendar sets its own height.
             .fixedSize(horizontal: false, vertical: height == nil)
+            .frame(idealHeight: height, maxHeight: .infinity, alignment: .top)
             .presentationCompactAdaptation(.popover)
     }
 
