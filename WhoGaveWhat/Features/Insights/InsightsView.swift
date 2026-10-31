@@ -79,9 +79,10 @@ struct InsightsView: View {
             owner: selfPerson)
     }
 
-    private func picker(for slot: InsightsPickerSlot) -> InsightsPersonPicker {
+    private func picker(for slot: InsightsPickerSlot, isPopover: Bool = false) -> InsightsPersonPicker {
         InsightsPersonPicker(
             title: pickerTitle(for: slot),
+            isPopover: isPopover,
             people: composition.insightsPickerPeople(for: slot, selectedID: selectedID(for: slot)),
             selectedID: selectedID(for: slot),
             onSelect: { id in
@@ -352,9 +353,8 @@ struct InsightsView: View {
         }
         .buttonStyle(.plain)
         .popover(isPresented: popoverIsPresented(for: slot)) {
-            picker(for: slot)
-                .frame(width: PickerPopover.width, height: PickerPopover.listHeight(rows: data.people.count))
-                .presentationCompactAdaptation(.popover)
+            picker(for: slot, isPopover: true)
+                .pickerPopoverFrame(height: PickerPopover.listHeight(rows: data.people.count))
         }
     }
 }
@@ -396,9 +396,11 @@ private struct BalanceRow: View {
 /// Modal list for choosing one person, in the style of the Add gift pickers.
 private struct InsightsPersonPicker: View {
     let title: LocalizedStringResource
+    let isPopover: Bool
     let people: [Person]
     let selectedID: String?
     let onSelect: (String) -> Void
+    @State private var detent = PresentationDetent.medium
 
     var body: some View {
         IntrinsicModalScaffold(title: title) {
@@ -427,8 +429,7 @@ private struct InsightsPersonPicker: View {
             }
             .scrollIndicators(.hidden)
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
+        .sheetDetents(isEnabled: !isPopover, [.medium, .large], selection: $detent)
         .presentationBackground(Color.appBackground)
     }
 }

@@ -574,11 +574,8 @@ struct AddGiftPickerPopover: ViewModifier {
 
     func body(content: Content) -> some View {
         content.popover(isPresented: isPresented) {
-            AddGiftPickerSheet(kind: kind, state: state, composition: composition)
-                .frame(width: PickerPopover.width, height: height)
-                // The date picker's calendar sets its own height.
-                .fixedSize(horizontal: false, vertical: height == nil)
-                .presentationCompactAdaptation(.popover)
+            AddGiftPickerSheet(kind: kind, state: state, composition: composition, isPopover: true)
+                .pickerPopoverFrame(height: height)
         }
     }
 
@@ -618,16 +615,19 @@ private struct AddGiftPickerSheet: View {
     let kind: AddGiftPicker
     let state: AddGiftState
     let composition: AppComposition
+    /// A popover sizes itself from its content, so the sheet detents stay off; a detent would stretch it.
+    var isPopover = false
     @State private var customText = ""
     @State private var fittedHeight: CGFloat = 520
     @State private var headerHeight: CGFloat = 56
     @State private var lastContentHeight: CGFloat = 0
     @State private var selectedDetent: PresentationDetent
 
-    init(kind: AddGiftPicker, state: AddGiftState, composition: AppComposition) {
+    init(kind: AddGiftPicker, state: AddGiftState, composition: AppComposition, isPopover: Bool = false) {
         self.kind = kind
         self.state = state
         self.composition = composition
+        self.isPopover = isPopover
         switch kind {
         case .date:
             _selectedDetent = State(initialValue: .height(520))
@@ -652,7 +652,7 @@ private struct AddGiftPickerSheet: View {
                 }
         }
         // No Cancel button — these sheets are dismissed with a swipe down.
-        .presentationDetents(detents, selection: $selectedDetent)
+        .sheetDetents(isEnabled: !isPopover, detents, selection: $selectedDetent)
         .onPreferenceChange(IntrinsicModalHeaderHeightKey.self) { height in
             headerHeight = height
             guard isDate else { return }
@@ -661,7 +661,6 @@ private struct AddGiftPickerSheet: View {
             fittedHeight = fitted
             selectedDetent = .height(fitted)
         }
-        .presentationDragIndicator(.visible)
         .presentationBackground(Color.appBackground)
     }
 

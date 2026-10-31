@@ -136,3 +136,36 @@ enum PickerPopover {
         min(maxHeight, header + padding + (hasAddField ? addField : 0) + CGFloat(rows) * row)
     }
 }
+
+extension View {
+    /// A picker's popover size: fixed width, `height` (or the content's own when nil), content from the top.
+    func pickerPopoverFrame(height: CGFloat?) -> some View {
+        frame(width: PickerPopover.width, height: height, alignment: .top)
+            // The date picker's calendar sets its own height.
+            .fixedSize(horizontal: false, vertical: height == nil)
+            .presentationCompactAdaptation(.popover)
+    }
+
+    /// Sheet detents and the drag indicator, left off when the same view is shown as a popover.
+    func sheetDetents(
+        isEnabled: Bool, _ detents: Set<PresentationDetent>, selection: Binding<PresentationDetent>
+    ) -> some View {
+        modifier(SheetDetents(isEnabled: isEnabled, detents: detents, selection: selection))
+    }
+}
+
+private struct SheetDetents: ViewModifier {
+    let isEnabled: Bool
+    let detents: Set<PresentationDetent>
+    @Binding var selection: PresentationDetent
+
+    func body(content: Content) -> some View {
+        if isEnabled {
+            content
+                .presentationDetents(detents, selection: $selection)
+                .presentationDragIndicator(.visible)
+        } else {
+            content
+        }
+    }
+}
