@@ -37,6 +37,12 @@ struct AdaptiveLayoutTests {
         #expect(!InsightsLayout.usesTwoColumns(width: 402, dynamicTypeSize: .large))
     }
 
+    @Test func twoInsightsColumnsShareTheWidthUpToTheirCap() {
+        // iPad Pro 13" portrait: (1032 - 64 - 24) / 2.
+        #expect(InsightsLayout.twoColumnWidth(in: 1032) == 472)
+        #expect(InsightsLayout.twoColumnWidth(in: InsightsLayout.twoColumnMaxWidth) == InsightsLayout.columnWidth)
+    }
+
     @Test func accessibilityTextSizesKeepInsightsInOneColumn() {
         #expect(!InsightsLayout.usesTwoColumns(width: 1376, dynamicTypeSize: .accessibility1))
     }

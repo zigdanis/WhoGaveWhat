@@ -16,6 +16,12 @@ enum InsightsLayout {
     static func usesTwoColumns(width: CGFloat, dynamicTypeSize: DynamicTypeSize) -> Bool {
         width >= twoColumnMinWidth && !dynamicTypeSize.isAccessibilitySize
     }
+
+    /// Each of two equal columns in a container of `width`, never wider than a single column.
+    /// A fixed width, not a flexible frame: flexible columns let the year total shrink to fit a probe width.
+    static func twoColumnWidth(in width: CGFloat) -> CGFloat {
+        min(columnWidth, (width - 2 * twoColumnPadding - columnSpacing) / 2)
+    }
 }
 
 /// Year summary, the balance with each person, and a two-person comparison.
@@ -42,9 +48,9 @@ struct InsightsView: View {
                             summaryCard
                             compareSection
                         }
-                        .frame(maxWidth: .infinity)
+                        .frame(width: InsightsLayout.twoColumnWidth(in: width))
                         balancesSection
-                            .frame(maxWidth: .infinity)
+                            .frame(width: InsightsLayout.twoColumnWidth(in: width))
                     }
                 }
                 .padding(.horizontal, InsightsLayout.twoColumnPadding - InsightsLayout.horizontalPadding)
