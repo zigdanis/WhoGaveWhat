@@ -102,9 +102,13 @@ struct ScreenHeadingSection: View {
 struct ToolbarAddButton: View {
     let title: LocalizedStringKey
     let action: () -> Void
+    @Environment(\.haptics) private var haptics
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            haptics.play(.softImpact)
+            action()
+        } label: {
             // Not a `Label`: toolbars draw labels icon-only, and the title is what makes the action findable.
             HStack(spacing: 6) {
                 Image(systemName: "plus")
