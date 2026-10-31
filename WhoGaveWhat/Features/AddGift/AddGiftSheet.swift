@@ -573,7 +573,7 @@ struct AddGiftPickerPopover: ViewModifier {
     let isEnabled: Bool
 
     func body(content: Content) -> some View {
-        content.popover(isPresented: isPresented) {
+        content.popover(isPresented: isPresented, arrowEdge: .top) {
             AddGiftPickerSheet(kind: kind, state: state, composition: composition, isPopover: true)
                 .pickerPopoverFrame(height: height)
         }
