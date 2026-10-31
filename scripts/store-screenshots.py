@@ -5,7 +5,9 @@ The Debug app runs with its sample data on a fresh Simulator, once per language,
 WhoGaveWhatUITests/StoreScreenshotsUITests. `--display iphone-6.9` (the default) uses a 6.9-inch iPhone and
 writes `<out>/screenshots/<locale>/NN_slug.png`; `--display iphone-6.3` uses iPhone 18 Pro and writes
 `medium_NN_slug.png`; `--display iphone-duo` uses iPhone Duo, which boots folded, and writes the outer display as
-`duo_NN_slug.png`. Each run also writes metadata.json and an index.html contact sheet.
+`duo_NN_slug.png`; `--display ipad-13` uses the newest 13-inch iPad Pro and writes `ipad_NN_slug.png` in portrait.
+Each run also writes metadata.json and an index.html contact sheet. `--combine PARTS` merges the sets' artifacts into
+one folder per language, the layout the App Store metadata workflow uploads, with a review page of every set.
 """
 import argparse
 import collections
@@ -29,15 +31,21 @@ _spec.loader.exec_module(tools)
 ROOT = Path(__file__).resolve().parents[1]
 LOCALES = ("en-US", "ru")
 # One App Store Connect screenshot set: Apple's accepted portrait sizes, the file name prefix that keeps the sets
-# apart in one language folder (deliver sorts files by name and sorts them into sets by size), and the
-# Simulator model when the set needs one.
-Display = collections.namedtuple("Display", "key title sizes prefix device")
-IPHONE_69 = Display("iphone-6.9", "6.9-inch", frozenset({(1320, 2868), (1290, 2796), (1260, 2736)}), "", None)
+# apart in one language folder (deliver sorts files by name and sorts them into sets by size), and either the one
+# Simulator model the set needs or the model name patterns it accepts, most preferred first. A pattern's number
+# group, when it has one, prefers the newest model.
+Display = collections.namedtuple("Display", "key title sizes prefix device models")
+IPHONE_69 = Display("iphone-6.9", "6.9-inch", frozenset({(1320, 2868), (1290, 2796), (1260, 2736)}), "", None,
+                    (r"iPhone 18 Pro Max", r"iPhone (\d+) Pro Max", r"iPhone (\d+) Plus"))
 # Apple requires at least one screenshot for iPhone with Dynamic Island (medium display), the 6.3-inch set.
-IPHONE_63 = Display("iphone-6.3", "6.3-inch", frozenset({(1206, 2622), (1179, 2556)}), "medium_", "iPhone 18 Pro")
+IPHONE_63 = Display("iphone-6.3", "6.3-inch", frozenset({(1206, 2622), (1179, 2556)}), "medium_", "iPhone 18 Pro", ())
 # The iPhone Duo Simulator boots folded, so its screenshots show the outer display.
-IPHONE_DUO = Display("iphone-duo", "iPhone Duo outer display", frozenset({(1398, 2034)}), "duo_", "iPhone Duo")
-DISPLAYS = {display.key: display for display in (IPHONE_69, IPHONE_63, IPHONE_DUO)}
+IPHONE_DUO = Display("iphone-duo", "iPhone Duo outer display", frozenset({(1398, 2034)}), "duo_", "iPhone Duo", ())
+# Apple requires the 13-inch iPad set once the app runs on iPad; smaller iPads get it scaled down. fastlane deliver
+# files both sizes under the 13-inch display type (APP_IPAD_PRO_3GEN_129).
+IPAD_13 = Display("ipad-13", "13-inch iPad", frozenset({(2064, 2752), (2048, 2732)}), "ipad_", None,
+                  (r"iPad Pro 13-inch \(M(\d+)\)", r"iPad Air 13-inch \(M(\d+)\)"))
+DISPLAYS = {display.key: display for display in (IPHONE_69, IPHONE_63, IPHONE_DUO, IPAD_13)}
 ALLOWED_SIZES = IPHONE_69.sizes
 MIN_SHOTS = 5
 MAX_SHOTS = 10  # App Store Connect accepts at most ten screenshots per set.
@@ -47,8 +55,6 @@ STATUS_BAR_ARGUMENTS = (
 TEST_CLASS = "WhoGaveWhatUITests/StoreScreenshotsUITests"
 # xcodebuild forwards TEST_RUNNER_<NAME> to the test runner as <NAME>; the test is skipped without them.
 ATTACHMENT_NAME = re.compile(r"store-(?P<locale>en-US|ru)-(?P<number>\d{2})-(?P<slug>[a-z0-9]+(?:-[a-z0-9]+)*)")
-PREFERRED_DEVICE = "iPhone 18 Pro Max"
-FALLBACK_DEVICE_PATTERNS = (r"iPhone (\d+) Pro Max", r"iPhone (\d+) Plus")
 BUILD_TIMEOUT_SECONDS = 1800
 STATUS_BAR_ATTEMPTS = 3
 STATUS_BAR_TIMEOUT_SECONDS = 90
@@ -62,23 +68,22 @@ def _ios_runtimes(payload):
             if runtime.get("isAvailable") and str(runtime.get("name", "")).startswith("iOS")]
 
 
-def _device_preference(name):
-    """Sort key for a 6.9-inch candidate: the preferred model, then other Pro Max, then Plus; newest first."""
-    if name == PREFERRED_DEVICE:
-        return (0, 0)
-    for group, pattern in enumerate(FALLBACK_DEVICE_PATTERNS, start=1):
+def _device_preference(name, display):
+    """Sort key for a candidate model: the earlier pattern of `display.models` first, then the newest model."""
+    for group, pattern in enumerate(display.models):
         match = re.fullmatch(pattern, name)
         if match:
-            return (group, -int(match.group(1)))
+            return (group, -int(match.group(1)) if match.groups() else 0)
     return None
 
 
 def choose_device(payload, device=None, runtime=None, display=IPHONE_69):
     """Pick the Simulator model for `display` and the newest available iOS runtime that supports it.
 
-    `payload` is the JSON of `simctl list runtimes available` (or `simctl list -j`). For the 6.9-inch set, without
-    `device` only the preferred model and other Pro Max and Plus models qualify, and iPhone Duo is never accepted.
-    A set tied to one model, such as iPhone Duo, accepts only that model.
+    `payload` is the JSON of `simctl list runtimes available` (or `simctl list -j`). Without `device`, only the models
+    matching the set's patterns qualify: for the 6.9-inch set iPhone 18 Pro Max, other Pro Max and Plus models; for
+    the 13-inch iPad set the 13-inch iPad Pro, then the 13-inch iPad Air. iPhone Duo is accepted only for its own
+    set. A set tied to one model, such as iPhone Duo, accepts only that model.
     """
     runtimes = _ios_runtimes(payload)
     if runtime is not None:
@@ -94,15 +99,17 @@ def choose_device(payload, device=None, runtime=None, display=IPHONE_69):
         names = [device] if device in supported else []
     elif device is not None:
         if "Duo" in device:
-            raise ValueError("iPhone Duo does not produce 6.9-inch App Store screenshot sizes")
+            raise ValueError(f"iPhone Duo does not produce {display.title} App Store screenshot sizes")
         names = [device] if device in supported else []
     else:
-        names = sorted((name for name in supported if _device_preference(name) is not None), key=_device_preference)
+        names = sorted((name for name in supported if _device_preference(name, display) is not None),
+                       key=lambda name: _device_preference(name, display))
     if not names:
-        available = ", ".join(sorted(name for name in supported if name.startswith("iPhone"))) or "none"
+        family = "iPad" if display is IPAD_13 else "iPhone"
+        wanted = device or ("13-inch iPad" if display is IPAD_13 else "6.9-inch (Pro Max or Plus) iPhone")
+        available = ", ".join(sorted(name for name in supported if name.startswith(family))) or "none"
         raise ValueError(
-            f"No available {device or '6.9-inch (Pro Max or Plus) iPhone'} Simulator"
-            f"{f' on {runtime}' if runtime else ''}; available iPhones: {available}")
+            f"No available {wanted} Simulator{f' on {runtime}' if runtime else ''}; available {family}s: {available}")
     name = names[0]
     chosen = max(supported[name], key=lambda item: tools._runtime_version(item["name"]))
     return {"device": name, "runtime": chosen["name"], "runtime_identifier": chosen.get("identifier")}
@@ -194,23 +201,98 @@ def export_locale(directory, locale, result_bundle, display=IPHONE_69):
 
 # MARK: Reports
 
-def render_index(shots_by_locale, title="WhoGaveWhat App Store screenshots", prefix=""):
-    parts = ['<!doctype html><html lang="en"><meta charset="utf-8">',
-             '<meta name="viewport" content="width=device-width, initial-scale=1">',
-             f"<title>{html.escape(title)}</title>",
-             "<style>body{font:16px/1.5 system-ui;margin:24px auto;max-width:1400px;padding:0 16px}"
-             ".row{display:flex;flex-wrap:wrap;gap:16px}figure{margin:0;width:220px}"
-             "img{width:100%;border:1px solid #ccc;border-radius:12px}figcaption{overflow-wrap:anywhere;font-size:13px}"
-             "</style>", f"<h1>{html.escape(title)}</h1>"]
+PAGE_STYLE = ("<style>body{font:16px/1.5 system-ui;margin:24px auto;max-width:1400px;padding:0 16px}"
+              ".row{display:flex;flex-wrap:wrap;gap:16px}figure{margin:0;width:220px}"
+              "img{width:100%;border:1px solid #ccc;border-radius:12px}figcaption{overflow-wrap:anywhere;font-size:13px}"
+              "</style>")
+
+
+def _page_start(title):
+    return ['<!doctype html><html lang="en"><meta charset="utf-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1">',
+            f"<title>{html.escape(title)}</title>", PAGE_STYLE, f"<h1>{html.escape(title)}</h1>"]
+
+
+def _locale_rows(parts, shots_by_locale, prefix, source, heading):
+    """One row of figures per locale; `source(locale, file name)` gives each image's address."""
     for locale, shots in shots_by_locale.items():
-        parts.append(f"<h2>{html.escape(locale)}</h2><div class=\"row\">")
+        parts.append(f"<{heading}>{html.escape(locale)}</{heading}><div class=\"row\">")
         for number, slug, (width, height) in shots:
-            relative = quote(f"screenshots/{locale}/{output_name(number, slug, prefix)}")
-            caption = html.escape(f"{output_name(number, slug, prefix)} ({width}x{height})")
-            parts.append(f'<figure><a href="{relative}"><img loading="lazy" src="{relative}" alt="{caption}"></a>'
+            name = output_name(number, slug, prefix)
+            address = html.escape(source(locale, name))
+            caption = html.escape(f"{name} ({width}x{height})")
+            parts.append(f'<figure><a href="{address}"><img loading="lazy" src="{address}" alt="{caption}"></a>'
                          f"<figcaption>{caption}</figcaption></figure>")
         parts.append("</div>")
+
+
+def _relative_source(locale, name):
+    return quote(f"screenshots/{locale}/{name}")
+
+
+def render_index(shots_by_locale, title="WhoGaveWhat App Store screenshots", prefix=""):
+    parts = _page_start(title)
+    _locale_rows(parts, shots_by_locale, prefix, _relative_source, "h2")
     return "\n".join(parts) + "\n"
+
+
+def render_review(sets, title="WhoGaveWhat App Store screenshots: every set", source=_relative_source):
+    """The page for reviewing an upload: every set, then every locale. `sets` is [(display, metadata, shots)]."""
+    parts = _page_start(title)
+    head = sorted({metadata.get("head_sha", "")[:12] for _display, metadata, _shots in sets} - {""})
+    if head:
+        parts.append(f"<p>Commit {html.escape(', '.join(head))}</p>")
+    for display, metadata, shots_by_locale in sets:
+        details = ", ".join(str(value) for value in (metadata.get("device"), metadata.get("runtime")) if value)
+        count = sum(len(shots) for shots in shots_by_locale.values())
+        parts.append(f"<h2>{html.escape(display.title)}{f' ({html.escape(details)})' if details else ''}"
+                     f" &middot; {count} screenshots</h2>")
+        _locale_rows(parts, shots_by_locale, display.prefix, source, "h3")
+    return "\n".join(parts) + "\n"
+
+
+def combine_sets(parts, out, displays=tuple(DISPLAYS)):
+    """Merge the per-set artifacts `<parts>/store-screenshots-<display>` into `<out>/screenshots/<locale>/`.
+
+    This is the layout the App Store metadata workflow uploads: one folder per language holding every set. Each
+    set's metadata and contact sheet stay in `<out>/<display>/`, and `<out>/index.html` shows every set. Returns
+    `[(display, metadata, shots_by_locale)]` in the order of `DISPLAYS`.
+    """
+    found = {path.name.removeprefix("store-screenshots-") for path in parts.iterdir() if path.is_dir()}
+    if found != set(displays):
+        raise ValueError(f"Expected the screenshot sets {sorted(displays)}, got {sorted(found)}")
+    sets = []
+    for display in (display for key, display in DISPLAYS.items() if key in displays):
+        part = parts / f"store-screenshots-{display.key}"
+        (out / display.key).mkdir(parents=True)
+        metadata = json.loads((part / "metadata.json").read_text())
+        shutil.copy2(part / "metadata.json", out / display.key / "metadata.json")
+        # The set's own contact sheet now sits one level below the screenshots it links to.
+        sheet = (part / "index.html").read_text()
+        sheet = sheet.replace('href="screenshots/', 'href="../screenshots/').replace('src="screenshots/', 'src="../screenshots/')
+        (out / display.key / "index.html").write_text(sheet)
+        languages = sorted(path.name for path in (part / "screenshots").iterdir())
+        if set(languages) - set(LOCALES):
+            raise ValueError(f"{display.key} has unexpected language folders: {languages}")
+        pattern = re.compile(rf"{re.escape(display.prefix)}(\d{{2}})_([a-z0-9]+(?:-[a-z0-9]+)*)\.png")
+        shots_by_locale = {}
+        for locale in (locale for locale in LOCALES if locale in languages):
+            shots = []
+            for source in sorted((part / "screenshots" / locale).iterdir()):
+                match = pattern.fullmatch(source.name)
+                if not match:
+                    raise ValueError(f"{display.key} has an unexpected file {locale}/{source.name}")
+                target = out / "screenshots" / locale / source.name
+                if target.exists():
+                    raise ValueError(f"Two sets both produced {locale}/{source.name}")
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
+                shots.append((int(match[1]), match[2], png_size(source)))
+            shots_by_locale[locale] = shots
+        validate_set(shots_by_locale, display)
+        sets.append((display, metadata, shots_by_locale))
+    (out / "index.html").write_text(render_review(sets))
+    return sets
 
 
 def clear_previous_outputs(directory):
@@ -337,12 +419,25 @@ def run(directory, device=None, runtime=None, locales=LOCALES, display=IPHONE_69
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path, help="Output folder; screenshots go to <directory>/screenshots/<locale>/")
+    parser.add_argument("--combine", type=Path, metavar="PARTS",
+                        help="Instead of capturing, merge the downloaded store-screenshots-<display> artifacts in PARTS "
+                             "into the output folder and write one review page of every set")
     parser.add_argument("--display", choices=sorted(DISPLAYS), default=IPHONE_69.key,
                         help="App Store screenshot set to capture (default: %(default)s)")
-    parser.add_argument("--device", help=f"Simulator model for the 6.9-inch set (default: {PREFERRED_DEVICE}, else the newest Pro Max or Plus)")
+    parser.add_argument("--device", help="Simulator model for the 6.9-inch or iPad set (default: iPhone 18 Pro Max, else the "
+                        "newest Pro Max or Plus; for iPad the newest 13-inch iPad Pro, else iPad Air)")
     parser.add_argument("--runtime", help="Require a runtime such as 'iOS 27.0' (default: newest one supporting the model)")
     parser.add_argument("--locale", action="append", choices=LOCALES, help="Store language to capture (default: all)")
     args = parser.parse_args(argv)
+    if args.combine:
+        try:
+            for display, _metadata, shots_by_locale in combine_sets(args.combine, args.directory):
+                for locale, shots in shots_by_locale.items():
+                    print(display.key, locale, [output_name(number, slug, display.prefix) for number, slug, _ in shots])
+        except (OSError, ValueError, json.JSONDecodeError) as error:
+            print(f"error: {error}", file=sys.stderr)
+            return 1
+        return 0
     try:
         run(args.directory, args.device, args.runtime, tuple(args.locale or LOCALES), DISPLAYS[args.display])
     except (tools.NativeCommandError, ValueError) as error:

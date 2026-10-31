@@ -92,6 +92,34 @@ class DeviceSelectionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '6.3-inch sizes are 1206x2622, 1179x2556'):
             shots.validate_size(1320, 2868, 'shot', shots.IPHONE_63)
 
+    def test_the_ipad_set_prefers_the_newest_13_inch_ipad_pro_then_air(self):
+        payload = {'runtimes': [runtime('iOS 27.1', ['iPhone Duo']), runtime('iOS 27.0', [
+            'iPhone 18 Pro Max', 'iPad Air 13-inch (M4)', 'iPad Pro 11-inch (M5)', 'iPad Pro 13-inch (M4)',
+            'iPad Pro 13-inch (M5)', 'iPad mini (A17 Pro)'])]}
+        air = {'runtimes': [runtime('iOS 27.0', ['iPad Air 11-inch (M4)', 'iPad Air 13-inch (M3)', 'iPad Air 13-inch (M4)'])]}
+
+        choice = shots.choose_device(payload, display=shots.IPAD_13)
+
+        self.assertEqual(('iPad Pro 13-inch (M5)', 'iOS 27.0'), (choice['device'], choice['runtime']))
+        self.assertEqual('iPad Air 13-inch (M4)', shots.choose_device(air, display=shots.IPAD_13)['device'])
+
+    def test_the_ipad_set_never_falls_back_to_a_smaller_ipad_or_an_iphone(self):
+        payload = {'runtimes': [runtime('iOS 27.0', ['iPhone 18 Pro Max', 'iPad Pro 11-inch (M5)', 'iPad mini (A17 Pro)'])]}
+
+        with self.assertRaisesRegex(ValueError, r'No available 13-inch iPad Simulator; available iPads: '
+                                                r'iPad Pro 11-inch \(M5\), iPad mini'):
+            shots.choose_device(payload, display=shots.IPAD_13)
+        with self.assertRaisesRegex(ValueError, 'Duo does not produce 13-inch iPad'):
+            shots.choose_device(payload, 'iPhone Duo', display=shots.IPAD_13)
+
+    def test_only_apples_portrait_13_inch_ipad_sizes_pass_for_ipad(self):
+        for size in [(2064, 2752), (2048, 2732)]:
+            shots.validate_size(*size, 'shot', shots.IPAD_13)
+        with self.assertRaisesRegex(ValueError, '13-inch iPad sizes are 2064x2752, 2048x2732'):
+            shots.validate_size(1668, 2420, 'shot', shots.IPAD_13)
+        with self.assertRaisesRegex(ValueError, 'portrait'):
+            shots.validate_size(2752, 2064, 'shot', shots.IPAD_13)
+
     def test_every_set_has_its_own_file_prefix(self):
         prefixes = [display.prefix for display in shots.DISPLAYS.values()]
         self.assertEqual(len(prefixes), len(set(prefixes)))
@@ -232,6 +260,62 @@ class IndexTests(unittest.TestCase):
         self.assertIn('01_home.png (1320x2868)', page)
 
 
+class CombineTests(unittest.TestCase):
+    SIZES = {'iphone-6.9': (1320, 2868), 'iphone-6.3': (1206, 2622), 'iphone-duo': (1398, 2034), 'ipad-13': (2064, 2752)}
+
+    def write_parts(self, parts, sizes=None, slugs=SLUGS):
+        for key, (width, height) in (sizes or self.SIZES).items():
+            display = shots.DISPLAYS[key]
+            part = parts / f'store-screenshots-{key}'
+            for locale in shots.LOCALES:
+                folder = part / 'screenshots' / locale
+                folder.mkdir(parents=True)
+                for number, slug in enumerate(slugs, start=1):
+                    (folder / shots.output_name(number, slug, display.prefix)).write_bytes(png(width, height))
+            (part / 'metadata.json').write_text(json.dumps({'head_sha': 'b' * 40, 'device': f'{key} model', 'runtime': 'iOS 27.0'}))
+            (part / 'index.html').write_text(f'<img src="screenshots/en-US/{display.prefix}01_home.png">')
+
+    def test_merges_every_set_into_one_folder_per_language_with_a_review_page(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            parts, out = Path(temporary) / 'parts', Path(temporary) / 'out'
+            self.write_parts(parts)
+
+            sets = shots.combine_sets(parts, out)
+
+            self.assertEqual(['iphone-6.9', 'iphone-6.3', 'iphone-duo', 'ipad-13'], [display.key for display, _, _ in sets])
+            names = sorted(path.name for path in (out / 'screenshots/ru').iterdir())
+            self.assertEqual(4 * len(SLUGS), len(names))
+            self.assertIn('ipad_01_home.png', names)
+            self.assertEqual(names, sorted(path.name for path in (out / 'screenshots/en-US').iterdir()))
+            self.assertIn('src="../screenshots/en-US/ipad_01_home.png"', (out / 'ipad-13/index.html').read_text())
+            self.assertTrue((out / 'iphone-duo/metadata.json').is_file())
+            page = (out / 'index.html').read_text()
+            for text in ('13-inch iPad (ipad-13 model, iOS 27.0) &middot; 14 screenshots', 'Commit bbbbbbbbbbbb',
+                         'src="screenshots/ru/ipad_07_people.png"', 'medium_07_people.png (1206x2622)',
+                         'src="screenshots/en-US/duo_01_home.png"'):
+                self.assertIn(text, page)
+            self.assertLess(page.index('6.9-inch'), page.index('13-inch iPad'))
+
+    def test_a_missing_set_or_wrong_size_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            parts = Path(temporary) / 'parts'
+            self.write_parts(parts, {key: size for key, size in self.SIZES.items() if key != 'ipad-13'})
+            with self.assertRaisesRegex(ValueError, "Expected the screenshot sets .*got \\['iphone-6.3'"):
+                shots.combine_sets(parts, Path(temporary) / 'out')
+        with tempfile.TemporaryDirectory() as temporary:
+            parts = Path(temporary) / 'parts'
+            self.write_parts(parts, {**self.SIZES, 'ipad-13': (1668, 2420)})
+            with self.assertRaisesRegex(ValueError, '13-inch iPad sizes'):
+                shots.combine_sets(parts, Path(temporary) / 'out')
+
+    def test_the_review_page_can_embed_its_images(self):
+        page = shots.render_review([(shots.IPAD_13, {}, {'en-US': [(1, 'home', (2064, 2752))]})],
+                                   source=lambda locale, name: f'data:image/jpeg;base64,{locale}-{name}')
+
+        self.assertIn('src="data:image/jpeg;base64,en-US-ipad_01_home.png"', page)
+        self.assertIn('<h2>13-inch iPad &middot; 1 screenshots</h2>', page)
+
+
 class RunTests(unittest.TestCase):
     def fake_environment(self, directory, width=1320, height=2868, ru_slugs=None, display=None):
         commands = []
@@ -245,7 +329,7 @@ class RunTests(unittest.TestCase):
             output = ''
             if label == 'simulator-runtimes-list':
                 output = json.dumps({'runtimes': [runtime('iOS 27.1', ['iPhone Duo']),
-                                                  runtime('iOS 27.0', ['iPhone 18 Pro Max'])]})
+                                                  runtime('iOS 27.0', ['iPhone 18 Pro Max', 'iPad Pro 13-inch (M5)'])]})
             if label == 'simulator-list':
                 output = json.dumps({'devices': {}})
             return subprocess.CompletedProcess(command, 0, output, '')
@@ -330,6 +414,20 @@ class RunTests(unittest.TestCase):
                              (metadata['display'], metadata['device'], metadata['runtime'], metadata['sizes']))
             self.assertIn(['iOS 27.1', 'iPhone Duo'], [arguments for label, arguments in commands if label == 'create'])
             self.assertIn('src="screenshots/en-US/duo_01_home.png"', (directory / 'index.html').read_text())
+
+    def test_an_ipad_run_names_its_files_for_the_ipad_set(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            commands, _ = self.run_with(directory, width=2064, height=2752)
+
+            shots.run(directory, display=shots.IPAD_13)
+
+            self.assertEqual(sorted(f'ipad_{number:02d}_{slug}.png' for number, slug in enumerate(SLUGS, start=1)),
+                             sorted(path.name for path in (directory / 'screenshots/en-US').iterdir()))
+            metadata = json.loads((directory / 'metadata.json').read_text())
+            self.assertEqual(('ipad-13', 'iPad Pro 13-inch (M5)', 'iOS 27.0', ['2064x2752']),
+                             (metadata['display'], metadata['device'], metadata['runtime'], metadata['sizes']))
+            self.assertIn(['iOS 27.0', 'iPad Pro 13-inch (M5)'], [arguments for label, arguments in commands if label == 'create'])
 
     def test_wrong_screenshot_size_fails_clearly_and_still_cleans_up(self):
         with tempfile.TemporaryDirectory() as temporary:
