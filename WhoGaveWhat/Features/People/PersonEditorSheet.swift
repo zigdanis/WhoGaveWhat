@@ -27,7 +27,6 @@ struct PersonEditorSheet: View {
     @State private var errorMessage: String?
     @State private var headerHeight: CGFloat = 0
     @State private var formHeight: CGFloat = 0
-    @State private var selectedDetent: PresentationDetent = .large
     @FocusState private var nameIsFocused: Bool
 
     init(
@@ -66,7 +65,6 @@ struct PersonEditorSheet: View {
                 geometry.size.height
             } action: { height in
                 headerHeight = height
-                fitSheetHeight()
             }
             ScrollView {
                 VStack(spacing: isCompact ? 16 : 20) {
@@ -97,7 +95,6 @@ struct PersonEditorSheet: View {
                     geometry.size.height
                 } action: { height in
                     formHeight = height
-                    fitSheetHeight()
                 }
             }
             .scrollIndicators(.hidden)
@@ -106,7 +103,8 @@ struct PersonEditorSheet: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.appBackground)
-        .presentationDetents(detents, selection: $selectedDetent)
+        // One detent at a time, so the sheet follows the measured height as the form changes.
+        .presentationDetents([detent], selection: .constant(detent))
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.appBackground)
         .interactiveDismissDisabled(isLoadingPhoto)
@@ -157,18 +155,11 @@ struct PersonEditorSheet: View {
 
     /// A regular-width window shows the editor as a centered form sized to its content, so Add person is a
     /// small card rather than a tall empty sheet. Compact windows keep the full-height sheet.
-    private var fittedHeight: CGFloat? {
-        guard layout.usesFormSheets, headerHeight > 0, formHeight > 0 else { return nil }
-        return headerHeight + formHeight
-    }
-
-    private var detents: Set<PresentationDetent> {
-        fittedHeight.map { [.height($0)] } ?? [.large]
-    }
-
-    private func fitSheetHeight() {
-        guard let fittedHeight, selectedDetent != .height(fittedHeight) else { return }
-        selectedDetent = .height(fittedHeight)
+    /// Until the first layout measures it, an estimate keeps the sheet from opening tall and snapping down.
+    private var detent: PresentationDetent {
+        guard layout.usesFormSheets else { return .large }
+        guard headerHeight > 0, formHeight > 0 else { return .height(showsPhoto ? 480 : 190) }
+        return .height(headerHeight + formHeight)
     }
 
     private var canSave: Bool {

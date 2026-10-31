@@ -63,8 +63,12 @@ private struct TabRootTitle: ViewModifier {
 /// in regular-width windows, where `tabRootTitle` removes the bar's own title.
 struct ScreenHeading: View {
     let title: LocalizedStringKey
-    /// Applied only while the heading shows, so compact windows get no extra gap.
+    /// Applied only while the heading shows, so compact windows get no extra gap. A scroll view starts higher
+    /// than a list's first section, so its screens pass `ScreenHeading.scrollViewTopSpacing`.
+    var topSpacing: CGFloat = 8
     var bottomSpacing: CGFloat = 4
+
+    static let scrollViewTopSpacing: CGFloat = 40
     @Environment(\.adaptiveLayout) private var layout
 
     var body: some View {
@@ -74,7 +78,7 @@ struct ScreenHeading: View {
                 .foregroundStyle(Color.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 8)
+                .padding(.top, topSpacing)
                 .padding(.bottom, bottomSpacing)
                 .accessibilityAddTraits(.isHeader)
         }
@@ -142,14 +146,15 @@ enum PickerPopover {
 }
 
 extension View {
-    /// A picker's popover size: a fixed width and an ideal `height` (the content's own when nil). The system
-    /// may still make a popover shorter, above a keyboard, or taller, beside its row in landscape, so the
-    /// content stays flexible and starts at the top instead of being centered and clipped.
+    /// A picker's popover size: a fixed width and `height` (the content's own when nil), from the top. The
+    /// height is a cap as well as the ideal: an unbounded frame would report the space beside the row in
+    /// landscape and stretch the popover to the window's height. Less space above a keyboard still shrinks it.
+    /// Compact adaptation stays a popover because a form sheet's own content can report compact width.
     func pickerPopoverFrame(height: CGFloat?) -> some View {
         frame(width: PickerPopover.width)
             // The date picker's calendar sets its own height.
             .fixedSize(horizontal: false, vertical: height == nil)
-            .frame(idealHeight: height, maxHeight: .infinity, alignment: .top)
+            .frame(idealHeight: height, maxHeight: height, alignment: .top)
             .presentationCompactAdaptation(.popover)
     }
 

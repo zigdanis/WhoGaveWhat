@@ -10,7 +10,7 @@ struct SettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                ScreenHeading(title: "Settings", bottomSpacing: 16)
+                ScreenHeading(title: "Settings", topSpacing: ScreenHeading.scrollViewTopSpacing, bottomSpacing: 16)
                 SectionHeader(text: "Preferences").padding(.bottom, 7)
                 Card {
                     NavigationLink {

@@ -5,10 +5,12 @@ enum InsightsLayout {
     static let columnWidth = ReadableWidth.content - 2 * horizontalPadding
     static let columnSpacing: CGFloat = 24
     static let horizontalPadding: CGFloat = 16
+    /// Two columns can fill a window, so they keep a wider margin than one centered column needs.
+    static let twoColumnPadding: CGFloat = 32
     /// Narrower columns would wrap the compare card's names and amounts.
     static let minColumnWidth: CGFloat = 420
-    static let twoColumnMaxWidth = 2 * columnWidth + columnSpacing + 2 * horizontalPadding
-    static let twoColumnMinWidth = 2 * minColumnWidth + columnSpacing + 2 * horizontalPadding
+    static let twoColumnMaxWidth = 2 * columnWidth + columnSpacing + 2 * twoColumnPadding
+    static let twoColumnMinWidth = 2 * minColumnWidth + columnSpacing + 2 * twoColumnPadding
 
     /// Two columns once both fit at their minimum width, except at accessibility text sizes.
     static func usesTwoColumns(width: CGFloat, dynamicTypeSize: DynamicTypeSize) -> Bool {
@@ -34,7 +36,7 @@ struct InsightsView: View {
         Group {
             if InsightsLayout.usesTwoColumns(width: width, dynamicTypeSize: dynamicTypeSize) {
                 VStack(alignment: .leading, spacing: 16) {
-                    ScreenHeading(title: "Insights")
+                    ScreenHeading(title: "Insights", topSpacing: ScreenHeading.scrollViewTopSpacing)
                     HStack(alignment: .top, spacing: InsightsLayout.columnSpacing) {
                         VStack(alignment: .leading, spacing: 24) {
                             summaryCard
@@ -45,9 +47,10 @@ struct InsightsView: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
+                .padding(.horizontal, InsightsLayout.twoColumnPadding - InsightsLayout.horizontalPadding)
             } else {
                 VStack(alignment: .leading, spacing: 24) {
-                    ScreenHeading(title: "Insights", bottomSpacing: 0)
+                    ScreenHeading(title: "Insights", topSpacing: ScreenHeading.scrollViewTopSpacing, bottomSpacing: 0)
                     summaryCard
                     balancesSection
                     compareSection
