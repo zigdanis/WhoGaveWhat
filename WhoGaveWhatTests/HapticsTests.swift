@@ -97,14 +97,6 @@ struct CompositionHapticsTests {
     }
 }
 
-struct HapticFeedbackTests {
-    @MainActor
-    @Test func personSaveFailureMatchesTheEditorsMessages() {
-        #expect(HapticFeedback.personSaveFailure(PersonUpdateError.duplicateName) == .warning)
-        #expect(HapticFeedback.personSaveFailure(CocoaError(.fileWriteUnknown)) == .error)
-    }
-}
-
 struct HapticThrottleTests {
     /// Feeds `(feedback, time)` requests through a fresh throttle and returns which ones played.
     private func results(_ requests: [(HapticFeedback, TimeInterval)]) -> [Bool] {

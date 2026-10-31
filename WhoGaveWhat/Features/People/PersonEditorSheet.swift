@@ -149,10 +149,10 @@ struct PersonEditorSheet: View {
             try onSave(name, imageData)
         } catch PersonUpdateError.duplicateName {
             errorMessage = NSLocalizedString("A person with this name already exists.", comment: "")
-            haptics.play(HapticFeedback.personSaveFailure(PersonUpdateError.duplicateName))
+            haptics.play(.warning)
         } catch {
             errorMessage = NSLocalizedString("Could not save person changes.", comment: "")
-            haptics.play(HapticFeedback.personSaveFailure(error))
+            haptics.play(.error)
         }
     }
 
