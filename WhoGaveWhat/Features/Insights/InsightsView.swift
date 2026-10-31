@@ -16,12 +16,6 @@ enum InsightsLayout {
     static func usesTwoColumns(width: CGFloat, dynamicTypeSize: DynamicTypeSize) -> Bool {
         width >= twoColumnMinWidth && !dynamicTypeSize.isAccessibilitySize
     }
-
-    /// Each of two equal columns in a container of `width`, never wider than a single column.
-    /// A fixed width, not a flexible frame: flexible columns let the year total shrink to fit a probe width.
-    static func twoColumnWidth(in width: CGFloat) -> CGFloat {
-        min(columnWidth, (width - 2 * twoColumnPadding - columnSpacing) / 2)
-    }
 }
 
 /// Year summary, the balance with each person, and a two-person comparison.
@@ -48,9 +42,9 @@ struct InsightsView: View {
                             summaryCard
                             compareSection
                         }
-                        .frame(width: InsightsLayout.twoColumnWidth(in: width))
+                        .frame(maxWidth: .infinity)
                         balancesSection
-                            .frame(width: InsightsLayout.twoColumnWidth(in: width))
+                            .frame(maxWidth: .infinity)
                     }
                 }
                 .padding(.horizontal, InsightsLayout.twoColumnPadding - InsightsLayout.horizontalPadding)
@@ -67,9 +61,6 @@ struct InsightsView: View {
             }
         }
         .padding(.horizontal, InsightsLayout.horizontalPadding)
-        // Measures the space offered, not the content: fixed-width columns would otherwise keep their width
-        // after a rotation narrows the window.
-        .frame(maxWidth: .infinity)
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.size.width
         } action: { newWidth in

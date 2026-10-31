@@ -81,6 +81,9 @@ struct YearSummaryCard: View {
                 Text(formattedCurrency(summary.circulatedValue, code: currencyCode))
                     .font(Font.app(32, .bold, rounded: true)).tracking(-0.6).foregroundColor(Color.textPrimary)
                     .lineLimit(1).minimumScaleFactor(0.6)
+                    // Scales only to fit the width. A two-column iPad layout can offer less height while a
+                    // wrapped hint below is measured, which would otherwise shrink the total.
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(verbatim: LocalizedCount.gifts(summary.giftCount))
                     .font(Font.app(14, .regular)).foregroundColor(Color.textSecondary)
             }
