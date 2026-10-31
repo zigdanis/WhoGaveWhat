@@ -52,7 +52,9 @@ private struct TabRootTitle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .navigationTitle(title)
-            // The title still names the window, the back button's menu and VoiceOver's screen change.
+            // The title still names the window, the back button's menu and VoiceOver's screen change. A large
+            // title ignores `toolbar(removing:)`, so the bar switches to inline first.
+            .navigationBarTitleDisplayMode(layout.isRegularWidth ? .inline : .automatic)
             .toolbar(removing: layout.isRegularWidth ? .title : nil)
     }
 }
@@ -103,10 +105,14 @@ struct ToolbarAddButton: View {
 
     var body: some View {
         Button(action: action) {
-            Label(title, systemImage: "plus")
-                .font(Font.app(16, .semibold))
-                .labelStyle(.titleAndIcon)
-                .foregroundStyle(Color.onFill)
+            // Not a `Label`: toolbars draw labels icon-only, and the title is what makes the action findable.
+            HStack(spacing: 6) {
+                Image(systemName: "plus")
+                Text(title)
+            }
+            .font(Font.app(16, .semibold))
+            .foregroundStyle(Color.onFill)
+            .padding(.horizontal, 6)
         }
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .buttonStyle(.glassProminent)
