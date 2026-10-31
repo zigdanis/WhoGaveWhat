@@ -30,6 +30,7 @@ struct InsightsView: View {
                 people: composition.insightsPickerPeople(for: slot, selectedID: selectedID(for: slot)),
                 selectedID: selectedID(for: slot),
                 onSelect: { id in
+                    if id != selectedID(for: slot) { composition.haptics.play(.selection) }
                     composition.recordInsightsPick(id, for: slot)
                     select(id, for: slot)
                     picker = nil
@@ -194,6 +195,7 @@ struct InsightsView: View {
     /// Swaps Person A and Person B, so the flows and net read from the other side.
     private var swapButton: some View {
         Button {
+            composition.haptics.play(.selection)
             let previousA = compareA?.id
             withAnimation(.easeInOut(duration: 0.2)) {
                 compareAID = compareB?.id

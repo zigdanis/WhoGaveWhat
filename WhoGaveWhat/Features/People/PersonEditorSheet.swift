@@ -14,6 +14,7 @@ struct PersonEditorSheet: View {
     /// On a short window the hero photo would push Delete under the keyboard, so the photo card shrinks.
     @Environment(\.compactVerticalSpace) private var isCompact
     @Environment(\.analytics) private var analytics
+    @Environment(\.haptics) private var haptics
     @State private var name: String
     @State private var imageData: Data?
     @State private var selectedPhotoItem: PhotosPickerItem?
@@ -148,8 +149,10 @@ struct PersonEditorSheet: View {
             try onSave(name, imageData)
         } catch PersonUpdateError.duplicateName {
             errorMessage = NSLocalizedString("A person with this name already exists.", comment: "")
+            haptics.play(HapticFeedback.personSaveFailure(PersonUpdateError.duplicateName))
         } catch {
             errorMessage = NSLocalizedString("Could not save person changes.", comment: "")
+            haptics.play(HapticFeedback.personSaveFailure(error))
         }
     }
 

@@ -8,6 +8,7 @@ final class AppComposition {
     let appDiscovery: AppDiscoveryIndexer
     let data = AppData()
     let analytics: AnalyticsGateway
+    let haptics: HapticsGateway
     private(set) var currencyCode: String
     private(set) var isAnalyticsEnabled: Bool
     let preferences: PreferencesGateway
@@ -26,7 +27,11 @@ final class AppComposition {
     let buildInsights = BuildInsightsUseCase()
     let rankPickerOptions = RankPickerOptionsUseCase()
 
-    convenience init(store: SwiftDataStore, preferences: UserDefaultsPreferencesGateway, analytics: AnalyticsGateway) {
+    convenience init(
+        store: SwiftDataStore, preferences: UserDefaultsPreferencesGateway,
+        analytics: AnalyticsGateway,
+        haptics: HapticsGateway
+    ) {
         let environment = ProcessInfo.processInfo.environment
         let cloud: GiftIntelligenceGateway
         if environment["KS_CLOUD_ICONS"] == "stub" {
@@ -43,7 +48,8 @@ final class AppComposition {
                 onDevice: FoundationModelsGiftIntelligenceGateway(analytics: analytics)
             ),
             launchEnvironment: environment,
-            analytics: analytics
+            analytics: analytics,
+            haptics: haptics
         )
     }
 
@@ -52,7 +58,8 @@ final class AppComposition {
         preferences: PreferencesGateway,
         intelligence: GiftIntelligenceGateway,
         launchEnvironment: [String: String] = ProcessInfo.processInfo.environment,
-        analytics: AnalyticsGateway = NoopAnalyticsGateway()
+        analytics: AnalyticsGateway = NoopAnalyticsGateway(),
+        haptics: HapticsGateway = NoopHapticsGateway()
     ) {
         let giftGateway = SwiftDataGiftGateway(context: store.context)
         let peopleGateway = SwiftDataPeopleGateway(context: store.context)
@@ -61,6 +68,7 @@ final class AppComposition {
 
         self.preferences = preferences
         self.analytics = analytics
+        self.haptics = haptics
         appDiscovery = AppDiscoveryIndexer(analytics: analytics)
         if let rawConsent = launchEnvironment["KS_CLOUD_ICON_CONSENT"],
             let consent = CloudIconConsent(rawValue: rawConsent)
@@ -142,6 +150,7 @@ final class AppComposition {
         guard let gift else { return false }
         reloadData()
         analytics.track(.giftSaved(giftSavedProperties(for: gift, input: input)))
+        haptics.play(.success)
         return true
     }
 
@@ -222,6 +231,7 @@ final class AppComposition {
         reloadData()
         if id != nil, !existedBefore {
             analytics.track(.personCreated(source: source, peopleCount: data.people.count))
+            haptics.play(.success)
         }
         return id
     }
@@ -253,6 +263,7 @@ final class AppComposition {
             .personUpdated(
                 nameChanged: previous?.name != name.trimmingCharacters(in: .whitespaces),
                 photo: Self.photoChange(from: previous?.imageData, to: imageData)))
+        haptics.play(.success)
     }
 
     static func photoChange(from previous: Data?, to current: Data?) -> PersonPhotoChange {
