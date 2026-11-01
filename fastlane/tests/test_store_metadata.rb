@@ -71,6 +71,7 @@ class StoreMetadataTest < Minitest::Test
       source = File.join(directory, 'metadata')
       FileUtils.mkdir_p([File.join(source, 'en-US'), File.join(source, 'review_information')])
       File.write(File.join(source, 'en-US', 'subtitle.txt'), 'Gift tracker')
+      File.write(File.join(source, 'en-US', 'release_notes.txt'), 'iPad support')
       File.write(File.join(source, 'copyright.txt'), '2026')
       File.write(File.join(source, 'review_information', 'notes.txt'), 'Notes')
 
@@ -78,6 +79,7 @@ class StoreMetadataTest < Minitest::Test
 
       refute_equal source, copy
       assert_equal 'Gift tracker', File.read(File.join(copy, 'en-US', 'subtitle.txt'))
+      assert_equal 'iPad support', File.read(File.join(copy, 'en-US', 'release_notes.txt'))
       assert File.file?(File.join(copy, 'copyright.txt'))
       refute File.exist?(File.join(copy, 'review_information'))
       assert File.file?(File.join(source, 'review_information', 'notes.txt'))

@@ -1,0 +1,2 @@
+• Who Gave What now runs on iPad, in portrait, landscape and multitasking windows. Add a gift and Add person sit in the top bar (Command-N with a keyboard), pickers open as popovers next to their rows, and Insights shows two columns.
+• Gentle haptic feedback when you add or save a gift or a person, and when you choose people in Insights. It follows the System Haptics setting.

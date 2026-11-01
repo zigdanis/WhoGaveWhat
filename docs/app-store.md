@@ -26,6 +26,7 @@ review. It runs only by manual dispatch on `master`, after Danis approves the li
 | `keywords.txt` | 100 | Comma-separated, no spaces after commas; don't repeat words from the name or subtitle. |
 | `promotional_text.txt` | 170 | Can change at any time without review. |
 | `description.txt` | 4000 | Not searchable. Plain text. |
+| `release_notes.txt` | 4000 | What's New of the version being uploaded. Covers every user-visible change since the version on the App Store; replace it for each update. |
 | `review_information/notes.txt` | 4000 | Reviewer notes. Contact details are never committed (see App Review Information below). |
 
 ## Set in App Store Connect by hand

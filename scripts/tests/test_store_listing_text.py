@@ -4,7 +4,10 @@ from pathlib import Path
 METADATA = Path(__file__).resolve().parents[2] / 'fastlane' / 'metadata'
 LOCALES = ('en-US', 'ru')
 # App Store Connect limits in characters. The name is set by hand in App Store Connect, so there is no name.txt.
-LIMITS = {'subtitle.txt': 30, 'keywords.txt': 100, 'promotional_text.txt': 170, 'description.txt': 4000}
+# release_notes.txt is the version's What's New: App Store Connect rejects it on an app's first version, but
+# every update needs it, so each locale must carry one.
+LIMITS = {'subtitle.txt': 30, 'keywords.txt': 100, 'promotional_text.txt': 170, 'description.txt': 4000,
+          'release_notes.txt': 4000}
 
 
 # Blocks that hold emoji: Miscellaneous Technical (⌚ ⏰), Miscellaneous Symbols and Dingbats (☀ ✅),
