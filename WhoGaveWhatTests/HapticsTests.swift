@@ -87,8 +87,6 @@ struct CompositionHapticsTests {
 
         composition.markSelf(true, personID: "anton")
         composition.setCurrencyCode("RUB")
-        composition.setCloudIconConsent(.allowed)
-        composition.setAnalyticsEnabled(false)
         composition.recordInsightsPick("maria", for: .subject)
         composition.deleteGift(id: gift.id, source: .giftDetail)
         composition.deletePerson(id: removable, source: .personEditor)

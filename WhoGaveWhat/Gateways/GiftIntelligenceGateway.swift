@@ -2,6 +2,8 @@ struct GiftIntelligenceResult: Equatable {
     let emoji: String?
     /// Approximate price in the requested currency; nil when there is no estimate.
     let value: Int?
+    /// Which service answered; set by the gateway that routes between them, nil for a single service.
+    var provider: SuggestionProvider?
 }
 
 @MainActor

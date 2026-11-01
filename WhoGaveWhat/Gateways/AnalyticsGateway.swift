@@ -24,15 +24,13 @@ struct AnalyticsContext: Equatable {
     var peopleCount: Int
     var hasViewpoint: Bool
     var currency: String
-    var cloudIcons: String
 
     var properties: [String: AnalyticsValue] {
         [
             "gifts_count": .int(giftsCount),
             "people_count": .int(peopleCount),
             "has_viewpoint": .bool(hasViewpoint),
-            "currency": .string(currency),
-            "cloud_icons": .string(cloudIcons)
+            "currency": .string(currency)
         ]
     }
 }
@@ -44,8 +42,6 @@ protocol AnalyticsGateway: AnyObject {
     func track(_ event: AnalyticsEvent)
     func report(_ failure: AnalyticsFailure)
     func update(_ context: AnalyticsContext)
-    /// Honors the user's choice in Settings. Nothing leaves the device while disabled.
-    func setEnabled(_ enabled: Bool)
 }
 
 /// The gateway for tests, previews and builds without any monitoring service.
@@ -56,7 +52,6 @@ final class NoopAnalyticsGateway: AnalyticsGateway {
     func track(_ event: AnalyticsEvent) {}
     func report(_ failure: AnalyticsFailure) {}
     func update(_ context: AnalyticsContext) {}
-    func setEnabled(_ enabled: Bool) {}
 }
 
 extension AnalyticsValue {

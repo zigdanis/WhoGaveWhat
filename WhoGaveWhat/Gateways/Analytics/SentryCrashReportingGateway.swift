@@ -5,18 +5,8 @@ import Sentry
 /// crash report shows the last steps before it; the app state travels as a context block.
 @MainActor
 final class SentryCrashReportingGateway: AnalyticsGateway {
-    private let dsn: String
-    private let environment: String
-    private var context: AnalyticsContext?
-
-    init(dsn: String, environment: String, enabled: Bool) {
-        self.dsn = dsn
-        self.environment = environment
-        if enabled { start() }
-    }
-
-    private func start() {
-        SentrySDK.start { [dsn, environment] options in
+    init(dsn: String, environment: String) {
+        SentrySDK.start { options in
             options.dsn = dsn
             options.environment = environment
             options.enableAutoSessionTracking = true
@@ -28,7 +18,6 @@ final class SentryCrashReportingGateway: AnalyticsGateway {
             // their name. Only the gateway's fixed product events become breadcrumbs.
             options.enableAutoBreadcrumbTracking = false
         }
-        if let context { apply(context) }
     }
 
     func track(_ event: AnalyticsEvent) {
@@ -53,7 +42,6 @@ final class SentryCrashReportingGateway: AnalyticsGateway {
     }
 
     func update(_ context: AnalyticsContext) {
-        self.context = context
         apply(context)
     }
 
@@ -70,14 +58,6 @@ final class SentryCrashReportingGateway: AnalyticsGateway {
     private func apply(_ context: AnalyticsContext) {
         SentrySDK.configureScope { scope in
             scope.setContext(value: context.properties.anyValues, key: "app_state")
-        }
-    }
-
-    func setEnabled(_ enabled: Bool) {
-        if enabled, !SentrySDK.isEnabled {
-            start()
-        } else if !enabled, SentrySDK.isEnabled {
-            SentrySDK.close()
         }
     }
 }

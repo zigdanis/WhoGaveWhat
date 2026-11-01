@@ -3,54 +3,35 @@ import Testing
 @testable import WhoGaveWhat
 
 @MainActor
-struct CloudIconConsentStateTests {
+struct CloudIconSuggestionStateTests {
     private func makeState(
         preferences: TestPreferencesGateway,
         cloud: ScriptedIntelligenceGateway,
+        onDevice: GiftIntelligenceGateway = TestIntelligenceGateway(),
+        analytics: AnalyticsGateway = NoopAnalyticsGateway(),
         data: AppData
     ) -> AddGiftState {
-        let intelligence = PreferredGiftIntelligenceGateway(
-            preferences: preferences,
-            cloud: cloud,
-            onDevice: TestIntelligenceGateway()
-        )
+        let intelligence = PreferredGiftIntelligenceGateway(cloud: cloud, onDevice: onDevice)
         return AddGiftState(
             route: .create,
             data: data,
             suggestGift: SuggestGiftUseCase(intelligenceGateway: intelligence),
             preferences: preferences,
-            debounce: .milliseconds(5)
+            debounce: .milliseconds(5),
+            analytics: analytics
         )
     }
 
-    @Test func consentCardRequiresTypingAnEligibleNameWithoutManualEmoji() throws {
-        let composition = try makeTestComposition()
-        let preferences = TestPreferencesGateway()
-        let state = makeState(preferences: preferences, cloud: ScriptedIntelligenceGateway(), data: composition.data)
-        #expect(state.showsCloudIconConsent == false)
-        state.setName("  я \n")
-        #expect(state.showsCloudIconConsent == false)
-        state.setName("  гитара \n")
-        #expect(state.showsCloudIconConsent)
-        state.selectEmoji("🐶")
-        #expect(state.showsCloudIconConsent == false)
-    }
-
-    @Test func allowPersistsConsentAndImmediatelySuggestsForCurrentName() async throws {
+    @Test func firstGiftNameGoesToTheCloudWithoutAnyPrompt() async throws {
         let composition = try makeTestComposition()
         let preferences = TestPreferencesGateway()
         let cloud = ScriptedIntelligenceGateway()
         cloud.results["гитара"] = GiftIntelligenceResult(emoji: "🎸", value: nil)
         let state = makeState(preferences: preferences, cloud: cloud, data: composition.data)
-        state.setName("гитара")
-        #expect(state.suggestionTask == nil)
-        #expect(state.showsCloudIconConsent)
 
-        state.allowCloudIcons()
+        state.setName("гитара")
         await state.suggestionTask?.value
 
-        #expect(preferences.cloudIconConsent == .allowed)
-        #expect(state.showsCloudIconConsent == false)
         #expect(cloud.requests == ["гитара"])
         #expect(state.draft.aiEmoji == "🎸")
         #expect(state.effectiveEmoji == "🎸")
@@ -58,29 +39,43 @@ struct CloudIconConsentStateTests {
         #expect(state.draft.valueTouched == false)
     }
 
-    @Test func decliningHidesPromptAcrossTypingAndNewSheets() throws {
+    @Test func tooShortNamesAreNotSent() throws {
         let composition = try makeTestComposition()
-        let preferences = TestPreferencesGateway()
         let cloud = ScriptedIntelligenceGateway()
-        let state = makeState(preferences: preferences, cloud: cloud, data: composition.data)
-        state.setName("гитара")
-        #expect(state.showsCloudIconConsent)
-        state.declineCloudIcons()
+        let state = makeState(preferences: TestPreferencesGateway(), cloud: cloud, data: composition.data)
 
-        #expect(preferences.cloudIconConsent == .declined)
-        #expect(state.showsCloudIconConsent == false)
-        state.setName("кроссовки")
-        #expect(state.showsCloudIconConsent == false)
-        let reopened = makeState(preferences: preferences, cloud: cloud, data: composition.data)
-        reopened.setName("гитара")
-        #expect(reopened.showsCloudIconConsent == false)
+        state.setName("  я \n")
+
+        #expect(state.suggestionTask == nil)
         #expect(cloud.requests.isEmpty)
+    }
+
+    @Test func suggestionAnalyticsNameTheServiceThatAnswered() async throws {
+        let composition = try makeTestComposition()
+        let analytics = RecordingAnalyticsGateway()
+        let cloud = ScriptedIntelligenceGateway()
+        cloud.results["гитара"] = GiftIntelligenceResult(emoji: "🎸", value: nil)
+        let onDevice = ScriptedIntelligenceGateway()
+        onDevice.results["кроссовки"] = GiftIntelligenceResult(emoji: "👟", value: 5_000)
+        let state = makeState(
+            preferences: TestPreferencesGateway(), cloud: cloud, onDevice: onDevice, analytics: analytics, data: composition.data)
+
+        state.setName("гитара")
+        await state.suggestionTask?.value
+        state.setName("кроссовки")
+        await state.suggestionTask?.value
+
+        let providers = analytics.events.compactMap { event -> SuggestionProvider? in
+            if case .giftSuggestionCompleted(let provider, _, _, _) = event { provider } else { nil }
+        }
+        #expect(providers == [.cloud, .onDevice])
+        #expect(state.draft.aiEmoji == "👟")
+        #expect(state.draft.estimatedValue == 5_000)
     }
 
     @Test func manualPickBeatsLateCloudAnswer() async throws {
         let composition = try makeTestComposition()
         let preferences = TestPreferencesGateway()
-        preferences.setCloudIconConsent(.allowed)
         let cloud = ScriptedIntelligenceGateway()
         cloud.holdsRequests = true
         cloud.results["гитара"] = GiftIntelligenceResult(emoji: "🎸", value: nil)
@@ -96,13 +91,11 @@ struct CloudIconConsentStateTests {
         #expect(state.effectiveEmoji == "🐶")
         #expect(state.draft.aiEmoji == nil)
         #expect(state.aiLoading == false)
-        #expect(state.showsCloudIconConsent == false)
     }
 
     @Test func staleCloudAnswerCannotReplaceLatestName() async throws {
         let composition = try makeTestComposition()
         let preferences = TestPreferencesGateway()
-        preferences.setCloudIconConsent(.allowed)
         let cloud = ScriptedIntelligenceGateway()
         cloud.holdsRequests = true
         cloud.results["гитара"] = GiftIntelligenceResult(emoji: "🎸", value: nil)
@@ -126,7 +119,6 @@ struct CloudIconConsentStateTests {
     @Test func cloudNilKeepsHeuristicAndNeverBlocksSaving() async throws {
         let composition = try makeTestComposition()
         let preferences = TestPreferencesGateway()
-        preferences.setCloudIconConsent(.allowed)
         let state = makeState(preferences: preferences, cloud: ScriptedIntelligenceGateway(), data: composition.data)
         state.setName("bouquet")
         let people = composition.data.people.map(\.id)
@@ -142,11 +134,8 @@ struct CloudIconConsentStateTests {
         let composition = try makeTestComposition()
         let gift = try #require(composition.data.gifts.first { !$0.emojiPickedByUser && $0.emoji != "🎁" })
         let preferences = TestPreferencesGateway()
-        preferences.setCloudIconConsent(.allowed)
         let cloud = ScriptedIntelligenceGateway()
-        let gateway = PreferredGiftIntelligenceGateway(
-            preferences: preferences, cloud: cloud, onDevice: TestIntelligenceGateway()
-        )
+        let gateway = PreferredGiftIntelligenceGateway(cloud: cloud, onDevice: TestIntelligenceGateway())
         let state = AddGiftState(
             route: .edit(giftID: gift.id),
             data: composition.data,
@@ -160,20 +149,5 @@ struct CloudIconConsentStateTests {
         #expect(state.effectiveEmoji == gift.emoji)
         #expect(state.input.aiEmoji == gift.emoji)
         #expect(cloud.requests == ["zz unknown thing"])
-    }
-
-    @Test func verificationLaunchCanOverrideConsent() throws {
-        let preferences = TestPreferencesGateway()
-        let composition = AppComposition(
-            store: try SwiftDataStore(inMemory: true, seed: true),
-            preferences: preferences,
-            intelligence: TestIntelligenceGateway(),
-            launchEnvironment: ["KS_CLOUD_ICON_CONSENT": "allowed"]
-        )
-        #expect(composition.cloudIconConsent == .allowed)
-        let installID = preferences.installID
-        composition.setCloudIconConsent(.declined)
-        #expect(composition.cloudIconConsent == .declined)
-        #expect(preferences.installID != installID)
     }
 }

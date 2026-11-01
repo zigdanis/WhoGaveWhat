@@ -17,7 +17,6 @@ struct AnalyticsEventCatalogTests {
         .giftPriceEdited(hadEstimate: false),
         .giftSuggestionCompleted(provider: .cloud, hasIcon: true, hasPrice: false, latencyMilliseconds: 420),
         .occasionAdded,
-        .cloudIconsConsentChanged(allowed: true, source: .addGift),
         .giftSaved(
             GiftSavedProperties(
                 mode: .create, direction: .received, iconSource: .inferred, valueSource: .estimate,
@@ -32,7 +31,6 @@ struct AnalyticsEventCatalogTests {
         .currencyChanged(currency: "USD"),
         .privacyPolicyOpened,
         .licensesOpened,
-        .analyticsConsentChanged(enabled: false),
         .reviewPromptRequested(activeDays: 3, daysSinceFirstLaunch: 4, giftsCount: 6, peopleCount: 3, requestNumber: 1)
     ]
 
@@ -54,7 +52,6 @@ struct AnalyticsEventCatalogTests {
         #expect(event.properties["outcome"] == .string("suggested"))
         #expect(event.properties["latency_ms"] == .int(90))
         #expect(AnalyticsEvent.giftIconPicked(custom: false).properties["source"] == .string("list"))
-        #expect(AnalyticsEvent.cloudIconsConsentChanged(allowed: false, source: .settings).properties["consent"] == .string("declined"))
     }
 
     @Test func occasionLabelKeepsBuiltInsAndHidesCustomText() {
@@ -130,6 +127,24 @@ struct CompositionAnalyticsTests {
         #expect(analytics.events[1].properties["gifts_count"] == .int(composition.data.gifts.count))
     }
 
+    @Test func welcomeActionsReportTheirOwnSources() throws {
+        let analytics = RecordingAnalyticsGateway()
+        let composition = try makeTestComposition(selfPersonID: nil, analytics: analytics)
+
+        composition.router.presentNewGift(from: .insightsWelcome)
+        #expect(analytics.events.last == .giftSheetOpened(mode: .create, source: .insightsWelcome))
+        #expect(analytics.events.last?.properties["source"] == .string("insights_welcome"))
+
+        // "Add yourself" on the People welcome creates the person, then makes them the viewpoint.
+        let id = try #require(composition.createPerson(name: "Dana", source: .peopleWelcome))
+        composition.markSelf(true, personID: id)
+        #expect(composition.data.selfPersonID == id)
+        #expect(analytics.events.contains(.personCreated(source: .peopleWelcome, peopleCount: composition.data.people.count)))
+        #expect(
+            AnalyticsEvent.personCreated(source: .peopleWelcome, peopleCount: 1).properties["source"]
+                == .string("people_welcome"))
+    }
+
     @Test func peopleEventsCountOnlyRealChanges() throws {
         let analytics = RecordingAnalyticsGateway()
         let composition = try makeTestComposition(analytics: analytics)
@@ -167,7 +182,7 @@ struct CompositionAnalyticsTests {
         #expect(analytics.events.isEmpty)
     }
 
-    @Test func viewpointCurrencyAndConsentChangesAreTracked() throws {
+    @Test func viewpointAndCurrencyChangesAreTracked() throws {
         let analytics = RecordingAnalyticsGateway()
         let composition = try makeTestComposition(selfPersonID: nil, analytics: analytics)
 
@@ -176,41 +191,15 @@ struct CompositionAnalyticsTests {
         composition.markSelf(false, personID: "anton")
         composition.setCurrencyCode("RUB")
         composition.setCurrencyCode("RUB")
-        composition.setCloudIconConsent(.allowed)
-        composition.setCloudIconConsent(.declined, source: .settings)
 
         #expect(
             analytics.events == [
                 .viewpointChanged(isSet: true),
                 .viewpointChanged(isSet: false),
-                .currencyChanged(currency: "RUB"),
-                .cloudIconsConsentChanged(allowed: true, source: .settings),
-                .cloudIconsConsentChanged(allowed: false, source: .settings)
+                .currencyChanged(currency: "RUB")
             ])
-        #expect(analytics.contexts.last?.cloudIcons == "declined")
+        #expect(analytics.contexts.last?.currency == "RUB")
         #expect(analytics.contexts.last?.hasViewpoint == false)
-    }
-
-    @Test func turningAnalyticsOffSendsTheChoiceLastAndPersistsIt() throws {
-        let analytics = RecordingAnalyticsGateway()
-        let preferences = TestPreferencesGateway()
-        let composition = AppComposition(
-            store: try SwiftDataStore(inMemory: true),
-            preferences: preferences,
-            intelligence: TestIntelligenceGateway(),
-            analytics: analytics
-        )
-        #expect(composition.isAnalyticsEnabled)
-
-        composition.setAnalyticsEnabled(false)
-        composition.setAnalyticsEnabled(false)
-        composition.setAnalyticsEnabled(true)
-
-        #expect(!analytics.events.isEmpty)
-        #expect(analytics.events == [.analyticsConsentChanged(enabled: false), .analyticsConsentChanged(enabled: true)])
-        #expect(analytics.enabledChanges == [false, true])
-        #expect(preferences.analyticsEnabled)
-        #expect(composition.isAnalyticsEnabled)
     }
 
     @Test func spotlightLaunchIsTrackedOnlyWhenRecognized() throws {
@@ -227,18 +216,6 @@ struct CompositionAnalyticsTests {
         #expect(AppComposition.photoChange(from: Data([1]), to: nil) == .removed)
         #expect(AppComposition.photoChange(from: Data([1]), to: Data([1])) == .unchanged)
         #expect(AppComposition.photoChange(from: Data([1]), to: Data([2])) == .replaced)
-    }
-
-    @Test func userDefaultsGatewayDefaultsAnalyticsOnAndPersistsOff() {
-        let suiteName = "AnalyticsPreferenceTests.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
-        defer { defaults.removePersistentDomain(forName: suiteName) }
-        let gateway = UserDefaultsPreferencesGateway(defaults: defaults)
-
-        #expect(gateway.analyticsEnabled)
-        gateway.setAnalyticsEnabled(false)
-
-        #expect(!UserDefaultsPreferencesGateway(defaults: defaults).analyticsEnabled)
     }
 }
 
@@ -351,21 +328,6 @@ struct CrashReportSanitizingTests {
         #expect(sanitized.localizedDescription.contains("SwiftDataPersistenceError"))
         #expect(!sanitized.localizedDescription.contains("Maria"))
     }
-
-    @Test func cloudIconConsentFromTheSheetGoesThroughTheComposition() throws {
-        let analytics = RecordingAnalyticsGateway()
-        let composition = try makeTestComposition(analytics: analytics)
-        let state = AddGiftState(
-            route: .create, data: composition.data, suggestGift: composition.suggestGift,
-            preferences: composition.preferences, analytics: analytics,
-            applyCloudIconConsent: { composition.setCloudIconConsent($0, source: .addGift) })
-
-        state.allowCloudIcons()
-
-        #expect(composition.cloudIconConsent == .allowed)
-        #expect(analytics.events == [.cloudIconsConsentChanged(allowed: true, source: .addGift)])
-        #expect(analytics.contexts.last?.cloudIcons == "allowed")
-    }
 }
 
 struct MonitoringConfigurationTests {
@@ -416,6 +378,6 @@ struct MonitoringConfigurationTests {
     @MainActor
     @Test func unconfiguredReleaseLaunchGetsTheSilentGateway() {
         let configuration = MonitoringConfiguration(isDebugBuild: false, isSimulator: false, isVerificationLaunch: false, isTestFlight: false)
-        #expect(Monitoring.makeAnalytics(configuration: configuration, isEnabled: true) is NoopAnalyticsGateway)
+        #expect(Monitoring.makeAnalytics(configuration: configuration) is NoopAnalyticsGateway)
     }
 }

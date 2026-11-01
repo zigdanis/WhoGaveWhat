@@ -1,28 +1,29 @@
+/// Asks the cloud service first; when it has no answer (offline, rate limited, low confidence) and the
+/// on-device model is available, that model gets the same question. Results are stamped with who answered.
 @MainActor
 final class PreferredGiftIntelligenceGateway: GiftIntelligenceGateway {
-    private let preferences: PreferencesGateway
     private let cloud: GiftIntelligenceGateway
     private let onDevice: GiftIntelligenceGateway
 
-    init(preferences: PreferencesGateway, cloud: GiftIntelligenceGateway, onDevice: GiftIntelligenceGateway) {
-        self.preferences = preferences
+    init(cloud: GiftIntelligenceGateway, onDevice: GiftIntelligenceGateway) {
         self.cloud = cloud
         self.onDevice = onDevice
     }
 
-    private var selected: GiftIntelligenceGateway {
-        preferences.cloudIconConsent == .allowed ? cloud : onDevice
-    }
+    var isAvailable: Bool { cloud.isAvailable || onDevice.isAvailable }
 
-    var isAvailable: Bool { selected.isAvailable }
-    func prewarm() { selected.prewarm() }
+    /// Only the cloud route is warmed: it is the one every request tries first.
+    func prewarm() { cloud.prewarm() }
 
     func suggestGift(named name: String, currency: SupportedCurrency) async -> GiftIntelligenceResult? {
-        let consent = preferences.cloudIconConsent
-        let gateway = selected
-        guard gateway.isAvailable else { return nil }
-        let result = await gateway.suggestGift(named: name, currency: currency)
-        guard !Task.isCancelled, preferences.cloudIconConsent == consent else { return nil }
+        if cloud.isAvailable, var result = await cloud.suggestGift(named: name, currency: currency) {
+            result.provider = .cloud
+            return result
+        }
+        guard !Task.isCancelled, onDevice.isAvailable,
+            var result = await onDevice.suggestGift(named: name, currency: currency)
+        else { return nil }
+        result.provider = .onDevice
         return result
     }
 }

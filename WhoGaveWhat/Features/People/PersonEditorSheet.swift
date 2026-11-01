@@ -68,7 +68,7 @@ struct PersonEditorSheet: View {
             }
             ScrollView {
                 VStack(spacing: isCompact ? 16 : 20) {
-                    PersonEditorNameField(name: $name, isFocused: $nameIsFocused)
+                    PersonEditorNameField(name: $name, isFocused: $nameIsFocused, onReturn: submitFromKeyboard)
                     if showsPhoto {
                         PersonEditorPhotoControl(
                             imageData: imageData,
@@ -98,6 +98,8 @@ struct PersonEditorSheet: View {
                 }
             }
             .scrollIndicators(.hidden)
+            // A sheet sized to its content has nothing to scroll, so it should not rubber-band either.
+            .scrollBounceBehavior(.basedOnSize)
             .scrollDismissesKeyboard(.interactively)
             .accessibilityIdentifier("person-editor.scroll")
         }
@@ -153,17 +155,34 @@ struct PersonEditorSheet: View {
         }
     }
 
-    /// A regular-width window shows the editor as a centered form sized to its content, so Add person is a
-    /// small card rather than a tall empty sheet. Compact windows keep the full-height sheet.
-    /// Until the first layout measures it, an estimate keeps the sheet from opening tall and snapping down.
+    /// Add person (no photo, no Delete) is one field, so on every width the sheet is as tall as its header and
+    /// form: on an iPhone it rises just above the keyboard with the field and Save in reach. A regular-width window
+    /// shows any editor as a centered form sized to its content. Only the edit sheet on a compact window, with its
+    /// photo card and Delete, keeps the full-height sheet.
+    /// Until the first layout measures it, an estimate keeps the sheet from opening tall and snapping down: Add
+    /// person is about 180 pt (70 header with its top padding, 24 + 58 + 28 form) at the default text size.
     private var detent: PresentationDetent {
-        guard layout.usesFormSheets else { return .large }
-        guard headerHeight > 0, formHeight > 0 else { return .height(showsPhoto ? 480 : 190) }
+        guard layout.usesFormSheets || sizesToContent else { return .large }
+        guard headerHeight > 0, formHeight > 0 else { return .height(showsPhoto ? 480 : 180) }
         return .height(headerHeight + formHeight)
+    }
+
+    private var sizesToContent: Bool {
+        !showsPhoto && onDelete == nil
     }
 
     private var canSave: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty && !isLoadingPhoto
+    }
+
+    /// Return on the keyboard saves like the checkmark. With nothing to save, such as an empty name, the keyboard
+    /// stays up so typing can go on.
+    private func submitFromKeyboard() {
+        guard canSave else {
+            nameIsFocused = true
+            return
+        }
+        save()
     }
 
     private func save() {
@@ -281,6 +300,7 @@ private struct PersonEditorHeader: View {
 private struct PersonEditorNameField: View {
     @Binding var name: String
     @FocusState.Binding var isFocused: Bool
+    let onReturn: () -> Void
 
     var body: some View {
         TextField("Name", text: $name)
@@ -288,7 +308,7 @@ private struct PersonEditorNameField: View {
             .multilineTextAlignment(.center)
             .focused($isFocused)
             .submitLabel(.done)
-            .onSubmit { isFocused = false }
+            .onSubmit(onReturn)
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .frame(minHeight: 58)

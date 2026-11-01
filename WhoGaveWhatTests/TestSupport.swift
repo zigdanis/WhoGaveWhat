@@ -8,16 +8,7 @@ import Observation
 final class TestPreferencesGateway: PreferencesGateway {
     var currencyCode = "USD"
     var selfPersonID: String?
-    var cloudIconConsent: CloudIconConsent = .undecided
     var installID = UUID().uuidString
-    var analyticsEnabled = true
-    func setAnalyticsEnabled(_ enabled: Bool) {
-        analyticsEnabled = enabled
-    }
-    func setCloudIconConsent(_ consent: CloudIconConsent) {
-        if cloudIconConsent != consent, consent == .declined { installID = UUID().uuidString }
-        cloudIconConsent = consent
-    }
     func setCurrencyCode(_ currencyCode: String) {
         self.currencyCode = currencyCode
     }
@@ -43,12 +34,10 @@ final class RecordingAnalyticsGateway: AnalyticsGateway {
     var events: [AnalyticsEvent] = []
     var failures: [AnalyticsFailure] = []
     var contexts: [AnalyticsContext] = []
-    var enabledChanges: [Bool] = []
 
     func track(_ event: AnalyticsEvent) { events.append(event) }
     func report(_ failure: AnalyticsFailure) { failures.append(failure) }
     func update(_ context: AnalyticsContext) { contexts.append(context) }
-    func setEnabled(_ enabled: Bool) { enabledChanges.append(enabled) }
 
     var eventNames: [String] { events.map(\.name) }
 }

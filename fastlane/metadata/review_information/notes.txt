@@ -2,8 +2,8 @@ No account or sign-in is required. People, gifts and photos are stored on the de
 
 To try it: tap Add a gift on Home (on iPad it is in the top bar), type a gift name such as "Bouquet of roses", pick who gave and who received it, then Save. In People, open a person and turn on "This is me" to see per-person balances in Insights.
 
-Optional cloud suggestions: the first time you type a gift name, the app asks whether it may send the gift name to TypeSafe AI (through our Cloudflare server) to choose an icon and an approximate price. It is off until allowed and can be turned off in Settings > Cloud icon suggestions. Only the gift name, currency and a random rate-limit ID are sent; people, dates, amounts and occasions never leave the device. Without it, icons are chosen on device.
+Cloud suggestions: while you type a gift name, the app sends the gift name to TypeSafe AI (through our Cloudflare server) to choose an icon and an approximate price. Only the gift name, currency and a random rate-limit ID are sent; people, dates, amounts and occasions never leave the device. If the service has no answer, the on-device model or a keyword list chooses the icon.
 
-Diagnostics: anonymous usage events and crash reports are sent unless turned off in Settings > Diagnostics > Share usage and crash reports. They never include names, gift titles, amounts or photos.
+Diagnostics: anonymous usage events and crash reports are sent. They never include names, gift titles, amounts or photos.
 
 The app runs on iPhone and iPad (portrait, landscape and multitasking windows) and supports English and Russian.
