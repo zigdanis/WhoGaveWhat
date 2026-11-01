@@ -48,6 +48,12 @@ jobs:
             display: iphone-duo
             runtime: iOS 27.1
             device: iPhone Duo
+          # Apple requires the 13-inch iPad set once the app runs on iPad. The script picks the newest 13-inch
+          # iPad Pro on the preinstalled iOS 27.0 runtime, or else a 13-inch iPad Air.
+          - name: Plain 13-inch iPad screenshots (English and Russian)
+            display: ipad-13
+            runtime: iOS 27.0
+            device: ''
     env:
       DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
       XCODE_VERSION: '27.1'
@@ -82,40 +88,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           pattern: store-screenshots-*
           path: ${{ runner.temp }}/parts
-      # One folder per language holding every set, the layout the App Store metadata workflow uploads.
+      # One folder per language holding every set, the layout the App Store metadata workflow uploads, and an
+      # index.html that shows every set by device and language for review.
       - name: Merge the sets into one folder per language
-        run: |
-          python3 -I - <<'PY'
-          import os, shutil
-          from pathlib import Path
-          parts = Path(os.environ['RUNNER_TEMP']) / 'parts'
-          out = Path(os.environ['RUNNER_TEMP']) / 'store-screenshots'
-          expected = {'iphone-6.9', 'iphone-6.3', 'iphone-duo'}
-          found = {path.name.removeprefix('store-screenshots-') for path in parts.iterdir()}
-          if found != expected:
-              raise SystemExit(f'Expected the screenshot sets {sorted(expected)}, got {sorted(found)}')
-          for display in sorted(expected):
-              part = parts / f'store-screenshots-{display}'
-              # Each set's own report stays beside the merged folders for review; its contact sheet now sits
-              # one level below the screenshots it links to.
-              (out / display).mkdir(parents=True)
-              shutil.copy2(part / 'metadata.json', out / display / 'metadata.json')
-              sheet = (part / 'index.html').read_text()
-              sheet = sheet.replace('href="screenshots/', 'href="../screenshots/').replace('src="screenshots/', 'src="../screenshots/')
-              (out / display / 'index.html').write_text(sheet)
-              for source in sorted((part / 'screenshots').glob('*/*.png')):
-                  target = out / 'screenshots' / source.parent.name / source.name
-                  if target.exists():
-                      raise SystemExit(f'Two sets both produced {source.parent.name}/{source.name}')
-                  target.parent.mkdir(parents=True, exist_ok=True)
-                  shutil.copy2(source, target)
-          for language in sorted((out / 'screenshots').iterdir()):
-              print(language.name, sorted(path.name for path in language.iterdir()))
-          PY
+        run: python3 scripts/store-screenshots.py "$RUNNER_TEMP/store-screenshots" --combine "$RUNNER_TEMP/parts"
       - name: Upload the combined screenshots
         uses: actions/upload-artifact@v4
         with:

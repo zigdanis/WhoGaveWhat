@@ -3,7 +3,8 @@
 The listing text lives in [`fastlane/metadata`](../fastlane/metadata) in fastlane `deliver`
 layout, in English (`en-US`) and Russian (`ru`). Screenshots are generated, not committed: the
 `Store screenshots` workflow captures them from the Debug sample data and keeps them as a
-`store-screenshots` artifact for review. There are three sets:
+`store-screenshots` artifact for review; its `index.html` shows every set by device and language. There are
+four sets:
 
 - **6.9" iPhone** (`NN_slug.png`, 1320×2868) on iPhone 18 Pro Max.
 - **6.3" iPhone** (`medium_NN_slug.png`, 1206×2622) on iPhone 18 Pro. Apple requires at least one
@@ -13,11 +14,17 @@ layout, in English (`en-US`) and Russian (`ru`). Screenshots are generated, not 
   in CI. With Duo screenshots the product page shows the "optimized for iPhone Duo" badge; Apple
   requires them from April 2027 for apps built with the iOS 27.1 SDK. Uploading this set needs
   fastlane 2.241.1 or later (`APP_IPHONE_DUO`).
+- **13" iPad** (`ipad_NN_slug.png`, 2064×2752, portrait) on the newest 13-inch iPad Pro. Apple requires it once
+  the app runs on iPad and scales it down for the smaller iPads. In regular width the app shows its iPad layout:
+  "Add a gift" in the toolbar, Save in the form's header, pickers as popovers and Insights in two columns, so the
+  set shows the comparison on the Insights shot and has no separate compare shot. fastlane files 2064×2752 under
+  the 13-inch display type (`APP_IPAD_PRO_3GEN_129`).
 
 fastlane `deliver` sorts each language folder's files into sets by pixel size, in file name order.
 
 The `App Store metadata` workflow uploads the text and, when given a screenshots run ID, those
-screenshots to the editable App Store version. It never uploads a build and never submits for
+screenshots to the editable App Store version. `deliver` replaces every set of each language it uploads, so the
+run must contain all four sets; the `Store screenshots` workflow refuses to combine an incomplete run. It never uploads a build and never submits for
 review. It runs only by manual dispatch on `master`, after Danis approves the listing.
 
 | Field | Limit | Notes |

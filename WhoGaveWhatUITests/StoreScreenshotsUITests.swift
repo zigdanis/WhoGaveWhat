@@ -5,6 +5,8 @@ import XCTest
 /// The test only runs for `scripts/store-screenshots.py`, which forwards `KS_STORE_SCREENSHOTS=1`
 /// and the store language (`KS_STORE_LOCALE=en-US|ru`) with xcodebuild's `TEST_RUNNER_` prefix.
 /// In the normal suite it is skipped. Each screenshot is attached as `store-<locale>-NN-<slug>`.
+/// On iPad the app shows its regular-width layout: "Add a gift" sits in the toolbar under the same
+/// label, pickers open as popovers, and Insights puts the comparison beside the balances.
 final class StoreScreenshotsUITests: XCTestCase {
     /// The words the test taps or waits for, in the language of the store listing.
     private struct Listing {
@@ -18,7 +20,6 @@ final class StoreScreenshotsUITests: XCTestCase {
         let addGift: String
         let cancel: String
         let giftTitle: String
-        let insightsTitle: String
         let giftName: String
         let viewpointName: String
         let giverName: String
@@ -30,14 +31,14 @@ final class StoreScreenshotsUITests: XCTestCase {
         static let english = Listing(
             id: "en-US", appleLanguage: "en", appleLocale: "en_US", currency: "USD",
             homeTab: "Home", peopleTab: "People", insightsTab: "Insights",
-            addGift: "Add a gift", cancel: "Cancel", giftTitle: "Gift", insightsTitle: "Insights",
+            addGift: "Add a gift", cancel: "Cancel", giftTitle: "Gift",
             giftName: "Bouquet of roses", viewpointName: "Anton", giverName: "Anton", recipientName: "Marina",
             watchName: "Wristwatch", compareName: "Igor")
 
         static let russian = Listing(
             id: "ru", appleLanguage: "ru", appleLocale: "ru_RU", currency: "RUB",
             homeTab: "Главная", peopleTab: "Люди", insightsTab: "Аналитика",
-            addGift: "Добавить подарок", cancel: "Отмена", giftTitle: "Подарок", insightsTitle: "Аналитика",
+            addGift: "Добавить подарок", cancel: "Отмена", giftTitle: "Подарок",
             giftName: "Букет роз", viewpointName: "Антон", giverName: "Антон", recipientName: "Марина",
             watchName: "Наручные часы", compareName: "Игорь")
     }
@@ -56,6 +57,10 @@ final class StoreScreenshotsUITests: XCTestCase {
             [Listing.english, Listing.russian].first { $0.id == (environment["KS_STORE_LOCALE"] ?? "en-US") },
             "KS_STORE_LOCALE must be en-US or ru")
         continueAfterFailure = false
+        if isPad {
+            // The App Store shows iPad screenshots in portrait.
+            XCUIDevice.shared.orientation = .portrait
+        }
         app = XCUIApplication()
         // The currency argument overrides a code the app stored on an earlier launch, such as the other language's.
         app.launchArguments += [
@@ -92,7 +97,6 @@ final class StoreScreenshotsUITests: XCTestCase {
         captureGiftDetails()
         captureHistoryOfPerson()
         captureInsights()
-        captureCompare()
         capturePeople()
     }
 
@@ -119,7 +123,8 @@ final class StoreScreenshotsUITests: XCTestCase {
         captureStoreShot("home")
     }
 
-    /// A tidy form: icon from the name, giver and recipient chosen, keyboard up, nothing saved.
+    /// A tidy form: icon from the name, giver and recipient chosen, nothing saved. On iPhone the keyboard stays
+    /// up under the form; on iPad Return puts it away, so the form sheet shows centered over Home.
     private func captureAddGift() {
         app.buttons[listing.addGift].tap()
         let field = app.textFields["add-gift.name"]
@@ -130,7 +135,12 @@ final class StoreScreenshotsUITests: XCTestCase {
         waitForKeyboardFocus(field)
         field.typeText(listing.giftName)
         waitForValue(app.buttons["add-gift.emoji"], expected: "💐")
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
+        if isPad {
+            field.typeText("\n")
+            waitForDisappearance(app.keyboards.firstMatch)
+        } else {
+            XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
+        }
         captureStoreShot("add-gift")
 
         let save = app.buttons["add-gift.save"]
@@ -162,18 +172,31 @@ final class StoreScreenshotsUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts[listing.viewpointName].waitForExistence(timeout: timeout))
     }
 
+    /// The year summary and balances, then the comparison card with a person who gave and received. A window wide
+    /// enough for two columns shows the comparison beside the balances, so one shot covers both.
     private func captureInsights() {
         selectTab(listing.insightsTab)
-        XCTAssertTrue(app.navigationBars[listing.insightsTitle].waitForExistence(timeout: timeout))
-        XCTAssertTrue(element(identifier: "insights.balances").waitForExistence(timeout: timeout))
+        let balances = element(identifier: "insights.balances")
+        let compare = element(identifier: "insights.compare")
+        XCTAssertTrue(balances.waitForExistence(timeout: timeout))
+        XCTAssertTrue(compare.waitForExistence(timeout: timeout))
+        if compare.frame.maxX <= balances.frame.minX {
+            chooseComparedPerson()
+            XCTAssertTrue(app.buttons["insights.compare.b"].isHittable)
+            captureStoreShot("insights")
+            return
+        }
         captureStoreShot("insights")
+        scrollToEnd(of: compare)
+        chooseComparedPerson()
+        scrollToEnd(of: compare)
+        XCTAssertTrue(app.buttons["insights.compare.a"].isHittable)
+        XCTAssertTrue(app.buttons["insights.compare.b"].isHittable)
+        captureStoreShot("compare")
     }
 
-    /// The comparison card at the end of the Insights scroll view, with a person who gave and received.
-    private func captureCompare() {
-        let compare = element(identifier: "insights.compare")
-        XCTAssertTrue(compare.waitForExistence(timeout: timeout))
-        scrollToEnd(of: compare)
+    /// Picks the person compared with the viewpoint: on iPhone in a sheet, on iPad in a popover.
+    private func chooseComparedPerson() {
         let personB = app.buttons["insights.compare.b"]
         XCTAssertTrue(personB.isHittable)
         personB.tap()
@@ -187,10 +210,6 @@ final class StoreScreenshotsUITests: XCTestCase {
         XCTAssertEqual(
             XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: chosen, object: personB)], timeout: timeout),
             .completed)
-        scrollToEnd(of: compare)
-        XCTAssertTrue(app.buttons["insights.compare.a"].isHittable)
-        XCTAssertTrue(personB.isHittable)
-        captureStoreShot("compare")
     }
 
     private func scrollToEnd(of element: XCUIElement) {
@@ -211,6 +230,9 @@ final class StoreScreenshotsUITests: XCTestCase {
     }
 
     // MARK: Helpers
+
+    /// The UI test runner runs on the same Simulator as the app.
+    private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
 
     /// Attaches the whole screen as `store-<locale>-NN-<slug>` after animations had time to settle.
     private func captureStoreShot(_ slug: String) {

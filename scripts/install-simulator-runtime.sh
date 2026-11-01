@@ -2,7 +2,7 @@
 # Makes sure the named iOS Simulator runtime (for example "iOS 27.1") is installed for the
 # selected Xcode. GitHub's xcode-27 image preinstalls only the iOS 27.0 runtime, so the
 # runtime that matches Xcode's own SDK is downloaded with `xcodebuild -downloadPlatform iOS`.
-# Prints the installed runtimes, the iPhones the runtime supports and, when a model is named,
+# Prints the installed runtimes, the iPhones and iPads the runtime supports and, when a model is named,
 # that model's Simulator profile (screen size and scale) for the run log.
 
 set -eu
@@ -42,7 +42,7 @@ import json, sys
 for runtime in json.load(sys.stdin).get("runtimes", []):
     if runtime.get("name") == sys.argv[1]:
         names = [device.get("name", "") for device in runtime.get("supportedDeviceTypes", [])]
-        print(runtime["name"], runtime.get("buildversion"), "supports:", ", ".join(name for name in names if name.startswith("iPhone")))
+        print(runtime["name"], runtime.get("buildversion"), "supports:", ", ".join(name for name in names if name.startswith(("iPhone", "iPad"))))
 ' "$runtime"
 
 if [ -n "$device" ]; then
