@@ -175,11 +175,17 @@ struct PersonEditorSheet: View {
         !name.trimmingCharacters(in: .whitespaces).isEmpty && !isLoadingPhoto
     }
 
-    /// Return on the keyboard saves like the checkmark. With nothing to save, such as an empty name, the keyboard
-    /// stays up so typing can go on.
+    /// In Add person, Return saves like the checkmark; with nothing to save yet, such as an empty name, the
+    /// keyboard comes straight back so typing can go on. The edit sheet has more below the name, so there
+    /// Return only hides the keyboard.
     private func submitFromKeyboard() {
+        guard sizesToContent else {
+            nameIsFocused = false
+            return
+        }
         guard canSave else {
-            nameIsFocused = true
+            // The field gives up focus once the submit finishes, so the focus returns on the next turn.
+            Task { @MainActor in nameIsFocused = true }
             return
         }
         save()
