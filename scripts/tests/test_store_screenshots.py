@@ -308,6 +308,24 @@ class CombineTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, '13-inch iPad sizes'):
                 shots.combine_sets(parts, Path(temporary) / 'out')
 
+    def test_a_self_contained_review_page_embeds_every_set(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            parts, out = Path(temporary) / 'parts', Path(temporary) / 'out'
+            self.write_parts(parts)
+            shots.combine_sets(parts, out)
+            page = Path(temporary) / 'review.html'
+
+            with patch.object(shots.shutil, 'which', return_value=None):
+                sets = shots.write_review_page(out, page, note='Run 1')
+
+            text = page.read_text()
+            self.assertEqual(4, len(sets))
+            self.assertEqual(4 * len(SLUGS) * 2, text.count('data:image/png;base64,'))
+            self.assertIn('<a href="#">', text)
+            self.assertNotIn('src="screenshots/', text)
+            self.assertIn('data-label="13-inch iPad · ru · ipad_07_people.png"', text)
+            self.assertIn('<p>Run 1</p>', text)
+
     def test_the_review_page_can_embed_its_images(self):
         page = shots.render_review([(shots.IPAD_13, {}, {'en-US': [(1, 'home', (2064, 2752))]})],
                                    source=lambda locale, name: f'data:image/jpeg;base64,{locale}-{name}')
@@ -316,6 +334,8 @@ class CombineTests(unittest.TestCase):
         # Browsers won't open a data: link as a page, so a tap shows the shot in the page's own dialog.
         self.assertIn('<dialog id="zoom">', page)
         self.assertIn("event.preventDefault()", page)
+        self.assertIn("ArrowRight", page)
+        self.assertIn("ArrowLeft", page)
         self.assertIn('<h2>13-inch iPad &middot; 1 screenshots</h2>', page)
 
 

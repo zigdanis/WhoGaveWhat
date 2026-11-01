@@ -7,9 +7,11 @@ writes `<out>/screenshots/<locale>/NN_slug.png`; `--display iphone-6.3` uses iPh
 `medium_NN_slug.png`; `--display iphone-duo` uses iPhone Duo, which boots folded, and writes the outer display as
 `duo_NN_slug.png`; `--display ipad-13` uses the newest 13-inch iPad Pro and writes `ipad_NN_slug.png` in portrait.
 Each run also writes metadata.json and an index.html contact sheet. `--combine PARTS` merges the sets' artifacts into
-one folder per language, the layout the App Store metadata workflow uploads, with a review page of every set.
+one folder per language, the layout the App Store metadata workflow uploads, with a review page of every set;
+`--review-page FILE` turns such a folder into one self-contained page with the images embedded.
 """
 import argparse
+import base64
 import collections
 import contextlib
 import html
@@ -21,6 +23,7 @@ import shutil
 import struct
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from urllib.parse import quote
 
@@ -207,15 +210,26 @@ PAGE_STYLE = ("<style>body{font:16px/1.5 system-ui;margin:24px auto;max-width:14
               "figcaption{overflow-wrap:anywhere;font-size:13px}"
               "dialog{border:0;padding:0;background:transparent;max-width:100vw;max-height:100vh}"
               "dialog img{width:auto;max-width:96vw;max-height:94vh;border:0;cursor:zoom-out}"
-              "dialog::backdrop{background:rgba(0,0,0,.85)}"
+              "dialog::backdrop{background:rgba(0,0,0,.85)}dialog p{margin:6px 0 0;color:#fff;text-align:center;font-size:13px}"
               "</style>")
 # A tap opens the shot full screen in the page and another closes it. Following the link instead fails where
-# the page embeds its images, because browsers refuse to open a data: URL as a page.
-ZOOM = ('<dialog id="zoom"><img alt=""></dialog><script>'
-        "const zoom=document.getElementById('zoom');"
+# the page embeds its images, because browsers refuse to open a data: URL as a page. While open, the arrow keys
+# or a horizontal swipe step through every shot on the page in order, and Escape closes it.
+ZOOM = ('<dialog id="zoom"><img alt=""><p></p></dialog><script>'
+        "const zoom=document.getElementById('zoom');let shown=-1,touchX=null;"
+        "function show(index){const all=[...document.querySelectorAll('figure a')];if(!all.length)return;"
+        "shown=(index+all.length)%all.length;const link=all[shown];zoom.querySelector('img').src=link.querySelector('img').src;"
+        "zoom.querySelector('p').textContent=`${link.closest('figure').dataset.label}"
+        " \u00b7 ${shown+1}/${all.length}`;if(!zoom.open)zoom.showModal()}"
         "document.addEventListener('click',event=>{const link=event.target.closest('figure a');"
-        "if(link){event.preventDefault();zoom.querySelector('img').src=link.getAttribute('href');zoom.showModal()}"
-        "else if(event.target.closest('dialog')){zoom.close()}});</script>")
+        "if(link){event.preventDefault();show([...document.querySelectorAll('figure a')].indexOf(link))}"
+        "else if(event.target.closest('dialog')){zoom.close()}});"
+        "document.addEventListener('keydown',event=>{if(!zoom.open)return;"
+        "if(event.key==='ArrowRight'||event.key==='ArrowDown'){event.preventDefault();show(shown+1)}"
+        "else if(event.key==='ArrowLeft'||event.key==='ArrowUp'){event.preventDefault();show(shown-1)}});"
+        "zoom.addEventListener('touchstart',event=>{touchX=event.touches[0].clientX},{passive:true});"
+        "zoom.addEventListener('touchend',event=>{if(touchX===null)return;const dx=event.changedTouches[0].clientX-touchX;"
+        "touchX=null;if(Math.abs(dx)>50){event.preventDefault();show(shown+(dx<0?1:-1))}});</script>")
 
 
 def _page_start(title):
@@ -224,16 +238,20 @@ def _page_start(title):
             f"<title>{html.escape(title)}</title>", PAGE_STYLE, ZOOM, f"<h1>{html.escape(title)}</h1>"]
 
 
-def _locale_rows(parts, shots_by_locale, prefix, source, heading):
-    """One row of figures per locale; `source(locale, file name)` gives each image's address."""
+def _locale_rows(parts, shots_by_locale, prefix, source, heading, group):
+    """One row of figures per locale; `source(locale, file name)` gives each image's address. The full-screen view
+    labels each shot with `group`, its locale and its file name."""
     for locale, shots in shots_by_locale.items():
         parts.append(f"<{heading}>{html.escape(locale)}</{heading}><div class=\"row\">")
         for number, slug, (width, height) in shots:
             name = output_name(number, slug, prefix)
             address = html.escape(source(locale, name))
+            # An embedded image is not repeated in the link: the page would double in size for a link that can't open.
+            link = "#" if address.startswith("data:") else address
             caption = html.escape(f"{name} ({width}x{height})")
-            parts.append(f'<figure><a href="{address}"><img loading="lazy" src="{address}" alt="{caption}"></a>'
-                         f"<figcaption>{caption}</figcaption></figure>")
+            label = html.escape(f"{group} · {locale} · {name}")
+            parts.append(f'<figure data-label="{label}"><a href="{link}"><img loading="lazy" src="{address}" '
+                         f'alt="{caption}"></a><figcaption>{caption}</figcaption></figure>')
         parts.append("</div>")
 
 
@@ -243,13 +261,17 @@ def _relative_source(locale, name):
 
 def render_index(shots_by_locale, title="WhoGaveWhat App Store screenshots", prefix=""):
     parts = _page_start(title)
-    _locale_rows(parts, shots_by_locale, prefix, _relative_source, "h2")
+    _locale_rows(parts, shots_by_locale, prefix, _relative_source, "h2", title)
     return "\n".join(parts) + "\n"
 
 
-def render_review(sets, title="WhoGaveWhat App Store screenshots: every set", source=_relative_source):
+def render_review(sets, title="WhoGaveWhat App Store screenshots: every set", source=_relative_source, note=None):
     """The page for reviewing an upload: every set, then every locale. `sets` is [(display, metadata, shots)]."""
     parts = _page_start(title)
+    parts.append("<p>Tap a screenshot to open it full screen. The arrow keys or a swipe go to the next or previous one;"
+                 " a tap or Escape closes it.</p>")
+    if note:
+        parts.append(f"<p>{html.escape(note)}</p>")
     head = sorted({metadata.get("head_sha", "")[:12] for _display, metadata, _shots in sets} - {""})
     if head:
         parts.append(f"<p>Commit {html.escape(', '.join(head))}</p>")
@@ -258,7 +280,7 @@ def render_review(sets, title="WhoGaveWhat App Store screenshots: every set", so
         count = sum(len(shots) for shots in shots_by_locale.values())
         parts.append(f"<h2>{html.escape(display.title)}{f' ({html.escape(details)})' if details else ''}"
                      f" &middot; {count} screenshots</h2>")
-        _locale_rows(parts, shots_by_locale, display.prefix, source, "h3")
+        _locale_rows(parts, shots_by_locale, display.prefix, source, "h3", display.title)
     return "\n".join(parts) + "\n"
 
 
@@ -303,6 +325,59 @@ def combine_sets(parts, out, displays=tuple(DISPLAYS)):
         validate_set(shots_by_locale, display)
         sets.append((display, metadata, shots_by_locale))
     (out / "index.html").write_text(render_review(sets))
+    return sets
+
+
+def read_combined(directory):
+    """The sets of a combined folder written by `combine_sets`, as `[(display, metadata, shots_by_locale)]`."""
+    sets = []
+    for display in DISPLAYS.values():
+        if not (directory / display.key / "metadata.json").is_file():
+            continue
+        metadata = json.loads((directory / display.key / "metadata.json").read_text())
+        pattern = re.compile(rf"{re.escape(display.prefix)}(\d{{2}})_([a-z0-9]+(?:-[a-z0-9]+)*)\.png")
+        shots_by_locale = {}
+        for locale in LOCALES:
+            shots = []
+            for path in sorted((directory / "screenshots" / locale).iterdir()):
+                match = pattern.fullmatch(path.name)
+                if match:
+                    shots.append((int(match[1]), match[2], png_size(path)))
+            shots_by_locale[locale] = shots
+        validate_set(shots_by_locale, display)
+        sets.append((display, metadata, shots_by_locale))
+    if not sets:
+        raise ValueError(f"{directory} holds no combined screenshot sets")
+    return sets
+
+
+def embedded_image(path, width):
+    """A data: URL for one screenshot, scaled to `width` as JPEG with ffmpeg or macOS sips, else the PNG itself."""
+    with tempfile.TemporaryDirectory() as temporary:
+        target = Path(temporary) / "shot.jpg"
+        for command in (["ffmpeg", "-loglevel", "error", "-y", "-i", str(path), "-vf", f"scale={width}:-1",
+                         "-q:v", "4", str(target)],
+                        ["sips", "-s", "format", "jpeg", "-s", "formatOptions", "70", "--resampleWidth", str(width),
+                         str(path), "--out", str(target)]):
+            if shutil.which(command[0]):
+                subprocess.run(command, check=True, capture_output=True)
+                return "data:image/jpeg;base64," + base64.b64encode(target.read_bytes()).decode()
+    return "data:image/png;base64," + base64.b64encode(Path(path).read_bytes()).decode()
+
+
+def write_review_page(directory, page, note=None):
+    """Write one self-contained review page for a combined folder: every set and locale, images embedded, so the
+    file opens anywhere, such as from a T3 attachment on a phone."""
+    sets = read_combined(directory)
+    widths = {display.key: 1032 if display is IPAD_13 else 660 for display, _metadata, _shots in sets}
+    prefixes = sorted(((display.prefix, display.key) for display, _metadata, _shots in sets), reverse=True)
+
+    def source(locale, name):
+        key = next(key for prefix, key in prefixes if name.startswith(prefix))
+        return embedded_image(directory / "screenshots" / locale / name, widths[key])
+
+    page.write_text(render_review(sets, title="WhoGaveWhat App Store screenshots (all sets, EN + RU)", source=source,
+                                  note=note))
     return sets
 
 
@@ -433,6 +508,10 @@ def main(argv=None):
     parser.add_argument("--combine", type=Path, metavar="PARTS",
                         help="Instead of capturing, merge the downloaded store-screenshots-<display> artifacts in PARTS "
                              "into the output folder and write one review page of every set")
+    parser.add_argument("--review-page", type=Path, metavar="FILE",
+                        help="Instead of capturing, write a self-contained review page of the combined folder "
+                             "(a store-screenshots artifact) to FILE, with the images embedded")
+    parser.add_argument("--note", help="A line of context for --review-page, such as the run it shows")
     parser.add_argument("--display", choices=sorted(DISPLAYS), default=IPHONE_69.key,
                         help="App Store screenshot set to capture (default: %(default)s)")
     parser.add_argument("--device", help="Simulator model for the 6.9-inch or iPad set (default: iPhone 18 Pro Max, else the "
@@ -440,6 +519,14 @@ def main(argv=None):
     parser.add_argument("--runtime", help="Require a runtime such as 'iOS 27.0' (default: newest one supporting the model)")
     parser.add_argument("--locale", action="append", choices=LOCALES, help="Store language to capture (default: all)")
     args = parser.parse_args(argv)
+    if args.review_page:
+        try:
+            write_review_page(args.directory, args.review_page, args.note)
+        except (OSError, ValueError, json.JSONDecodeError, subprocess.SubprocessError) as error:
+            print(f"error: {error}", file=sys.stderr)
+            return 1
+        print(args.review_page)
+        return 0
     if args.combine:
         try:
             for display, _metadata, shots_by_locale in combine_sets(args.combine, args.directory):
