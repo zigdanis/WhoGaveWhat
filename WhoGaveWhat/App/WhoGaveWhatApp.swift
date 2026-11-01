@@ -34,8 +34,14 @@ struct WhoGaveWhatApp: App {
                 }
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
-            if phase == .active {
+            switch phase {
+            case .active:
+                composition.sceneBecameActive()
                 Task { await composition.appDiscovery.refresh() }
+            case .background:
+                composition.sceneEnteredBackground()
+            default:
+                composition.sceneBecameInactive()
             }
         }
     }
