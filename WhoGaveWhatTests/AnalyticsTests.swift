@@ -32,7 +32,8 @@ struct AnalyticsEventCatalogTests {
         .currencyChanged(currency: "USD"),
         .privacyPolicyOpened,
         .licensesOpened,
-        .analyticsConsentChanged(enabled: false)
+        .analyticsConsentChanged(enabled: false),
+        .reviewPromptRequested(activeDays: 3, daysSinceFirstLaunch: 4, giftsCount: 6, peopleCount: 3, requestNumber: 1)
     ]
 
     @Test func namesAndPropertyKeysAreSnakeCaseAndUnique() {

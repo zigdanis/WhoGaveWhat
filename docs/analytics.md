@@ -37,6 +37,7 @@ suggestion still sends the typed gift name, as described in Settings.) The full 
 | `privacy_policy_opened`, `licenses_opened` | – | Settings → About |
 | `analytics_consent_changed` | `enabled` | Settings → Diagnostics; `false` is the last event sent |
 | `app_opened_from_spotlight` | – | The Spotlight launcher opened the app |
+| `review_prompt_requested` | `active_days`, `days_since_first_launch`, `gifts_count`, `people_count`, `request_number` | The app asked iOS for the App Store rating sheet (see [rating prompt](rating-prompt.md)); iOS may not show it |
 
 PostHog adds its own `Application Installed / Opened / Updated / Backgrounded` events and attaches
 these super properties to everything: `app_environment` (testflight/appstore), `gifts_count`,

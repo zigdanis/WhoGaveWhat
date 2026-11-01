@@ -31,6 +31,10 @@ final class TestPreferencesGateway: PreferencesGateway {
     func setRecentInsightsPicks(_ ids: [String], for slot: InsightsPickerSlot) {
         recentInsightsPicks[slot] = ids
     }
+    var reviewPromptState = ReviewPromptState()
+    func setReviewPromptState(_ state: ReviewPromptState) {
+        reviewPromptState = state
+    }
 }
 
 /// Remembers every analytics call for assertions.

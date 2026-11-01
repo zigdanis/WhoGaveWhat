@@ -12,6 +12,7 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
     private let installIDKey = "cloudIconInstallID"
     private let recentInsightsPicksKeyPrefix = "insightsRecentPicks."
     private let analyticsEnabledKey = "analyticsEnabled"
+    private let reviewPromptKey = "reviewPrompt"
     private(set) var cloudIconConsent: CloudIconConsent
 
     init(defaults: UserDefaults = .standard) {
@@ -79,5 +80,17 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
 
     func setRecentInsightsPicks(_ ids: [String], for slot: InsightsPickerSlot) {
         defaults.set(ids, forKey: recentInsightsPicksKeyPrefix + slot.rawValue)
+    }
+
+    var reviewPromptState: ReviewPromptState {
+        guard let data = defaults.data(forKey: reviewPromptKey),
+            let state = try? JSONDecoder().decode(ReviewPromptState.self, from: data)
+        else { return ReviewPromptState() }
+        return state
+    }
+
+    func setReviewPromptState(_ state: ReviewPromptState) {
+        guard let data = try? JSONEncoder().encode(state) else { return }
+        defaults.set(data, forKey: reviewPromptKey)
     }
 }
