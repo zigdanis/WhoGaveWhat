@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Floating primary action rendered as a prominent Liquid Glass capsule, pinned
-/// just above the tab bar by `floatingAddButton` and the People screen.
+/// just above the tab bar by `addGiftAction` and the People screen.
 struct FloatingActionButton: View {
     let title: LocalizedStringKey
     let systemImage: String
