@@ -36,6 +36,45 @@ review. It runs only by manual dispatch on `master`, after Danis approves the li
 | `release_notes.txt` | 4000 | What's New of the version being uploaded. Covers every user-visible change since the version on the App Store; replace it for each update. |
 | `review_information/notes.txt` | 4000 | Reviewer notes. Contact details are never committed (see App Review Information below). |
 
+## Search by name
+
+Each storefront indexes only its own languages, so «Кто Че Подарил» must be searchable in storefronts that
+never read the `ru` localization. Apple's [App Store localizations](https://developer.apple.com/help/app-store-connect/reference/app-information/app-store-localizations/)
+table lists each storefront's default and additional languages. AppTweak's [cross-localization
+tests](https://www.apptweak.com/en/aso-blog/how-to-benefit-from-cross-localization-on-the-app-store) (updated
+November 2025) agree on the indexed languages and conclude: "Other than in Canada and the US, apps globally rank
+for keywords included in the English (UK) or English (US) metadata, depending on which one is set as the primary
+locale." Our primary locale is `en-US`, and we have no `en-GB`. In the table the default language comes first.
+
+| Storefronts | Their languages | What we get indexed |
+|---|---|---|
+| Russia | **Russian**, English (U.K.), Ukrainian | `ru`, likely also `en-US` |
+| Ukraine | **English (U.K.)**, Russian, Ukrainian | `en-US` (fallback), `ru` |
+| United States | **English (U.S.)**, Russian, Spanish (Mexico), Arabic, Chinese, French, Korean, Portuguese (Brazil), Vietnamese | `en-US`, `ru` |
+| Kazakhstan, Belarus, Uzbekistan, Kyrgyzstan, Tajikistan, Turkmenistan, Azerbaijan, Armenia, Georgia, Moldova, Latvia, Lithuania, Estonia, Mongolia | **English (U.K.)** only | `en-US` (fallback) |
+| Israel, Türkiye, United Arab Emirates, Cyprus, Serbia, Montenegro | **English (U.K.)** plus Hebrew, Turkish, Arabic, Greek or Croatian | `en-US` (fallback) |
+| Germany, France, Italy, Spain, Poland, Czechia and most of Europe | **their language** plus English (U.K.) | `en-US` (fallback) |
+
+The iTunes Search API agreed on 2026-11-01: «кто че подарил» found the app in ru, ua and us and nothing in kz,
+by, ge, am, rs, de, ae, il and tr, while "who gave what" found it in kz, by and il. So `en-US` is what those
+storefronts read.
+
+**Scheme.** The `en-US` keywords carry the words of the Russian name, `кто,че,подарил`, and `что`, so «кто че
+подарил» and «кто что подарил» match through `en-US` everywhere English is indexed. Apple combines words from the
+name, subtitle and keywords of one localization, never across localizations. The `ru` keywords add `что` (the
+name already has the rest) and `др` (short for «день рождения»). App Store search treats ё as е («кто чё
+подарил» found the app in ru on 2026-11-01), so `чё` is not needed. Only the name is covered this way: generic
+Russian searches such as «учёт подарков» still find the app only where `ru` is indexed.
+`scripts/tests/test_store_listing_text.py` checks this and that keywords don't repeat the name or subtitle.
+
+**Adding `en-GB`.** It would replace the `en-US` fallback in all the English (U.K.) storefronts above, so its
+keywords would have to carry the Russian words instead. It could also change which language Russian-speaking
+customers in those storefronts see. We don't add it for now.
+
+Keywords and the name change only with a new version. Indexing takes from a few hours to two days after
+release; then check with `https://itunes.apple.com/search?term=кто+че+подарил&country=kz&entity=software` per
+storefront (the API rate-limits, so wait a few seconds between requests).
+
 ## Set in App Store Connect by hand
 
 These can't be set through the API key upload, or are kept by hand on purpose.

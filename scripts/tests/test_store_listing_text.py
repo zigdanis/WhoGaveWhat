@@ -1,3 +1,4 @@
+import re
 import unittest
 from pathlib import Path
 
@@ -8,6 +9,23 @@ LOCALES = ('en-US', 'ru')
 # every update needs it, so each locale must carry one.
 LIMITS = {'subtitle.txt': 30, 'keywords.txt': 100, 'promotional_text.txt': 170, 'description.txt': 4000,
           'release_notes.txt': 4000}
+
+
+# The names as set by hand in App Store Connect, to check that keywords don't repeat their words.
+NAMES = {'en-US': 'Who Gave What', 'ru': 'Кто Че Подарил'}
+# The Russian name has to be findable in storefronts that index only English (U.K.), such as Kazakhstan. The
+# app has no en-GB localization, so those storefronts index the primary en-US one, and its keywords carry the
+# words of the Russian name (and «что» for «кто что подарил»). See docs/app-store.md, "Search by name".
+RUSSIAN_NAME_WORDS = ('кто', 'че', 'подарил', 'что')
+
+
+def words(text):
+    # App Store search treats ё as е, so they count as the same word.
+    return set(re.findall(r'\w+', text.lower().replace('ё', 'е')))
+
+
+def keywords(locale):
+    return (METADATA / locale / 'keywords.txt').read_text().strip().split(',')
 
 
 # Blocks that hold emoji: Miscellaneous Technical (⌚ ⏰), Miscellaneous Symbols and Dingbats (☀ ✅),
@@ -35,6 +53,31 @@ class StoreListingTextTests(unittest.TestCase):
     def test_the_name_is_left_to_app_store_connect(self):
         for locale in LOCALES:
             self.assertFalse((METADATA / locale / 'name.txt').exists())
+
+    def test_keywords_are_comma_separated_without_spaces_around(self):
+        for locale in LOCALES:
+            for keyword in keywords(locale):
+                with self.subTest(locale=locale, keyword=keyword):
+                    self.assertTrue(keyword)
+                    self.assertEqual(keyword.strip(), keyword)
+
+    def test_keywords_do_not_repeat_the_name_or_subtitle(self):
+        for locale in LOCALES:
+            subtitle = (METADATA / locale / 'subtitle.txt').read_text()
+            with self.subTest(locale=locale):
+                self.assertEqual(set(), words(','.join(keywords(locale))) & words(NAMES[locale] + ' ' + subtitle))
+
+    def test_keywords_have_no_duplicate_words(self):
+        for locale in LOCALES:
+            found = [word for keyword in keywords(locale) for word in sorted(words(keyword))]
+            with self.subTest(locale=locale):
+                self.assertEqual(sorted(found), sorted(set(found)))
+
+    def test_the_russian_name_is_searchable_in_english_storefronts(self):
+        self.assertFalse((METADATA / 'en-GB').exists(), 'en-GB would replace en-US in those storefronts; move the '
+                         'Russian name words there first and update docs/app-store.md')
+        self.assertLessEqual(set(RUSSIAN_NAME_WORDS), set(keywords('en-US')))
+        self.assertIn('что', keywords('ru'))
 
     def test_no_emoji_in_listing_text(self):
         for path in sorted(METADATA.rglob('*.txt')):
