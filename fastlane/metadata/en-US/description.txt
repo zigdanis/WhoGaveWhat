@@ -3,7 +3,7 @@ Who Gave What is a simple, fast way to keep track of the gifts you and your fami
 Now you're the one with the best memory in the family ;)
 
 LOGGED IN SECONDS
-• Everything is stored right on your iPhone, so saving is instant.
+• Everything is stored right on your iPhone or iPad, so saving is instant.
 • Just enter the gift, who gave it and who received it. The app suggests an icon and an approximate price for you.
 
 A HISTORY WITH EVERYONE
@@ -12,9 +12,10 @@ A HISTORY WITH EVERYONE
 • Compare any two people for any year.
 
 YOUR DATA STAYS YOURS
-• No account needed. Your people, gifts and amounts stay on your iPhone.
+• No account needed. Your people, gifts and amounts stay on your iPhone or iPad.
 • No ads and no tracking.
 • Cloud suggestions work only with your permission. People, dates and amounts are never sent.
 
-MADE FOR iPHONE
+MADE FOR iPHONE AND iPAD
 • Liquid Glass design and support for both displays on iPhone Duo.
+• On iPad it works in portrait, landscape and multitasking windows, with the add buttons in the top bar and Insights in two columns.
