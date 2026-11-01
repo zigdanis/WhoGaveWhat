@@ -41,7 +41,7 @@ struct WhoGaveWhatApp: App {
             case .background:
                 composition.sceneEnteredBackground()
             default:
-                break
+                composition.sceneBecameInactive()
             }
         }
     }

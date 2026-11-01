@@ -17,9 +17,10 @@ All of these must hold, checked when a **new** gift is saved (edits don't count)
 - after an earlier request: at least **120 days** have passed, fewer than 3 requests were made in the last
   365 days, and the user has since saved **3 new gifts** on **2 new days**.
 
-The request comes **2 seconds** after the gift sheet closes, so the saved gift shows on Home first. If
-another sheet is open by then or the app left the foreground, the moment is skipped and a later new gift
-can try again.
+The request comes **2 seconds** after the gift sheet closes, so the saved gift shows on Home first. If by
+then the user has left Home (other tabs own the Add person, Rename and Insights sheets), opened the gift
+sheet again, or the app is no longer active (Control Center, a notification, the app switcher), the moment
+is skipped and a later new gift can try again.
 
 The rules live in `ReviewPromptPolicy` (`WhoGaveWhat/Models/ReviewPrompt.swift`); their state is stored
 in `UserDefaults` under `reviewPrompt`.

@@ -14,6 +14,8 @@ final class AppComposition {
     /// Set when a new gift makes this the moment to ask for an App Store rating; the root view
     /// asks once the gift sheet has closed, then reports back.
     private(set) var isReviewRequestPending = false
+    /// Whether the app is in the foreground and taking input, kept live from the scene phase.
+    private(set) var isSceneActive = false
     let reviewPrompt: ReviewPromptUseCase
     let preferences: PreferencesGateway
     private let peopleGateway: PeopleGateway
@@ -187,10 +189,17 @@ final class AppComposition {
     // MARK: - App Store rating request
 
     func sceneBecameActive() {
+        isSceneActive = true
         reviewPrompt.appBecameActive()
     }
 
+    /// Control Center, a notification or the app switcher covers the app.
+    func sceneBecameInactive() {
+        isSceneActive = false
+    }
+
     func sceneEnteredBackground() {
+        isSceneActive = false
         reviewPrompt.appEnteredBackground()
         isReviewRequestPending = false
     }
@@ -202,7 +211,7 @@ final class AppComposition {
         analytics.track(reviewPrompt.recordRequest(giftsCount: data.gifts.count, peopleCount: data.people.count))
     }
 
-    /// The moment passed without a request, e.g. the user opened another sheet; a later new gift can try again.
+    /// The moment passed without a request, e.g. the user left Home; a later new gift can try again.
     func reviewRequestSkipped() {
         isReviewRequestPending = false
     }

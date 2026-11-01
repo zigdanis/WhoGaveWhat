@@ -8,7 +8,6 @@ import SwiftUI
 struct RootAppView: View {
     let composition: AppComposition
     @Environment(\.requestReview) private var requestReview
-    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         TabView(selection: tabSelection) {
@@ -49,13 +48,15 @@ struct RootAppView: View {
     }
 
     /// Asks for an App Store rating a moment after a new gift lands on Home, unless the user has
-    /// already moved on to another sheet or left the app.
+    /// moved on in the meantime: left Home, opened the gift sheet again or left the app.
     private func requestReviewIfPending() async {
         guard composition.isReviewRequestPending else { return }
         // Lets the gift sheet finish closing and the saved gift show up before the system sheet.
         try? await Task.sleep(for: .seconds(2))
-        guard !Task.isCancelled else { return }
-        guard scenePhase == .active, composition.router.giftSheet == nil else {
+        // Another window of the app may have taken this moment already.
+        guard !Task.isCancelled, composition.isReviewRequestPending else { return }
+        // Only Home is checked: the other tabs' sheets (Add person, Rename, Insights pickers) live there.
+        guard composition.isSceneActive, composition.router.tab == .home, composition.router.giftSheet == nil else {
             composition.reviewRequestSkipped()
             return
         }

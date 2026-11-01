@@ -206,10 +206,14 @@ struct ReviewPromptCompositionTests {
         #expect(!composition.isReviewRequestPending)
 
         composition.sceneEnteredBackground()
+        #expect(!composition.isSceneActive)
         composition.sceneBecameActive()
+        #expect(composition.isSceneActive)
         #expect(composition.saveGift(newGift))
         #expect(composition.isReviewRequestPending)
 
+        composition.sceneBecameInactive()
+        #expect(!composition.isSceneActive)
         composition.reviewRequestSkipped()
         #expect(!composition.isReviewRequestPending)
         #expect(composition.saveGift(newGift))
