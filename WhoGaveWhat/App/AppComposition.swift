@@ -11,6 +11,10 @@ final class AppComposition {
     let haptics: HapticsGateway
     private(set) var currencyCode: String
     private(set) var isAnalyticsEnabled: Bool
+    /// Set when a new gift makes this the moment to ask for an App Store rating; the root view
+    /// asks once the gift sheet has closed, then reports back.
+    private(set) var isReviewRequestPending = false
+    let reviewPrompt: ReviewPromptUseCase
     let preferences: PreferencesGateway
     private let peopleGateway: PeopleGateway
 
@@ -79,6 +83,7 @@ final class AppComposition {
         currencyCode = preferences.currencyCode
         isAnalyticsEnabled = preferences.analyticsEnabled
         router = AppRouter(launchEnvironment: launchEnvironment, analytics: analytics)
+        reviewPrompt = Self.makeReviewPrompt(preferences: preferences, launchEnvironment: launchEnvironment)
         loadGiftsUseCase = LoadGiftsUseCase(gateway: giftGateway)
         saveGiftUseCase = SaveGiftUseCase(giftGateway: giftGateway, suggestGift: suggestGift)
         deleteGiftUseCase = DeleteGiftUseCase(gateway: giftGateway)
@@ -97,6 +102,25 @@ final class AppComposition {
         }
         data.setSelfPerson(preferences.selfPersonID)
         reloadData()
+    }
+
+    /// Verification launches never ask for a rating, except `KS_REVIEW_PROMPT=ready`, which starts on
+    /// the third day of use so the next new gift (with five gifts in total) shows the request.
+    private static func makeReviewPrompt(
+        preferences: PreferencesGateway, launchEnvironment: [String: String]
+    ) -> ReviewPromptUseCase {
+        let isReadyLaunch = launchEnvironment["KS_REVIEW_PROMPT"] == "ready"
+        if isReadyLaunch {
+            let now = Date()
+            preferences.setReviewPromptState(
+                ReviewPromptState(
+                    activeDays: 3,
+                    lastActiveDay: ReviewPromptPolicy.dayKey(for: now, calendar: .autoupdatingCurrent),
+                    firstActiveDate: now.addingTimeInterval(-2 * 86_400)))
+        }
+        return ReviewPromptUseCase(
+            preferences: preferences,
+            isEnabled: isReadyLaunch || !MonitoringConfiguration.isVerificationLaunch(launchEnvironment))
     }
 
     func reloadData() {
@@ -145,13 +169,42 @@ final class AppComposition {
             gift = try saveGiftUseCase.execute(input)
         } catch {
             analytics.report(AnalyticsFailure(operation: "save_gift", error: error))
+            reviewPrompt.noteSetback()
             return false
         }
         guard let gift else { return false }
         reloadData()
         analytics.track(.giftSaved(giftSavedProperties(for: gift, input: input)))
         haptics.play(.success)
+        if input.editingGiftID == nil,
+            reviewPrompt.newGiftSaved(giftsCount: data.gifts.count, peopleCount: data.people.count)
+        {
+            isReviewRequestPending = true
+        }
         return true
+    }
+
+    // MARK: - App Store rating request
+
+    func sceneBecameActive() {
+        reviewPrompt.appBecameActive()
+    }
+
+    func sceneEnteredBackground() {
+        reviewPrompt.appEnteredBackground()
+        isReviewRequestPending = false
+    }
+
+    /// The root view handed the pending moment to the system rating request.
+    func reviewRequestPresented() {
+        guard isReviewRequestPending else { return }
+        isReviewRequestPending = false
+        analytics.track(reviewPrompt.recordRequest(giftsCount: data.gifts.count, peopleCount: data.people.count))
+    }
+
+    /// The moment passed without a request, e.g. the user opened another sheet; a later new gift can try again.
+    func reviewRequestSkipped() {
+        isReviewRequestPending = false
     }
 
     private func giftSavedProperties(for gift: Gift, input: SaveGiftInput) -> GiftSavedProperties {
@@ -187,9 +240,11 @@ final class AppComposition {
             try deleteGiftUseCase.execute(id: id)
         } catch {
             analytics.report(AnalyticsFailure(operation: "delete_gift", error: error))
+            reviewPrompt.noteSetback()
             reloadData()
             return
         }
+        reviewPrompt.noteSetback()
         reloadData()
         analytics.track(.giftDeleted(source: source, giftsCount: data.gifts.count))
     }
@@ -285,6 +340,8 @@ final class AppComposition {
             analytics.report(AnalyticsFailure(operation: "delete_person", error: error))
             deleted = false
         }
+        // Removing someone, or failing to, is not a moment to ask for a rating.
+        reviewPrompt.noteSetback()
         // Clear the viewpoint before reloading so a failing reload cannot leave it pointing at a deleted person.
         if deleted, data.isSelf(id) {
             setSelfPerson(nil)

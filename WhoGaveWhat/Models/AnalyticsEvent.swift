@@ -156,6 +156,9 @@ enum AnalyticsEvent: Equatable {
     case privacyPolicyOpened
     case licensesOpened
     case analyticsConsentChanged(enabled: Bool)
+    /// The app asked the system for an App Store rating; whether the sheet appeared is not known.
+    case reviewPromptRequested(
+        activeDays: Int, daysSinceFirstLaunch: Int, giftsCount: Int, peopleCount: Int, requestNumber: Int)
 
     var name: String {
         switch self {
@@ -183,6 +186,7 @@ enum AnalyticsEvent: Equatable {
         case .privacyPolicyOpened: "privacy_policy_opened"
         case .licensesOpened: "licenses_opened"
         case .analyticsConsentChanged: "analytics_consent_changed"
+        case .reviewPromptRequested: "review_prompt_requested"
         }
     }
 
@@ -243,6 +247,14 @@ enum AnalyticsEvent: Equatable {
             ["currency": .string(currency)]
         case .analyticsConsentChanged(let enabled):
             ["enabled": .bool(enabled)]
+        case .reviewPromptRequested(let activeDays, let daysSinceFirstLaunch, let giftsCount, let peopleCount, let requestNumber):
+            [
+                "active_days": .int(activeDays),
+                "days_since_first_launch": .int(daysSinceFirstLaunch),
+                "gifts_count": .int(giftsCount),
+                "people_count": .int(peopleCount),
+                "request_number": .int(requestNumber)
+            ]
         }
     }
 }

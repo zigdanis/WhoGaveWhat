@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftUI
 
 /// Native iOS 26 shell: a Liquid Glass tab bar floating over four navigation
@@ -6,6 +7,8 @@ import SwiftUI
 /// is a native sheet.
 struct RootAppView: View {
     let composition: AppComposition
+    @Environment(\.requestReview) private var requestReview
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         TabView(selection: tabSelection) {
@@ -40,6 +43,24 @@ struct RootAppView: View {
         .sheet(item: giftSheetBinding) { route in
             AddGiftSheet(route: route, composition: composition)
         }
+        .task(id: composition.isReviewRequestPending) {
+            await requestReviewIfPending()
+        }
+    }
+
+    /// Asks for an App Store rating a moment after a new gift lands on Home, unless the user has
+    /// already moved on to another sheet or left the app.
+    private func requestReviewIfPending() async {
+        guard composition.isReviewRequestPending else { return }
+        // Lets the gift sheet finish closing and the saved gift show up before the system sheet.
+        try? await Task.sleep(for: .seconds(2))
+        guard !Task.isCancelled else { return }
+        guard scenePhase == .active, composition.router.giftSheet == nil else {
+            composition.reviewRequestSkipped()
+            return
+        }
+        requestReview()
+        composition.reviewRequestPresented()
     }
 
     /// One tab: a navigation stack that pushes `PersonDetailView` for any entity id.
