@@ -171,7 +171,7 @@ final class AppComposition {
             gift = try saveGiftUseCase.execute(input)
         } catch {
             analytics.report(AnalyticsFailure(operation: "save_gift", error: error))
-            reviewPrompt.noteSetback()
+            noteReviewSetback()
             return false
         }
         guard let gift else { return false }
@@ -209,6 +209,12 @@ final class AppComposition {
         guard isReviewRequestPending else { return }
         isReviewRequestPending = false
         analytics.track(reviewPrompt.recordRequest(giftsCount: data.gifts.count, peopleCount: data.people.count))
+    }
+
+    /// A failed save or a deletion: no rating request this session, including one already waiting.
+    private func noteReviewSetback() {
+        reviewPrompt.noteSetback()
+        isReviewRequestPending = false
     }
 
     /// The moment passed without a request, e.g. the user left Home; a later new gift can try again.
@@ -249,11 +255,11 @@ final class AppComposition {
             try deleteGiftUseCase.execute(id: id)
         } catch {
             analytics.report(AnalyticsFailure(operation: "delete_gift", error: error))
-            reviewPrompt.noteSetback()
+            noteReviewSetback()
             reloadData()
             return
         }
-        reviewPrompt.noteSetback()
+        noteReviewSetback()
         reloadData()
         analytics.track(.giftDeleted(source: source, giftsCount: data.gifts.count))
     }
@@ -350,7 +356,7 @@ final class AppComposition {
             deleted = false
         }
         // Removing someone, or failing to, is not a moment to ask for a rating.
-        reviewPrompt.noteSetback()
+        noteReviewSetback()
         // Clear the viewpoint before reloading so a failing reload cannot leave it pointing at a deleted person.
         if deleted, data.isSelf(id) {
             setSelfPerson(nil)

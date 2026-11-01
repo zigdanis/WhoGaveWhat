@@ -12,12 +12,14 @@ All of these must hold, checked when a **new** gift is saved (edits don't count)
 - the app has been in the foreground on at least **3 distinct calendar days** (day 1 is the first launch
   of a build with this feature, also for people who installed earlier);
 - at least **5 gifts** and **2 people** are stored;
-- no gift save failed and no gift or person was deleted since the app last came to the foreground;
+- no gift save failed and no gift or person was deleted since the app last came to the foreground (one
+  during the pause cancels a request that is already waiting);
 - no request was made yet this session or for this app version;
 - after an earlier request: at least **120 days** have passed, fewer than 3 requests were made in the last
   365 days, and the user has since saved **3 new gifts** on **2 new days**.
 
-The request comes **2 seconds** after the gift sheet closes, so the saved gift shows on Home first. If by
+The request comes **2 seconds** after Save (the sheet closes in the first fraction of that), so the saved gift
+shows on Home first. If by
 then the user has left Home (other tabs own the Add person, Rename and Insights sheets), opened the gift
 sheet again, or the app is no longer active (Control Center, a notification, the app switcher), the moment
 is skipped and a later new gift can try again.

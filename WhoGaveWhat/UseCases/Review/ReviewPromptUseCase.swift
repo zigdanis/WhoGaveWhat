@@ -50,7 +50,8 @@ final class ReviewPromptUseCase {
 
     /// Counts a newly created gift and reports whether this is the moment to ask.
     func newGiftSaved(giftsCount: Int, peopleCount: Int) -> Bool {
-        update { policy.recordingNewGift($0) }
+        // A session that runs past midnight is already on the next day of use.
+        update { policy.recordingNewGift(policy.recordingActiveDay($0, now: now(), calendar: calendar)) }
         guard isEnabled, !hadSetbackThisSession, !requestedThisSession else { return false }
         return policy.shouldRequest(
             preferences.reviewPromptState, now: now(), version: version,

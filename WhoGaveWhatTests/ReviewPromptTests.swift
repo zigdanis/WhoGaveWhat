@@ -125,6 +125,15 @@ struct ReviewPromptUseCaseTests {
         #expect(useCase.newGiftSaved(giftsCount: 6, peopleCount: 2))
     }
 
+    @Test func aSessionPastMidnightCountsTheNewDayBeforeDeciding() {
+        var state = thirdDayState()
+        state.activeDays = 2
+        state.lastActiveDay = "2026-10-31"
+        let (useCase, preferences) = makeUseCase(state: state)
+        #expect(useCase.newGiftSaved(giftsCount: 5, peopleCount: 2))
+        #expect(preferences.reviewPromptState.activeDays == 3)
+    }
+
     @Test func aDisabledLaunchStillCountsGiftsButNeverAsks() {
         let (useCase, preferences) = makeUseCase(isEnabled: false)
         #expect(!useCase.newGiftSaved(giftsCount: 5, peopleCount: 2))
@@ -184,6 +193,8 @@ struct ReviewPromptCompositionTests {
     @Test func editsAndEarlyDaysDoNotAsk() throws {
         var early = thirdDayState()
         early.activeDays = 2
+        // The composition runs on the real clock, so the second day must be today.
+        early.lastActiveDay = ReviewPromptPolicy.dayKey(for: Date(), calendar: .autoupdatingCurrent)
         let (earlyComposition, _) = try makeComposition(state: early)
         #expect(earlyComposition.saveGift(newGift))
         #expect(!earlyComposition.isReviewRequestPending)
@@ -218,6 +229,15 @@ struct ReviewPromptCompositionTests {
         #expect(!composition.isReviewRequestPending)
         #expect(composition.saveGift(newGift))
         #expect(composition.isReviewRequestPending)
+    }
+
+    @Test func aDeletionDuringThePauseCancelsTheWaitingRequest() throws {
+        let (composition, _) = try makeComposition()
+        #expect(composition.saveGift(newGift))
+        #expect(composition.isReviewRequestPending)
+        let existing = try #require(composition.data.gifts.first)
+        composition.deleteGift(id: existing.id, source: .home)
+        #expect(!composition.isReviewRequestPending)
     }
 
     @Test func verificationLaunchesAskOnlyWhenReady() throws {
