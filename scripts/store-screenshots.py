@@ -203,14 +203,25 @@ def export_locale(directory, locale, result_bundle, display=IPHONE_69):
 
 PAGE_STYLE = ("<style>body{font:16px/1.5 system-ui;margin:24px auto;max-width:1400px;padding:0 16px}"
               ".row{display:flex;flex-wrap:wrap;gap:16px}figure{margin:0;width:220px}"
-              "img{width:100%;border:1px solid #ccc;border-radius:12px}figcaption{overflow-wrap:anywhere;font-size:13px}"
+              "img{width:100%;border:1px solid #ccc;border-radius:12px;cursor:zoom-in}"
+              "figcaption{overflow-wrap:anywhere;font-size:13px}"
+              "dialog{border:0;padding:0;background:transparent;max-width:100vw;max-height:100vh}"
+              "dialog img{width:auto;max-width:96vw;max-height:94vh;border:0;cursor:zoom-out}"
+              "dialog::backdrop{background:rgba(0,0,0,.85)}"
               "</style>")
+# A tap opens the shot full screen in the page and another closes it. Following the link instead fails where
+# the page embeds its images, because browsers refuse to open a data: URL as a page.
+ZOOM = ('<dialog id="zoom"><img alt=""></dialog><script>'
+        "const zoom=document.getElementById('zoom');"
+        "document.addEventListener('click',event=>{const link=event.target.closest('figure a');"
+        "if(link){event.preventDefault();zoom.querySelector('img').src=link.getAttribute('href');zoom.showModal()}"
+        "else if(event.target.closest('dialog')){zoom.close()}});</script>")
 
 
 def _page_start(title):
     return ['<!doctype html><html lang="en"><meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
-            f"<title>{html.escape(title)}</title>", PAGE_STYLE, f"<h1>{html.escape(title)}</h1>"]
+            f"<title>{html.escape(title)}</title>", PAGE_STYLE, ZOOM, f"<h1>{html.escape(title)}</h1>"]
 
 
 def _locale_rows(parts, shots_by_locale, prefix, source, heading):

@@ -313,6 +313,9 @@ class CombineTests(unittest.TestCase):
                                    source=lambda locale, name: f'data:image/jpeg;base64,{locale}-{name}')
 
         self.assertIn('src="data:image/jpeg;base64,en-US-ipad_01_home.png"', page)
+        # Browsers won't open a data: link as a page, so a tap shows the shot in the page's own dialog.
+        self.assertIn('<dialog id="zoom">', page)
+        self.assertIn("event.preventDefault()", page)
         self.assertIn('<h2>13-inch iPad &middot; 1 screenshots</h2>', page)
 
 
