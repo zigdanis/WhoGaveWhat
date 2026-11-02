@@ -59,13 +59,14 @@ final class SwiftDataPeopleGateway: PeopleGateway {
         if let person = try fetchPerson(id: id) {
             // iOS 18 SwiftData traps ("an appropriate default value is not configured") when
             // deleting a person still has to detach it from a gift's non-optional giver or
-            // recipient, even a gift deleted earlier in the same save. So there the gifts go
-            // first, in their own save. iOS 26 keeps the single atomic cascade.
+            // recipient. So there the gifts are deleted first and the context processes those
+            // deletions before the person goes. processPendingChanges writes nothing to the
+            // store, so the one save below still commits or rolls back all of it.
             if #unavailable(iOS 26.0) {
                 let gifts = person.giftsGiven + person.giftsReceived
                 if !gifts.isEmpty {
                     gifts.forEach(context.delete)
-                    try saveContext()
+                    context.processPendingChanges()
                 }
             }
             context.delete(person)
