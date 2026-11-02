@@ -7,18 +7,12 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
     private let defaults: UserDefaults
     private let currencyCodeKey = "preferredCurrencyCode"
     private let selfPersonKey = "selfPersonID"
-    /// Static so the initializer can read it before every stored property is set.
-    private static let cloudIconConsentKey = "cloudIconConsent"
     private let installIDKey = "cloudIconInstallID"
     private let recentInsightsPicksKeyPrefix = "insightsRecentPicks."
-    private let analyticsEnabledKey = "analyticsEnabled"
     private let reviewPromptKey = "reviewPrompt"
-    private(set) var cloudIconConsent: CloudIconConsent
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        let storedConsent = defaults.string(forKey: Self.cloudIconConsentKey).flatMap(CloudIconConsent.init(rawValue:))
-        cloudIconConsent = storedConsent ?? .undecided
     }
 
     var installID: String {
@@ -28,23 +22,6 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
         let id = UUID().uuidString
         defaults.set(id, forKey: installIDKey)
         return id
-    }
-
-    func setCloudIconConsent(_ consent: CloudIconConsent) {
-        guard cloudIconConsent != consent else { return }
-        if consent == .declined {
-            defaults.set(UUID().uuidString, forKey: installIDKey)
-        }
-        defaults.set(consent.rawValue, forKey: Self.cloudIconConsentKey)
-        cloudIconConsent = consent
-    }
-
-    var analyticsEnabled: Bool {
-        defaults.object(forKey: analyticsEnabledKey) as? Bool ?? true
-    }
-
-    func setAnalyticsEnabled(_ enabled: Bool) {
-        defaults.set(enabled, forKey: analyticsEnabledKey)
     }
 
     var currencyCode: String {

@@ -5,14 +5,31 @@ import SwiftUI
 /// received, so it's gated behind a big, hard-to-miss warning.
 struct PeopleView: View {
     let composition: AppComposition
-    @State private var isAddingPerson = false
+    @State private var addMode: PersonAddMode?
     @Environment(\.adaptiveLayout) private var layout
 
     var body: some View {
         List {
             ScreenHeadingSection(title: "People")
-            ForEach(sortedPeople) { person in
-                personRow(person)
+            if isEmpty {
+                Section {
+                    PeopleWelcome(
+                        onAddYourself: { addMode = .yourself },
+                        onAddSomeoneElse: { addMode = .welcomePerson }
+                    )
+                    // The row spans the full width and pads itself, like the Home welcome.
+                    .padding(.horizontal, WelcomeMetrics.horizontalInset)
+                    .padding(.top, 8)
+                    .padding(.bottom, 24)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                }
+                .zeroHorizontalListSectionMargins()
+            } else {
+                ForEach(sortedPeople) { person in
+                    personRow(person)
+                }
             }
         }
         .listStyle(.insetGrouped)
@@ -21,34 +38,44 @@ struct PeopleView: View {
         .softBottomScrollEdge()
         .background(Color.appBackground)
         .safeAreaInset(edge: .bottom) {
-            if !layout.placesAddActionInToolbar {
+            // The welcome card carries the only add actions until the first person.
+            if !layout.placesAddActionInToolbar, !isEmpty {
                 AddPersonFloatingAction {
-                    isAddingPerson = true
+                    addMode = .person
                 }
             }
         }
         .toolbar {
-            if layout.placesAddActionInToolbar {
+            if layout.placesAddActionInToolbar, !isEmpty {
                 ToolbarItem(placement: .primaryAction) {
-                    ToolbarAddButton(title: "Add person") { isAddingPerson = true }
+                    ToolbarAddButton(title: "Add person") { addMode = .person }
                         .accessibilityIdentifier("people.add-person")
                 }
             }
         }
-        .sheet(isPresented: $isAddingPerson) {
+        .sheet(item: $addMode) { mode in
             PersonEditorSheet(
-                title: "Add person",
+                title: mode == .yourself ? "Add yourself" : "Add person",
                 initialName: "",
                 showsPhoto: false,
-                onCancel: { isAddingPerson = false },
+                onCancel: { addMode = nil },
                 onSave: { name, _ in
-                    guard composition.createPerson(name: name, source: .peopleTab) != nil else {
+                    guard let id = composition.createPerson(name: name, source: mode.source) else {
                         throw CocoaError(.validationMissingMandatoryProperty)
                     }
-                    isAddingPerson = false
+                    if mode == .yourself {
+                        composition.markSelf(true, personID: id)
+                    }
+                    addMode = nil
                 }
             )
         }
+        // The first saved person and the last deleted one swap the welcome, list and button smoothly.
+        .animation(.default, value: isEmpty)
+    }
+
+    private var isEmpty: Bool {
+        composition.data.people.isEmpty
     }
 
     private var sortedPeople: [Person] {
@@ -103,6 +130,22 @@ struct PeopleView: View {
     }
 }
 
+/// What the Add person sheet was opened for.
+private enum PersonAddMode: String, Identifiable {
+    /// From the floating or toolbar button.
+    case person
+    /// From the welcome card's "Add someone else".
+    case welcomePerson
+    /// From the welcome card's "Add yourself": the new person becomes the viewpoint.
+    case yourself
+
+    var id: String { rawValue }
+
+    var source: PersonCreationSource {
+        self == .person ? .peopleTab : .peopleWelcome
+    }
+}
+
 private struct AddPersonFloatingAction: View {
     let action: () -> Void
 
@@ -145,11 +188,7 @@ struct PersonRow: View {
                     Text(name).font(Font.app(16, .semibold)).foregroundColor(Color.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
                     if isSelf {
-                        Text("You")
-                            .font(Font.app(11, .semibold)).foregroundColor(Color.brand)
-                            .padding(.horizontal, 7).padding(.vertical, 2)
-                            .background(Capsule().fill(Color.receivedTint))
-                            .fixedSize()
+                        YouBadge()
                             .accessibilityIdentifier("people.you-badge")
                     }
                 }

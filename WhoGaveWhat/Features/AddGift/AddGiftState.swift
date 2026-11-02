@@ -13,9 +13,6 @@ final class AddGiftState {
     private let debounce: Duration
     private let preferences: PreferencesGateway?
     private let analytics: AnalyticsGateway
-    /// Applies a cloud icon choice through the composition root, which records and publishes it.
-    private let applyCloudIconConsent: ((CloudIconConsent) -> Void)?
-    private var hasEditedName = false
     private var hasEditedPrice = false
     private(set) var suggestionTask: Task<Void, Never>?
     /// The automatically chosen emoji a gift being edited already has; kept until a rename yields a better guess.
@@ -27,14 +24,12 @@ final class AddGiftState {
         suggestGift: SuggestGiftUseCase,
         preferences: PreferencesGateway? = nil,
         debounce: Duration = .milliseconds(500),
-        analytics: AnalyticsGateway = NoopAnalyticsGateway(),
-        applyCloudIconConsent: ((CloudIconConsent) -> Void)? = nil
+        analytics: AnalyticsGateway = NoopAnalyticsGateway()
     ) {
         self.suggestGift = suggestGift
         self.preferences = preferences
         self.debounce = debounce
         self.analytics = analytics
-        self.applyCloudIconConsent = applyCloudIconConsent
         editingGiftID = route.editingGiftID
 
         if let giftID = route.editingGiftID,
@@ -84,31 +79,6 @@ final class AddGiftState {
 
     var effectiveEmoji: String {
         draft.emoji ?? draft.aiEmoji ?? suggestGift.instantSuggestion(for: draft.name).emoji
-    }
-
-    var showsCloudIconConsent: Bool {
-        hasEditedName && preferences?.cloudIconConsent == .undecided && draft.emoji == nil
-            && draft.name.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2
-    }
-
-    func allowCloudIcons() {
-        setCloudIconConsent(.allowed)
-        scheduleSuggestion(after: .zero)
-    }
-
-    func declineCloudIcons() {
-        setCloudIconConsent(.declined)
-        // Any in-flight inference belongs to the old routing choice.
-        scheduleSuggestion(after: debounce)
-    }
-
-    private func setCloudIconConsent(_ consent: CloudIconConsent) {
-        if let applyCloudIconConsent {
-            applyCloudIconConsent(consent)
-        } else {
-            preferences?.setCloudIconConsent(consent)
-            analytics.track(.cloudIconsConsentChanged(allowed: consent == .allowed, source: .addGift))
-        }
     }
 
     var name: String {
@@ -166,7 +136,6 @@ final class AddGiftState {
             draft.estimatedValue = nil
         }
         draft.name = name
-        hasEditedName = true
         // Without a specific keyword match, keep the emoji the gift already had instead of the generic one.
         draft.aiEmoji = suggestGift.keywordSuggestion(for: name) == nil ? storedEmoji : nil
         scheduleSuggestion(after: debounce)
@@ -189,14 +158,13 @@ final class AddGiftState {
             guard !isStale(trimmed) else { return }
             // The spinner belongs to the icon, so it stays hidden over a hand-picked emoji.
             aiLoading = draft.emoji == nil
-            let provider: SuggestionProvider = preferences?.cloudIconConsent == .allowed ? .cloud : .onDevice
             let started = Date()
             let result = await suggestGift.intelligentSuggestion(for: trimmed, currency: currency)
             // A request the user typed past was cancelled; only answers that arrive are measured.
             guard !isStale(trimmed) else { return }
             analytics.track(
                 .giftSuggestionCompleted(
-                    provider: provider,
+                    provider: result?.provider ?? .cloud,
                     hasIcon: result?.emoji != nil,
                     hasPrice: result?.value != nil,
                     latencyMilliseconds: Int(Date().timeIntervalSince(started) * 1_000)))

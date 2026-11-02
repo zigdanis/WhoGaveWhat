@@ -18,8 +18,4 @@ final class CompositeAnalyticsGateway: AnalyticsGateway {
     func update(_ context: AnalyticsContext) {
         for gateway in gateways { gateway.update(context) }
     }
-
-    func setEnabled(_ enabled: Bool) {
-        for gateway in gateways { gateway.setEnabled(enabled) }
-    }
 }

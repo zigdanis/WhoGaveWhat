@@ -28,52 +28,6 @@ struct SettingsView: View {
                     .accessibilityValue(composition.currencyCode)
                 }
 
-                SectionHeader(text: "Gift icons").padding(.top, 24).padding(.bottom, 7)
-                Card {
-                    Toggle(
-                        "Cloud icon suggestions",
-                        isOn: Binding(
-                            get: { composition.cloudIconConsent == .allowed },
-                            set: { composition.setCloudIconConsent($0 ? .allowed : .declined, source: .settings) }
-                        )
-                    )
-                    .font(Font.app(16, .regular))
-                    .foregroundStyle(Color.textPrimary)
-                    .tint(Color.brandFill)
-                    .padding(.horizontal, 14).padding(.vertical, 9)
-                    .accessibilityIdentifier("settings.cloud-icons")
-                }
-                Text(
-                    "Sends only the gift name and your currency, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon and an approximate price. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms."
-                )
-                .font(Font.app(13, .regular))
-                .foregroundStyle(Color.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 14).padding(.top, 8)
-
-                SectionHeader(text: "Diagnostics").padding(.top, 24).padding(.bottom, 7)
-                Card {
-                    Toggle(
-                        "Share usage and crash reports",
-                        isOn: Binding(
-                            get: { composition.isAnalyticsEnabled },
-                            set: { composition.setAnalyticsEnabled($0) }
-                        )
-                    )
-                    .font(Font.app(16, .regular))
-                    .foregroundStyle(Color.textPrimary)
-                    .tint(Color.brandFill)
-                    .padding(.horizontal, 14).padding(.vertical, 9)
-                    .accessibilityIdentifier("settings.analytics")
-                }
-                Text(
-                    "Anonymous usage statistics and crash reports help improve the app. They never include names, gift titles, amounts or photos."
-                )
-                .font(Font.app(13, .regular))
-                .foregroundStyle(Color.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 14).padding(.top, 8)
-
                 SectionHeader(text: "About").padding(.top, 24).padding(.bottom, 7)
                 Card {
                     VStack(spacing: 0) {

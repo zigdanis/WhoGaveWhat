@@ -10,7 +10,6 @@ final class AppComposition {
     let analytics: AnalyticsGateway
     let haptics: HapticsGateway
     private(set) var currencyCode: String
-    private(set) var isAnalyticsEnabled: Bool
     /// Set when a new gift makes this the moment to ask for an App Store rating; the root view
     /// asks once the gift sheet has closed, then reports back.
     private(set) var isReviewRequestPending = false
@@ -39,20 +38,19 @@ final class AppComposition {
         haptics: HapticsGateway
     ) {
         let environment = ProcessInfo.processInfo.environment
-        let cloud: GiftIntelligenceGateway
+        // Verification launches with `KS_CLOUD_ICONS=stub` get fixed answers only: no network, no on-device model.
+        let intelligence: GiftIntelligenceGateway
         if environment["KS_CLOUD_ICONS"] == "stub" {
-            cloud = StubCloudGiftIconGateway()
+            intelligence = StubCloudGiftIconGateway()
         } else {
-            cloud = CloudGiftIconGateway(preferences: preferences, analytics: analytics)
+            intelligence = PreferredGiftIntelligenceGateway(
+                cloud: CloudGiftIconGateway(preferences: preferences, analytics: analytics),
+                onDevice: FoundationModelsGiftIntelligenceGateway(analytics: analytics))
         }
         self.init(
             store: store,
             preferences: preferences,
-            intelligence: PreferredGiftIntelligenceGateway(
-                preferences: preferences,
-                cloud: cloud,
-                onDevice: FoundationModelsGiftIntelligenceGateway(analytics: analytics)
-            ),
+            intelligence: intelligence,
             launchEnvironment: environment,
             analytics: analytics,
             haptics: haptics
@@ -76,14 +74,8 @@ final class AppComposition {
         self.analytics = analytics
         self.haptics = haptics
         appDiscovery = AppDiscoveryIndexer(analytics: analytics)
-        if let rawConsent = launchEnvironment["KS_CLOUD_ICON_CONSENT"],
-            let consent = CloudIconConsent(rawValue: rawConsent)
-        {
-            preferences.setCloudIconConsent(consent)
-        }
         self.peopleGateway = peopleGateway
         currencyCode = preferences.currencyCode
-        isAnalyticsEnabled = preferences.analyticsEnabled
         router = AppRouter(launchEnvironment: launchEnvironment, analytics: analytics)
         reviewPrompt = Self.makeReviewPrompt(preferences: preferences, launchEnvironment: launchEnvironment)
         loadGiftsUseCase = LoadGiftsUseCase(gateway: giftGateway)
@@ -151,8 +143,7 @@ final class AppComposition {
                 giftsCount: data.gifts.count,
                 peopleCount: data.people.count,
                 hasViewpoint: data.selfPersonID != nil,
-                currency: currencyCode,
-                cloudIcons: preferences.cloudIconConsent.rawValue))
+                currency: currencyCode))
     }
 
     @discardableResult
@@ -393,31 +384,5 @@ final class AppComposition {
         self.currencyCode = currencyCode
         analytics.track(.currencyChanged(currency: currencyCode))
         publishAnalyticsContext()
-    }
-
-    var cloudIconConsent: CloudIconConsent { preferences.cloudIconConsent }
-
-    func setCloudIconConsent(_ consent: CloudIconConsent, source: ConsentSource = .settings) {
-        guard preferences.cloudIconConsent != consent else { return }
-        preferences.setCloudIconConsent(consent)
-        if consent != .undecided {
-            analytics.track(.cloudIconsConsentChanged(allowed: consent == .allowed, source: source))
-        }
-        publishAnalyticsContext()
-    }
-
-    /// The Settings switch for usage events and crash reports. Turning it off is the last thing sent.
-    func setAnalyticsEnabled(_ enabled: Bool) {
-        guard isAnalyticsEnabled != enabled else { return }
-        isAnalyticsEnabled = enabled
-        preferences.setAnalyticsEnabled(enabled)
-        if enabled {
-            analytics.setEnabled(true)
-            analytics.track(.analyticsConsentChanged(enabled: true))
-            publishAnalyticsContext()
-        } else {
-            analytics.track(.analyticsConsentChanged(enabled: false))
-            analytics.setEnabled(false)
-        }
     }
 }

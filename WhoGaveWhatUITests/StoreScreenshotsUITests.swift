@@ -72,8 +72,8 @@ final class StoreScreenshotsUITests: XCTestCase {
         app.launchEnvironment["KS_START"] = "app"
         app.launchEnvironment["KS_RESET_SELF"] = "1"
         app.launchEnvironment["KS_APPEARANCE"] = "light"
+        // Fixed cloud answers and no on-device model, so no network and no Apple Intelligence reach the shots.
         app.launchEnvironment["KS_CLOUD_ICONS"] = "stub"
-        app.launchEnvironment["KS_CLOUD_ICON_CONSENT"] = "declined"
         app.launch()
         XCTAssertTrue(element(identifier: "appearance.light").waitForExistence(timeout: timeout))
         XCTAssertTrue(app.waitForTabButton(listing.homeTab, timeout: timeout).exists)

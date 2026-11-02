@@ -19,6 +19,7 @@ enum GiftSheetSource: String, Equatable {
     case floatingButton = "floating_button"
     case toolbarButton = "toolbar_button"
     case giftDetail = "gift_detail"
+    case insightsWelcome = "insights_welcome"
 }
 
 enum GiftSheetOutcome: String, Equatable {
@@ -45,6 +46,7 @@ enum GiftDeletionSource: String, Equatable {
 enum PersonCreationSource: String, Equatable {
     case peopleTab = "people_tab"
     case giftPicker = "gift_picker"
+    case peopleWelcome = "people_welcome"
 }
 
 enum PersonDeletionSource: String, Equatable {
@@ -57,12 +59,6 @@ enum PersonPhotoChange: String, Equatable {
     case replaced
     case removed
     case unchanged
-}
-
-/// Where a consent choice was made.
-enum ConsentSource: String, Equatable {
-    case addGift = "add_gift"
-    case settings
 }
 
 enum SuggestionProvider: String, Equatable {
@@ -143,7 +139,6 @@ enum AnalyticsEvent: Equatable {
     case giftPriceEdited(hadEstimate: Bool)
     case giftSuggestionCompleted(provider: SuggestionProvider, hasIcon: Bool, hasPrice: Bool, latencyMilliseconds: Int)
     case occasionAdded
-    case cloudIconsConsentChanged(allowed: Bool, source: ConsentSource)
     case giftSaved(GiftSavedProperties)
     case giftDeleted(source: GiftDeletionSource, giftsCount: Int)
     case personCreated(source: PersonCreationSource, peopleCount: Int)
@@ -155,7 +150,6 @@ enum AnalyticsEvent: Equatable {
     case currencyChanged(currency: String)
     case privacyPolicyOpened
     case licensesOpened
-    case analyticsConsentChanged(enabled: Bool)
     /// The app asked the system for an App Store rating; whether the sheet appeared is not known.
     case reviewPromptRequested(
         activeDays: Int, daysSinceFirstLaunch: Int, giftsCount: Int, peopleCount: Int, requestNumber: Int)
@@ -173,7 +167,6 @@ enum AnalyticsEvent: Equatable {
         case .giftPriceEdited: "gift_price_edited"
         case .giftSuggestionCompleted: "gift_suggestion_completed"
         case .occasionAdded: "occasion_added"
-        case .cloudIconsConsentChanged: "cloud_icons_consent_changed"
         case .giftSaved: "gift_saved"
         case .giftDeleted: "gift_deleted"
         case .personCreated: "person_created"
@@ -185,7 +178,6 @@ enum AnalyticsEvent: Equatable {
         case .currencyChanged: "currency_changed"
         case .privacyPolicyOpened: "privacy_policy_opened"
         case .licensesOpened: "licenses_opened"
-        case .analyticsConsentChanged: "analytics_consent_changed"
         case .reviewPromptRequested: "review_prompt_requested"
         }
     }
@@ -216,8 +208,6 @@ enum AnalyticsEvent: Equatable {
                 "has_price": .bool(hasPrice),
                 "latency_ms": .int(latency)
             ]
-        case .cloudIconsConsentChanged(let allowed, let source):
-            ["consent": .string(allowed ? "allowed" : "declined"), "source": .string(source.rawValue)]
         case .giftSaved(let gift):
             [
                 "mode": .string(gift.mode.rawValue),
@@ -245,8 +235,6 @@ enum AnalyticsEvent: Equatable {
             ["is_current_year": .bool(isCurrentYear)]
         case .currencyChanged(let currency):
             ["currency": .string(currency)]
-        case .analyticsConsentChanged(let enabled):
-            ["enabled": .bool(enabled)]
         case .reviewPromptRequested(let activeDays, let daysSinceFirstLaunch, let giftsCount, let peopleCount, let requestNumber):
             [
                 "active_days": .int(activeDays),

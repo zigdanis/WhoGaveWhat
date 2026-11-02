@@ -1,6 +1,6 @@
 import Foundation
 
-/// Best-effort, opt-in icon and price inference. The request body is the gift name and the currency.
+/// Best-effort icon and price inference. The request body is the gift name and the currency.
 @MainActor
 final class CloudGiftIconGateway: GiftIntelligenceGateway {
     nonisolated static let endpoint = URL(string: "https://whogavewhat-icons.zigdanis.workers.dev")!
@@ -35,7 +35,6 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
     private var backoffUntil = Date.distantPast
     private var cache: [String: CacheEntry] = [:]
     private var cacheOrder: [String] = []
-    private var cacheInstallID: String?
 
     init(
         preferences: PreferencesGateway,
@@ -63,7 +62,7 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
         }
     }
 
-    var isAvailable: Bool { preferences.cloudIconConsent == .allowed }
+    var isAvailable: Bool { true }
     func prewarm() {}
 
     static func normalizedName(_ name: String) -> String {
@@ -73,13 +72,8 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
 
     func suggestGift(named name: String, currency: SupportedCurrency) async -> GiftIntelligenceResult? {
         let normalized = Self.normalizedName(name)
-        guard isAvailable, !Task.isCancelled, normalized.count >= 2 else { return nil }
+        guard !Task.isCancelled, normalized.count >= 2 else { return nil }
         let installID = preferences.installID
-        if cacheInstallID != installID {
-            cache.removeAll()
-            cacheOrder.removeAll()
-            cacheInstallID = installID
-        }
         // The estimate is in the requested currency, so each currency has its own entry.
         let cacheKey = "\(currency.code)\n\(normalized)"
         if let entry = cache[cacheKey] { return entry.result }
@@ -93,10 +87,8 @@ final class CloudGiftIconGateway: GiftIntelligenceGateway {
 
         do {
             let (data, response) = try await transport(request)
-            // A revoked consent or a cancelled edit must not publish or cache a late answer.
-            guard !Task.isCancelled, isAvailable, preferences.installID == installID,
-                let response = response as? HTTPURLResponse
-            else { return nil }
+            // A cancelled edit must not publish or cache a late answer.
+            guard !Task.isCancelled, let response = response as? HTTPURLResponse else { return nil }
             if response.statusCode == 429 || response.statusCode == 503 {
                 // The server says how long to wait: briefly after a provider hiccup, until tomorrow
                 // for a spent budget. A rate limit is never retried sooner than a minute.

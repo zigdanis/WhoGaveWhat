@@ -43,7 +43,6 @@ struct CloudGiftIconTests {
         now: @escaping @MainActor () -> Date = { Date() }
     ) -> CloudGiftIconGateway {
         let preferences = preferences ?? TestPreferencesGateway()
-        preferences.setCloudIconConsent(.allowed)
         return CloudGiftIconGateway(preferences: preferences, now: now, transport: { try await transport.send($0) })
     }
 
@@ -261,18 +260,14 @@ struct CloudGiftIconTests {
         #expect(transport.requests.count == 102)
     }
 
-    @Test func requiresConsentAndAtLeastTwoCharacters() async {
+    @Test func isAlwaysAvailableAndNeedsAtLeastTwoCharacters() async {
         let transport = IconTransportStub()
-        let preferences = TestPreferencesGateway()
-        let gateway = CloudGiftIconGateway(preferences: preferences, transport: { try await transport.send($0) })
-        #expect(gateway.isAvailable == false)
-        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
-        preferences.setCloudIconConsent(.declined)
-        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
-        preferences.setCloudIconConsent(.allowed)
+        let gateway = makeGateway(transport: transport)
         #expect(gateway.isAvailable)
         #expect(await gateway.suggestGift(named: " \nя ", currency: .usd) == nil)
         #expect(transport.requests.isEmpty)
+        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) != nil)
+        #expect(transport.requests.count == 1)
     }
 
     @Test func cancelledAnswerIsNotPublishedOrCached() async {
@@ -289,78 +284,68 @@ struct CloudGiftIconTests {
         #expect(await gateway.suggestGift(named: "guitar", currency: .usd) != nil)
         #expect(transport.requests.count == 2)
     }
-
-    @Test func revokingConsentDiscardsLateAnswerAndOldCache() async {
-        let transport = IconTransportStub()
-        let preferences = TestPreferencesGateway()
-        let gateway = makeGateway(transport: transport, preferences: preferences)
-        _ = await gateway.suggestGift(named: "cached guitar", currency: .usd)
-        transport.holdsRequests = true
-        let request = Task { await gateway.suggestGift(named: "guitar", currency: .usd) }
-        // The first request is already cached; wait for the new transport to suspend.
-        for _ in 0..<500 where transport.requests.count < 2 {
-            try? await Task.sleep(for: .milliseconds(10))
-        }
-        preferences.setCloudIconConsent(.declined)
-        preferences.setCloudIconConsent(.allowed)
-        transport.releaseRequest()
-        #expect(await request.value == nil)
-
-        transport.holdsRequests = false
-        _ = await gateway.suggestGift(named: "cached guitar", currency: .usd)
-        #expect(transport.requests.count == 3)
-        #expect(transport.requests.first?.value(forHTTPHeaderField: "X-Install-ID") != preferences.installID)
-        #expect(transport.requests.last?.value(forHTTPHeaderField: "X-Install-ID") == preferences.installID)
-    }
 }
 
 @MainActor
 struct PreferredGiftIntelligenceTests {
-    @Test(arguments: [CloudIconConsent.undecided, .declined, .allowed])
-    func routesByConsent(_ consent: CloudIconConsent) async {
-        let preferences = TestPreferencesGateway()
-        preferences.setCloudIconConsent(consent)
+    @Test func cloudAnswersFirstAndTheOnDeviceModelIsNotAsked() async {
         let cloud = ScriptedIntelligenceGateway()
         let onDevice = ScriptedIntelligenceGateway()
         cloud.results["guitar"] = GiftIntelligenceResult(emoji: "🎸", value: nil)
         onDevice.results["guitar"] = GiftIntelligenceResult(emoji: "🎵", value: 1_000)
-        let gateway = PreferredGiftIntelligenceGateway(preferences: preferences, cloud: cloud, onDevice: onDevice)
+        let gateway = PreferredGiftIntelligenceGateway(cloud: cloud, onDevice: onDevice)
 
         #expect(gateway.isAvailable)
         gateway.prewarm()
         let result = await gateway.suggestGift(named: "guitar", currency: .rub)
-        #expect(result?.emoji == (consent == .allowed ? "🎸" : "🎵"))
-        #expect((consent == .allowed ? cloud : onDevice).currencies == [.rub])
-        #expect(cloud.requests.count == (consent == .allowed ? 1 : 0))
-        #expect(onDevice.requests.count == (consent == .allowed ? 0 : 1))
-        #expect(cloud.prewarmCount == (consent == .allowed ? 1 : 0))
-        #expect(onDevice.prewarmCount == (consent == .allowed ? 0 : 1))
+
+        #expect(result == GiftIntelligenceResult(emoji: "🎸", value: nil, provider: .cloud))
+        #expect(cloud.currencies == [.rub])
+        #expect(cloud.prewarmCount == 1)
+        #expect(onDevice.requests.isEmpty)
+        #expect(onDevice.prewarmCount == 0)
     }
 
-    @Test func unavailableOnDeviceModelUsesHeuristicUntilConsentChanges() async {
-        let preferences = TestPreferencesGateway()
+    @Test func availableOnDeviceModelAnswersWhenTheCloudHasNothing() async {
+        let cloud = ScriptedIntelligenceGateway()
+        let onDevice = ScriptedIntelligenceGateway()
+        onDevice.results["guitar"] = GiftIntelligenceResult(emoji: "🎵", value: 1_000)
+        let gateway = PreferredGiftIntelligenceGateway(cloud: cloud, onDevice: onDevice)
+
+        let result = await gateway.suggestGift(named: "guitar", currency: .usd)
+
+        #expect(result == GiftIntelligenceResult(emoji: "🎵", value: 1_000, provider: .onDevice))
+        #expect(cloud.requests == ["guitar"])
+        #expect(onDevice.requests == ["guitar"])
+        #expect(onDevice.currencies == [.usd])
+    }
+
+    @Test func unavailableOnDeviceModelLeavesTheHeuristicWhenTheCloudHasNothing() async {
         let cloud = ScriptedIntelligenceGateway()
         let onDevice = ScriptedIntelligenceGateway()
         onDevice.isAvailable = false
-        let gateway = PreferredGiftIntelligenceGateway(preferences: preferences, cloud: cloud, onDevice: onDevice)
+        onDevice.results["guitar"] = GiftIntelligenceResult(emoji: "🎵", value: 1_000)
+        let gateway = PreferredGiftIntelligenceGateway(cloud: cloud, onDevice: onDevice)
 
-        #expect(gateway.isAvailable == false)
-        #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
-        preferences.setCloudIconConsent(.declined)
-        #expect(gateway.isAvailable == false)
-        preferences.setCloudIconConsent(.allowed)
         #expect(gateway.isAvailable)
-    }
-
-    @Test func cloudNilDoesNotFallThroughToOnDevice() async {
-        let preferences = TestPreferencesGateway()
-        preferences.setCloudIconConsent(.allowed)
-        let cloud = ScriptedIntelligenceGateway()
-        let onDevice = ScriptedIntelligenceGateway()
-        let gateway = PreferredGiftIntelligenceGateway(preferences: preferences, cloud: cloud, onDevice: onDevice)
-
         #expect(await gateway.suggestGift(named: "guitar", currency: .usd) == nil)
         #expect(cloud.requests == ["guitar"])
+        #expect(onDevice.requests.isEmpty)
+    }
+
+    @Test func cancelledRequestDoesNotFallThroughToTheOnDeviceModel() async {
+        let cloud = ScriptedIntelligenceGateway()
+        cloud.holdsRequests = true
+        let onDevice = ScriptedIntelligenceGateway()
+        onDevice.results["guitar"] = GiftIntelligenceResult(emoji: "🎵", value: nil)
+        let gateway = PreferredGiftIntelligenceGateway(cloud: cloud, onDevice: onDevice)
+
+        let request = Task { await gateway.suggestGift(named: "guitar", currency: .usd) }
+        await cloud.waitForRequests(1)
+        request.cancel()
+        cloud.releaseRequests()
+
+        #expect(await request.value == nil)
         #expect(onDevice.requests.isEmpty)
     }
 }
@@ -382,37 +367,14 @@ struct CloudIconPreferencesTests {
         #expect(defaults["NSPrivacyAccessedAPITypeReasons"] as? [String] == ["CA92.1"])
     }
 
-    @Test func persistsConsentAndRotatesInstallIDWhenDeclined() throws {
+    @Test func installIDIsRandomAndStableAcrossLaunches() throws {
         let suite = "CloudIconPreferencesTests.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let preferences = UserDefaultsPreferencesGateway(defaults: defaults)
-        #expect(preferences.cloudIconConsent == .undecided)
         let originalID = preferences.installID
         #expect(UUID(uuidString: originalID) != nil)
-        #expect(UserDefaultsPreferencesGateway(defaults: defaults).installID == originalID)
-
-        preferences.setCloudIconConsent(.allowed)
-        #expect(UserDefaultsPreferencesGateway(defaults: defaults).cloudIconConsent == .allowed)
         #expect(preferences.installID == originalID)
-
-        preferences.setCloudIconConsent(.declined)
-        #expect(preferences.installID != originalID)
-        #expect(UUID(uuidString: preferences.installID) != nil)
-        let reloaded = UserDefaultsPreferencesGateway(defaults: defaults)
-        #expect(reloaded.cloudIconConsent == .declined)
-        #expect(reloaded.installID == preferences.installID)
-
-        let rotatedID = preferences.installID
-        preferences.setCloudIconConsent(.allowed)
-        #expect(preferences.installID == rotatedID)
-    }
-
-    @Test func unknownStoredConsentDefaultsToUndecided() throws {
-        let suite = "CloudIconPreferencesTests.\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        defaults.set("unknown", forKey: "cloudIconConsent")
-        #expect(UserDefaultsPreferencesGateway(defaults: defaults).cloudIconConsent == .undecided)
+        #expect(UserDefaultsPreferencesGateway(defaults: defaults).installID == originalID)
     }
 }

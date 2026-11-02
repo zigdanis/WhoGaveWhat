@@ -232,6 +232,23 @@
         }
       }
     },
+    "Add someone else" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add someone else"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить другого человека"
+          }
+        }
+      }
+    },
     "Add two people to compare them" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -262,6 +279,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добавить первый подарок"
+          }
+        }
+      }
+    },
+    "Add yourself" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add yourself"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить себя"
           }
         }
       }
@@ -317,40 +351,6 @@
         }
       }
     },
-    "Allow" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Allow"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Разрешить"
-          }
-        }
-      }
-    },
-    "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon and an approximate price? Only the name, your currency and a random app ID are sent — never people, dates, amounts or occasions." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon and an approximate price? Only the name, your currency and a random app ID are sent — never people, dates, amounts or occasions."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Разрешить «Кто че подарил» отправлять введённое название подарка в TypeSafe AI, чтобы подобрать значок и примерную стоимость? Отправляются только название, валюта и случайный ID приложения — без имён людей, дат, сумм и поводов."
-          }
-        }
-      }
-    },
     "Anniversary" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -364,23 +364,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Годовщина"
-          }
-        }
-      }
-    },
-    "Anonymous usage statistics and crash reports help improve the app. They never include names, gift titles, amounts or photos." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anonymous usage statistics and crash reports help improve the app. They never include names, gift titles, amounts or photos."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Анонимная статистика использования и отчёты о сбоях помогают улучшать приложение. В них никогда нет имён, названий подарков, сумм и фотографий."
           }
         }
       }
@@ -708,23 +691,6 @@
         }
       }
     },
-    "Cloud icon suggestions" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cloud icon suggestions"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Подбор значков в облаке"
-          }
-        }
-      }
-    },
     "Compare two people" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -997,23 +963,6 @@
         }
       }
     },
-    "Diagnostics" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Diagnostics"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Диагностика"
-          }
-        }
-      }
-    },
     "Dmitri" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1214,23 +1163,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подарок"
-          }
-        }
-      }
-    },
-    "Gift icons" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gift icons"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Значки подарков"
           }
         }
       }
@@ -1711,23 +1643,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пока нет подарков"
-          }
-        }
-      }
-    },
-    "Not now" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not now"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Не сейчас"
           }
         }
       }
@@ -2293,23 +2208,6 @@
         }
       }
     },
-    "Sends only the gift name and your currency, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon and an approximate price. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sends only the gift name and your currency, with a random app ID for rate limiting, through the WhoGaveWhat server to TypeSafe AI (Jev) to choose an icon and an approximate price. People, dates, amounts and occasions are never sent. TypeSafe processes requests under its terms."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Для подбора значка и примерной стоимости через сервер WhoGaveWhat в TypeSafe AI (Jev) отправляются только название подарка, валюта и случайный ID приложения для ограничения числа запросов. Имена людей, даты, суммы и поводы не отправляются. TypeSafe обрабатывает запросы на своих условиях."
-          }
-        }
-      }
-    },
     "Settings" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2323,23 +2221,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Настройки"
-          }
-        }
-      }
-    },
-    "Share usage and crash reports" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Share usage and crash reports"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Отправлять статистику и отчёты о сбоях"
           }
         }
       }
@@ -2395,23 +2276,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Серебряное колье"
-          }
-        }
-      }
-    },
-    "Smarter gift icons" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Smarter gift icons"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Подходящие значки подарков"
           }
         }
       }

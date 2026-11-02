@@ -1,8 +1,8 @@
 # Gift icon Worker
 
 A small Cloudflare Worker that picks an emoji, and optionally an approximate price, for a gift name with
-[TypeSafe Jev](https://docs.typesafe.ai/primitives/choice). The app calls it only
-after the user opts in to cloud icon suggestions. The Jev API key stays in Cloudflare;
+[TypeSafe Jev](https://docs.typesafe.ai/primitives/choice). The app calls it
+while the user types a gift name. The Jev API key stays in Cloudflare;
 the app holds no secret.
 
 ## API

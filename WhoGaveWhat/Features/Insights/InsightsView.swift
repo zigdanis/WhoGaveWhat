@@ -34,7 +34,20 @@ struct InsightsView: View {
 
     var body: some View {
         Group {
-            if InsightsLayout.usesTwoColumns(width: width, dynamicTypeSize: dynamicTypeSize) {
+            if data.gifts.isEmpty {
+                // Before the first gift every number would be zero, so one centred column leads to it instead.
+                VStack(alignment: .leading, spacing: 16) {
+                    ScreenHeading(title: "Insights", topSpacing: ScreenHeading.scrollViewTopSpacing, bottomSpacing: 0)
+                    InsightsWelcome(router: composition.router)
+                        // The card is as wide as the Home and People welcomes.
+                        .padding(.horizontal, WelcomeMetrics.horizontalInset - InsightsLayout.horizontalPadding)
+                        .padding(.top, 8)
+                        .padding(.bottom, 24)
+                        .transition(.opacity)
+                }
+                .frame(maxWidth: InsightsLayout.columnWidth)
+                .frame(maxWidth: .infinity)
+            } else if InsightsLayout.usesTwoColumns(width: width, dynamicTypeSize: dynamicTypeSize) {
                 VStack(alignment: .leading, spacing: 16) {
                     ScreenHeading(title: "Insights", topSpacing: ScreenHeading.scrollViewTopSpacing)
                     HStack(alignment: .top, spacing: InsightsLayout.columnSpacing) {
@@ -61,6 +74,8 @@ struct InsightsView: View {
             }
         }
         .padding(.horizontal, InsightsLayout.horizontalPadding)
+        // The first saved gift and the last deleted one swap the welcome and the sections smoothly.
+        .animation(.default, value: data.gifts.isEmpty)
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.size.width
         } action: { newWidth in

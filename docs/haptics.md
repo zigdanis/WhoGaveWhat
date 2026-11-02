@@ -23,7 +23,7 @@ on save, and drops light ticks that follow another haptic within 0.12 s (`Haptic
 
 System toggles (iOS plays its own switch haptic), swipe actions, every delete and confirmation
 dialog, the Add Gift From, To, occasion, icon and date picks and quick-date pills, typing, AI icon
-and price suggestions arriving, cloud-consent card buttons, the Details disclosure, the Settings
+and price suggestions arriving, the Details disclosure, the Settings
 currency list, the Insights year menu, the photo picker, crop and Use photo, tab switches,
 navigation, sheet present and dismiss, `onAppear`, `onChange` and reloads, and a failed gift save
 (it dismisses without a visible message, so a buzz would be unexplained).

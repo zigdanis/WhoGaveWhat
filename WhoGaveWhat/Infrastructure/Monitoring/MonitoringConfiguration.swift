@@ -89,10 +89,10 @@ struct MonitoringConfiguration: Equatable {
     }
 }
 
-/// Builds the one analytics gateway the app uses from the configuration and the user's choice.
+/// Builds the one analytics gateway the app uses from the configuration.
 @MainActor
 enum Monitoring {
-    static func makeAnalytics(configuration: MonitoringConfiguration, isEnabled: Bool) -> AnalyticsGateway {
+    static func makeAnalytics(configuration: MonitoringConfiguration) -> AnalyticsGateway {
         var gateways: [AnalyticsGateway] = []
         if configuration.isDebugBuild {
             gateways.append(LoggingAnalyticsGateway())
@@ -100,14 +100,12 @@ enum Monitoring {
         if configuration.isReportingAllowed {
             // The crash reporter starts first so a failure while PostHog starts is still captured.
             if let dsn = configuration.sentryDSN {
-                gateways.append(
-                    SentryCrashReportingGateway(dsn: dsn, environment: configuration.environmentName, enabled: isEnabled))
+                gateways.append(SentryCrashReportingGateway(dsn: dsn, environment: configuration.environmentName))
             }
             if let apiKey = configuration.postHogAPIKey {
                 gateways.append(
                     PostHogAnalyticsGateway(
-                        apiKey: apiKey, host: configuration.postHogHost,
-                        environment: configuration.environmentName, enabled: isEnabled))
+                        apiKey: apiKey, host: configuration.postHogHost, environment: configuration.environmentName))
             }
         }
         switch gateways.count {

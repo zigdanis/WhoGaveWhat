@@ -91,13 +91,13 @@ is not eligible to publish on visionOS; see ITMS-90984).
 
 **App Privacy** (must match `WhoGaveWhat/PrivacyInfo.xcprivacy` and the privacy policy):
 
-- Do you collect data? **Yes** — the typed gift name only when the user allows cloud
-  suggestions; anonymous usage events and crash reports unless the user turns off
-  Settings → Diagnostics (see [analytics.md](analytics.md)).
+- Do you collect data? **Yes** — the typed gift name for cloud icon and price suggestions;
+  anonymous usage events and crash reports (see [analytics.md](analytics.md)). Neither has an
+  opt-out or opt-in in the app.
 - **User Content → Other User Content** (the typed gift name): App Functionality; not linked to
   the user; not used for tracking.
-- **Identifiers → Device ID** (the random rate-limit ID, recreated whenever the feature is turned
-  off, and the PostHog anonymous ID): App Functionality and Analytics; not linked to the user; not
+- **Identifiers → Device ID** (the random rate-limit ID, created once per install, and the
+  PostHog anonymous ID): App Functionality and Analytics; not linked to the user; not
   used for tracking.
 - **Usage Data → Product Interaction** (screens opened, pickers used, counts): Analytics; not
   linked to the user; not used for tracking.

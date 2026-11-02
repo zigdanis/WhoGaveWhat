@@ -6,7 +6,7 @@ import PostHog
 /// "Application Opened / Backgrounded / Installed / Updated" lifecycle events.
 @MainActor
 final class PostHogAnalyticsGateway: AnalyticsGateway {
-    init(apiKey: String, host: String, environment: String, enabled: Bool) {
+    init(apiKey: String, host: String, environment: String) {
         let config = PostHogConfig(projectToken: apiKey, host: host)
         config.captureApplicationLifecycleEvents = true
         // SwiftUI screens are reported as explicit events instead of view-controller names.
@@ -16,8 +16,9 @@ final class PostHogAnalyticsGateway: AnalyticsGateway {
         // Feature flags are not used, so the app never calls the flags endpoint.
         config.preloadFeatureFlags = false
         config.sendFeatureFlagEvent = false
-        config.optOut = !enabled
         PostHogSDK.shared.setup(config)
+        // The SDK keeps an opt-out from the Settings switch of earlier versions; that switch is gone.
+        if PostHogSDK.shared.isOptOut() { PostHogSDK.shared.optIn() }
         PostHogSDK.shared.register(["app_environment": environment])
     }
 
@@ -30,13 +31,5 @@ final class PostHogAnalyticsGateway: AnalyticsGateway {
 
     func update(_ context: AnalyticsContext) {
         PostHogSDK.shared.register(context.properties.anyValues)
-    }
-
-    func setEnabled(_ enabled: Bool) {
-        if enabled {
-            PostHogSDK.shared.optIn()
-        } else {
-            PostHogSDK.shared.optOut()
-        }
     }
 }

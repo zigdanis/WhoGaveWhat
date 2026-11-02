@@ -27,8 +27,7 @@ struct AddGiftSheet: View {
                 data: composition.data,
                 suggestGift: composition.suggestGift,
                 preferences: composition.preferences,
-                analytics: composition.analytics,
-                applyCloudIconConsent: { composition.setCloudIconConsent($0, source: .addGift) }
+                analytics: composition.analytics
             ))
         let startsExpanded = route.editingGiftID != nil
         _showsDetails = State(initialValue: startsExpanded)
@@ -80,19 +79,6 @@ struct AddGiftSheet: View {
                         onSelectTo: { state.open(.to) },
                         pickerPopover: pickerPopover
                     )
-                    if state.showsCloudIconConsent {
-                        CloudIconConsentCard(
-                            onAllow: {
-                                focus = nil
-                                state.allowCloudIcons()
-                            },
-                            onDecline: {
-                                focus = nil
-                                state.declineCloudIcons()
-                            }
-                        )
-                        .padding(.top, 12)
-                    }
                     GiftDetailsDisclosure(
                         isExpanded: $showsDetails,
                         valueSummary: showsDetails ? nil : valueSummary
@@ -216,44 +202,6 @@ struct AddGiftSheet: View {
 private enum AddGiftField: Hashable {
     case name
     case value
-}
-
-private struct CloudIconConsentCard: View {
-    let onAllow: () -> Void
-    let onDecline: () -> Void
-
-    var body: some View {
-        Card {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Smarter gift icons")
-                    .font(Font.app(15, .semibold))
-                    .foregroundStyle(Color.textPrimary)
-                Text(
-                    "Allow WhoGaveWhat to send the gift name you type to TypeSafe AI to choose a matching icon and an approximate price? Only the name, your currency and a random app ID are sent — never people, dates, amounts or occasions."
-                )
-                .font(Font.app(13, .regular))
-                .foregroundStyle(Color.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-                HStack(spacing: 12) {
-                    Spacer(minLength: 0)
-                    Button("Not now", action: onDecline)
-                        .glassButtonStyle()
-                        .accessibilityIdentifier("add-gift.cloud-icons.decline")
-                    Button("Allow", action: onAllow)
-                        .prominentGlassButtonStyle()
-                        .tint(Color.brandFill)
-                        .accessibilityIdentifier("add-gift.cloud-icons.allow")
-                }
-                .font(Font.app(14, .semibold))
-                .buttonBorderShape(.capsule)
-                .controlSize(.regular)
-            }
-            .padding(14)
-        }
-        // A containing element keeps the buttons' own identifiers instead of inheriting this one.
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("add-gift.cloud-icons.consent")
-    }
 }
 
 private struct GiftSaveButton: View {
