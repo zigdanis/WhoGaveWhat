@@ -31,7 +31,7 @@ description: Deliver WhoGaveWhat features, fixes, improvements and new builds th
 ## Verify and merge
 
 - **Verify:** the `Checks` workflow runs on every PR; `Tests` and `Simulator app` run when the PR touches app or script paths (not docs or agent files alone). `Tests` runs only the unit suite; no PR check exercises the UI.
-- **Show:** for user-visible changes, capture the PR head's Simulator app by hand (`scripts/simulator-app.sh`, then the MacPro simulator pool through T3's `macpro` device host; Expo cloud only when MacPro is unreachable) and attach inspected screenshots with `visual-acceptance`; a clip only on request. Non-UI changes report functional checks instead.
+- **Show:** for user-visible changes, capture the PR head's Simulator app by hand (`scripts/simulator-app.sh`, then the MacPro simulator pool through T3's `macpro` device host after a slot in MacPro's simulator queue; Expo cloud only when that host is not ready) and attach inspected screenshots with `visual-acceptance`; a clip only on request. Non-UI changes report functional checks instead.
 - **Fix:** address real review issues, test the fixes and reply before resolving comments. Batch them into one push.
 - **Watch:** while PR checks or reviews are pending, call T3 Code's `watch_pull_request` and end the turn. Recheck when notified. Don't poll, sleep or run your own watcher.
 - **Merge:** when the current head has green checks, independent review is clean and no actionable comment is open, merge. Then confirm the `Tests` run on the merged master commit passed before TestFlight. If that commit skipped `Tests` (docs or agent files only), dispatch `gh workflow run tests.yml --repo zigdanis/WhoGaveWhat --ref master` once while it is still master's head.
