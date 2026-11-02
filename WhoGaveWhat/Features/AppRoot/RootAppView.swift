@@ -38,7 +38,7 @@ struct RootAppView: View {
             }
         }
         .tint(Color.brand)
-        .tabBarMinimizeBehavior(.onScrollDown)
+        .minimizingTabBar()
         .sheet(item: giftSheetBinding) { route in
             AddGiftSheet(route: route, composition: composition)
         }
@@ -109,7 +109,7 @@ struct ScreenScroll<Content: View>: View {
         }
         .readableColumn(maxWidth: maxWidth)
         .scrollIndicators(.hidden)
-        .scrollEdgeEffectStyle(.soft, for: .bottom)
+        .softBottomScrollEdge()
         .background(Color.appBackground)
     }
 }

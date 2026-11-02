@@ -24,7 +24,7 @@ struct YearMenu: View {
                 .foregroundStyle(Color.brand)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
-                .glassEffect(.regular.interactive(), in: Capsule())
+                .glassSurface(in: Capsule())
             }
             .accessibilityLabel("Year")
             .accessibilityValue(String(selection))

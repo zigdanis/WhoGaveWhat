@@ -237,10 +237,10 @@ private struct CloudIconConsentCard: View {
                 HStack(spacing: 12) {
                     Spacer(minLength: 0)
                     Button("Not now", action: onDecline)
-                        .buttonStyle(.glass)
+                        .glassButtonStyle()
                         .accessibilityIdentifier("add-gift.cloud-icons.decline")
                     Button("Allow", action: onAllow)
-                        .buttonStyle(.glassProminent)
+                        .prominentGlassButtonStyle()
                         .tint(Color.brandFill)
                         .accessibilityIdentifier("add-gift.cloud-icons.allow")
                 }
@@ -267,7 +267,7 @@ private struct GiftSaveButton: View {
                 .foregroundStyle(isEnabled ? Color.onFill : Color.textSecondary)
                 .frame(maxWidth: .infinity).padding(.vertical, 8)
         }
-        .buttonStyle(.glassProminent)
+        .prominentGlassButtonStyle()
         .buttonBorderShape(.capsule)
         .controlSize(.large)
         .tint(Color.brandFill)

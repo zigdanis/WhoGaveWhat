@@ -20,7 +20,7 @@ App Store screenshots are plain captures of that sample data. The `Store screens
 `python3 scripts/store-screenshots.py OUT`) writes `screenshots/en-US` and `screenshots/ru` for fastlane;
 the manual `App Store metadata` workflow uploads `fastlane/metadata` and, when given a screenshots run ID, those images.
 
-- **Minimum iOS:** 26.0 — built with **Xcode 27.1** against the iOS 27.1 SDK, native **Liquid Glass** throughout.
+- **Minimum iOS:** 18.4 — built with **Xcode 27.1** against the iOS 27.1 SDK; native **Liquid Glass** on iOS 26 and later, with system materials and bordered buttons on iOS 18. iOS 26-only APIs live behind `WhoGaveWhat/DesignSystem/PlatformCompatibility.swift`.
   The iOS 27.1 SDK lets the app fill both iPhone Duo displays. The iPhone Duo Simulator needs the iOS 27.1 runtime
   (`xcodebuild -downloadPlatform iOS`, or `scripts/install-simulator-runtime.sh 'iOS 27.1' 'iPhone Duo'`).
 - **Dependencies:** [PostHog iOS](https://github.com/PostHog/posthog-ios) (product analytics) and

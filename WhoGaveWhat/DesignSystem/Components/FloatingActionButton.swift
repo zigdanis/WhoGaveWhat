@@ -21,7 +21,7 @@ struct FloatingActionButton: View {
                 .padding(.horizontal, 6)
         }
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-        .buttonStyle(.glassProminent)
+        .prominentGlassButtonStyle()
         .buttonBorderShape(.capsule)
         .controlSize(.large)
         .tint(Color.brandFill)

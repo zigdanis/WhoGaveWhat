@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   GENERIC_KEY as GENERATOR_GENERIC_KEY,
   MAX_CHOICE_OPTIONS,
+  MAX_EMOJI_VERSION,
   SUBGROUP_NOTES,
   buildCatalog,
   catalogVersion,
@@ -67,6 +68,26 @@ describe("regeneration", () => {
     expect(await sha256("abc")).toBe("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
     expect(await sha256("")).toBe("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
     expect(await sha256("a".repeat(1000))).toBe("41edece42d63e8d9bf515a9ba6932e1c20cbc9f5a5d134645adb5db1b9737ea3");
+  });
+});
+
+describe("emoji version cap", () => {
+  const line = (version: string, codepoint: string) =>
+    `${codepoint} ; fully-qualified # x E${version} name`;
+
+  it("keeps entries up to MAX_EMOJI_VERSION and drops newer ones", () => {
+    expect(MAX_EMOJI_VERSION).toBe(16.0);
+    const text = [line("15.1", "1F600"), line("16.0", "1FAE9"), line("17.0", "1FAC8"), line("100.0", "1FAEA")].join("\n");
+    expect(parseEmojiTest(text).map((e) => e.codepoints[0])).toEqual([0x1f600, 0x1fae9]);
+  });
+
+  it("fails loudly on a fully-qualified line without a version marker", () => {
+    expect(() => parseEmojiTest("1F600 ; fully-qualified # x name")).toThrow(/E<major>\.<minor>/);
+  });
+
+  it("leaves nothing newer than Emoji 16.0 in the committed catalog", () => {
+    const newer = [0x1f6d8, 0x1fa8a, 0x1fa8e, 0x1fac8, 0x1facd, 0x1fadd, 0x1faea, 0x1faef]; // Emoji 17.0
+    for (const [, icon] of withoutNone) expect(newer.some((c) => codepointsOf(icon.emoji).includes(c))).toBe(false);
   });
 });
 

@@ -24,7 +24,7 @@ struct HomeView: View {
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
                 }
-                .listSectionMargins(.horizontal, 0)
+                .zeroHorizontalListSectionMargins()
             } else {
                 ForEach(timeline) { group in
                     Section {
@@ -50,7 +50,7 @@ struct HomeView: View {
         .listStyle(.insetGrouped)
         .readableColumn()
         .scrollContentBackground(.hidden)
-        .scrollEdgeEffectStyle(.soft, for: .bottom)
+        .softBottomScrollEdge()
         .background(Color.appBackground)
         // The welcome card carries the only "Add a gift" action until the first gift.
         .addGiftAction(composition: composition, isVisible: !composition.data.gifts.isEmpty)
