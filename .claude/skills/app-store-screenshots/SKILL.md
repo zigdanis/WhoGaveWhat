@@ -35,7 +35,7 @@ The story follows the app's *current* design; nothing about the screens or sampl
    - Tapping a screenshot opens it full screen inside the page. The arrow keys and a swipe go to the next or previous shot across the whole page, and a tap or Escape closes it. The `ZOOM` viewer in the script does this; never replace it with plain links, because a link to an embedded `data:` image does nothing in T3.
    - Before handing the page over, run `scripts/check-review-page.py PAGE`. It loads a copy of the page with a probe script in headless Chrome, taps the first shot, presses the arrows and taps again, and fails unless the viewer opens, steps through every shot and closes. That the file exists is not enough.
 9. **Upload without waiting for approval.** The `App Store metadata` workflow (manual dispatch on `master`) sends the screenshots of a green `Store screenshots` run to the editable version. It also sends the listing text from `fastlane/metadata`, so make sure that text is what should go live. Never print or commit the App Store Connect key and never submit for App Review. Then open the review page for Danis so he can check what was uploaded without opening App Store Connect.
-10. **Deliver.** Open the PR through `full-send`. Shut down any simulator you booted and remove temporary keys and DerivedData.
+10. **Deliver.** Open the PR through `full-send`. Shut down any simulator you booted, delete your simulator-queue ticket, and remove temporary keys and DerivedData.
 
 ## Rules that save time
 
