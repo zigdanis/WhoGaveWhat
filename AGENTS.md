@@ -7,7 +7,7 @@
 
 - To monitor or babysit a pull request, call T3 Code's `watch_pull_request` and end the turn; it wakes the thread on failed or passing checks, new comments and conflicts. Validate each bot finding before changing code, batch fixes into one push, and reply with evidence before resolving a review thread. Call `unwatch_pull_request` when handing back.
 - To read live analytics, use `scripts/posthog-cli.sh` (PostHog, credentials in `~/.config/posthog/whogavewhat.env`) and the `sentry` CLI with the `sentry-cli` skill (Sentry, `sentry auth` once per machine); `docs/analytics.md` → "Checking live data" has the setup.
-- To drive the app interactively from Linux, install the CI simulator build on an Expo cloud simulator with the `eas-simulator` skill: `scripts/simulator-app.sh [PR_NUMBER]` prints the `.app` path for a PR head, or for master without an argument.
+- To drive the app interactively from Linux, use the MacPro simulator pool through T3's `macpro` device host (`device_list`, `device_open`); `.claude/skills/visual-acceptance/SKILL.md` has the steps. `scripts/simulator-app.sh [PR_NUMBER]` prints the CI `.app` path for a PR head, or for master without an argument. An Expo cloud simulator (`eas-simulator` skill) is only the fallback when MacPro is unreachable: its minutes come from a small shared trial budget.
 
 <posthog>
 ## PostHog
