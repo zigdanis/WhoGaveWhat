@@ -215,7 +215,7 @@ private struct GiftSaveButton: View {
                 .foregroundStyle(isEnabled ? Color.onFill : Color.textSecondary)
                 .frame(maxWidth: .infinity).padding(.vertical, 8)
         }
-        .buttonStyle(.glassProminent)
+        .prominentGlassButtonStyle()
         .buttonBorderShape(.capsule)
         .controlSize(.large)
         .tint(Color.brandFill)

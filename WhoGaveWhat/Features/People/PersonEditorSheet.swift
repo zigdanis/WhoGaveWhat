@@ -262,7 +262,7 @@ private struct PersonEditorHeader: View {
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(Color.textPrimary)
                     .frame(width: 44, height: 44)
-                    .glassEffect(.regular.interactive(), in: Circle())
+                    .glassSurface(in: Circle())
             }
             .accessibilityLabel(Text("Cancel"))
             .accessibilityIdentifier("person-editor.cancel")
@@ -284,9 +284,7 @@ private struct PersonEditorHeader: View {
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(canSave ? Color.onFill : Color.textSecondary)
                     .frame(width: 44, height: 44)
-                    .glassEffect(
-                        .regular.tint(canSave ? Color.brandFill : nil).interactive(),
-                        in: Circle())
+                    .glassSurface(in: Circle(), tint: canSave ? Color.brandFill : nil)
             }
             .disabled(!canSave)
             .accessibilityLabel(Text("Save"))

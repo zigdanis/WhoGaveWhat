@@ -45,7 +45,7 @@ struct WelcomeCard<Hero: View>: View {
                     }
                     // Same cap as the floating button, so the label stays on one line.
                     .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                    .buttonStyle(.glassProminent)
+                    .prominentGlassButtonStyle()
                     .buttonBorderShape(.capsule)
                     .controlSize(.large)
                     .tint(Color.brandFill)

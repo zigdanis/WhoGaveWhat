@@ -153,7 +153,7 @@ struct GiftDetailView: View {
                 .foregroundStyle(Color.destructive)
                 .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.glass)
+        .glassButtonStyle()
         .buttonBorderShape(.capsule)
         .controlSize(.large)
         .tint(Color.destructive)

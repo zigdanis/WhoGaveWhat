@@ -71,7 +71,23 @@ export interface EmojiTestEntry {
   subgroup: string;
 }
 
-/** Every fully-qualified entry of emoji-test.txt, in CLDR order, with its group and subgroup. */
+/**
+ * Newest Emoji version the catalog may contain. It matches the app's minimum iOS (18.4), which renders Emoji 16.0 at
+ * most; a newer emoji would show as a missing-glyph box there. A refreshed emoji-test.txt cannot pull in anything newer.
+ */
+export const MAX_EMOJI_VERSION = 16.0;
+
+/** The `E<major>.<minor>` marker of an emoji-test.txt line (`# 😀 E1.0 grinning face`) as a number, e.g. 15.1. */
+function emojiVersionOf(line: string): number {
+  const match = /#\s+\S+\s+E(\d+)\.(\d+)\s/.exec(line);
+  if (!match) throw new Error(`emoji-test.txt line has no E<major>.<minor> marker: ${line}`);
+  return Number(`${match[1]}.${match[2]}`);
+}
+
+/**
+ * Every fully-qualified entry of emoji-test.txt up to MAX_EMOJI_VERSION, in CLDR order, with its group and subgroup.
+ * (The minor version is compared as a decimal, which holds while minors stay below 10.)
+ */
 export function parseEmojiTest(text: string): EmojiTestEntry[] {
   const entries: EmojiTestEntry[] = [];
   let group = "";
@@ -80,6 +96,7 @@ export function parseEmojiTest(text: string): EmojiTestEntry[] {
     if (line.startsWith("# group:")) group = line.slice("# group:".length).trim();
     else if (line.startsWith("# subgroup:")) subgroup = line.slice("# subgroup:".length).trim();
     else if (line.includes("; fully-qualified")) {
+      if (emojiVersionOf(line) > MAX_EMOJI_VERSION) continue;
       const codepoints = line
         .split(";")[0]
         .trim()

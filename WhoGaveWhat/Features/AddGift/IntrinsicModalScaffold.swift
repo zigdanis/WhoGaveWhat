@@ -230,7 +230,7 @@ private struct IntrinsicModalHeader: View {
                     .font(.body.weight(.semibold))
                     .foregroundStyle(isEnabled ? Color.onFill : Color.textSecondary)
             }
-            .buttonStyle(.glassProminent)
+            .prominentGlassButtonStyle()
             .buttonBorderShape(.capsule)
             .tint(Color.brandFill)
             .accessibilityIdentifier(accessibilityIdentifier ?? "")
@@ -239,7 +239,7 @@ private struct IntrinsicModalHeader: View {
                 Text(title)
                     .font(.body)
             }
-            .buttonStyle(.glass)
+            .glassButtonStyle()
             .buttonBorderShape(.capsule)
             .accessibilityIdentifier(accessibilityIdentifier ?? "")
         }

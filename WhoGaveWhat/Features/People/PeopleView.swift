@@ -25,7 +25,7 @@ struct PeopleView: View {
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
                 }
-                .listSectionMargins(.horizontal, 0)
+                .zeroHorizontalListSectionMargins()
             } else {
                 ForEach(sortedPeople) { person in
                     personRow(person)
@@ -35,7 +35,7 @@ struct PeopleView: View {
         .listStyle(.insetGrouped)
         .readableColumn()
         .scrollContentBackground(.hidden)
-        .scrollEdgeEffectStyle(.soft, for: .bottom)
+        .softBottomScrollEdge()
         .background(Color.appBackground)
         .safeAreaInset(edge: .bottom) {
             // The welcome card carries the only add actions until the first person.
