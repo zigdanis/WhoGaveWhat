@@ -57,6 +57,15 @@ final class SwiftDataPeopleGateway: PeopleGateway {
 
     func deletePerson(id: String) throws {
         if let person = try fetchPerson(id: id) {
+            // The gifts go first, in their own save: iOS 18 SwiftData traps ("an appropriate
+            // default value is not configured") when deleting a person still has to detach it
+            // from a gift's non-optional giver or recipient, even a gift deleted earlier in the
+            // same save. iOS 26 handles the cascade itself.
+            let gifts = person.giftsGiven + person.giftsReceived
+            if !gifts.isEmpty {
+                gifts.forEach(context.delete)
+                try saveContext()
+            }
             context.delete(person)
             try saveContext()
         }
