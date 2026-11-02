@@ -1,3 +1,5 @@
-• Who Gave What now runs on iPad, in portrait, landscape and multitasking windows. Add a gift and Add person sit in the top bar (Command-N with a keyboard), pickers open as popovers next to their rows, and Insights shows two columns.
-• Gentle haptic feedback when you add or save a gift or a person, and when you choose people in Insights. It follows the System Haptics setting.
-• After a few days of use, the app may occasionally ask you to rate it on the App Store with the standard iOS request.
+• Empty People and Insights screens now greet you with a little animation and show where to start. Tip: begin with Add yourself.
+• Adding a person takes seconds: a compact sheet sits right above the keyboard, and Done saves.
+• Gift icons and price estimates pop up on the fly as you type.
+• Hello, iOS 18! Who Gave What now runs on iOS 18.4 and later — invite family with older iPhones.
+• We tightened the bolts, oiled the gears and squashed a few bugs, so everything feels livelier.
