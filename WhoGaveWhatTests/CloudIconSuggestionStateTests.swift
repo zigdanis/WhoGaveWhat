@@ -7,18 +7,20 @@ struct CloudIconSuggestionStateTests {
     private func makeState(
         preferences: TestPreferencesGateway,
         cloud: ScriptedIntelligenceGateway,
-        onDevice: GiftIntelligenceGateway = TestIntelligenceGateway(),
-        analytics: AnalyticsGateway = NoopAnalyticsGateway(),
+        // Main-actor defaults cannot be default argument values, so nil stands for them.
+        onDevice: GiftIntelligenceGateway? = nil,
+        analytics: AnalyticsGateway? = nil,
         data: AppData
     ) -> AddGiftState {
-        let intelligence = PreferredGiftIntelligenceGateway(cloud: cloud, onDevice: onDevice)
+        let intelligence = PreferredGiftIntelligenceGateway(
+            cloud: cloud, onDevice: onDevice ?? TestIntelligenceGateway())
         return AddGiftState(
             route: .create,
             data: data,
             suggestGift: SuggestGiftUseCase(intelligenceGateway: intelligence),
             preferences: preferences,
             debounce: .milliseconds(5),
-            analytics: analytics
+            analytics: analytics ?? NoopAnalyticsGateway()
         )
     }
 
