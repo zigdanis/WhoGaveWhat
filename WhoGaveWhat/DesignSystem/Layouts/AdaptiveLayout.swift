@@ -123,7 +123,7 @@ struct ToolbarAddButton: View {
             .padding(.horizontal, 6)
         }
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-        .buttonStyle(.glassProminent)
+        .prominentGlassButtonStyle()
         .tint(Color.brandFill)
         .keyboardShortcut("n", modifiers: .command)
         .accessibilityLabel(Text(title))

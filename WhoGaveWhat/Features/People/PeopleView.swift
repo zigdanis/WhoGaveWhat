@@ -18,7 +18,7 @@ struct PeopleView: View {
         .listStyle(.insetGrouped)
         .readableColumn()
         .scrollContentBackground(.hidden)
-        .scrollEdgeEffectStyle(.soft, for: .bottom)
+        .softBottomScrollEdge()
         .background(Color.appBackground)
         .safeAreaInset(edge: .bottom) {
             if !layout.placesAddActionInToolbar {
