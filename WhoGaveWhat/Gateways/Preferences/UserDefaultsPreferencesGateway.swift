@@ -6,6 +6,7 @@ import Observation
 final class UserDefaultsPreferencesGateway: PreferencesGateway {
     private let defaults: UserDefaults
     private let currencyCodeKey = "preferredCurrencyCode"
+    private let legacyGiftCurrencyKey = "legacyGiftCurrencyCode"
     private let selfPersonKey = "selfPersonID"
     private let installIDKey = "cloudIconInstallID"
     private let recentInsightsPicksKeyPrefix = "insightsRecentPicks."
@@ -31,6 +32,15 @@ final class UserDefaultsPreferencesGateway: PreferencesGateway {
         // Persists the locale default and rewrites an unsupported stored code, so the choice stays stable.
         if storedCode != currency.code { defaults.set(currency.code, forKey: currencyCodeKey) }
         return currency.code
+    }
+
+    var legacyGiftCurrency: SupportedCurrency {
+        if let stored = defaults.string(forKey: legacyGiftCurrencyKey).flatMap(SupportedCurrency.init(rawValue:)) {
+            return stored
+        }
+        let currency = defaultCurrency
+        defaults.set(currency.code, forKey: legacyGiftCurrencyKey)
+        return currency
     }
 
     var selfPersonID: String? {

@@ -31,17 +31,23 @@ final class SwiftDataStore {
     /// The on-disk store. Gifts saved before each gift had its own currency (1.2.0 and earlier) were
     /// all shown in the currency preference, so opening such a store gives them that currency.
     static func persistent(url: URL? = nil, preferences: PreferencesGateway) throws -> SwiftDataStore {
-        try SwiftDataStore(url: url, legacyGiftCurrency: preferences.defaultCurrency)
+        try SwiftDataStore(url: url, legacyGiftCurrency: preferences.legacyGiftCurrency)
     }
 
     let container: ModelContainer
     let context: ModelContext
+    /// The currency gifts from before per-gift currencies take; nil when the store has none to migrate.
+    let legacyGiftCurrency: SupportedCurrency?
+    /// Why storing `legacyGiftCurrency` on those gifts failed at open, such as a full disk. The app still
+    /// opens: `SwiftDataGiftGateway` shows them in the same currency, and the next open tries again.
+    private(set) var legacyGiftCurrencyError: Error?
 
     /// - Parameters:
     ///   - url: Where the store file lives; nil uses the default location for `storeName`.
     ///   - legacyGiftCurrency: The currency for gifts saved before each gift had its own (1.2.0 and
     ///     earlier), which were shown in the currency preference of the time. Nil leaves them without
-    ///     one, and loading them fails instead of guessing.
+    ///     one, and loading them fails instead of guessing. A failure to store it is kept in
+    ///     `legacyGiftCurrencyError` rather than thrown, so it can never stop the app from opening.
     init(
         inMemory: Bool = false,
         url: URL? = nil,
@@ -59,9 +65,14 @@ final class SwiftDataStore {
         container = try ModelContainer(for: schema, configurations: [configuration])
         context = ModelContext(container)
         context.autosaveEnabled = false
+        self.legacyGiftCurrency = legacyGiftCurrency
 
         if let legacyGiftCurrency {
-            try assignLegacyGiftCurrency(legacyGiftCurrency)
+            do {
+                try assignLegacyGiftCurrency(legacyGiftCurrency)
+            } catch {
+                legacyGiftCurrencyError = error
+            }
         }
         if seed {
             try seedIfNeeded(currency: sampleCurrency)

@@ -18,6 +18,19 @@ private func copyOf120Store() throws -> URL {
     return url
 }
 
+/// Removes the temporary folder `copyOf120Store` made.
+private func removeCopy(_ url: URL) {
+    try? FileManager.default.removeItem(at: url.deletingLastPathComponent())
+}
+
+/// A throwaway defaults suite holding `preference`, removed again by `remove`.
+private func defaultsSuite(preferring preference: SupportedCurrency) throws -> (UserDefaults, remove: () -> Void) {
+    let name = "LegacyStoreMigrationTests.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: name))
+    defaults.set(preference.code, forKey: "preferredCurrencyCode")
+    return (defaults, { defaults.removePersistentDomain(forName: name) })
+}
+
 private func date(_ seconds: TimeInterval) -> Date { Date(timeIntervalSince1970: seconds) }
 
 @MainActor
@@ -25,8 +38,9 @@ struct LegacyStoreMigrationTests {
     @Test(arguments: SupportedCurrency.allCases)
     func giftsFrom120TakeThePreferenceTheyWereShownIn(_ preference: SupportedCurrency) throws {
         let url = try copyOf120Store()
-        let defaults = try #require(UserDefaults(suiteName: "LegacyStoreMigrationTests.\(UUID().uuidString)"))
-        defaults.set(preference.code, forKey: "preferredCurrencyCode")
+        defer { removeCopy(url) }
+        let (defaults, removeDefaults) = try defaultsSuite(preferring: preference)
+        defer { removeDefaults() }
 
         let store = try SwiftDataStore.persistent(url: url, preferences: UserDefaultsPreferencesGateway(defaults: defaults))
         let gifts = try SwiftDataGiftGateway(context: store.context).loadGifts()
@@ -59,6 +73,7 @@ struct LegacyStoreMigrationTests {
 
     @Test func theMigratedCurrencyIsStoredOnceAndLaterPreferencesDoNotChangeIt() throws {
         let url = try copyOf120Store()
+        defer { removeCopy(url) }
         let preferences = TestPreferencesGateway()
         preferences.setCurrencyCode("RUB")
         do {
@@ -75,6 +90,7 @@ struct LegacyStoreMigrationTests {
 
     @Test func aMigratedStoreKeepsNewGiftsInTheirOwnCurrency() throws {
         let url = try copyOf120Store()
+        defer { removeCopy(url) }
         let preferences = TestPreferencesGateway()
         preferences.setCurrencyCode("RUB")
         let composition = AppComposition(
@@ -95,13 +111,50 @@ struct LegacyStoreMigrationTests {
 
     /// Without a currency to give them, gifts from an old store fail to load instead of taking a guessed one.
     @Test func legacyGiftsWithoutAKnownCurrencyAreNeverGuessed() throws {
-        let store = try SwiftDataStore(url: try copyOf120Store())
+        let url = try copyOf120Store()
+        defer { removeCopy(url) }
+        let store = try SwiftDataStore(url: url)
 
         #expect(throws: SwiftDataPersistenceError.self) {
             try SwiftDataGiftGateway(context: store.context).loadGifts()
         }
         #expect(try store.assignLegacyGiftCurrency(.usd) == 3)
         #expect(try SwiftDataGiftGateway(context: store.context).loadGifts().allSatisfy { $0.currency == .usd })
+    }
+
+    /// If storing the currency failed at open, the gifts still show in the currency they were going
+    /// to get, and the next open stores it.
+    @Test func legacyGiftsShowInTheMigrationCurrencyUntilItIsStored() throws {
+        let url = try copyOf120Store()
+        defer { removeCopy(url) }
+        let unmigrated = try SwiftDataStore(url: url)
+
+        let gifts = try SwiftDataGiftGateway(context: unmigrated.context, legacyGiftCurrency: .rub).loadGifts()
+
+        #expect(gifts.count == 3)
+        #expect(gifts.allSatisfy { $0.currency == .rub })
+        #expect(unmigrated.legacyGiftCurrencyError == nil)
+        // An unknown stored code is never replaced by the legacy currency.
+        let stored = try #require(try unmigrated.context.fetch(FetchDescriptor<StoredGift>()).first)
+        stored.currencyCode = "EUR"
+        #expect(throws: SwiftDataPersistenceError.missingCurrency(giftID: stored.id)) {
+            try SwiftDataGiftGateway(context: unmigrated.context, legacyGiftCurrency: .rub).loadGifts()
+        }
+    }
+
+    /// The migration currency is fixed the first time it is read, so changing the default currency
+    /// before the migration is stored (for example after a failed save) cannot relabel old gifts.
+    @Test func theLegacyCurrencyIsPinnedOnFirstRead() throws {
+        let (defaults, removeDefaults) = try defaultsSuite(preferring: .rub)
+        defer { removeDefaults() }
+        let preferences = UserDefaultsPreferencesGateway(defaults: defaults)
+
+        #expect(preferences.legacyGiftCurrency == .rub)
+        preferences.setCurrencyCode("USD")
+
+        #expect(preferences.defaultCurrency == .usd)
+        #expect(preferences.legacyGiftCurrency == .rub)
+        #expect(UserDefaultsPreferencesGateway(defaults: defaults).legacyGiftCurrency == .rub)
     }
 }
 
@@ -250,6 +303,36 @@ struct PerGiftCurrencyTests {
     }
 }
 
+/// Answers each currency with its own price, and only when the test says so, so answers can arrive in any order.
+@MainActor
+private final class PerCurrencyIntelligenceGateway: GiftIntelligenceGateway {
+    var isAvailable = true
+    let prices: [SupportedCurrency: Int]
+    private(set) var currencies: [SupportedCurrency] = []
+    private var waiting: [SupportedCurrency: CheckedContinuation<Void, Never>] = [:]
+
+    init(prices: [SupportedCurrency: Int]) { self.prices = prices }
+
+    func prewarm() {}
+
+    func suggestGift(named name: String, currency: SupportedCurrency) async -> GiftIntelligenceResult? {
+        currencies.append(currency)
+        await withCheckedContinuation { waiting[currency] = $0 }
+        return GiftIntelligenceResult(emoji: "🎸", value: prices[currency])
+    }
+
+    func answer(_ currency: SupportedCurrency) {
+        waiting.removeValue(forKey: currency)?.resume()
+    }
+
+    /// A request records its currency and starts waiting in the same main-actor step.
+    func waitForRequests(_ count: Int) async {
+        for _ in 0..<500 where currencies.count < count {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+}
+
 @MainActor
 struct GiftCurrencyEstimateTests {
     private func makeState(
@@ -307,25 +390,37 @@ struct GiftCurrencyEstimateTests {
     }
 
     @Test func anAnswerForTheCurrencyTheUserLeftIsNeverApplied() async throws {
-        let gateway = ScriptedIntelligenceGateway()
-        gateway.holdsRequests = true
-        gateway.results["guitar"] = GiftIntelligenceResult(emoji: "🎸", value: 10_000)
-        let (state, _) = try makeState(gateway)
+        let gateway = PerCurrencyIntelligenceGateway(prices: [.rub: 10_000, .usd: 150])
+        let composition = try makeTestComposition()
+        let preferences = TestPreferencesGateway()
+        preferences.setCurrencyCode("RUB")
+        let state = AddGiftState(
+            route: .create, data: composition.data, suggestGift: SuggestGiftUseCase(intelligenceGateway: gateway),
+            preferences: preferences, debounce: .milliseconds(5))
+        let people = composition.data.people.map(\.id)
+        state.previewFrom(people[0])
+        state.previewTo(people[1])
         state.setName("guitar")
         await gateway.waitForRequests(1)
         let rubleRequest = try #require(state.suggestionTask)
 
         state.currency = .usd
         await gateway.waitForRequests(2)
-        gateway.results["guitar"] = GiftIntelligenceResult(emoji: "🎸", value: 150)
-        gateway.releaseRequests()
+        let dollarRequest = try #require(state.suggestionTask)
+        // The new answer arrives first, then the one for the currency the user left.
+        gateway.answer(.usd)
+        await dollarRequest.value
+        #expect(state.draft.estimatedValue == 150)
+        gateway.answer(.rub)
         await rubleRequest.value
-        await state.suggestionTask?.value
 
         #expect(gateway.currencies == [.rub, .usd])
         #expect(state.draft.estimatedValue == 150)
         #expect(state.draft.estimatedCurrency == .usd)
-        #expect(state.input.currency == .usd)
+        #expect(composition.saveGift(state.input))
+        let saved = try #require(composition.data.gifts.first { $0.name == "guitar" })
+        #expect(saved.value == 150)
+        #expect(saved.currency == .usd)
     }
 
     @Test func aTypedValueKeepsItsDigitsAndAsksForNothingWhenTheCurrencyChanges() async throws {
@@ -496,6 +591,11 @@ struct CurrencyAmountsTests {
                 [$0.aToB, $0.bToA]
             } == [300, 100])
         #expect(comparison(CurrencyAmounts([.usd: 3]), CurrencyAmounts([.rub: 100])).comparableValues == nil)
+        // A zero in another currency has nothing to convert, so the bar still shows.
+        #expect(
+            comparison(CurrencyAmounts([.usd: 100]), CurrencyAmounts([.rub: 0])).comparableValues.map {
+                [$0.aToB, $0.bToA]
+            } == [100, 0])
     }
 
     @Test func balancesWithSeveralCurrenciesSortWithoutConverting() {

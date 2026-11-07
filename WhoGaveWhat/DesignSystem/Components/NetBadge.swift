@@ -8,13 +8,26 @@ struct NetBadge: View {
     let preferredCurrency: SupportedCurrency
 
     var body: some View {
-        label
+        // Several currencies share one line while it fits, as at default text sizes; otherwise,
+        // such as at accessibility sizes on a narrow phone, they stack one per line.
+        ViewThatFits(in: .horizontal) {
+            chip(label, in: Capsule())
+            if net.nonZeroCurrencies.count > 1 {
+                chip(
+                    AmountsText(amounts: net, preferred: preferredCurrency, signed: true, alignment: .trailing),
+                    in: RoundedRectangle(cornerRadius: DesignMetrics.radiusSmall, style: .continuous))
+            }
+        }
+    }
+
+    private func chip(_ content: some View, in shape: some Shape) -> some View {
+        content
             .font(Font.app(14, .semibold, rounded: true))
             .foregroundColor(foreground)
             .lineLimit(1)
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .background(Capsule().fill(tint))
+            .background(shape.fill(tint))
             .fixedSize()
     }
 

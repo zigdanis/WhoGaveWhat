@@ -7,6 +7,12 @@ import Observation
 @Observable
 final class TestPreferencesGateway: PreferencesGateway {
     var currencyCode = "USD"
+    private var pinnedLegacyGiftCurrency: SupportedCurrency?
+    var legacyGiftCurrency: SupportedCurrency {
+        if let pinnedLegacyGiftCurrency { return pinnedLegacyGiftCurrency }
+        pinnedLegacyGiftCurrency = defaultCurrency
+        return defaultCurrency
+    }
     var selfPersonID: String?
     var installID = UUID().uuidString
     func setCurrencyCode(_ currencyCode: String) {

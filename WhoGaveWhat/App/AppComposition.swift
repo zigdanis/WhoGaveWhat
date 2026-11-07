@@ -66,7 +66,10 @@ final class AppComposition {
         analytics: AnalyticsGateway = NoopAnalyticsGateway(),
         haptics: HapticsGateway = NoopHapticsGateway()
     ) {
-        let giftGateway = SwiftDataGiftGateway(context: store.context)
+        let giftGateway = SwiftDataGiftGateway(context: store.context, legacyGiftCurrency: store.legacyGiftCurrency)
+        if let error = store.legacyGiftCurrencyError {
+            analytics.report(AnalyticsFailure(operation: "migrate_gift_currency", error: error))
+        }
         let peopleGateway = SwiftDataPeopleGateway(context: store.context)
         let suggestGift = SuggestGiftUseCase(intelligenceGateway: intelligence)
         let createPerson = CreatePersonUseCase(gateway: peopleGateway)

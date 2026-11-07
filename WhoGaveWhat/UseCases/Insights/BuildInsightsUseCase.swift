@@ -34,10 +34,10 @@ struct PersonComparison: Equatable {
     var net: CurrencyAmounts { bToAValue - aToBValue }
     var isEven: Bool { net.isEven }
 
-    /// Both directions' values as plain numbers, for setting them against each other. Nil when the
-    /// gifts are in more than one currency: amounts are never converted, so they cannot be compared.
+    /// Both directions' values as plain numbers, for setting them against each other. Nil when
+    /// non-zero amounts are in more than one currency: they are never converted, so they cannot be compared.
     var comparableValues: (aToB: Double, bToA: Double)? {
-        let currencies = Set(aToBValue.currencies + bToAValue.currencies)
+        let currencies = Set(aToBValue.nonZeroCurrencies + bToAValue.nonZeroCurrencies)
         guard currencies.count <= 1 else { return nil }
         guard let currency = currencies.first else { return (0, 0) }
         return (aToBValue[currency], bToAValue[currency])

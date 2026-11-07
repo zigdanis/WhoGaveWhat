@@ -4,9 +4,12 @@ import SwiftData
 @MainActor
 final class SwiftDataGiftGateway: GiftGateway {
     private let context: ModelContext
+    /// The currency a gift saved before per-gift currencies has, until the store has saved it on the gift.
+    private let legacyGiftCurrency: SupportedCurrency?
 
-    init(context: ModelContext) {
+    init(context: ModelContext, legacyGiftCurrency: SupportedCurrency? = nil) {
         self.context = context
+        self.legacyGiftCurrency = legacyGiftCurrency
     }
 
     func loadGifts() throws -> [Gift] {
@@ -14,7 +17,7 @@ final class SwiftDataGiftGateway: GiftGateway {
             SortDescriptor(\StoredGift.date, order: .reverse),
             SortDescriptor(\StoredGift.createdAt, order: .reverse)
         ])
-        return try context.fetch(descriptor).map { try Gift($0) }
+        return try context.fetch(descriptor).map { try Gift($0, legacyCurrency: legacyGiftCurrency) }
     }
 
     func save(_ gift: Gift) throws {
@@ -102,9 +105,16 @@ final class SwiftDataGiftGateway: GiftGateway {
 }
 
 private extension Gift {
-    init(_ storedGift: StoredGift) throws {
-        // Never fall back to the default currency: that would relabel the amount.
-        guard let currency = storedGift.currencyCode.flatMap(SupportedCurrency.init(rawValue:)) else {
+    /// `legacyCurrency` applies only to a gift with no stored currency, one saved before gifts had their own.
+    init(_ storedGift: StoredGift, legacyCurrency: SupportedCurrency?) throws {
+        // Never fall back to the current default currency: that would relabel the amount.
+        let currency =
+            if let code = storedGift.currencyCode {
+                SupportedCurrency(rawValue: code)
+            } else {
+                legacyCurrency
+            }
+        guard let currency else {
             throw SwiftDataPersistenceError.missingCurrency(giftID: storedGift.id)
         }
         self.init(
