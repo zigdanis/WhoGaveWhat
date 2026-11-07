@@ -285,11 +285,27 @@ final class ICloudBackupService {
         candidates = found
     }
 
+    /// Loads a backup with its photos. When the latest copy cannot be loaded, its complete previous copy
+    /// joins the list, so the user can restore that instead.
     func loadBackup(_ candidate: BackupCandidate) async throws -> DataBackup {
         guard let store else { throw DataBackupError.unreadable }
-        return try await Task.detached(priority: .userInitiated) {
-            try store.load(folder: candidate.folderName, previousCopy: candidate.isPreviousCopy)
+        let writerID = settings.writerID
+        let result = await Task.detached(priority: .userInitiated) {
+            Result { try store.load(folder: candidate.folderName, previousCopy: candidate.isPreviousCopy) }
         }.value
+        if case .failure = result, !candidate.isPreviousCopy,
+            !candidates.contains(where: { $0.folderName == candidate.folderName && $0.isPreviousCopy }),
+            let earlier = await Task.detached(
+                priority: .userInitiated,
+                operation: {
+                    store.previousCandidate(folder: candidate.folderName, thisWriterID: writerID)
+                }
+            ).value
+        {
+            candidates.append(earlier)
+            candidates.sort { $0.summary.createdAt > $1.summary.createdAt }
+        }
+        return try result.get()
     }
 
     func deleteBackup(_ candidate: BackupCandidate) async throws {

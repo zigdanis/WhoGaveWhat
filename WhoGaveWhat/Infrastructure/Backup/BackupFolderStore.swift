@@ -130,6 +130,17 @@ struct BackupFolderStore: Sendable {
         }
     }
 
+    /// The previous copy in `folder` as a restore choice, when it is complete and not empty. The list offers
+    /// it after the latest copy failed to load, e.g. with a damaged photo that only loading can detect.
+    func previousCandidate(folder: String, thisWriterID: String) -> BackupCandidate? {
+        guard Self.isSafeFolderName(folder), let previous = try? readPreviousJSON(folder: folder),
+            let summary = try? DataBackupCodec.decodeSummary(previous), !summary.isEmpty,
+            isComplete(previous, photos: root.appending(path: folder).appending(path: Self.photosFolderName))
+        else { return nil }
+        return BackupCandidate(
+            folderName: folder, summary: summary, isThisDevice: folder == thisWriterID, isPreviousCopy: true)
+    }
+
     /// Removes one install's backup from iCloud, or only its previous copy.
     func delete(folder: String, previousCopyOnly: Bool = false) throws {
         guard Self.isSafeFolderName(folder) else { throw CocoaError(.fileWriteInvalidFileName) }

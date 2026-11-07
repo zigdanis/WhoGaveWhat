@@ -643,6 +643,34 @@ struct ICloudBackupServiceTests {
         #expect(settings.isRestoreOfferDismissed)
     }
 
+    @Test func aLatestCopyThatFailsToLoadOffersTheEarlierOne() async throws {
+        let root = try makeTemporaryDirectory().appending(path: "Application Support", directoryHint: .isDirectory)
+        let (settings, defaults, suite) = makeSettings()
+        defer {
+            try? FileManager.default.removeItem(at: root.deletingLastPathComponent())
+            defaults.removePersistentDomain(forName: suite)
+        }
+        let store = BackupFolderStore(root: root, usesFileCoordination: false)
+        let otherInstall = UUID().uuidString
+        let earlier = BackupSamples.backup()
+        try store.write(earlier, writerID: otherInstall)
+        var latest = earlier
+        latest.people[0] = BackupSamples.person("p-anna", "Anna", sortIndex: 0, photo: BackupSamples.otherPhoto)
+        try store.write(latest, writerID: otherInstall)
+        // Same size, wrong bytes: only loading notices.
+        try Data(repeating: 0, count: BackupSamples.otherPhoto.count).write(
+            to: root.appending(path: otherInstall).appending(path: BackupFolderStore.photosFolderName)
+                .appending(path: DataBackupCodec.photoFileName(for: BackupSamples.otherPhoto)))
+
+        let service = makeService(root: root, settings: settings)
+        await service.refreshCandidates()
+        #expect(service.candidates.map(\.isPreviousCopy) == [false])
+
+        await #expect(throws: (any Error).self) { try await service.loadBackup(service.candidates[0]) }
+        let offered = try #require(service.candidates.first { $0.isPreviousCopy })
+        #expect(try await service.loadBackup(offered) == earlier)
+    }
+
     @Test func deletingThisInstallsBackupWritesAFullOneNextTime() async throws {
         let root = try makeTemporaryDirectory().appending(path: "Application Support", directoryHint: .isDirectory)
         let (settings, defaults, suite) = makeSettings()
