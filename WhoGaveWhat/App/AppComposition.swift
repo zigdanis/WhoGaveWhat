@@ -47,8 +47,17 @@ final class AppComposition {
                 cloud: CloudGiftIconGateway(preferences: preferences, analytics: analytics),
                 onDevice: FoundationModelsGiftIntelligenceGateway(analytics: analytics))
         }
+        var giftGateway: GiftGateway = SwiftDataGiftGateway(context: store.context)
+        var peopleGateway: PeopleGateway = SwiftDataPeopleGateway(context: store.context)
+        #if DEBUG
+            if let fault = LaunchFault(environment: environment) {
+                giftGateway = fault.wrap(giftGateway)
+                peopleGateway = fault.wrap(peopleGateway)
+            }
+        #endif
         self.init(
-            store: store,
+            giftGateway: giftGateway,
+            peopleGateway: peopleGateway,
             preferences: preferences,
             intelligence: intelligence,
             launchEnvironment: environment,
@@ -57,7 +66,7 @@ final class AppComposition {
         )
     }
 
-    init(
+    convenience init(
         store: SwiftDataStore,
         preferences: PreferencesGateway,
         intelligence: GiftIntelligenceGateway,
@@ -65,8 +74,26 @@ final class AppComposition {
         analytics: AnalyticsGateway = NoopAnalyticsGateway(),
         haptics: HapticsGateway = NoopHapticsGateway()
     ) {
-        let giftGateway = SwiftDataGiftGateway(context: store.context)
-        let peopleGateway = SwiftDataPeopleGateway(context: store.context)
+        self.init(
+            giftGateway: SwiftDataGiftGateway(context: store.context),
+            peopleGateway: SwiftDataPeopleGateway(context: store.context),
+            preferences: preferences,
+            intelligence: intelligence,
+            launchEnvironment: launchEnvironment,
+            analytics: analytics,
+            haptics: haptics
+        )
+    }
+
+    init(
+        giftGateway: GiftGateway,
+        peopleGateway: PeopleGateway,
+        preferences: PreferencesGateway,
+        intelligence: GiftIntelligenceGateway,
+        launchEnvironment: [String: String] = ProcessInfo.processInfo.environment,
+        analytics: AnalyticsGateway = NoopAnalyticsGateway(),
+        haptics: HapticsGateway = NoopHapticsGateway()
+    ) {
         let suggestGift = SuggestGiftUseCase(intelligenceGateway: intelligence)
         let createPerson = CreatePersonUseCase(gateway: peopleGateway)
 
@@ -117,23 +144,39 @@ final class AppComposition {
             isEnabled: isReadyLaunch || !MonitoringConfiguration.isVerificationLaunch(launchEnvironment))
     }
 
-    func reloadData() {
+    /// Loads gifts and people together and publishes them as one snapshot. When either fetch fails,
+    /// the previous snapshot and the viewpoint stay as they were, and the screens offer a retry.
+    @discardableResult
+    func reloadData() -> Bool {
+        let gifts: [Gift]
+        let people: PeopleSnapshot
         do {
-            data.replaceGifts(try loadGiftsUseCase.execute())
+            gifts = try loadGiftsUseCase.execute()
         } catch {
-            analytics.report(AnalyticsFailure(operation: "load_gifts", error: error))
+            noteLoadFailure(operation: "load_gifts", error: error)
+            return false
         }
         do {
-            let people = try loadPeopleUseCase.execute()
-            data.replacePeople(people)
-            // The viewpoint goes away with its person, including when they were deleted elsewhere.
-            if let selfID = data.selfPersonID, !people.people.contains(where: { $0.id == selfID }) {
-                setSelfPerson(nil)
-            }
+            people = try loadPeopleUseCase.execute()
         } catch {
-            analytics.report(AnalyticsFailure(operation: "load_people", error: error))
+            noteLoadFailure(operation: "load_people", error: error)
+            return false
+        }
+        data.replaceSnapshot(gifts: gifts, people: people)
+        // The viewpoint goes away with its person, including when they were deleted elsewhere.
+        if let selfID = data.selfPersonID, !people.people.contains(where: { $0.id == selfID }) {
+            setSelfPerson(nil)
         }
         publishAnalyticsContext()
+        return true
+    }
+
+    private func noteLoadFailure(operation: String, error: Error) {
+        analytics.report(
+            AnalyticsFailure(
+                operation: operation, error: error,
+                details: ["has_snapshot": .bool(data.hasLoadedSnapshot)]))
+        data.noteLoadFailed()
     }
 
     /// Counts and preferences that travel with every event and crash report.

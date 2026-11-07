@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Home timeline as a native `List` — so swipe-to-delete and tap-to-open are the
 /// system's own gestures (smooth, reliable) rather than a hand-rolled drag. Before the
-/// first gift it shows `HomeWelcome` instead.
+/// first gift it shows `HomeWelcome` instead, and `LoadFailedCard` when the gifts could not be loaded.
 /// Shows the full timeline across all years, grouped by month; past years carry
 /// their year in month headers and dates. The year summary lives in Insights.
 struct HomeView: View {
@@ -12,7 +12,10 @@ struct HomeView: View {
         let year = currentYear
         List {
             ScreenHeadingSection(title: "Who gave what")
-            if composition.data.gifts.isEmpty {
+            if composition.data.isLoadFailing {
+                LoadFailedListSection { composition.reloadData() }
+            }
+            if composition.data.showsGiftsWelcome {
                 Section {
                     HomeWelcome(router: composition.router)
                         // The row spans the full width and pads itself, so the cell has room for the
@@ -56,6 +59,7 @@ struct HomeView: View {
         .addGiftAction(composition: composition, isVisible: !composition.data.gifts.isEmpty)
         // The first saved gift and the last deleted one swap the welcome, timeline and button smoothly.
         .animation(.default, value: composition.data.gifts.isEmpty)
+        .animation(.default, value: composition.data.isLoadFailing)
     }
 
     /// Months and dates omit the year only for the current calendar year.
