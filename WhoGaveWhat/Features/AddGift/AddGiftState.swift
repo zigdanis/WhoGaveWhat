@@ -11,7 +11,6 @@ final class AddGiftState {
     private(set) var editingGiftID: String?
     private let suggestGift: SuggestGiftUseCase
     private let debounce: Duration
-    private let preferences: PreferencesGateway?
     private let analytics: AnalyticsGateway
     private var hasEditedPrice = false
     private(set) var suggestionTask: Task<Void, Never>?
@@ -27,10 +26,11 @@ final class AddGiftState {
         analytics: AnalyticsGateway = NoopAnalyticsGateway()
     ) {
         self.suggestGift = suggestGift
-        self.preferences = preferences
         self.debounce = debounce
         self.analytics = analytics
         editingGiftID = route.editingGiftID
+        // A new gift starts in the default currency; an edited one keeps its own below.
+        draft.currency = preferences?.defaultCurrency ?? .usd
 
         if let giftID = route.editingGiftID,
             let gift = data.gifts.first(where: { $0.id == giftID })
@@ -41,6 +41,7 @@ final class AddGiftState {
                 emoji: gift.emojiPickedByUser ? gift.emoji : nil,
                 value: Int(gift.value),
                 valueTouched: true,
+                currency: gift.currency,
                 fromID: gift.giverID,
                 toID: gift.recipientID,
                 paidByYou: gift.paidByYou,
@@ -68,6 +69,8 @@ final class AddGiftState {
             value: draft.value,
             valueTouched: draft.valueTouched,
             estimatedValue: draft.estimatedValue,
+            estimatedCurrency: draft.estimatedCurrency,
+            currency: draft.currency,
             fromID: draft.fromID,
             toID: draft.toID,
             paidByYou: draft.paidByYou,
@@ -84,6 +87,12 @@ final class AddGiftState {
     var name: String {
         get { draft.name }
         set { setName(newValue) }
+    }
+
+    /// The currency of this gift's value; setting it goes through `selectCurrency`.
+    var currency: SupportedCurrency {
+        get { draft.currency }
+        set { selectCurrency(newValue) }
     }
 
     /// True while the shown value is the inferred estimate rather than something the user entered.
@@ -133,7 +142,7 @@ final class AddGiftState {
         if name.trimmingCharacters(in: .whitespacesAndNewlines)
             != draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
         {
-            draft.estimatedValue = nil
+            clearEstimate()
         }
         draft.name = name
         // Without a specific keyword match, keep the emoji the gift already had instead of the generic one.
@@ -150,7 +159,7 @@ final class AddGiftState {
         let wantsAnswer = draft.emoji == nil || !draft.valueTouched
         guard wantsAnswer, trimmed.count >= 2, suggestGift.isIntelligenceAvailable else {
             // No answer is coming for this name, so an estimate for an earlier one would be stale.
-            draft.estimatedValue = nil
+            clearEstimate()
             return
         }
         suggestionTask = Task {
@@ -159,6 +168,8 @@ final class AddGiftState {
             // The spinner belongs to the icon, so it stays hidden over a hand-picked emoji.
             aiLoading = draft.emoji == nil
             let started = Date()
+            // The price comes back in the currency it was asked for, which the gift keeps if saved with it.
+            let currency = draft.currency
             let result = await suggestGift.intelligentSuggestion(for: trimmed, currency: currency)
             // A request the user typed past was cancelled; only answers that arrive are measured.
             guard !isStale(trimmed) else { return }
@@ -171,13 +182,27 @@ final class AddGiftState {
             aiLoading = false
             if let emoji = result?.emoji, draft.emoji == nil { draft.aiEmoji = emoji }
             // The user's own value always wins; an answer without a price clears an earlier estimate.
-            if !draft.valueTouched { draft.estimatedValue = result?.value }
+            // A price for a currency the user has since switched away from is dropped; the switch asked again.
+            if !draft.valueTouched, draft.currency == currency {
+                draft.estimatedValue = result?.value
+                draft.estimatedCurrency = result?.value == nil ? nil : currency
+            }
         }
     }
 
-    /// The currency the estimate is asked for: the app's current one, or USD without preferences.
-    private var currency: SupportedCurrency {
-        preferences.flatMap { SupportedCurrency(rawValue: $0.currencyCode) } ?? .usd
+    private func clearEstimate() {
+        draft.estimatedValue = nil
+        draft.estimatedCurrency = nil
+    }
+
+    /// Sets the currency of this gift's value. A number the user entered keeps its digits and now
+    /// means the new currency; an estimate was for the old one, so it is dropped and asked for again.
+    func selectCurrency(_ currency: SupportedCurrency) {
+        guard currency != draft.currency else { return }
+        draft.currency = currency
+        guard !draft.valueTouched else { return }
+        clearEstimate()
+        scheduleSuggestion(after: .zero)
     }
 
     /// True once this inference was cancelled or the name moved on. Whoever cancelled it

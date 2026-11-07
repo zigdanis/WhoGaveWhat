@@ -7,7 +7,6 @@ struct GiftRow: View {
     let gift: Gift
     let subtitle: String
     let dateLabel: String
-    let currencyCode: String
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
@@ -51,7 +50,8 @@ struct GiftRow: View {
     }
 
     private var valueLabel: some View {
-        Text(formattedCurrency(gift.value, code: currencyCode))
+        // Every gift shows its value in its own currency.
+        Text(formattedCurrency(gift.value, code: gift.currency.code))
             .font(Font.app(16, .semibold, rounded: true))
             .foregroundColor(Color.textPrimary)
     }

@@ -22,13 +22,14 @@ struct SeededDataTests {
         #expect(summary.year == year)
         #expect(summary.receivedCount == 3)
         #expect(summary.givenCount == 3)
-        #expect(summary.receivedValue == 13_200)
-        #expect(summary.givenValue == 5_800)
-        #expect(summary.net == 7_400)
-        #expect(summary.circulatedValue == 31_100)
+        // The sample gifts are all in rubles, so every total has one currency.
+        #expect(summary.receivedValue == CurrencyAmounts([.rub: 13_200]))
+        #expect(summary.givenValue == CurrencyAmounts([.rub: 5_800]))
+        #expect(summary.net == CurrencyAmounts([.rub: 7_400]))
+        #expect(summary.circulatedValue == CurrencyAmounts([.rub: 31_100]))
         #expect(summary.giftCount == 12)
         #expect(composition.data.selfPerson?.id == "anton")
-        #expect([Gift]().totalValue == 0)
+        #expect([Gift]().totals == CurrencyAmounts())
     }
 
     @Test func yearSummaryWithoutViewpointHasNoBalance() throws {
@@ -38,8 +39,8 @@ struct SeededDataTests {
         let summary = useCase.summary(gifts: composition.data.gifts, relativeTo: composition.data.selfPersonID, year: year)
         #expect(summary.receivedCount == 0)
         #expect(summary.givenCount == 0)
-        #expect(summary.net == 0)
-        #expect(summary.circulatedValue == 31_100)
+        #expect(summary.net == CurrencyAmounts())
+        #expect(summary.circulatedValue == CurrencyAmounts([.rub: 31_100]))
     }
 
     @Test func balancesRankTheSeededCounterpartsByAbsoluteNet() throws {
@@ -48,7 +49,7 @@ struct SeededDataTests {
         let balances = useCase.balances(
             gifts: composition.data.gifts, people: composition.data.people, relativeTo: "anton", year: nil)
         #expect(balances.first?.person.id == "pavel")
-        #expect(balances.first?.net == 9_500)
+        #expect(balances.first?.net == CurrencyAmounts([.rub: 9_500]))
         #expect(balances.map(\.person.id).contains("anton") == false)
     }
 }
@@ -124,13 +125,13 @@ struct GiftViewpointTests {
             locale: Locale(identifier: "en_US")
         )
         #expect(sections.map(\.label) == ["April", "March"])
-        #expect(sections.map(\.total) == [7, 15])
+        #expect(sections.map(\.total) == [CurrencyAmounts([.usd: 7]), CurrencyAmounts([.usd: 15])])
     }
 
     private func makeGift(id: String = "g", giverID: String, recipientID: String) -> Gift {
         Gift(
             id: id, emoji: "🎁", name: id, giverID: giverID, recipientID: recipientID,
-            paidByYou: false, occasion: "", date: AppDate.today, value: 0,
+            paidByYou: false, occasion: "", date: AppDate.today, value: 0, currency: .usd,
             createdAt: AppDate.today)
     }
 }
@@ -388,24 +389,22 @@ struct CurrencyPreferenceTests {
             intelligence: TestIntelligenceGateway()
         )
 
-        composition.setCurrencyCode("RUB")
+        composition.setDefaultCurrency(.rub)
 
-        #expect(composition.currencyCode == "RUB")
+        #expect(composition.defaultCurrency == .rub)
         #expect(preferences.currencyCode == "RUB")
     }
 
-    @Test func compositionIgnoresUnsupportedCurrencies() throws {
+    @Test func compositionTreatsAnUnsupportedStoredCurrencyAsDollars() throws {
         let preferences = TestPreferencesGateway()
+        preferences.currencyCode = "EUR"
         let composition = AppComposition(
             store: try SwiftDataStore(inMemory: true),
             preferences: preferences,
             intelligence: TestIntelligenceGateway()
         )
 
-        composition.setCurrencyCode("EUR")
-
-        #expect(composition.currencyCode == "USD")
-        #expect(preferences.currencyCode == "USD")
+        #expect(composition.defaultCurrency == .usd)
     }
 
     @Test func userDefaultsGatewayPersistsSelectedCurrency() {
@@ -523,7 +522,7 @@ struct OrderingTests {
     private func gift(_ id: String, date: Date, createdAt: Date) -> Gift {
         Gift(
             id: id, emoji: "🎁", name: id, giverID: "p",
-            recipientID: "you", paidByYou: false, occasion: "", date: date, value: 0,
+            recipientID: "you", paidByYou: false, occasion: "", date: date, value: 0, currency: .usd,
             createdAt: createdAt)
     }
 

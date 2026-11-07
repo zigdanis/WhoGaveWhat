@@ -114,6 +114,8 @@ struct GiftSavedProperties: Equatable {
     var valueSource: GiftValueSource
     /// The built-in occasion in snake_case, or `custom` for one the user typed.
     var occasion: String
+    /// The ISO code of the gift's currency, never its amount.
+    var currency: String
     var paidByYou: Bool
     var dateOffset: GiftDateOffset
     var giftsCount: Int
@@ -215,6 +217,7 @@ enum AnalyticsEvent: Equatable {
                 "icon_source": .string(gift.iconSource.rawValue),
                 "value_source": .string(gift.valueSource.rawValue),
                 "occasion": .string(gift.occasion),
+                "currency": .string(gift.currency),
                 "paid_by_you": .bool(gift.paidByYou),
                 "date_offset": .string(gift.dateOffset.rawValue),
                 "gifts_count": .int(gift.giftsCount)

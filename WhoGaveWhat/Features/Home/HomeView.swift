@@ -33,8 +33,7 @@ struct HomeView: View {
                                 GiftRow(
                                     gift: gift,
                                     subtitle: composition.data.giftSubtitle(gift),
-                                    dateLabel: gift.date.giftShortLabel(displayYear: year),
-                                    currencyCode: composition.currencyCode)
+                                    dateLabel: gift.date.giftShortLabel(displayYear: year))
                             }
                             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
                             .swipeToDelete(title: Text("Delete this gift?"), allowsFullSwipe: true) {
@@ -63,13 +62,13 @@ struct HomeView: View {
         Calendar.current.component(.year, from: Date())
     }
 
-    /// Month name with that month's total.
+    /// Month name with that month's total, one amount per currency.
     private func monthHeader(_ group: GiftTimelineSection) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(group.label)
                 .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
             Spacer(minLength: 8)
-            Text(formattedCurrency(group.total, code: composition.currencyCode))
+            AmountsText(amounts: group.total, preferred: composition.defaultCurrency, layout: .inline)
                 .font(Font.app(13, .semibold, rounded: true)).foregroundColor(Color.textSecondary)
         }
         .textCase(nil)

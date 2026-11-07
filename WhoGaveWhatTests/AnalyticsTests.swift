@@ -20,7 +20,7 @@ struct AnalyticsEventCatalogTests {
         .giftSaved(
             GiftSavedProperties(
                 mode: .create, direction: .received, iconSource: .inferred, valueSource: .estimate,
-                occasion: "birthday", paidByYou: false, dateOffset: .today, giftsCount: 1)),
+                occasion: "birthday", currency: "USD", paidByYou: false, dateOffset: .today, giftsCount: 1)),
         .giftDeleted(source: .home, giftsCount: 0),
         .personCreated(source: .giftPicker, peopleCount: 2),
         .personUpdated(nameChanged: true, photo: .added),
@@ -189,8 +189,8 @@ struct CompositionAnalyticsTests {
         composition.markSelf(true, personID: "anton")
         composition.markSelf(true, personID: "anton")
         composition.markSelf(false, personID: "anton")
-        composition.setCurrencyCode("RUB")
-        composition.setCurrencyCode("RUB")
+        composition.setDefaultCurrency(.rub)
+        composition.setDefaultCurrency(.rub)
 
         #expect(
             analytics.events == [

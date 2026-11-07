@@ -266,6 +266,7 @@ struct SwiftDataPersistenceTests {
             occasion: "Just because",
             date: AppDate.today,
             value: 0,
+            currency: .usd,
             createdAt: createdAt
         )
     }

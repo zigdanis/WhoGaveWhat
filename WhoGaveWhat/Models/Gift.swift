@@ -10,6 +10,8 @@ struct Gift: Identifiable, Hashable {
     var occasion: String
     var date: Date
     var value: Double
+    /// The currency `value` is in. It is the gift's own and never follows the default currency.
+    var currency: SupportedCurrency
     let createdAt: Date
     /// True when the user chose the emoji in the picker rather than inferring it from the name.
     var emojiPickedByUser = false

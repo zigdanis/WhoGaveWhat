@@ -20,7 +20,7 @@ struct InsightsTests {
         let date = calendar.date(from: DateComponents(year: year, month: 6, day: 15, hour: 12))!
         return Gift(
             id: id, emoji: "🎁", name: id, giverID: giver.id, recipientID: recipient.id,
-            paidByYou: false, occasion: "", date: date, value: value, createdAt: date)
+            paidByYou: false, occasion: "", date: date, value: value, currency: .usd, createdAt: date)
     }
 
     private var gifts: [Gift] {
@@ -67,19 +67,19 @@ struct InsightsTests {
 
     @Test func summarySplitsRelativeToTheViewpoint() {
         let summary = useCase.summary(gifts: gifts, relativeTo: me.id, year: year)
-        #expect(summary.circulatedValue == 100 + 40 + 30 + 90 + 999)
+        #expect(summary.circulatedValue[.usd] == 100 + 40 + 30 + 90 + 999)
         #expect(summary.giftCount == 5)
-        #expect(summary.receivedValue == 130)
+        #expect(summary.receivedValue[.usd] == 130)
         #expect(summary.receivedCount == 2)
-        #expect(summary.givenValue == 130)
+        #expect(summary.givenValue[.usd] == 130)
         #expect(summary.givenCount == 2)
-        #expect(summary.net == 0)
+        #expect(summary.net[.usd] == 0)
         #expect(summary.isEven)
     }
 
     @Test func summaryWithoutViewpointOnlyCirculates() {
         let summary = useCase.summary(gifts: gifts, relativeTo: nil, year: year)
-        #expect(summary.circulatedValue == 1_259)
+        #expect(summary.circulatedValue[.usd] == 1_259)
         #expect(summary.receivedCount == 0)
         #expect(summary.givenCount == 0)
     }
@@ -89,10 +89,10 @@ struct InsightsTests {
     @Test func balancesListEveryoneTheViewpointExchangedWith() {
         let balances = useCase.balances(gifts: gifts, people: people, relativeTo: me.id, year: year)
         #expect(balances.map(\.person.id) == ["alice", "bob"])
-        #expect(balances[0].receivedValue == 100)
-        #expect(balances[0].givenValue == 40)
-        #expect(balances[0].net == 60)
-        #expect(balances[1].net == -60)
+        #expect(balances[0].receivedValue[.usd] == 100)
+        #expect(balances[0].givenValue[.usd] == 40)
+        #expect(balances[0].net[.usd] == 60)
+        #expect(balances[1].net[.usd] == -60)
         #expect(balances[0].receivedCount == 1)
         #expect(balances[0].givenCount == 1)
     }
@@ -100,7 +100,7 @@ struct InsightsTests {
     @Test func balancesSortByAbsoluteNetThenName() {
         let allYears = useCase.balances(gifts: gifts, people: people, relativeTo: me.id, year: nil)
         #expect(allYears.map(\.person.id) == ["carol", "alice", "bob"])
-        #expect(allYears.first?.net == 500)
+        #expect(allYears.first?.net[.usd] == 500)
     }
 
     @Test func countBalanceIsPositiveWhenTheViewpointReceivedMoreGifts() {
@@ -134,7 +134,7 @@ struct InsightsTests {
         #expect(balance.receivedCount == balance.givenCount)
         #expect(balance.countNet == 0)
         #expect(balance.isCountEven)
-        #expect(balance.net != 0)
+        #expect(balance.net[.usd] != 0)
     }
 
     @Test func balancesSortByAbsoluteCountBalanceThenMoneyThenName() {
@@ -168,7 +168,7 @@ struct InsightsTests {
         let balances = useCase.balances(gifts: gifts, people: people, relativeTo: alice.id, year: year)
         // Alice also gave to Bob, which only Alice's own view counts.
         #expect(balances.map(\.person.id) == ["bob", "me"])
-        #expect(balances.first?.net == -999)
+        #expect(balances.first?.net[.usd] == -999)
         #expect(balances.contains { $0.person.id == alice.id } == false)
     }
 
@@ -182,34 +182,34 @@ struct InsightsTests {
 
     @Test func comparisonTotalsBothDirections() {
         let result = useCase.comparison(gifts: gifts, a: me, b: alice, year: year)
-        #expect(result.aToBValue == 40)
+        #expect(result.aToBValue[.usd] == 40)
         #expect(result.aToBCount == 1)
-        #expect(result.bToAValue == 100)
+        #expect(result.bToAValue[.usd] == 100)
         #expect(result.bToACount == 1)
-        #expect(result.net == 60)
+        #expect(result.net[.usd] == 60)
         #expect(!result.isEven)
     }
 
     @Test func comparisonIsSymmetric() {
         let forward = useCase.comparison(gifts: gifts, a: alice, b: bob, year: nil)
         let backward = useCase.comparison(gifts: gifts, a: bob, b: alice, year: nil)
-        #expect(forward.aToBValue == backward.bToAValue)
+        #expect(forward.aToBValue[.usd] == backward.bToAValue[.usd])
         #expect(forward.aToBCount == backward.bToACount)
-        #expect(forward.bToAValue == backward.aToBValue)
-        #expect(forward.net == -backward.net)
-        #expect(forward.aToBValue == 999)
+        #expect(forward.bToAValue[.usd] == backward.aToBValue[.usd])
+        #expect(forward.net[.usd] == -backward.net[.usd])
+        #expect(forward.aToBValue[.usd] == 999)
     }
 
     @Test func comparisonRespectsTheYearAndIgnoresOtherPeople() {
-        #expect(useCase.comparison(gifts: gifts, a: me, b: carol, year: year).bToAValue == 0)
-        #expect(useCase.comparison(gifts: gifts, a: me, b: carol, year: year - 1).bToAValue == 500)
+        #expect(useCase.comparison(gifts: gifts, a: me, b: carol, year: year).bToAValue[.usd] == 0)
+        #expect(useCase.comparison(gifts: gifts, a: me, b: carol, year: year - 1).bToAValue[.usd] == 500)
         #expect(useCase.comparison(gifts: gifts, a: bob, b: carol, year: nil).aToBCount == 0)
     }
 
     @Test func comparisonWithoutGiftsIsEven() {
         let result = useCase.comparison(gifts: [], a: me, b: alice, year: year)
-        #expect(result.aToBValue == 0)
-        #expect(result.bToAValue == 0)
+        #expect(result.aToBValue[.usd] == 0)
+        #expect(result.bToAValue[.usd] == 0)
         #expect(result.aToBCount == 0)
         #expect(result.bToACount == 0)
         #expect(result.isEven)

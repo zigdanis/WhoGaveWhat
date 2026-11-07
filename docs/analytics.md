@@ -24,7 +24,7 @@ outside the cases listed under "When nothing is sent". The full list lives in
 | `gift_price_edited` | `had_estimate` | The first edit of the price field in a sheet |
 | `gift_suggestion_completed` | `provider` cloud/on_device (whichever answered; cloud when none did), `outcome`, `has_icon`, `has_price`, `latency_ms` | An icon/price inference returns |
 | `occasion_added` | – | A custom occasion is typed |
-| `gift_saved` | `mode`, `direction` received/given/unrelated/no_viewpoint, `icon_source`, `value_source` user/estimate/none, `occasion` (built-in key or `custom`), `paid_by_you`, `date_offset`, `gifts_count` | A gift is stored |
+| `gift_saved` | `mode`, `direction` received/given/unrelated/no_viewpoint, `icon_source`, `value_source` user/estimate/none, `occasion` (built-in key or `custom`), `currency` (the gift's own ISO code, never its amount), `paid_by_you`, `date_offset`, `gifts_count` | A gift is stored |
 | `gift_deleted` | `source` home/person_detail/gift_detail, `gifts_count` | A gift is removed |
 | `gift_detail_viewed` | – | A gift screen appears |
 | `person_detail_viewed` | `is_self`, `gifts_count` | A person screen appears |
@@ -34,18 +34,18 @@ outside the cases listed under "When nothing is sent". The full list lives in
 | `viewpoint_changed` | `is_set` | "This is me" is switched |
 | `insights_person_picked` | `slot` subject/compareA/compareB | An Insights picker choice |
 | `insights_year_changed` | `is_current_year` | The Insights year menu |
-| `currency_changed` | `currency` | Settings → Currency |
+| `currency_changed` | `currency` | Settings → Default currency (applies to new gifts only) |
 | `privacy_policy_opened`, `licenses_opened` | – | Settings → About |
 | `app_opened_from_spotlight` | – | The Spotlight launcher opened the app |
 | `review_prompt_requested` | `active_days`, `days_since_first_launch`, `gifts_count`, `people_count`, `request_number` | The app asked iOS for the App Store rating sheet (see [rating prompt](rating-prompt.md)); iOS may not show it |
 
 PostHog adds its own `Application Installed / Opened / Updated / Backgrounded` events and attaches
 these super properties to everything: `app_environment` (testflight/appstore), `gifts_count`,
-`people_count`, `has_viewpoint`, `currency`. The same values travel to Sentry as the
+`people_count`, `has_viewpoint`, `currency` (the default currency for new gifts). The same values travel to Sentry as the
 `app_state` context, and every product event becomes a Sentry breadcrumb.
 
 Handled failures (`AnalyticsFailure`) go to Sentry only, tagged with `operation`: `load_gifts`,
-`load_people`, `save_gift`, `delete_gift`, `create_person`, `rename_person`, `update_person`,
+`load_people`, `migrate_gift_currency`, `save_gift`, `delete_gift`, `create_person`, `rename_person`, `update_person`,
 `delete_person`, `load_person_photo`, `cloud_icon_request`, `cloud_icon_decode`,
 `on_device_inference`, `spotlight_index`. A duplicate person name, being offline and cancellation
 are ordinary and are not reported.

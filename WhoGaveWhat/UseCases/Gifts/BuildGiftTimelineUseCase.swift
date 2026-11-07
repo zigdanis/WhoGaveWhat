@@ -5,7 +5,8 @@ struct GiftTimelineSection: Identifiable, Equatable {
     let label: String
     let gifts: [Gift]
 
-    var total: Double { gifts.totalValue }
+    /// The month's total, one per currency.
+    var total: CurrencyAmounts { gifts.totals }
 }
 
 struct BuildGiftTimelineUseCase {

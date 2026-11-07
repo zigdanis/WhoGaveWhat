@@ -38,6 +38,10 @@ final class StoredGift {
     var emojiPickedByUser: Bool = false
     // Optional, so stores created before this attribute open with a lightweight migration.
     var lastSavedAt: Date?
+    /// The ISO code of the currency `value` is in. Optional, so stores from 1.2.0 and earlier open
+    /// with a lightweight migration; `SwiftDataStore` then gives those gifts the currency they were
+    /// shown in, and every gift saved since has one.
+    var currencyCode: String?
 
     init(
         id: String,
@@ -51,7 +55,8 @@ final class StoredGift {
         value: Double,
         createdAt: Date,
         emojiPickedByUser: Bool = false,
-        lastSavedAt: Date? = nil
+        lastSavedAt: Date? = nil,
+        currencyCode: String?
     ) {
         self.id = id
         self.emoji = emoji
@@ -65,5 +70,6 @@ final class StoredGift {
         self.createdAt = createdAt
         self.emojiPickedByUser = emojiPickedByUser
         self.lastSavedAt = lastSavedAt
+        self.currencyCode = currencyCode
     }
 }

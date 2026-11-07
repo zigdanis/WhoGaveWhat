@@ -4,9 +4,12 @@ import SwiftData
 @MainActor
 final class SwiftDataGiftGateway: GiftGateway {
     private let context: ModelContext
+    /// The currency a gift saved before per-gift currencies has, until the store has saved it on the gift.
+    private let legacyGiftCurrency: SupportedCurrency?
 
-    init(context: ModelContext) {
+    init(context: ModelContext, legacyGiftCurrency: SupportedCurrency? = nil) {
         self.context = context
+        self.legacyGiftCurrency = legacyGiftCurrency
     }
 
     func loadGifts() throws -> [Gift] {
@@ -14,7 +17,7 @@ final class SwiftDataGiftGateway: GiftGateway {
             SortDescriptor(\StoredGift.date, order: .reverse),
             SortDescriptor(\StoredGift.createdAt, order: .reverse)
         ])
-        return try context.fetch(descriptor).map(Gift.init)
+        return try context.fetch(descriptor).map { try Gift($0, legacyCurrency: legacyGiftCurrency) }
     }
 
     func save(_ gift: Gift) throws {
@@ -44,7 +47,8 @@ final class SwiftDataGiftGateway: GiftGateway {
                 value: gift.value,
                 createdAt: gift.createdAt,
                 emojiPickedByUser: gift.emojiPickedByUser,
-                lastSavedAt: gift.lastSavedAt
+                lastSavedAt: gift.lastSavedAt,
+                currencyCode: gift.currency.code
             )
             context.insert(storedGift)
         }
@@ -56,6 +60,7 @@ final class SwiftDataGiftGateway: GiftGateway {
         storedGift.occasion = gift.occasion
         storedGift.date = gift.date
         storedGift.value = gift.value
+        storedGift.currencyCode = gift.currency.code
         storedGift.createdAt = gift.createdAt
         storedGift.emojiPickedByUser = gift.emojiPickedByUser
         storedGift.lastSavedAt = gift.lastSavedAt
@@ -100,7 +105,18 @@ final class SwiftDataGiftGateway: GiftGateway {
 }
 
 private extension Gift {
-    init(_ storedGift: StoredGift) {
+    /// `legacyCurrency` applies only to a gift with no stored currency, one saved before gifts had their own.
+    init(_ storedGift: StoredGift, legacyCurrency: SupportedCurrency?) throws {
+        // Never fall back to the current default currency: that would relabel the amount.
+        let currency =
+            if let code = storedGift.currencyCode {
+                SupportedCurrency(rawValue: code)
+            } else {
+                legacyCurrency
+            }
+        guard let currency else {
+            throw SwiftDataPersistenceError.missingCurrency(giftID: storedGift.id)
+        }
         self.init(
             id: storedGift.id,
             emoji: storedGift.emoji,
@@ -111,6 +127,7 @@ private extension Gift {
             occasion: storedGift.occasion,
             date: storedGift.date,
             value: storedGift.value,
+            currency: currency,
             createdAt: storedGift.createdAt,
             emojiPickedByUser: storedGift.emojiPickedByUser,
             lastSavedAt: storedGift.lastSavedAt
