@@ -284,6 +284,43 @@ struct DataLoadRecoveryTests {
         #expect(!composition.isReviewRequestPending)
     }
 
+    @Test func theViewpointNeedsAPersonFromACurrentSnapshot() {
+        let analytics = RecordingAnalyticsGateway()
+        let haptics = RecordingHapticsGateway()
+        let gifts = ScriptedGiftGateway()
+        let people = ScriptedPeopleGateway(people: [person("me"), person("ann"), person("bob")])
+        let (composition, preferences) = makeComposition(
+            gifts: gifts, people: people, selfPersonID: "me", analytics: analytics, haptics: haptics)
+
+        // Bob was deleted, but the reload after it failed, so he is still on screen.
+        people.people.removeAll { $0.id == "bob" }
+        people.loadError = TestStoreError()
+        #expect(!composition.reloadData())
+        composition.markSelf(true, personID: "bob")
+        #expect(composition.data.selfPersonID == "me")
+        #expect(preferences.selfPersonID == "me")
+        #expect(haptics.played.last == .error)
+        #expect(!analytics.eventNames.contains("viewpoint_changed"))
+
+        // With loading back, the fresh snapshot shows Bob is gone, so he still cannot be chosen.
+        people.loadError = nil
+        composition.markSelf(true, personID: "bob")
+        #expect(composition.data.selfPersonID == "me")
+        #expect(!composition.data.isLoadFailing)
+
+        // Someone who is still there can be.
+        composition.markSelf(true, personID: "ann")
+        #expect(composition.data.selfPersonID == "ann")
+        #expect(preferences.selfPersonID == "ann")
+        #expect(analytics.eventNames.last == "viewpoint_changed")
+
+        // Clearing it needs no fresh snapshot.
+        people.loadError = TestStoreError()
+        #expect(!composition.reloadData())
+        composition.markSelf(false, personID: "ann")
+        #expect(composition.data.selfPersonID == nil)
+    }
+
     @Test func aCompleteSnapshotStillClearsAMissingViewpoint() {
         let gifts = ScriptedGiftGateway()
         let people = ScriptedPeopleGateway(people: [person("ann")])

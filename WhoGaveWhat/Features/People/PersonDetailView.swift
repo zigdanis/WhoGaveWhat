@@ -10,6 +10,8 @@ struct PersonDetailView: View {
     @State private var filter: String = "all"
     /// Rename sheet state.
     @State private var renaming = false
+    /// Set once this screen is on its way out, so it pops only once.
+    @State private var isLeaving = false
 
     private var filterOptions: [Segmented.Option] {
         [
@@ -123,6 +125,13 @@ struct PersonDetailView: View {
         .navigationTitle(name)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { composition.analytics.track(.personDetailViewed(isSelf: isSelf, giftsCount: gs.count)) }
+        // The person was deleted elsewhere, for example from People while this screen sat in Home's stack.
+        // Only a current snapshot can say so; after a failed load the screen stays with its retry card.
+        .onChange(of: isMissingFromCurrentSnapshot, initial: true) { _, isMissing in
+            guard isMissing, !isLeaving else { return }
+            isLeaving = true
+            dismiss()
+        }
         .toolbar {
             if composition.deletePersonUseCase.canDelete(id: entityId) {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -141,6 +150,11 @@ struct PersonDetailView: View {
         .sheet(isPresented: $renaming) {
             renameSheet(name: name, count: giftsCount)
         }
+    }
+
+    private var isMissingFromCurrentSnapshot: Bool {
+        let data = composition.data
+        return data.hasLoadedSnapshot && !data.isLoadFailing && !data.people.contains { $0.id == entityId }
     }
 
     /// Exactly one person can be the viewpoint; switching this one on moves it from anyone else.
@@ -167,7 +181,10 @@ struct PersonDetailView: View {
             onDelete: {
                 // A failed deletion keeps this screen and the editor, which shows the error.
                 let result = composition.deletePerson(id: entityId, source: .personEditor)
-                if result == .deleted { dismiss() }
+                if result == .deleted, !isLeaving {
+                    isLeaving = true
+                    dismiss()
+                }
                 return result
             }
         )

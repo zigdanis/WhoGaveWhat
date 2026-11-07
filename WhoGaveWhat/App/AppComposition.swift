@@ -468,6 +468,12 @@ final class AppComposition {
     func markSelf(_ isSelf: Bool, personID id: String) {
         if isSelf {
             guard !data.isSelf(id) else { return }
+            // Only someone in a current snapshot can become the viewpoint, never a person deleted while
+            // loading kept failing. Clearing the viewpoint needs no check.
+            guard refreshStaleSnapshot(), data.people.contains(where: { $0.id == id }) else {
+                haptics.play(.error)
+                return
+            }
             setSelfPerson(id)
         } else if data.isSelf(id) {
             setSelfPerson(nil)
