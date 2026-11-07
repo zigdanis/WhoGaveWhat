@@ -8,6 +8,7 @@ import SwiftUI
 /// their year in month headers and dates. The year summary lives in Insights.
 struct HomeView: View {
     let composition: AppComposition
+    @State private var restoreNotice: String?
 
     var body: some View {
         let year = currentYear
@@ -20,12 +21,15 @@ struct HomeView: View {
                 let offer = backup.restoreOffer
             {
                 Section {
-                    RestoreOfferCard(composition: composition, backup: backup, offer: offer)
-                        .padding(.horizontal, WelcomeMetrics.horizontalInset)
-                        .padding(.top, 8)
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
+                    RestoreOfferCard(
+                        composition: composition, backup: backup, offer: offer,
+                        onPartialRestore: { restoreNotice = $0 }
+                    )
+                    .padding(.horizontal, WelcomeMetrics.horizontalInset)
+                    .padding(.top, 8)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 }
                 .zeroHorizontalListSectionMargins()
             }
@@ -77,6 +81,15 @@ struct HomeView: View {
         .animation(.default, value: composition.data.gifts.isEmpty)
         .animation(.default, value: composition.data.isLoadFailing)
         .animation(.default, value: composition.iCloudBackup?.restoreOffer?.id)
+        .alert(
+            "Backup restored",
+            isPresented: Binding(get: { restoreNotice != nil }, set: { if !$0 { restoreNotice = nil } }),
+            presenting: restoreNotice
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { notice in
+            Text(verbatim: notice)
+        }
     }
 
     /// Months and dates omit the year only for the current calendar year.

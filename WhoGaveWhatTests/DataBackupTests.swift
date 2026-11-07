@@ -160,6 +160,15 @@ struct DataBackupCodecTests {
         }
     }
 
+    @Test func refusesAPhotoReferenceItCouldNotHaveWritten() throws {
+        var object = try #require(
+            JSONSerialization.jsonObject(with: try BackupSamples.goldenV1()) as? [String: Any])
+        var people = try #require(object["people"] as? [[String: Any]])
+        people[1]["photoFile"] = "abc.photo"
+        object["people"] = people
+        #expect(throws: DataBackupError.inconsistent("photo_reference")) { try DataBackupCodec.decode(try json(object)) }
+    }
+
     @Test func aViewpointWithoutItsPersonIsDropped() throws {
         let backup = BackupSamples.backup(selfPersonID: "p-gone")
         let decoded = try DataBackupCodec.decode(try DataBackupCodec.encode(backup, photos: .inline).json)
@@ -283,6 +292,7 @@ struct JournalArchiveGatewayTests {
         let summary = try SwiftDataJournalArchiveGateway(context: store.context).restore(backup)
         #expect(summary.giftsAdded == 0)
         #expect(summary.giftsWithoutPlace == 1)
+        #expect(summary.restoredSelfPersonID == "p-anna")
         #expect(RestoreMessages.outcome(summary).contains("1"))
     }
 
@@ -433,6 +443,38 @@ struct BackupFolderStoreTests {
 
         try FileManager.default.moveItem(at: parked, to: photo)
         #expect(try store.load(folder: writer).people.first?.photo == BackupSamples.photo)
+    }
+
+    @Test func aDamagedPhotoIsRewrittenAndRefusedOnLoad() throws {
+        let store = try makeStore()
+        defer { try? FileManager.default.removeItem(at: store.root.deletingLastPathComponent()) }
+        try store.write(BackupSamples.backup(), writerID: writer)
+        let photo = store.root.appending(path: writer).appending(path: BackupFolderStore.photosFolderName)
+            .appending(path: DataBackupCodec.photoFileName(for: BackupSamples.photo))
+        try Data([0x00]).write(to: photo)
+
+        #expect(throws: DataBackupError.inconsistent("photo_damaged")) { try store.load(folder: writer) }
+
+        try store.write(BackupSamples.backup(), writerID: writer)
+        #expect(try store.load(folder: writer).people.first?.photo == BackupSamples.photo)
+    }
+
+    @Test func aBackupMissingAPhotoIsNotIntactAndNeverBecomesThePreviousCopy() throws {
+        let store = try makeStore()
+        defer { try? FileManager.default.removeItem(at: store.root.deletingLastPathComponent()) }
+        try store.write(BackupSamples.backup(gifts: []), writerID: writer)
+        try store.write(BackupSamples.backup(), writerID: writer)
+        #expect(store.isIntact(writerID: writer))
+        let folder = store.root.appending(path: writer)
+        let previous = folder.appending(path: BackupFolderStore.previousFileName)
+        let goodPrevious = try Data(contentsOf: previous)
+        try FileManager.default.removeItem(
+            at: folder.appending(path: BackupFolderStore.photosFolderName)
+                .appending(path: DataBackupCodec.photoFileName(for: BackupSamples.photo)))
+        #expect(!store.isIntact(writerID: writer))
+
+        try store.write(BackupSamples.backup(people: [], gifts: []), writerID: writer)
+        #expect(try Data(contentsOf: previous) == goodPrevious)
     }
 
     @Test func listsEveryInstallNewestFirstAndIgnoresOtherFolders() throws {

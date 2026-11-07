@@ -85,6 +85,8 @@ final class SwiftDataJournalArchiveGateway: JournalArchiveGateway {
             summary.peopleAdded += 1
         }
 
+        summary.restoredSelfPersonID = backup.selfPersonID.flatMap { restoredPeople[$0]?.id }
+
         for gift in backup.gifts {
             guard !storedGiftIDs.contains(gift.id) else {
                 summary.giftsAlreadyHere += 1

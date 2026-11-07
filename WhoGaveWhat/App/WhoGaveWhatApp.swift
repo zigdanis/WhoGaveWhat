@@ -14,11 +14,26 @@ struct WhoGaveWhatApp: App {
             analytics: analytics, haptics: haptics, openStore: Self.storeOpener,
             makeComposition: { store in
                 AppComposition(
-                    store: store, preferences: UserDefaultsPreferencesGateway(), analytics: analytics,
+                    store: store, preferences: Self.makePreferences(), analytics: analytics,
                     haptics: haptics)
             })
         launch.start()
         _launch = State(initialValue: launch)
+    }
+
+    /// The app's preferences. In Debug, the empty journal of `KS_EMPTY_STORE=1` gets its own, emptied each
+    /// launch, so "This is me" or a restored default currency there never changes the device's real ones.
+    private static func makePreferences() -> UserDefaultsPreferencesGateway {
+        #if DEBUG
+            if LaunchFlags.opensEmptyStore {
+                let suite = "pro.ziganshin.WhoGaveWhat.debug-empty-store"
+                if let defaults = UserDefaults(suiteName: suite) {
+                    defaults.removePersistentDomain(forName: suite)
+                    return UserDefaultsPreferencesGateway(defaults: defaults)
+                }
+            }
+        #endif
+        return UserDefaultsPreferencesGateway()
     }
 
     /// Opens the persistent store, or in Debug builds the seeded in-memory one when a screenshot

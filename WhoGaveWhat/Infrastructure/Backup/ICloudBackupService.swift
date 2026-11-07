@@ -175,8 +175,9 @@ final class ICloudBackupService {
             Result {
                 let hash = try Self.contentHash(of: backup)
                 let exists = store.hasBackup(writerID: writerID)
-                // Unchanged content needs no write, unless the backup has gone, e.g. deleted from another device.
-                if hash == lastHash && exists { return .unchanged }
+                // Unchanged content needs no write, unless the backup has gone (e.g. deleted from another
+                // device) or is damaged or missing a photo: then the journal here writes it again.
+                if hash == lastHash && exists && store.isIntact(writerID: writerID) { return .unchanged }
                 // A fresh install has nothing to protect yet, and must not look like a newer, empty backup.
                 if backup.isEmpty && !exists { return .skipped }
                 try store.write(backup, writerID: writerID)
@@ -228,7 +229,10 @@ final class ICloudBackupService {
             for delay in [0, 5, 20, 60] {
                 if delay > 0 { try? await Task.sleep(for: .seconds(delay)) }
                 guard !Task.isCancelled, let self else { return }
+                let generation = self.storeGeneration
                 let state = await self.readUploadState()
+                // A read for the previous iCloud account must not replace the new account's state.
+                guard !Task.isCancelled, generation == self.storeGeneration else { return }
                 self.uploadState = state
                 if state != .uploading { return }
             }
@@ -261,12 +265,19 @@ final class ICloudBackupService {
         if store == nil { await resolveStore() }
         guard let store, !isLoadingCandidates else { return }
         isLoadingCandidates = true
+        let generation = storeGeneration
         let known = await discoverFolders()
         let writerID = settings.writerID
-        candidates = await Task.detached(priority: .userInitiated) {
+        let found = await Task.detached(priority: .userInitiated) {
             store.candidates(thisWriterID: writerID, knownFolders: known)
         }.value
         isLoadingCandidates = false
+        // The iCloud account changed meanwhile: these are the previous account's backups; look again.
+        guard generation == storeGeneration else {
+            await refreshCandidates()
+            return
+        }
+        candidates = found
     }
 
     func loadBackup(_ candidate: BackupCandidate) async throws -> DataBackup {
@@ -302,6 +313,8 @@ final class ICloudBackupService {
     /// Signing out, or into another account, changes what the container holds: write a full backup again.
     private func accountChanged() {
         storeGeneration += 1
+        // Nothing reads or writes the previous account's folder while the new one is located.
+        store = nil
         settings.lastContentHash = nil
         settings.lastBackupAt = nil
         lastBackupAt = nil

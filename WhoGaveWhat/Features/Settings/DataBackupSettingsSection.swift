@@ -62,7 +62,12 @@ struct DataBackupSettingsSection: View {
                         .padding(.horizontal, 14)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityIdentifier("settings.backup.status")
-                    SettingsFootnote(text: "settings.backup.footnote")
+                    // The promise only holds while the backup is on and iCloud can take it.
+                    if backup.isEnabled && backup.availability != .unavailable {
+                        SettingsFootnote(text: "settings.backup.footnote")
+                    } else {
+                        SettingsFootnote(text: "settings.backup.export-footnote")
+                    }
                 } else {
                     SettingsFootnote(text: "settings.backup.export-footnote")
                 }

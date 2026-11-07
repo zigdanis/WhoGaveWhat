@@ -18,6 +18,8 @@ enum DataBackupCodec {
     static let currentVersion = 1
     /// The extension of exported files, declared as the app's own document type in Info.plist.
     static let fileExtension = "whogavewhat"
+    /// Exports above this size are refused and imports above it are not read: far beyond any real journal.
+    static let maximumFileSize = 500_000_000
 
     enum PhotoStorage {
         /// Photos inside the JSON, for a single self-contained file.
@@ -90,7 +92,9 @@ enum DataBackupCodec {
         }
         let people = try file.people.map { record in
             var photoData = record.photo
-            if photoData == nil, let name = record.photoFile, isSafePhotoFileName(name) {
+            if photoData == nil, let name = record.photoFile {
+                // A reference this codec could not have written means a damaged file, not a missing photo.
+                guard isSafePhotoFileName(name) else { throw DataBackupError.inconsistent("photo_reference") }
                 photoData = try photo(name)
             }
             return DataBackup.Person(

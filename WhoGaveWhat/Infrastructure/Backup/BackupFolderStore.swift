@@ -34,17 +34,18 @@ struct BackupFolderStore: Sendable {
         let encoded = try DataBackupCodec.encode(backup, photos: .external)
         for (name, data) in encoded.photos {
             let url = photos.appending(path: name)
-            if !itemExists(at: url) { try coordinatedWrite(data, to: url) }
+            // A file of the wrong size is damaged; the name is the content's hash, so write it again.
+            if !itemExists(at: url) || Self.fileSize(of: url).map({ $0 != data.count }) == true {
+                try coordinatedWrite(data, to: url)
+            }
         }
 
         let current = folder.appending(path: Self.currentFileName)
         let previous = folder.appending(path: Self.previousFileName)
         var previousJSON: Data?
-        // Only a readable backup becomes the previous one; a damaged current file never replaces a good
-        // previous copy, so a failed write below still leaves one backup to restore.
-        if itemExists(at: current), let json = try? coordinatedRead(current),
-            (try? DataBackupCodec.decodeSummary(json)) != nil
-        {
+        // Only a complete backup becomes the previous one: a damaged current file, or one missing a photo,
+        // never replaces a good previous copy, so a failed write below still leaves one backup to restore.
+        if itemExists(at: current), let json = try? coordinatedRead(current), isComplete(json, photos: photos) {
             try coordinatedWrite(json, to: previous)
             previousJSON = json
         } else if itemExists(at: previous) {
@@ -64,6 +65,25 @@ struct BackupFolderStore: Sendable {
     func hasBackup(writerID: String) -> Bool {
         guard Self.isSafeFolderName(writerID) else { return false }
         return itemExists(at: root.appending(path: writerID).appending(path: Self.currentFileName))
+    }
+
+    /// Whether this install's current backup can be read and has every photo it refers to, so an unchanged
+    /// journal may skip writing it again.
+    func isIntact(writerID: String) -> Bool {
+        guard Self.isSafeFolderName(writerID) else { return false }
+        let folder = root.appending(path: writerID, directoryHint: .isDirectory)
+        let current = folder.appending(path: Self.currentFileName)
+        guard itemExists(at: current), let json = try? coordinatedRead(current) else { return false }
+        return isComplete(json, photos: folder.appending(path: Self.photosFolderName, directoryHint: .isDirectory))
+    }
+
+    private func isComplete(_ json: Data, photos: URL) -> Bool {
+        guard (try? DataBackupCodec.decodeSummary(json)) != nil else { return false }
+        return DataBackupCodec.referencedPhotoFiles(in: json).allSatisfy { itemExists(at: photos.appending(path: $0)) }
+    }
+
+    private static func fileSize(of url: URL) -> Int? {
+        try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
     }
 
     // MARK: - Reading
@@ -101,7 +121,10 @@ struct BackupFolderStore: Sendable {
         let json = try previousCopy ? readPreviousJSON(folder: folder) : readNewestJSON(folder: folder)
         let photos = root.appending(path: folder).appending(path: Self.photosFolderName, directoryHint: .isDirectory)
         return try DataBackupCodec.decode(json) { name in
-            try coordinatedRead(photos.appending(path: name))
+            let data = try coordinatedRead(photos.appending(path: name))
+            // The name is the photo's hash: anything else is a damaged file, not this portrait.
+            guard DataBackupCodec.photoFileName(for: data) == name else { throw DataBackupError.inconsistent("photo_damaged") }
+            return data
         }
     }
 

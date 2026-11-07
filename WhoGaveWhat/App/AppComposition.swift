@@ -201,6 +201,7 @@ final class AppComposition {
     /// the previous snapshot and the viewpoint stay as they were, and the screens offer a retry.
     @discardableResult
     func reloadData() -> Bool {
+        let wasLoadFailing = data.isLoadFailing
         let gifts: [Gift]
         let people: PeopleSnapshot
         do {
@@ -222,6 +223,8 @@ final class AppComposition {
         }
         publishAnalyticsContext()
         iCloudBackup?.journalChanged()
+        // A journal that only now loaded may be an empty reinstall with a backup to offer.
+        if wasLoadFailing { lookForBackupToRestore() }
         return true
     }
 

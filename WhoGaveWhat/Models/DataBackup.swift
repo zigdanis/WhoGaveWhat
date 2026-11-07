@@ -41,8 +41,9 @@ struct DataBackup: Equatable, Sendable {
 
     var isEmpty: Bool { people.isEmpty && gifts.isEmpty }
 
-    /// The largest amount a restored gift may have, far above any real gift and well inside `Int`.
-    static let maximumValue: Double = 1_000_000_000_000
+    /// The largest amount a restored gift may have: any amount the app can edit (it converts amounts to
+    /// `Int`), so every saved gift round-trips, while a damaged file cannot store one that would crash.
+    static let maximumValue: Double = 9_000_000_000_000_000_000
 
     /// The same records and preferences, ignoring when and where they were written: two backups with
     /// equal content need only one write.
@@ -113,6 +114,9 @@ struct DataRestoreSummary: Equatable {
     var giftsWithoutPlace = 0
     /// Whether the journal was empty, so the backup's preferences were applied too.
     var restoredIntoEmptyJournal = false
+    /// The backup's "This is me" person as stored here, which may be another id when two backup people
+    /// matched one by name; nil when the backup has none.
+    var restoredSelfPersonID: String?
 
     var addedAnything: Bool { peopleAdded > 0 || giftsAdded > 0 }
 }

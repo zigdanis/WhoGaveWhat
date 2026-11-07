@@ -7,6 +7,9 @@ struct RestoreOfferCard: View {
     let composition: AppComposition
     let backup: ICloudBackupService
     let offer: BackupCandidate
+    /// Called with the outcome when some gifts could not be added; the card itself goes away once the
+    /// journal has records, so Home shows it.
+    let onPartialRestore: (String) -> Void
     @State private var isRestoring = false
     @State private var failure: String?
     @Environment(\.compactVerticalSpace) private var isCompact
@@ -103,8 +106,13 @@ struct RestoreOfferCard: View {
                 failure = RestoreMessages.readFailure(error)
                 return
             }
-            if case .failed = composition.restore(loaded, source: .iCloud) {
+            switch composition.restore(loaded, source: .iCloud) {
+            case .failed:
                 failure = String(localized: "Nothing was changed. Try again.")
+            case .restored(let summary) where summary.giftsWithoutPlace > 0:
+                onPartialRestore(RestoreMessages.outcome(summary))
+            case .restored:
+                break
             }
         }
     }

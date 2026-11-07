@@ -80,7 +80,7 @@ extension AppComposition {
             return .failed
         }
         if summary.restoredIntoEmptyJournal {
-            applyRestoredPreferences(currency: backup.defaultCurrency, selfPersonID: backup.selfPersonID)
+            applyRestoredPreferences(currency: backup.defaultCurrency, selfPersonID: summary.restoredSelfPersonID)
         }
         reloadData()
         analytics.track(
@@ -101,7 +101,10 @@ extension AppComposition {
                 // Only the latest export stays on the device.
                 try? FileManager.default.removeItem(at: folder)
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-                try DataBackupCodec.encode(backup, photos: .inline).json.write(to: url, options: .atomic)
+                let json = try DataBackupCodec.encode(backup, photos: .inline).json
+                // Import would refuse it, so a file this large would be a backup that cannot be restored.
+                guard json.count <= DataBackupCodec.maximumFileSize else { throw CocoaError(.fileWriteOutOfSpace) }
+                try json.write(to: url, options: .atomic)
             }.value
         } catch {
             analytics.report(AnalyticsFailure(operation: "export_data", error: error))
@@ -121,8 +124,8 @@ extension AppComposition {
             NSFileCoordinator().coordinate(readingItemAt: url, options: [], error: &coordinationError) { url in
                 result = Result {
                     let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
-                    // Far beyond any real journal; a file this large is not a backup.
-                    guard size <= 500_000_000 else { throw DataBackupError.unreadable }
+                    // Far beyond any real journal; export refuses to write a larger file.
+                    guard size <= DataBackupCodec.maximumFileSize else { throw DataBackupError.unreadable }
                     return try Data(contentsOf: url)
                 }
             }
