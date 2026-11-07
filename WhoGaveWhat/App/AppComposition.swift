@@ -171,6 +171,13 @@ final class AppComposition {
         return true
     }
 
+    /// While the last load failed the screens show older records, so a change loads again first and is
+    /// refused when that fails too: it must not be checked against, or write over, newer stored data.
+    private func refreshStaleSnapshot() -> Bool {
+        guard data.isLoadFailing || !data.hasLoadedSnapshot else { return true }
+        return reloadData()
+    }
+
     private func noteLoadFailure(operation: String, error: Error) {
         analytics.report(
             AnalyticsFailure(
@@ -200,6 +207,10 @@ final class AppComposition {
     /// Saves the gift and reports whether it was stored.
     @discardableResult
     func saveGift(_ input: SaveGiftInput) -> Bool {
+        guard refreshStaleSnapshot() else {
+            noteReviewSetback()
+            return false
+        }
         let gift: Gift?
         do {
             gift = try saveGiftUseCase.execute(input)
@@ -285,6 +296,7 @@ final class AppComposition {
     }
 
     func deleteGift(id: String, source: GiftDeletionSource) {
+        guard refreshStaleSnapshot() else { return }
         do {
             try deleteGiftUseCase.execute(id: id)
         } catch {
@@ -323,6 +335,7 @@ final class AppComposition {
 
     /// Creates the person, or returns the existing one with that name without counting a creation.
     func createPerson(name: String, source: PersonCreationSource) -> String? {
+        guard refreshStaleSnapshot() else { return nil }
         let id: String?
         do {
             id = try createPersonUseCase.execute(name: name, current: data.peopleSnapshot)
@@ -341,6 +354,7 @@ final class AppComposition {
     }
 
     func renamePerson(id: String, newName: String) {
+        guard refreshStaleSnapshot() else { return }
         do {
             try renamePersonUseCase.execute(id: id, newName: newName, current: data.peopleSnapshot)
         } catch {
@@ -352,6 +366,7 @@ final class AppComposition {
     }
 
     func updatePerson(id: String, name: String, imageData: Data?) throws {
+        guard refreshStaleSnapshot() else { throw StaleSnapshotError() }
         let previous = data.people.first { $0.id == id }
         do {
             try renamePersonUseCase.update(id: id, newName: name, imageData: imageData, current: data.peopleSnapshot)
@@ -380,6 +395,7 @@ final class AppComposition {
     }
 
     func deletePerson(id: String, source: PersonDeletionSource) {
+        guard refreshStaleSnapshot() else { return }
         let giftsRemoved = data.gifts.filter { $0.giverID == id || $0.recipientID == id }.count
         let deleted: Bool
         do {
@@ -429,3 +445,6 @@ final class AppComposition {
         publishAnalyticsContext()
     }
 }
+
+/// A change was refused because the records on screen could not be brought up to date first.
+struct StaleSnapshotError: Error {}

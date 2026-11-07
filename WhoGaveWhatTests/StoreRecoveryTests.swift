@@ -150,6 +150,54 @@ struct DataLoadRecoveryTests {
         #expect(composition.data.selfPersonID == "me")
     }
 
+    @Test func anEmptySnapshotThatFailedToRefreshIsNotAnEmptyJournal() {
+        let gifts = ScriptedGiftGateway()
+        let people = ScriptedPeopleGateway()
+        let (composition, _) = makeComposition(gifts: gifts, people: people)
+        #expect(composition.data.showsGiftsWelcome)
+        #expect(composition.data.showsPeopleWelcome)
+
+        // The first gift and person were stored, then the reload after them failed.
+        people.people = [person("me"), person("ann")]
+        gifts.gifts = [gift("g1", from: "me", to: "ann")]
+        gifts.loadError = TestStoreError()
+        #expect(!composition.reloadData())
+
+        #expect(!composition.data.showsGiftsWelcome)
+        #expect(!composition.data.showsPeopleWelcome)
+        #expect(composition.data.isLoadFailing)
+    }
+
+    @Test func changesWaitForAFreshSnapshot() throws {
+        let analytics = RecordingAnalyticsGateway()
+        let gifts = ScriptedGiftGateway()
+        let people = ScriptedPeopleGateway(people: [person("me")])
+        let (composition, _) = makeComposition(gifts: gifts, people: people, analytics: analytics)
+
+        // "Dana" was stored, but the reload after it failed, so the screens still lack her.
+        people.people.append(Person(id: "dana", name: "Dana", colorHex: 0x12805C))
+        people.loadError = TestStoreError()
+        #expect(!composition.reloadData())
+
+        // While the store keeps failing, every change is refused instead of trusting the old snapshot.
+        #expect(composition.createPerson(name: "Dana", source: .peopleTab) == nil)
+        #expect(throws: StaleSnapshotError.self) {
+            try composition.updatePerson(id: "me", name: "Me", imageData: nil)
+        }
+        #expect(!composition.saveGift(makeGiftInput(name: "Book", fromID: "me", toID: "dana")))
+        composition.deletePerson(id: "dana", source: .peopleList)
+        #expect(people.people.map(\.id) == ["me", "dana"])
+        #expect(gifts.gifts.isEmpty)
+        #expect(!analytics.eventNames.contains("person_created"))
+
+        // Once loading works again, the change runs against the fresh snapshot: no second Dana.
+        people.loadError = nil
+        #expect(composition.createPerson(name: "Dana", source: .peopleTab) == "dana")
+        #expect(people.people.map(\.id) == ["me", "dana"])
+        #expect(!composition.data.isLoadFailing)
+        #expect(composition.data.people.map(\.id) == ["me", "dana"])
+    }
+
     @Test func aCompleteSnapshotStillClearsAMissingViewpoint() {
         let gifts = ScriptedGiftGateway()
         let people = ScriptedPeopleGateway(people: [person("ann")])

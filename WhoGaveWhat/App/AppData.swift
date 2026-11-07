@@ -41,13 +41,14 @@ final class AppData {
         isLoadFailing = true
     }
 
-    /// The first-run welcomes stand for an empty journal, so they need a loaded snapshot.
+    /// The first-run welcomes stand for an empty journal, so they need a loaded snapshot that is current:
+    /// after a failed load an empty snapshot may be out of date.
     var showsGiftsWelcome: Bool {
-        hasLoadedSnapshot && gifts.isEmpty
+        hasLoadedSnapshot && !isLoadFailing && gifts.isEmpty
     }
 
     var showsPeopleWelcome: Bool {
-        hasLoadedSnapshot && people.isEmpty
+        hasLoadedSnapshot && !isLoadFailing && people.isEmpty
     }
 
     func addOccasion(_ occasion: String) {
