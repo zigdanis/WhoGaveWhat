@@ -86,7 +86,7 @@ struct CompositionHapticsTests {
         haptics.played.removeAll()
 
         composition.markSelf(true, personID: "anton")
-        composition.setCurrencyCode("RUB")
+        composition.setDefaultCurrency(.rub)
         composition.recordInsightsPick("maria", for: .subject)
         composition.deleteGift(id: gift.id, source: .giftDetail)
         composition.deletePerson(id: removable, source: .personEditor)

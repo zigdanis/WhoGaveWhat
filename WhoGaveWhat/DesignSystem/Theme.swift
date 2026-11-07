@@ -79,6 +79,48 @@ func formattedSignedCurrency(
     return magnitude
 }
 
+/// Amounts in several currencies, one per currency with the preferred one first, joined with " · ".
+/// A single currency reads exactly like `formattedCurrency`. Currencies are never added together.
+func formattedAmounts(
+    _ amounts: CurrencyAmounts,
+    preferred: SupportedCurrency,
+    separator: String = " · ",
+    locale: Locale = .autoupdatingCurrent
+) -> String {
+    amountLines(amounts, preferred: preferred, locale: locale).joined(separator: separator)
+}
+
+/// `formattedAmounts` with each amount signed like `formattedSignedCurrency`.
+func formattedSignedAmounts(
+    _ amounts: CurrencyAmounts,
+    preferred: SupportedCurrency,
+    separator: String = " · ",
+    locale: Locale = .autoupdatingCurrent
+) -> String {
+    amountLines(amounts, preferred: preferred, signed: true, locale: locale).joined(separator: separator)
+}
+
+/// One formatted amount per displayed currency, in display order.
+func amountLines(
+    _ amounts: CurrencyAmounts,
+    preferred: SupportedCurrency,
+    signed: Bool = false,
+    locale: Locale = .autoupdatingCurrent
+) -> [String] {
+    amounts.displayed(preferred: preferred).map { formattedAmount($0, signed: signed, locale: locale) }
+}
+
+func formattedAmount(_ entry: CurrencyAmount, signed: Bool = false, locale: Locale = .autoupdatingCurrent) -> String {
+    signed
+        ? formattedSignedCurrency(entry.amount, code: entry.currency.code, locale: locale)
+        : formattedCurrency(entry.amount, code: entry.currency.code, locale: locale)
+}
+
+/// The currency's name in `locale`, such as "US Dollar" or "российский рубль".
+func currencyName(code: String, locale: Locale = .autoupdatingCurrent) -> String {
+    locale.localizedString(forCurrencyCode: code) ?? code
+}
+
 /// Count with an explicit sign: "+" and the typographic minus for non-zero values, plain at zero.
 func formattedSignedCount(_ value: Int) -> String {
     if value > 0 { return "+\(value)" }

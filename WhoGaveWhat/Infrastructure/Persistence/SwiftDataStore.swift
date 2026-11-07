@@ -12,7 +12,7 @@ final class SwiftDataStore {
 
     static let shared: SwiftDataStore = {
         do {
-            return try SwiftDataStore()
+            return try persistent(preferences: UserDefaultsPreferencesGateway())
         } catch {
             fatalError("SwiftData store failed to load: \(error)")
         }
@@ -21,34 +21,70 @@ final class SwiftDataStore {
     /// Sample amounts follow the currency the app resolves for this device, as the screenshots show them.
     static let preview: SwiftDataStore = {
         do {
-            let currency = SupportedCurrency(rawValue: UserDefaultsPreferencesGateway().currencyCode) ?? .usd
+            let currency = UserDefaultsPreferencesGateway().defaultCurrency
             return try SwiftDataStore(inMemory: true, seed: true, sampleCurrency: currency)
         } catch {
             fatalError("SwiftData preview store failed to load: \(error)")
         }
     }()
 
+    /// The on-disk store. Gifts saved before each gift had its own currency (1.2.0 and earlier) were
+    /// all shown in the currency preference, so opening such a store gives them that currency.
+    static func persistent(url: URL? = nil, preferences: PreferencesGateway) throws -> SwiftDataStore {
+        try SwiftDataStore(url: url, legacyGiftCurrency: preferences.defaultCurrency)
+    }
+
     let container: ModelContainer
     let context: ModelContext
 
+    /// - Parameters:
+    ///   - url: Where the store file lives; nil uses the default location for `storeName`.
+    ///   - legacyGiftCurrency: The currency for gifts saved before each gift had its own (1.2.0 and
+    ///     earlier), which were shown in the currency preference of the time. Nil leaves them without
+    ///     one, and loading them fails instead of guessing.
     init(
         inMemory: Bool = false,
+        url: URL? = nil,
         seed: Bool = false,
-        sampleCurrency: SupportedCurrency = .rub
+        sampleCurrency: SupportedCurrency = .rub,
+        legacyGiftCurrency: SupportedCurrency? = nil
     ) throws {
         let schema = Schema([StoredPerson.self, StoredGift.self])
-        let configuration = ModelConfiguration(
-            Self.storeName,
-            schema: schema,
-            isStoredInMemoryOnly: inMemory
-        )
+        let configuration =
+            if let url {
+                ModelConfiguration(schema: schema, url: url)
+            } else {
+                ModelConfiguration(Self.storeName, schema: schema, isStoredInMemoryOnly: inMemory)
+            }
         container = try ModelContainer(for: schema, configurations: [configuration])
         context = ModelContext(container)
         context.autosaveEnabled = false
 
+        if let legacyGiftCurrency {
+            try assignLegacyGiftCurrency(legacyGiftCurrency)
+        }
         if seed {
             try seedIfNeeded(currency: sampleCurrency)
         }
+    }
+
+    /// Gives every gift without a currency `currency` and saves, or rolls back and throws. Opening an
+    /// older store adds the attribute empty; this fills it once, and later opens find nothing to change.
+    @discardableResult
+    func assignLegacyGiftCurrency(_ currency: SupportedCurrency) throws -> Int {
+        let descriptor = FetchDescriptor<StoredGift>(predicate: #Predicate { $0.currencyCode == nil })
+        let gifts = try context.fetch(descriptor)
+        guard !gifts.isEmpty else { return 0 }
+        for gift in gifts {
+            gift.currencyCode = currency.code
+        }
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
+            throw error
+        }
+        return gifts.count
     }
 
     private func seedIfNeeded(currency: SupportedCurrency) throws {
@@ -120,7 +156,8 @@ final class SwiftDataStore {
                     occasion: gift.6,
                     date: date,
                     value: currency == .usd ? gift.9 : gift.8,
-                    createdAt: date.addingTimeInterval(TimeInterval(index))
+                    createdAt: date.addingTimeInterval(TimeInterval(index)),
+                    currencyCode: currency.code
                 ))
         }
 

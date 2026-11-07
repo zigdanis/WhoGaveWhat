@@ -14,7 +14,7 @@ final class SwiftDataGiftGateway: GiftGateway {
             SortDescriptor(\StoredGift.date, order: .reverse),
             SortDescriptor(\StoredGift.createdAt, order: .reverse)
         ])
-        return try context.fetch(descriptor).map(Gift.init)
+        return try context.fetch(descriptor).map { try Gift($0) }
     }
 
     func save(_ gift: Gift) throws {
@@ -44,7 +44,8 @@ final class SwiftDataGiftGateway: GiftGateway {
                 value: gift.value,
                 createdAt: gift.createdAt,
                 emojiPickedByUser: gift.emojiPickedByUser,
-                lastSavedAt: gift.lastSavedAt
+                lastSavedAt: gift.lastSavedAt,
+                currencyCode: gift.currency.code
             )
             context.insert(storedGift)
         }
@@ -56,6 +57,7 @@ final class SwiftDataGiftGateway: GiftGateway {
         storedGift.occasion = gift.occasion
         storedGift.date = gift.date
         storedGift.value = gift.value
+        storedGift.currencyCode = gift.currency.code
         storedGift.createdAt = gift.createdAt
         storedGift.emojiPickedByUser = gift.emojiPickedByUser
         storedGift.lastSavedAt = gift.lastSavedAt
@@ -100,7 +102,11 @@ final class SwiftDataGiftGateway: GiftGateway {
 }
 
 private extension Gift {
-    init(_ storedGift: StoredGift) {
+    init(_ storedGift: StoredGift) throws {
+        // Never fall back to the default currency: that would relabel the amount.
+        guard let currency = storedGift.currencyCode.flatMap(SupportedCurrency.init(rawValue:)) else {
+            throw SwiftDataPersistenceError.missingCurrency(giftID: storedGift.id)
+        }
         self.init(
             id: storedGift.id,
             emoji: storedGift.emoji,
@@ -111,6 +117,7 @@ private extension Gift {
             occasion: storedGift.occasion,
             date: storedGift.date,
             value: storedGift.value,
+            currency: currency,
             createdAt: storedGift.createdAt,
             emojiPickedByUser: storedGift.emojiPickedByUser,
             lastSavedAt: storedGift.lastSavedAt

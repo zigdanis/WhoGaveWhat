@@ -103,11 +103,12 @@ func makeGiftInput(
     toID: String? = nil,
     value: Int? = nil,
     valueTouched: Bool = false,
-    paidByYou: Bool = false
+    paidByYou: Bool = false,
+    currency: SupportedCurrency = .usd
 ) -> SaveGiftInput {
     SaveGiftInput(
         editingGiftID: nil, name: name, emoji: nil, aiEmoji: nil,
-        value: value, valueTouched: valueTouched,
+        value: value, valueTouched: valueTouched, currency: currency,
         fromID: fromID, toID: toID, paidByYou: paidByYou,
         occasion: nil, date: AppDate.today, createdAt: nil
     )

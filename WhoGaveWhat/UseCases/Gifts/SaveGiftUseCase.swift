@@ -8,6 +8,10 @@ struct SaveGiftInput: Equatable {
     var value: Int?
     var valueTouched: Bool
     var estimatedValue: Int?
+    /// The currency `estimatedValue` was asked for; nil means `currency`.
+    var estimatedCurrency: SupportedCurrency?
+    /// The currency of the gift's value: the default currency for a new gift unless the user picked another.
+    var currency: SupportedCurrency
     var fromID: String?
     var toID: String?
     var paidByYou: Bool
@@ -38,6 +42,12 @@ struct SaveGiftUseCase {
 
         let suggestion = suggestGift.instantSuggestion(for: input.name)
         let savedAt = now()
+        // By design an untouched estimate is saved as the gift's value, so gifts get approximate
+        // amounts instead of 0. Once the user edits the field, their value (even empty = 0) wins.
+        // An estimate keeps the currency it was asked for.
+        let usesEstimate = !input.valueTouched && input.estimatedValue != nil
+        let value = input.valueTouched ? (input.value ?? 0) : (input.estimatedValue ?? 0)
+        let currency = usesEstimate ? (input.estimatedCurrency ?? input.currency) : input.currency
         let gift = Gift(
             id: input.editingGiftID ?? "g\(UUID().uuidString)",
             emoji: input.emoji ?? input.aiEmoji ?? suggestion.emoji,
@@ -47,9 +57,8 @@ struct SaveGiftUseCase {
             paidByYou: input.paidByYou,
             occasion: input.occasion ?? "Just because",
             date: input.date,
-            // By design an untouched estimate is saved as the gift's value, so gifts get approximate
-            // amounts instead of 0. Once the user edits the field, their value (even empty = 0) wins.
-            value: Double(input.valueTouched ? (input.value ?? 0) : (input.estimatedValue ?? 0)),
+            value: Double(value),
+            currency: currency,
             createdAt: input.createdAt ?? savedAt,
             emojiPickedByUser: input.emoji != nil,
             lastSavedAt: savedAt

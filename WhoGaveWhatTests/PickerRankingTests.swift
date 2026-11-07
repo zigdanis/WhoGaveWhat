@@ -20,7 +20,7 @@ private func makeRankedGift(
 ) -> Gift {
     Gift(
         id: id, emoji: "🎁", name: id, giverID: giverID, recipientID: recipientID,
-        paidByYou: false, occasion: occasion, date: date, value: 0,
+        paidByYou: false, occasion: occasion, date: date, value: 0, currency: .usd,
         createdAt: createdAt, lastSavedAt: lastSavedAt)
 }
 

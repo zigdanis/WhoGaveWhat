@@ -827,6 +827,23 @@
         }
       }
     },
+    "Default currency" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default currency"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Валюта по умолчанию"
+          }
+        }
+      }
+    },
     "Default view" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2895,6 +2912,24 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "settings.default-currency.footnote" : {
+      "comment" : "Below the default currency setting and in its list: it applies only to new gifts.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New gifts start in this currency, and each gift can have its own. Changing it doesn't change the amounts or currencies of gifts you've already saved."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новые подарки создаются в этой валюте, а у каждого подарка может быть своя. Смена валюты не меняет суммы и валюты уже сохранённых подарков."
           }
         }
       }

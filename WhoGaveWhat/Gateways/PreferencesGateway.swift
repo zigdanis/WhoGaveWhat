@@ -12,3 +12,10 @@ protocol PreferencesGateway: AnyObject {
     var reviewPromptState: ReviewPromptState { get }
     func setReviewPromptState(_ state: ReviewPromptState)
 }
+
+extension PreferencesGateway {
+    /// The currency new gifts start in. It never changes gifts that are already saved.
+    var defaultCurrency: SupportedCurrency {
+        SupportedCurrency(rawValue: currencyCode) ?? .usd
+    }
+}

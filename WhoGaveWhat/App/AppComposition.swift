@@ -9,7 +9,8 @@ final class AppComposition {
     let data = AppData()
     let analytics: AnalyticsGateway
     let haptics: HapticsGateway
-    private(set) var currencyCode: String
+    /// The currency new gifts start in. Saved gifts keep their own currency whatever this is.
+    private(set) var defaultCurrency: SupportedCurrency
     /// Set when a new gift makes this the moment to ask for an App Store rating; the root view
     /// asks once the gift sheet has closed, then reports back.
     private(set) var isReviewRequestPending = false
@@ -75,7 +76,7 @@ final class AppComposition {
         self.haptics = haptics
         appDiscovery = AppDiscoveryIndexer(analytics: analytics)
         self.peopleGateway = peopleGateway
-        currencyCode = preferences.currencyCode
+        defaultCurrency = preferences.defaultCurrency
         router = AppRouter(launchEnvironment: launchEnvironment, analytics: analytics)
         reviewPrompt = Self.makeReviewPrompt(preferences: preferences, launchEnvironment: launchEnvironment)
         loadGiftsUseCase = LoadGiftsUseCase(gateway: giftGateway)
@@ -143,7 +144,7 @@ final class AppComposition {
                 giftsCount: data.gifts.count,
                 peopleCount: data.people.count,
                 hasViewpoint: data.selfPersonID != nil,
-                currency: currencyCode))
+                currency: defaultCurrency.code))
     }
 
     @discardableResult
@@ -236,6 +237,7 @@ final class AppComposition {
             iconSource: input.emoji == nil ? .inferred : .user,
             valueSource: valueSource,
             occasion: GiftSavedProperties.occasionLabel(gift.occasion, defaults: AppData.defaultOccasions.map(\.name)),
+            currency: gift.currency.code,
             paidByYou: gift.paidByYou,
             dateOffset: GiftDateOffset.bucket(for: gift.date, today: AppDate.today),
             giftsCount: data.gifts.count)
@@ -378,11 +380,12 @@ final class AppComposition {
         data.setSelfPerson(id)
     }
 
-    func setCurrencyCode(_ currencyCode: String) {
-        guard SupportedCurrency(rawValue: currencyCode) != nil, self.currencyCode != currencyCode else { return }
-        preferences.setCurrencyCode(currencyCode)
-        self.currencyCode = currencyCode
-        analytics.track(.currencyChanged(currency: currencyCode))
+    /// Changes only the currency new gifts start in; saved gifts keep their amounts and currencies.
+    func setDefaultCurrency(_ currency: SupportedCurrency) {
+        guard defaultCurrency != currency else { return }
+        preferences.setCurrencyCode(currency.code)
+        defaultCurrency = currency
+        analytics.track(.currencyChanged(currency: currency.code))
         publishAnalyticsContext()
     }
 }

@@ -1,10 +1,11 @@
 import SwiftUI
 
 /// Signed balance chip: received tint when ahead, given tint when behind, and a quiet
-/// "Even" at zero.
+/// "Even" at zero. A balance in several currencies lists each one; when it is ahead in one
+/// and behind in another there is no overall direction, so the chip stays neutral.
 struct NetBadge: View {
-    let net: Double
-    let currencyCode: String
+    let net: CurrencyAmounts
+    let preferredCurrency: SupportedCurrency
 
     var body: some View {
         label
@@ -18,20 +19,25 @@ struct NetBadge: View {
     }
 
     private var label: Text {
-        net.rounded() == 0
+        net.isEven
             ? Text("Even")
-            : Text(verbatim: formattedSignedCurrency(net, code: currencyCode))
+            : Text(verbatim: formattedSignedAmounts(net, preferred: preferredCurrency))
     }
 
     private var foreground: Color {
-        net.rounded() == 0 ? Color.textSecondary : appearance.main
+        switch net.sign {
+        case .even: Color.textSecondary
+        case .mixed: Color.textPrimary
+        case .positive: GiftDirection.received.appearance.main
+        case .negative: GiftDirection.given.appearance.main
+        }
     }
 
     private var tint: Color {
-        net.rounded() == 0 ? Color.fillTrack : appearance.tint
-    }
-
-    private var appearance: GiftDirectionAppearance {
-        (net > 0 ? GiftDirection.received : GiftDirection.given).appearance
+        switch net.sign {
+        case .even, .mixed: Color.fillTrack
+        case .positive: GiftDirection.received.appearance.tint
+        case .negative: GiftDirection.given.appearance.tint
+        }
     }
 }
