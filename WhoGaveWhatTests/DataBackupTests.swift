@@ -334,18 +334,21 @@ struct JournalArchiveGatewayTests {
 struct BackupFolderStoreTests {
     private let writer = UUID().uuidString
 
+    /// The root has a space in its path, like `Application Support` and iCloud's `Mobile Documents`.
     private func makeStore() throws -> BackupFolderStore {
-        BackupFolderStore(root: try makeTemporaryDirectory(), usesFileCoordination: false)
+        let root = try makeTemporaryDirectory().appending(path: "Mobile Documents", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        return BackupFolderStore(root: root, usesFileCoordination: false)
     }
 
     private func photoFiles(_ store: BackupFolderStore, writer: String) -> Set<String> {
         let folder = store.root.appending(path: writer).appending(path: BackupFolderStore.photosFolderName)
-        return Set((try? FileManager.default.contentsOfDirectory(atPath: folder.path())) ?? [])
+        return Set((try? FileManager.default.contentsOfDirectory(atPath: folder.path(percentEncoded: false))) ?? [])
     }
 
     @Test func writesAndReadsBackOneInstallsBackup() throws {
         let store = try makeStore()
-        defer { try? FileManager.default.removeItem(at: store.root) }
+        defer { try? FileManager.default.removeItem(at: store.root.deletingLastPathComponent()) }
         #expect(!store.hasBackup(writerID: writer))
 
         let backup = BackupSamples.backup()
@@ -366,7 +369,7 @@ struct BackupFolderStoreTests {
 
     @Test func keepsThePreviousBackupAndOnlyThePhotosEitherNeeds() throws {
         let store = try makeStore()
-        defer { try? FileManager.default.removeItem(at: store.root) }
+        defer { try? FileManager.default.removeItem(at: store.root.deletingLastPathComponent()) }
         let first = BackupSamples.backup()
         try store.write(first, writerID: writer)
 
@@ -388,7 +391,7 @@ struct BackupFolderStoreTests {
 
     @Test func aDamagedCurrentBackupFallsBackToThePreviousOne() throws {
         let store = try makeStore()
-        defer { try? FileManager.default.removeItem(at: store.root) }
+        defer { try? FileManager.default.removeItem(at: store.root.deletingLastPathComponent()) }
         let first = BackupSamples.backup()
         try store.write(first, writerID: writer)
         try store.write(BackupSamples.backup(gifts: []), writerID: writer)
@@ -401,7 +404,7 @@ struct BackupFolderStoreTests {
 
     @Test func aDamagedCurrentBackupNeverReplacesTheGoodPreviousOne() throws {
         let store = try makeStore()
-        defer { try? FileManager.default.removeItem(at: store.root) }
+        defer { try? FileManager.default.removeItem(at: store.root.deletingLastPathComponent()) }
         let first = BackupSamples.backup()
         try store.write(first, writerID: writer)
         try store.write(BackupSamples.backup(gifts: []), writerID: writer)
@@ -417,7 +420,7 @@ struct BackupFolderStoreTests {
 
     @Test func aPhotoThatCannotBeReadFailsTheLoadUntilItArrives() throws {
         let store = try makeStore()
-        defer { try? FileManager.default.removeItem(at: store.root) }
+        defer { try? FileManager.default.removeItem(at: store.root.deletingLastPathComponent()) }
         try store.write(BackupSamples.backup(), writerID: writer)
         let photo = store.root.appending(path: writer).appending(path: BackupFolderStore.photosFolderName)
             .appending(path: DataBackupCodec.photoFileName(for: BackupSamples.photo))
@@ -434,7 +437,7 @@ struct BackupFolderStoreTests {
 
     @Test func listsEveryInstallNewestFirstAndIgnoresOtherFolders() throws {
         let store = try makeStore()
-        defer { try? FileManager.default.removeItem(at: store.root) }
+        defer { try? FileManager.default.removeItem(at: store.root.deletingLastPathComponent()) }
         let older = UUID().uuidString
         try store.write(BackupSamples.backup(createdAt: Date(timeIntervalSince1970: 1_000)), writerID: older)
         try store.write(BackupSamples.backup(createdAt: Date(timeIntervalSince1970: 2_000)), writerID: writer)
@@ -449,7 +452,7 @@ struct BackupFolderStoreTests {
 
     @Test func anEmptiedJournalStillListsItsEarlierCopy() throws {
         let store = try makeStore()
-        defer { try? FileManager.default.removeItem(at: store.root) }
+        defer { try? FileManager.default.removeItem(at: store.root.deletingLastPathComponent()) }
         let full = BackupSamples.backup()
         try store.write(full, writerID: writer)
         try store.write(BackupSamples.backup(people: [], gifts: [], selfPersonID: nil), writerID: writer)
@@ -466,7 +469,7 @@ struct BackupFolderStoreTests {
 
     @Test func deletesOneInstallsBackup() throws {
         let store = try makeStore()
-        defer { try? FileManager.default.removeItem(at: store.root) }
+        defer { try? FileManager.default.removeItem(at: store.root.deletingLastPathComponent()) }
         try store.write(BackupSamples.backup(), writerID: writer)
         try store.delete(folder: writer)
         #expect(store.candidates(thisWriterID: writer).isEmpty)
@@ -493,10 +496,10 @@ struct ICloudBackupServiceTests {
     }
 
     @Test func writesOnlyWhenTheContentChanges() async throws {
-        let root = try makeTemporaryDirectory()
+        let root = try makeTemporaryDirectory().appending(path: "Application Support", directoryHint: .isDirectory)
         let (settings, defaults, suite) = makeSettings()
         defer {
-            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: root.deletingLastPathComponent())
             defaults.removePersistentDomain(forName: suite)
         }
         var backup = BackupSamples.backup(createdAt: Date(timeIntervalSince1970: 1_000))
@@ -519,10 +522,10 @@ struct ICloudBackupServiceTests {
     }
 
     @Test func aFreshInstallWithAnEmptyJournalWritesNothing() async throws {
-        let root = try makeTemporaryDirectory()
+        let root = try makeTemporaryDirectory().appending(path: "Application Support", directoryHint: .isDirectory)
         let (settings, defaults, suite) = makeSettings()
         defer {
-            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: root.deletingLastPathComponent())
             defaults.removePersistentDomain(forName: suite)
         }
         let service = makeService(root: root, settings: settings)
@@ -533,10 +536,10 @@ struct ICloudBackupServiceTests {
     }
 
     @Test func writesNothingWithoutAJournalSnapshotOrWhenOff() async throws {
-        let root = try makeTemporaryDirectory()
+        let root = try makeTemporaryDirectory().appending(path: "Application Support", directoryHint: .isDirectory)
         let (settings, defaults, suite) = makeSettings()
         defer {
-            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: root.deletingLastPathComponent())
             defaults.removePersistentDomain(forName: suite)
         }
         let service = makeService(root: root, settings: settings)
@@ -564,10 +567,10 @@ struct ICloudBackupServiceTests {
     }
 
     @Test func offersTheNewestBackupFromAnotherInstallUntilDismissed() async throws {
-        let root = try makeTemporaryDirectory()
+        let root = try makeTemporaryDirectory().appending(path: "Application Support", directoryHint: .isDirectory)
         let (settings, defaults, suite) = makeSettings()
         defer {
-            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: root.deletingLastPathComponent())
             defaults.removePersistentDomain(forName: suite)
         }
         let store = BackupFolderStore(root: root, usesFileCoordination: false)
@@ -587,10 +590,10 @@ struct ICloudBackupServiceTests {
     }
 
     @Test func deletingThisInstallsBackupWritesAFullOneNextTime() async throws {
-        let root = try makeTemporaryDirectory()
+        let root = try makeTemporaryDirectory().appending(path: "Application Support", directoryHint: .isDirectory)
         let (settings, defaults, suite) = makeSettings()
         defer {
-            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: root.deletingLastPathComponent())
             defaults.removePersistentDomain(forName: suite)
         }
         let service = makeService(root: root, settings: settings)
@@ -606,10 +609,10 @@ struct ICloudBackupServiceTests {
     }
 
     @Test func aBackupDeletedElsewhereIsWrittenAgainEvenWithoutChanges() async throws {
-        let root = try makeTemporaryDirectory()
+        let root = try makeTemporaryDirectory().appending(path: "Application Support", directoryHint: .isDirectory)
         let (settings, defaults, suite) = makeSettings()
         defer {
-            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: root.deletingLastPathComponent())
             defaults.removePersistentDomain(forName: suite)
         }
         let service = makeService(root: root, settings: settings)

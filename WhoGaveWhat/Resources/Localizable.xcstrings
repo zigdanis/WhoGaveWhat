@@ -3371,19 +3371,13 @@
         }
       }
     },
-    "Your backup from %@: %@." : {
-      "comment" : "Home's restore offer: the backup's date and what it holds.",
+    "Your backup from %@." : {
+      "comment" : "Home's restore offer: the backup's date.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Your backup from %1$@: %2$@."
-          }
-        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ваша копия от %@: %@."
+            "value" : "Ваша копия от %@."
           }
         }
       }

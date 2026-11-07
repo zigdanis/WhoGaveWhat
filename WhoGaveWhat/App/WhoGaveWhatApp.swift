@@ -26,9 +26,8 @@ struct WhoGaveWhatApp: App {
     /// when `KS_STORE_FAULT=open` (see `LaunchFault`).
     private static var storeOpener: () throws -> SwiftDataStore {
         #if DEBUG
-            let environment = ProcessInfo.processInfo.environment
             let open: () throws -> SwiftDataStore
-            if environment["KS_SAMPLE_DATA"] == "1" {
+            if LaunchFlags.value("KS_SAMPLE_DATA") == "1" {
                 open = { try .makePreview() }
             } else if LaunchFlags.opensEmptyStore {
                 open = { try SwiftDataStore(inMemory: true) }

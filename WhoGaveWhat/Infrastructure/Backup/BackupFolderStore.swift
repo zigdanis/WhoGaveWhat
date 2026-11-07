@@ -54,7 +54,7 @@ struct BackupFolderStore: Sendable {
 
         // Photos neither copy refers to any more, e.g. a replaced or removed portrait.
         let keep = Set(encoded.photos.keys).union(previousJSON.map(DataBackupCodec.referencedPhotoFiles) ?? [])
-        let files = (try? FileManager.default.contentsOfDirectory(atPath: photos.path())) ?? []
+        let files = (try? FileManager.default.contentsOfDirectory(atPath: photos.path(percentEncoded: false))) ?? []
         for name in files where DataBackupCodec.isSafePhotoFileName(name) && !keep.contains(name) {
             try? coordinatedDelete(photos.appending(path: name))
         }
@@ -72,7 +72,7 @@ struct BackupFolderStore: Sendable {
     /// may not have reached this device yet; reading them downloads them. When an install's journal was
     /// emptied, its previous, non-empty copy is listed too, so deleting everything can still be undone.
     func candidates(thisWriterID: String, knownFolders: Set<String> = []) -> [BackupCandidate] {
-        let listed = (try? FileManager.default.contentsOfDirectory(atPath: root.path())) ?? []
+        let listed = (try? FileManager.default.contentsOfDirectory(atPath: root.path(percentEncoded: false))) ?? []
         let folders = knownFolders.union(listed).filter(Self.isSafeFolderName)
         return folders.flatMap { folder -> [BackupCandidate] in
             guard let json = try? readNewestJSON(folder: folder),
@@ -168,10 +168,10 @@ struct BackupFolderStore: Sendable {
 
     /// A file that is in iCloud but not downloaded yet shows locally as a hidden `.<name>.icloud` placeholder.
     private func itemExists(at url: URL) -> Bool {
-        if FileManager.default.fileExists(atPath: url.path()) { return true }
+        if FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) { return true }
         guard usesFileCoordination else { return false }
         let placeholder = url.deletingLastPathComponent().appending(path: ".\(url.lastPathComponent).icloud")
-        return FileManager.default.fileExists(atPath: placeholder.path())
+        return FileManager.default.fileExists(atPath: placeholder.path(percentEncoded: false))
     }
 
     private func coordinatedRead(_ url: URL) throws -> Data {

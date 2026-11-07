@@ -23,9 +23,12 @@ struct RestoreOfferCard: View {
                     Text("Restore from iCloud?")
                         .font(Font.app(17, .semibold))
                         .accessibilityAddTraits(.isHeader)
-                    Text(verbatim: description)
-                        .font(Font.app(14, .regular))
-                        .foregroundStyle(Color.textSecondary)
+                    Group {
+                        Text(verbatim: savedOn)
+                        Text(verbatim: contents)
+                    }
+                    .font(Font.app(14, .regular))
+                    .foregroundStyle(Color.textSecondary)
                 }
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -76,13 +79,13 @@ struct RestoreOfferCard: View {
         }
     }
 
-    private var description: String {
+    private var savedOn: String {
         let date = offer.summary.createdAt.formatted(date: .long, time: .omitted)
-        let contents = RestoreMessages.contents(
-            giftsCount: offer.summary.giftsCount, peopleCount: offer.summary.peopleCount)
-        return String(
-            localized: "Your backup from \(date): \(contents).",
-            comment: "Home's restore offer: the backup's date and what it holds.")
+        return String(localized: "Your backup from \(date).", comment: "Home's restore offer: the backup's date.")
+    }
+
+    private var contents: String {
+        RestoreMessages.contents(giftsCount: offer.summary.giftsCount, peopleCount: offer.summary.peopleCount)
     }
 
     private var isFailing: Binding<Bool> {
