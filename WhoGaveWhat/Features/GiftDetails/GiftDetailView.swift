@@ -8,7 +8,7 @@ struct GiftDetailView: View {
     let giftId: String
     let composition: AppComposition
     @State private var confirmingDelete = false
-    @State private var deleteFailed = false
+    @State private var deletion = DeletionAlertState()
 
     var body: some View {
         Group {
@@ -164,14 +164,13 @@ struct GiftDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Delete", role: .destructive) {
-                switch composition.deleteGift(id: giftId, source: .giftDetail) {
-                case .deleted: dismiss()
-                case .failed: deleteFailed = true
+                if deletion.confirm({ composition.deleteGift(id: giftId, source: .giftDetail) }) {
+                    dismiss()
                 }
             }
             Button("Cancel", role: .cancel) {}
         }
-        .alert("Could not delete the gift", isPresented: $deleteFailed) {
+        .alert("Could not delete the gift", isPresented: $deletion.isShowingError) {
             Button("OK", role: .cancel) {}
         } message: {
             Text("Nothing was deleted. Try again.")

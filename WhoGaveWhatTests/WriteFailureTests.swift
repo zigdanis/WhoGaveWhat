@@ -249,26 +249,71 @@ struct DeletionFailureTests {
     }
 }
 
+/// The screens' handling of a deletion result: Gift detail and every swipe-to-delete row go through it.
+@MainActor
+struct DeletionAlertStateTests {
+    @Test func aFailedDeletionStaysAndShowsTheErrorThenARetryLeaves() throws {
+        let fixture = try FailableComposition()
+        let composition = fixture.composition
+        let gift = try #require(composition.data.gifts.first)
+        fixture.gifts.failingDeletes = 1
+        var deletion = DeletionAlertState()
+
+        let leftAfterFailure = deletion.confirm { composition.deleteGift(id: gift.id, source: .giftDetail) }
+
+        #expect(!leftAfterFailure)
+        #expect(deletion.isShowingError)
+        #expect(composition.data.gifts.contains(gift))
+
+        deletion.isShowingError = false  // The user taps OK, then Delete again.
+        let leftAfterRetry = deletion.confirm { composition.deleteGift(id: gift.id, source: .giftDetail) }
+
+        #expect(leftAfterRetry)
+        #expect(!deletion.isShowingError)
+        #expect(!composition.data.gifts.contains { $0.id == gift.id })
+    }
+
+    @Test func aFailedRowDeletionOfAPersonShowsTheError() throws {
+        let fixture = try FailableComposition()
+        fixture.people.failingDeletes = 1
+        var deletion = DeletionAlertState()
+
+        #expect(!deletion.confirm { fixture.composition.deletePerson(id: "maria", source: .peopleList) })
+        #expect(deletion.isShowingError)
+        #expect(fixture.composition.data.people.contains { $0.id == "maria" })
+    }
+}
+
 /// The Debug-only `KS_FAIL_SAVE` / `KS_FAIL_DELETE` launch switches used to show the error states on a simulator.
 @MainActor
 struct WriteFailureInjectionTests {
-    @Test func launchFlagsFailOnlyTheNextWrites() throws {
-        let fixture = try FailableComposition(launchEnvironment: ["KS_FAIL_SAVE": "1", "KS_FAIL_DELETE": "2"])
-        let composition = fixture.composition
-        let input = makeGiftInput(name: "Scarf", fromID: "maria", toID: "anton")
-        let gift = try #require(composition.data.gifts.first)
+    #if DEBUG
+        @Test func launchFlagsFailOnlyTheNextWrites() throws {
+            let fixture = try FailableComposition(launchEnvironment: ["KS_FAIL_SAVE": "1", "KS_FAIL_DELETE": "2"])
+            let composition = fixture.composition
+            let input = makeGiftInput(name: "Scarf", fromID: "maria", toID: "anton")
+            let gift = try #require(composition.data.gifts.first)
 
-        #expect(composition.saveGift(input) == .failed)
-        #expect(composition.saveGift(input) == .saved)
-        #expect(composition.deleteGift(id: gift.id, source: .home) == .failed)
-        #expect(composition.deletePerson(id: "maria", source: .peopleList) == .failed)
-        #expect(composition.deleteGift(id: gift.id, source: .home) == .deleted)
-        #expect(composition.deletePerson(id: "maria", source: .peopleList) == .deleted)
-    }
+            #expect(composition.saveGift(input) == .failed)
+            #expect(composition.saveGift(input) == .saved)
+            #expect(composition.deleteGift(id: gift.id, source: .home) == .failed)
+            #expect(composition.deletePerson(id: "maria", source: .peopleList) == .failed)
+            #expect(composition.deleteGift(id: gift.id, source: .home) == .deleted)
+            #expect(composition.deletePerson(id: "maria", source: .peopleList) == .deleted)
+        }
 
-    @Test func missingOrInvalidFlagsLeaveWritesAlone() {
-        #expect(!WriteFailureInjection(launchEnvironment: [:]).isActive)
-        #expect(!WriteFailureInjection(launchEnvironment: ["KS_FAIL_SAVE": "yes", "KS_FAIL_DELETE": "-2"]).isActive)
-        #expect(WriteFailureInjection(launchEnvironment: ["KS_FAIL_DELETE": "1"]).isActive)
-    }
+        @Test func missingOrInvalidFlagsLeaveWritesAlone() {
+            #expect(!WriteFailureInjection(launchEnvironment: [:]).isActive)
+            #expect(!WriteFailureInjection(launchEnvironment: ["KS_FAIL_SAVE": "yes", "KS_FAIL_DELETE": "-2"]).isActive)
+            #expect(WriteFailureInjection(launchEnvironment: ["KS_FAIL_DELETE": "1"]).isActive)
+        }
+    #else
+        @Test func releaseBuildsIgnoreTheLaunchFlags() throws {
+            let fixture = try FailableComposition(launchEnvironment: ["KS_FAIL_SAVE": "1", "KS_FAIL_DELETE": "1"])
+            let gift = try #require(fixture.composition.data.gifts.first)
+
+            #expect(fixture.composition.saveGift(makeGiftInput(name: "Scarf", fromID: "maria", toID: "anton")) == .saved)
+            #expect(fixture.composition.deleteGift(id: gift.id, source: .home) == .deleted)
+        }
+    #endif
 }

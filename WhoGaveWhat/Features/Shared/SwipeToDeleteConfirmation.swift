@@ -21,7 +21,7 @@ private struct SwipeToDeleteConfirmation: ViewModifier {
     let failureTitle: Text
     let onConfirm: () -> DeletionResult
     @State private var confirming = false
-    @State private var failed = false
+    @State private var deletion = DeletionAlertState()
 
     func body(content: Content) -> some View {
         content
@@ -38,7 +38,8 @@ private struct SwipeToDeleteConfirmation: ViewModifier {
             }
             .confirmationDialog(title, isPresented: $confirming, titleVisibility: .visible) {
                 Button(role: .destructive) {
-                    failed = onConfirm() == .failed
+                    // The row stays either way; a successful deletion removes it from the list.
+                    _ = deletion.confirm(onConfirm)
                 } label: {
                     confirmLabel
                 }
@@ -48,7 +49,7 @@ private struct SwipeToDeleteConfirmation: ViewModifier {
                     message
                 }
             }
-            .alert(failureTitle, isPresented: $failed) {
+            .alert(failureTitle, isPresented: $deletion.isShowingError) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text("Nothing was deleted. Try again.")
