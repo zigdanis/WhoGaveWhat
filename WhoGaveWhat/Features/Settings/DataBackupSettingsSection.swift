@@ -88,8 +88,12 @@ struct DataBackupSettingsSection: View {
             Text("Your data is still saved on this device. Try again in a moment.")
         }
         .fileImporter(isPresented: $isPickingFile, allowedContentTypes: [.whoGaveWhatBackup, .json]) { result in
-            guard case .success(let url) = result else { return }
-            Task { await read(url) }
+            switch result {
+            case .success(let url):
+                Task { await read(url) }
+            case .failure(let error):
+                readFailure = RestoreMessages.readFailure(error)
+            }
         }
         .restoreFlow(composition: composition, pending: $pendingRestore, readFailure: $readFailure)
     }

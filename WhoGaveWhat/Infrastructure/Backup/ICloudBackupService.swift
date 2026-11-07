@@ -36,6 +36,8 @@ final class ICloudBackupService {
     @ObservationIgnored private let settings: BackupSettings
     @ObservationIgnored private let locateStore: () async -> BackupFolderStore?
     @ObservationIgnored private let discoverFolders: () async -> Set<String>
+    /// The iCloud account's `ubiquityIdentityToken`, nil without one or in tests.
+    @ObservationIgnored private let accountIdentity: () -> NSObject?
     @ObservationIgnored private let analytics: AnalyticsGateway
     @ObservationIgnored private let debounce: Duration
     @ObservationIgnored private var store: BackupFolderStore?
@@ -60,13 +62,15 @@ final class ICloudBackupService {
         debounce: Duration = .seconds(3),
         observesAccountChanges: Bool = false,
         locateStore: @escaping () async -> BackupFolderStore?,
-        discoverFolders: @escaping () async -> Set<String> = { [] }
+        discoverFolders: @escaping () async -> Set<String> = { [] },
+        accountIdentity: @escaping () -> NSObject? = { nil }
     ) {
         self.settings = settings
         self.analytics = analytics
         self.debounce = debounce
         self.locateStore = locateStore
         self.discoverFolders = discoverFolders
+        self.accountIdentity = accountIdentity
         isEnabled = settings.isEnabled
         lastBackupAt = settings.lastBackupAt
         isRestoreOfferDismissed = settings.isRestoreOfferDismissed
@@ -97,7 +101,8 @@ final class ICloudBackupService {
                         usesFileCoordination: true)
                 }.value
             },
-            discoverFolders: { await ICloudBackupDiscovery.installFolders() })
+            discoverFolders: { await ICloudBackupDiscovery.installFolders() },
+            accountIdentity: { FileManager.default.ubiquityIdentityToken as? NSObject })
     }
 
     /// Connects the journal and makes the first backup of this launch.
@@ -305,16 +310,42 @@ final class ICloudBackupService {
     // MARK: - iCloud account
 
     private func resolveStore() async {
+        let generation = storeGeneration
         let located = await locateStore()
+        // An account change while locating started a newer lookup; this result is for the previous account.
+        guard generation == storeGeneration else { return }
+        noteAccountIdentity()
         store = located
         availability = located == nil ? .unavailable : .available
+    }
+
+    /// The account can change while the app is not running: a write remembered for another account must
+    /// not let this one skip its backup.
+    private func noteAccountIdentity() {
+        guard let identity = accountIdentity(),
+            let archived = try? NSKeyedArchiver.archivedData(withRootObject: identity, requiringSecureCoding: true)
+        else { return }
+        defer { settings.accountIdentity = archived }
+        guard let stored = settings.accountIdentity, stored != archived else { return }
+        // Apple compares tokens with isEqual; differing archives of an equal token change nothing.
+        if let previous = (try? NSKeyedUnarchiver.unarchivedObject(ofClasses: [NSObject.self], from: stored)) as? NSObject,
+            previous.isEqual(identity)
+        {
+            return
+        }
+        settings.lastContentHash = nil
+        settings.lastBackupAt = nil
+        lastBackupAt = nil
     }
 
     /// Signing out, or into another account, changes what the container holds: write a full backup again.
     private func accountChanged() {
         storeGeneration += 1
-        // Nothing reads or writes the previous account's folder while the new one is located.
+        // Nothing reads or writes the previous account's folder while the new one is located; a write
+        // already running finishes there and its result is discarded (see `storeGeneration`).
         store = nil
+        pendingBackup?.cancel()
+        pendingBackup = nil
         settings.lastContentHash = nil
         settings.lastBackupAt = nil
         lastBackupAt = nil
@@ -393,6 +424,12 @@ final class BackupSettings {
     var lastContentHash: String? {
         get { defaults.string(forKey: prefix + "lastContentHash") }
         set { defaults.set(newValue, forKey: prefix + "lastContentHash") }
+    }
+
+    /// The archived `ubiquityIdentityToken` the last backup was written for.
+    var accountIdentity: Data? {
+        get { defaults.data(forKey: prefix + "accountIdentity") }
+        set { defaults.set(newValue, forKey: prefix + "accountIdentity") }
     }
 
     var isRestoreOfferDismissed: Bool {

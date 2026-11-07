@@ -34,8 +34,9 @@ struct BackupFolderStore: Sendable {
         let encoded = try DataBackupCodec.encode(backup, photos: .external)
         for (name, data) in encoded.photos {
             let url = photos.appending(path: name)
-            // A file of the wrong size is damaged; the name is the content's hash, so write it again.
-            if !itemExists(at: url) || Self.fileSize(of: url).map({ $0 != data.count }) == true {
+            // The name is the content's hash: a file that does not match it is damaged, so write it again.
+            // Writes happen only when the journal changed, so reading the photos here stays rare.
+            if !itemExists(at: url) || (try? coordinatedRead(url)).map(DataBackupCodec.photoFileName(for:)) != name {
                 try coordinatedWrite(data, to: url)
             }
         }
@@ -82,15 +83,11 @@ struct BackupFolderStore: Sendable {
         return DataBackupCodec.referencedPhotoFiles(in: json).allSatisfy { itemExists(at: photos.appending(path: $0)) }
     }
 
-    private static func fileSize(of url: URL) -> Int? {
-        try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
-    }
-
     // MARK: - Reading
 
     /// Every readable backup, newest first. `knownFolders` adds folders iCloud reported but whose files
-    /// may not have reached this device yet; reading them downloads them. When an install's journal was
-    /// emptied, its previous, non-empty copy is listed too, so deleting everything can still be undone.
+    /// may not have reached this device yet; reading them downloads them. When an install's latest copy is
+    /// empty or incomplete, its previous, complete copy is listed too, so it can still be restored.
     func candidates(thisWriterID: String, knownFolders: Set<String> = []) -> [BackupCandidate] {
         let listed = (try? FileManager.default.contentsOfDirectory(atPath: root.path(percentEncoded: false))) ?? []
         let folders = knownFolders.union(listed).filter(Self.isSafeFolderName)
@@ -100,8 +97,13 @@ struct BackupFolderStore: Sendable {
             else { return [] }
             let isThisDevice = folder == thisWriterID
             var found = [BackupCandidate(folderName: folder, summary: summary, isThisDevice: isThisDevice)]
-            if summary.isEmpty, let previous = try? readPreviousJSON(folder: folder),
-                let previousSummary = try? DataBackupCodec.decodeSummary(previous), !previousSummary.isEmpty
+            let photos = root.appending(path: folder).appending(path: Self.photosFolderName, directoryHint: .isDirectory)
+            // The earlier copy is offered too when the latest is empty or cannot be restored whole (a photo
+            // is missing), and the earlier one is complete.
+            if summary.isEmpty || !isComplete(json, photos: photos),
+                let previous = try? readPreviousJSON(folder: folder), previous != json,
+                let previousSummary = try? DataBackupCodec.decodeSummary(previous), !previousSummary.isEmpty,
+                isComplete(previous, photos: photos)
             {
                 found.append(
                     BackupCandidate(

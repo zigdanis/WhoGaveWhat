@@ -314,6 +314,17 @@ struct JournalArchiveGatewayTests {
         #expect(try gateway.loadArchive().people.last?.sortIndex == 2)
     }
 
+    @Test func theViewpointFollowsItsPersonWhenTwoBackupPeopleMerge() throws {
+        let store = try SwiftDataStore(inMemory: true)
+        let backup = BackupSamples.backup(
+            people: [BackupSamples.person("p-anna", "Anna", sortIndex: 0), BackupSamples.person("p-2", "ANNA", sortIndex: 1)],
+            gifts: [], selfPersonID: "p-2")
+        let summary = try SwiftDataJournalArchiveGateway(context: store.context).restore(backup)
+        #expect(summary.restoredIntoEmptyJournal)
+        #expect(summary.peopleAdded == 1)
+        #expect(summary.restoredSelfPersonID == "p-anna")
+    }
+
     @Test func aFailedSaveAddsNothing() throws {
         struct SaveFailed: Error {}
         let store = try SwiftDataStore(inMemory: true)
@@ -451,7 +462,8 @@ struct BackupFolderStoreTests {
         try store.write(BackupSamples.backup(), writerID: writer)
         let photo = store.root.appending(path: writer).appending(path: BackupFolderStore.photosFolderName)
             .appending(path: DataBackupCodec.photoFileName(for: BackupSamples.photo))
-        try Data([0x00]).write(to: photo)
+        // Same size as the real photo, different bytes.
+        try Data(repeating: 0x00, count: BackupSamples.photo.count).write(to: photo)
 
         #expect(throws: DataBackupError.inconsistent("photo_damaged")) { try store.load(folder: writer) }
 
@@ -666,6 +678,37 @@ struct ICloudBackupServiceTests {
 
         await service.backUpNow()
         #expect(store.hasBackup(writerID: settings.writerID))
+    }
+
+    @Test func anotherICloudAccountSinceTheLastLaunchWritesAgain() async throws {
+        let root = try makeTemporaryDirectory().appending(path: "Application Support", directoryHint: .isDirectory)
+        let (settings, defaults, suite) = makeSettings()
+        defer {
+            try? FileManager.default.removeItem(at: root.deletingLastPathComponent())
+            defaults.removePersistentDomain(forName: suite)
+        }
+        func service(account: String) -> ICloudBackupService {
+            ICloudBackupService(
+                settings: settings, analytics: NoopAnalyticsGateway(), debounce: .zero,
+                locateStore: { BackupFolderStore(root: root, usesFileCoordination: false) },
+                accountIdentity: { account as NSString })
+        }
+        // A write rotates the current copy into the previous one, so the previous file shows that it ran.
+        let previous = root.appending(path: settings.writerID).appending(path: BackupFolderStore.previousFileName)
+        let first = service(account: "account-a")
+        await first.start { BackupSamples.backup() }
+        await first.backUpNow()
+        #expect(!FileManager.default.fileExists(atPath: previous.path(percentEncoded: false)))
+
+        let sameAccount = service(account: "account-a")
+        await sameAccount.start { BackupSamples.backup() }
+        await sameAccount.backUpNow()
+        #expect(!FileManager.default.fileExists(atPath: previous.path(percentEncoded: false)))
+
+        let otherAccount = service(account: "account-b")
+        await otherAccount.start { BackupSamples.backup() }
+        await otherAccount.backUpNow()
+        #expect(FileManager.default.fileExists(atPath: previous.path(percentEncoded: false)))
     }
 
     @Test func togglingIsTracked() {
