@@ -66,19 +66,15 @@ final class SwiftDataJournalArchiveGateway: JournalArchiveGateway {
         var nextSortIndex = (storedPeople.map(\.sortIndex).max() ?? -1) + 1
         var restoredPeople: [String: StoredPerson] = [:]
 
+        // Backup order decides, but places are renumbered from here, so no stored sort index comes from the file.
         for person in backup.people.sorted(by: { $0.sortIndex < $1.sortIndex }) {
             if let existing = peopleByID[person.id] ?? peopleByName[Self.nameKey(person.name)] {
                 restoredPeople[person.id] = existing
                 summary.peopleMatched += 1
                 continue
             }
-            let sortIndex: Int
-            if summary.restoredIntoEmptyJournal {
-                sortIndex = person.sortIndex
-            } else {
-                sortIndex = nextSortIndex
-                nextSortIndex += 1
-            }
+            let sortIndex = nextSortIndex
+            nextSortIndex += 1
             let stored = StoredPerson(
                 id: person.id, name: person.name, colorHex: Int64(Int(bitPattern: person.colorHex)),
                 sortIndex: sortIndex, imageData: person.photo)
@@ -90,13 +86,16 @@ final class SwiftDataJournalArchiveGateway: JournalArchiveGateway {
         }
 
         for gift in backup.gifts {
-            guard !storedGiftIDs.contains(gift.id),
-                let giver = restoredPeople[gift.giverID],
-                let recipient = restoredPeople[gift.recipientID],
-                // Two backup people can match one person here; a gift from someone to themselves is skipped.
+            guard !storedGiftIDs.contains(gift.id) else {
+                summary.giftsAlreadyHere += 1
+                continue
+            }
+            // Validation guarantees both people; two backup people can match one person here, and a gift
+            // from someone to themselves cannot be stored.
+            guard let giver = restoredPeople[gift.giverID], let recipient = restoredPeople[gift.recipientID],
                 giver.id != recipient.id
             else {
-                summary.giftsSkipped += 1
+                summary.giftsWithoutPlace += 1
                 continue
             }
             context.insert(

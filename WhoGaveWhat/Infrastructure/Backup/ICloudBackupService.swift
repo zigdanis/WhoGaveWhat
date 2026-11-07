@@ -43,6 +43,9 @@ final class ICloudBackupService {
     @ObservationIgnored private var pendingBackup: Task<Void, Never>?
     @ObservationIgnored private var needsAnotherPass = false
     @ObservationIgnored private var runningBackup: Task<Void, Never>?
+    /// Changes with the iCloud account, so a write that started for the previous account cannot mark the
+    /// new one as backed up.
+    @ObservationIgnored private var storeGeneration = 0
     @ObservationIgnored private var hasReportedWriteFailure = false
     @ObservationIgnored private var uploadCheck: Task<Void, Never>?
     @ObservationIgnored private var identityObserver: NSObjectProtocol?
@@ -152,6 +155,12 @@ final class ICloudBackupService {
         runningBackup = passes
         await passes.value
         runningBackup = nil
+        // A call that came in after the last pass decided to stop, but before this point, joined a finished
+        // task; it still needs its pass.
+        if needsAnotherPass {
+            await backUpNow()
+            return
+        }
         watchUpload()
     }
 
@@ -161,23 +170,33 @@ final class ICloudBackupService {
         defer { isBackingUp = false }
         let writerID = settings.writerID
         let lastHash = settings.lastContentHash
-        let outcome: Result<String?, Error> = await Task.detached(priority: .utility) {
+        let generation = storeGeneration
+        let outcome: Result<WriteOutcome, Error> = await Task.detached(priority: .utility) {
             Result {
                 let hash = try Self.contentHash(of: backup)
-                guard hash != lastHash else { return nil }
+                let exists = store.hasBackup(writerID: writerID)
+                // Unchanged content needs no write, unless the backup has gone, e.g. deleted from another device.
+                if hash == lastHash && exists { return .unchanged }
                 // A fresh install has nothing to protect yet, and must not look like a newer, empty backup.
-                if backup.isEmpty && !store.hasBackup(writerID: writerID) { return nil }
+                if backup.isEmpty && !exists { return .skipped }
                 try store.write(backup, writerID: writerID)
-                return hash
+                return .written(hash)
             }
         }.value
+        guard generation == storeGeneration else { return }
         switch outcome {
-        case .success(let hash?):
+        case .success(.written(let hash)):
             settings.lastContentHash = hash
             settings.lastBackupAt = backup.createdAt
             lastBackupAt = backup.createdAt
             lastWriteFailed = false
-        case .success(nil):
+        case .success(.skipped):
+            // Nothing in iCloud for this install: no "Last backup" to show.
+            settings.lastContentHash = nil
+            settings.lastBackupAt = nil
+            lastBackupAt = nil
+            lastWriteFailed = false
+        case .success(.unchanged):
             lastWriteFailed = false
         case .failure(let error):
             lastWriteFailed = true
@@ -227,7 +246,8 @@ final class ICloudBackupService {
     /// The newest backup from another install, offered on an empty Home.
     var restoreOffer: BackupCandidate? {
         guard !isRestoreOfferDismissed else { return nil }
-        return candidates.first { !$0.isThisDevice && ($0.summary.giftsCount > 0 || $0.summary.peopleCount > 0) }
+        // An earlier copy stays in Settings: its install emptied the journal on purpose.
+        return candidates.first { !$0.isThisDevice && !$0.isPreviousCopy && !$0.summary.isEmpty }
     }
 
     func dismissRestoreOffer() {
@@ -252,17 +272,17 @@ final class ICloudBackupService {
     func loadBackup(_ candidate: BackupCandidate) async throws -> DataBackup {
         guard let store else { throw DataBackupError.unreadable }
         return try await Task.detached(priority: .userInitiated) {
-            try store.load(folder: candidate.folderName)
+            try store.load(folder: candidate.folderName, previousCopy: candidate.isPreviousCopy)
         }.value
     }
 
     func deleteBackup(_ candidate: BackupCandidate) async throws {
         guard let store else { return }
         try await Task.detached(priority: .userInitiated) {
-            try store.delete(folder: candidate.folderName)
+            try store.delete(folder: candidate.folderName, previousCopyOnly: candidate.isPreviousCopy)
         }.value
-        candidates.removeAll { $0.id == candidate.id }
-        if candidate.isThisDevice {
+        candidates.removeAll { $0.folderName == candidate.folderName && (candidate.isPreviousCopy ? $0.isPreviousCopy : true) }
+        if candidate.isThisDevice && !candidate.isPreviousCopy {
             // The next change writes a complete backup again.
             settings.lastContentHash = nil
             settings.lastBackupAt = nil
@@ -281,7 +301,10 @@ final class ICloudBackupService {
 
     /// Signing out, or into another account, changes what the container holds: write a full backup again.
     private func accountChanged() {
+        storeGeneration += 1
         settings.lastContentHash = nil
+        settings.lastBackupAt = nil
+        lastBackupAt = nil
         candidates = []
         uploadState = nil
         availability = .checking
@@ -289,6 +312,12 @@ final class ICloudBackupService {
             await resolveStore()
             journalChanged()
         }
+    }
+
+    private enum WriteOutcome: Sendable {
+        case written(String)
+        case unchanged
+        case skipped
     }
 
     /// A hash of what a backup holds, without when or where it was written.

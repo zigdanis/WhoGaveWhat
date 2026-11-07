@@ -40,7 +40,11 @@ struct BackupFolderStore: Sendable {
         let current = folder.appending(path: Self.currentFileName)
         let previous = folder.appending(path: Self.previousFileName)
         var previousJSON: Data?
-        if itemExists(at: current), let json = try? coordinatedRead(current) {
+        // Only a readable backup becomes the previous one; a damaged current file never replaces a good
+        // previous copy, so a failed write below still leaves one backup to restore.
+        if itemExists(at: current), let json = try? coordinatedRead(current),
+            (try? DataBackupCodec.decodeSummary(json)) != nil
+        {
             try coordinatedWrite(json, to: previous)
             previousJSON = json
         } else if itemExists(at: previous) {
@@ -65,48 +69,77 @@ struct BackupFolderStore: Sendable {
     // MARK: - Reading
 
     /// Every readable backup, newest first. `knownFolders` adds folders iCloud reported but whose files
-    /// may not have reached this device yet; reading them downloads them.
+    /// may not have reached this device yet; reading them downloads them. When an install's journal was
+    /// emptied, its previous, non-empty copy is listed too, so deleting everything can still be undone.
     func candidates(thisWriterID: String, knownFolders: Set<String> = []) -> [BackupCandidate] {
         let listed = (try? FileManager.default.contentsOfDirectory(atPath: root.path())) ?? []
         let folders = knownFolders.union(listed).filter(Self.isSafeFolderName)
-        return folders.compactMap { folder -> BackupCandidate? in
+        return folders.flatMap { folder -> [BackupCandidate] in
             guard let json = try? readNewestJSON(folder: folder),
                 let summary = try? DataBackupCodec.decodeSummary(json)
-            else { return nil }
-            return BackupCandidate(folderName: folder, summary: summary, isThisDevice: folder == thisWriterID)
+            else { return [] }
+            let isThisDevice = folder == thisWriterID
+            var found = [BackupCandidate(folderName: folder, summary: summary, isThisDevice: isThisDevice)]
+            if summary.isEmpty, let previous = try? readPreviousJSON(folder: folder),
+                let previousSummary = try? DataBackupCodec.decodeSummary(previous), !previousSummary.isEmpty
+            {
+                found.append(
+                    BackupCandidate(
+                        folderName: folder, summary: previousSummary, isThisDevice: isThisDevice,
+                        isPreviousCopy: true))
+            }
+            return found
         }
         .sorted { $0.summary.createdAt > $1.summary.createdAt }
     }
 
     /// The backup in `folder`, with its photos. The previous copy stands in when the current one cannot be read.
-    func load(folder: String) throws -> DataBackup {
+    /// A photo that cannot be read, e.g. one iCloud has not downloaded yet, fails the whole load: a restore
+    /// without it could not be repaired later, since restoring again skips people already in the journal.
+    func load(folder: String, previousCopy: Bool = false) throws -> DataBackup {
         guard Self.isSafeFolderName(folder) else { throw DataBackupError.unreadable }
-        let json = try readNewestJSON(folder: folder)
+        let json = try previousCopy ? readPreviousJSON(folder: folder) : readNewestJSON(folder: folder)
         let photos = root.appending(path: folder).appending(path: Self.photosFolderName, directoryHint: .isDirectory)
         return try DataBackupCodec.decode(json) { name in
-            try? coordinatedRead(photos.appending(path: name))
+            try coordinatedRead(photos.appending(path: name))
         }
     }
 
-    /// Removes one install's backup from iCloud.
-    func delete(folder: String) throws {
+    /// Removes one install's backup from iCloud, or only its previous copy.
+    func delete(folder: String, previousCopyOnly: Bool = false) throws {
         guard Self.isSafeFolderName(folder) else { throw CocoaError(.fileWriteInvalidFileName) }
-        try coordinatedDelete(root.appending(path: folder, directoryHint: .isDirectory))
+        let url = root.appending(path: folder, directoryHint: .isDirectory)
+        try coordinatedDelete(previousCopyOnly ? url.appending(path: Self.previousFileName) : url)
     }
 
-    /// Whether iCloud has this install's current backup yet.
+    /// Whether iCloud has this install's whole current backup yet: its JSON and every photo it refers to.
     func uploadState(writerID: String) -> BackupUploadState {
         guard Self.isSafeFolderName(writerID) else { return .notInICloud }
-        let url = root.appending(path: writerID).appending(path: Self.currentFileName)
+        let folder = root.appending(path: writerID, directoryHint: .isDirectory)
+        let current = folder.appending(path: Self.currentFileName)
+        let photos = folder.appending(path: Self.photosFolderName, directoryHint: .isDirectory)
+        let referenced = (try? Data(contentsOf: current)).map(DataBackupCodec.referencedPhotoFiles) ?? []
+        let states = ([current] + referenced.sorted().map { photos.appending(path: $0) }).map(Self.uploadState(of:))
+        if states.contains(.notInICloud) { return .notInICloud }
+        if states.contains(.failed) { return .failed }
+        return states.contains(.uploading) ? .uploading : .uploaded
+    }
+
+    private static func uploadState(of url: URL) -> BackupUploadState {
         let keys: Set<URLResourceKey> = [
-            .isUbiquitousItemKey, .ubiquitousItemIsUploadedKey, .ubiquitousItemIsUploadingKey,
-            .ubiquitousItemUploadingErrorKey
+            .isUbiquitousItemKey, .ubiquitousItemIsUploadedKey, .ubiquitousItemUploadingErrorKey
         ]
         guard let values = try? url.resourceValues(forKeys: keys), values.isUbiquitousItem == true else {
             return .notInICloud
         }
         if values.ubiquitousItemUploadingError != nil { return .failed }
         return values.ubiquitousItemIsUploaded == true ? .uploaded : .uploading
+    }
+
+    private func readPreviousJSON(folder: String) throws -> Data {
+        let url = root.appending(path: folder, directoryHint: .isDirectory).appending(path: Self.previousFileName)
+        guard itemExists(at: url) else { throw CocoaError(.fileReadNoSuchFile) }
+        return try coordinatedRead(url)
     }
 
     private func readNewestJSON(folder: String) throws -> Data {
@@ -187,8 +220,10 @@ struct BackupCandidate: Identifiable, Equatable, Sendable {
     let summary: DataBackupSummary
     /// Written by this install of the app.
     let isThisDevice: Bool
+    /// The copy before the latest one, listed when the latest is empty.
+    var isPreviousCopy = false
 
-    var id: String { folderName }
+    var id: String { isPreviousCopy ? folderName + "/previous" : folderName }
 }
 
 enum BackupUploadState: Equatable, Sendable {

@@ -63,9 +63,9 @@ enum DataBackupCodec {
         return Encoded(json: try makeEncoder().encode(file), photos: photoFiles)
     }
 
-    /// Reads and checks a backup. `photo` supplies the content of a `photoFile`; a photo it cannot supply
-    /// is restored as no photo rather than failing the backup.
-    static func decode(_ data: Data, photo: (String) -> Data? = { _ in nil }) throws -> DataBackup {
+    /// Reads and checks a backup. `photo` supplies the content of a `photoFile`; nil means no photo, and an
+    /// error it throws fails the decoding. Without `photo`, photo files are left out (the restore list's summary).
+    static func decode(_ data: Data, photo: (String) throws -> Data? = { _ in nil }) throws -> DataBackup {
         let decoder = makeDecoder()
         let header: Header
         do {
@@ -88,10 +88,14 @@ enum DataBackupCodec {
             }
             return record.gift(currency: currency)
         }
-        let people = file.people.map { record in
-            DataBackup.Person(
+        let people = try file.people.map { record in
+            var photoData = record.photo
+            if photoData == nil, let name = record.photoFile, isSafePhotoFileName(name) {
+                photoData = try photo(name)
+            }
+            return DataBackup.Person(
                 id: record.id, name: record.name, colorHex: record.colorHex, sortIndex: record.sortIndex,
-                photo: record.photo ?? record.photoFile.flatMap { isSafePhotoFileName($0) ? photo($0) : nil })
+                photo: photoData)
         }
         return try DataBackup(
             createdAt: file.createdAt,
@@ -248,4 +252,6 @@ struct DataBackupSummary: Equatable, Sendable {
     let deviceModel: String
     let peopleCount: Int
     let giftsCount: Int
+
+    var isEmpty: Bool { peopleCount == 0 && giftsCount == 0 }
 }

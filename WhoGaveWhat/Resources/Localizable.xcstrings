@@ -966,7 +966,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось загрузить копию. Проверьте, не заполнено ли хранилище iCloud."
+            "value" : "Не удалось выгрузить копию в iCloud. Проверьте, не заполнено ли хранилище iCloud."
           }
         }
       }
@@ -1246,6 +1246,16 @@
         }
       }
     },
+    "Earlier copy" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Предыдущая копия"
+          }
+        }
+      }
+    },
     "Edit" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1504,6 +1514,17 @@
         }
       }
     },
+    "Gifts not added because both people have the same name here: %lld." : {
+      "comment" : "After a restore: gifts between two backup people who match one person in the app.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не добавлено подарков, у которых оба человека здесь с одинаковым именем: %lld."
+          }
+        }
+      }
+    },
     "Gifts: %lld · People: %lld" : {
       "comment" : "What a backup holds.",
       "localizations" : {
@@ -1739,7 +1760,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Последняя копия: %@. Загрузка в iCloud…"
+            "value" : "Последняя копия: %@. Выгрузка в iCloud…"
           }
         }
       }
@@ -2042,6 +2063,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не выбрано"
+          }
+        }
+      }
+    },
+    "Nothing was added." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ничего не добавлено."
           }
         }
       }
@@ -3449,12 +3480,12 @@
         }
       }
     },
-    "iCloud backup is off. Your data is only on this device." : {
+    "iCloud backup is off. New changes stay only on this device. Earlier backups remain in iCloud until you delete them in Restore from iCloud." : {
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Копия в iCloud выключена. Данные хранятся только на этом устройстве."
+            "value" : "Копия в iCloud выключена. Новые изменения хранятся только на этом устройстве. Прежние копии остаются в iCloud, пока вы не удалите их в разделе «Восстановить из iCloud»."
           }
         }
       }

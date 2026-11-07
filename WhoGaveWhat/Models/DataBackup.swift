@@ -41,6 +41,9 @@ struct DataBackup: Equatable, Sendable {
 
     var isEmpty: Bool { people.isEmpty && gifts.isEmpty }
 
+    /// The largest amount a restored gift may have, far above any real gift and well inside `Int`.
+    static let maximumValue: Double = 1_000_000_000_000
+
     /// The same records and preferences, ignoring when and where they were written: two backups with
     /// equal content need only one write.
     func hasSameContent(as other: DataBackup) -> Bool {
@@ -71,6 +74,10 @@ extension DataBackup {
         }
         var giftIDs = Set<String>()
         for gift in gifts {
+            // The app turns amounts into whole numbers for editing; anything beyond this is not a real amount.
+            guard gift.value.isFinite, abs(gift.value) <= DataBackup.maximumValue else {
+                throw DataBackupError.inconsistent("value_out_of_range")
+            }
             guard !gift.id.isEmpty, giftIDs.insert(gift.id).inserted else {
                 throw DataBackupError.inconsistent("duplicate_gift")
             }
@@ -88,13 +95,22 @@ extension DataBackup {
     }
 }
 
+/// Where a restore came from, for analytics.
+enum DataRestoreSource: String, Equatable {
+    case iCloud = "icloud"
+    case file
+}
+
 /// What a restore added. Records already in the journal are kept as they are and counted as skipped.
 struct DataRestoreSummary: Equatable {
     var peopleAdded = 0
     var giftsAdded = 0
     /// Backup people that matched one already in the journal, by id or by name.
     var peopleMatched = 0
-    var giftsSkipped = 0
+    /// Backup gifts already in the journal.
+    var giftsAlreadyHere = 0
+    /// Backup gifts between two backup people who are one person here (same name), so they cannot be added.
+    var giftsWithoutPlace = 0
     /// Whether the journal was empty, so the backup's preferences were applied too.
     var restoredIntoEmptyJournal = false
 

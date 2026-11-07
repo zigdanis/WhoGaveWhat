@@ -109,10 +109,12 @@ struct ICloudBackupsView: View {
     private func subtitle(_ candidate: BackupCandidate) -> String {
         let contents = RestoreMessages.contents(
             giftsCount: candidate.summary.giftsCount, peopleCount: candidate.summary.peopleCount)
-        let device =
-            candidate.isThisDevice
-            ? String(localized: "This device") : candidate.summary.deviceModel
-        return device.isEmpty ? contents : "\(device) · \(contents)"
+        var parts: [String] = []
+        let device = candidate.isThisDevice ? String(localized: "This device") : candidate.summary.deviceModel
+        if !device.isEmpty { parts.append(device) }
+        if candidate.isPreviousCopy { parts.append(String(localized: "Earlier copy")) }
+        parts.append(contents)
+        return parts.joined(separator: " · ")
     }
 
     private var isDeleting: Binding<Bool> {

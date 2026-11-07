@@ -24,12 +24,24 @@ enum RestoreMessages {
     }
 
     static func outcome(_ summary: DataRestoreSummary) -> String {
-        guard summary.addedAnything else {
-            return String(localized: "Everything in this backup is already in the app.")
+        var result =
+            if summary.addedAnything {
+                String(
+                    localized: "Gifts added: \(summary.giftsAdded). People added: \(summary.peopleAdded).",
+                    comment: "After a restore: how many records were added.")
+            } else if summary.giftsWithoutPlace == 0 {
+                String(localized: "Everything in this backup is already in the app.")
+            } else {
+                String(localized: "Nothing was added.")
+            }
+        if summary.giftsWithoutPlace > 0 {
+            result += " "
+            result += String(
+                localized:
+                    "Gifts not added because both people have the same name here: \(summary.giftsWithoutPlace).",
+                comment: "After a restore: gifts between two backup people who match one person in the app.")
         }
-        return String(
-            localized: "Gifts added: \(summary.giftsAdded). People added: \(summary.peopleAdded).",
-            comment: "After a restore: how many records were added.")
+        return result
     }
 
     /// Why a backup could not be opened.

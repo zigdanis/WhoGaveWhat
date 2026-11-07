@@ -1,12 +1,6 @@
 import Foundation
 import UIKit
 
-/// Where a restore came from, for analytics.
-enum DataRestoreSource: String, Equatable {
-    case iCloud = "icloud"
-    case file
-}
-
 enum DataRestoreResult: Equatable {
     case restored(DataRestoreSummary)
     /// Nothing was added: the store refused the records, or the journal could not be loaded first.

@@ -145,7 +145,10 @@ enum BackupStatusText {
         lastWriteFailed: Bool
     ) -> String {
         guard isEnabled else {
-            return String(localized: "iCloud backup is off. Your data is only on this device.")
+            return String(
+                localized:
+                    "iCloud backup is off. New changes stay only on this device. Earlier backups remain in iCloud until you delete them in Restore from iCloud."
+            )
         }
         switch availability {
         case .checking:

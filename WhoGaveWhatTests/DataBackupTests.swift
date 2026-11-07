@@ -149,6 +149,17 @@ struct DataBackupCodecTests {
         #expect(throws: DataBackupError.inconsistent("unknown_currency")) { try DataBackupCodec.decode(try json(object)) }
     }
 
+    @Test func refusesAmountsNoGiftCanHave() throws {
+        var gift = BackupSamples.gift("g-1", from: "p-maria", to: "p-anna")
+        gift = DataBackup.Gift(
+            id: gift.id, emoji: gift.emoji, name: gift.name, giverID: gift.giverID, recipientID: gift.recipientID,
+            paidByYou: gift.paidByYou, occasion: gift.occasion, date: gift.date, value: 1e100, currency: gift.currency,
+            createdAt: gift.createdAt, emojiPickedByUser: gift.emojiPickedByUser, lastSavedAt: gift.lastSavedAt)
+        #expect(throws: DataBackupError.inconsistent("value_out_of_range")) {
+            try BackupSamples.backup(gifts: [gift]).validated()
+        }
+    }
+
     @Test func aViewpointWithoutItsPersonIsDropped() throws {
         let backup = BackupSamples.backup(selfPersonID: "p-gone")
         let decoded = try DataBackupCodec.decode(try DataBackupCodec.encode(backup, photos: .inline).json)
@@ -238,7 +249,7 @@ struct JournalArchiveGatewayTests {
         #expect(summary.peopleMatched == 2)
         #expect(summary.peopleAdded == 1)
         #expect(summary.giftsAdded == 2)
-        #expect(summary.giftsSkipped == 1)
+        #expect(summary.giftsAlreadyHere == 1)
 
         let archive = try gateway.loadArchive()
         // The local records win: names, colors and the existing gift stay as they were.
@@ -259,7 +270,7 @@ struct JournalArchiveGatewayTests {
         let second = try gateway.restore(BackupSamples.backup())
         #expect(!second.addedAnything)
         #expect(second.peopleMatched == 2)
-        #expect(second.giftsSkipped == 1)
+        #expect(second.giftsAlreadyHere == 1)
     }
 
     @Test func aGiftBetweenTwoBackupPeopleWhoAreOnePersonHereIsSkipped() throws {
@@ -271,7 +282,26 @@ struct JournalArchiveGatewayTests {
             gifts: [BackupSamples.gift("g", from: "p-anna", to: "p-2")])
         let summary = try SwiftDataJournalArchiveGateway(context: store.context).restore(backup)
         #expect(summary.giftsAdded == 0)
-        #expect(summary.giftsSkipped == 1)
+        #expect(summary.giftsWithoutPlace == 1)
+        #expect(RestoreMessages.outcome(summary).contains("1"))
+    }
+
+    @Test func restoredPeopleAreRenumberedInBackupOrder() throws {
+        let store = try SwiftDataStore(inMemory: true)
+        let gateway = SwiftDataJournalArchiveGateway(context: store.context)
+        try gateway.restore(
+            BackupSamples.backup(
+                people: [
+                    BackupSamples.person("p-last", "Last", sortIndex: Int.max),
+                    BackupSamples.person("p-first", "First", sortIndex: -40)
+                ],
+                gifts: []))
+        let archive = try gateway.loadArchive()
+        #expect(archive.people.map(\.id) == ["p-first", "p-last"])
+        #expect(archive.people.map(\.sortIndex) == [0, 1])
+        // A later restore appends after them without overflowing.
+        try gateway.restore(BackupSamples.backup(people: [BackupSamples.person("p-new", "New", sortIndex: 0)], gifts: []))
+        #expect(try gateway.loadArchive().people.last?.sortIndex == 2)
     }
 
     @Test func aFailedSaveAddsNothing() throws {
@@ -369,6 +399,39 @@ struct BackupFolderStoreTests {
         #expect(store.candidates(thisWriterID: writer).first?.summary.giftsCount == 1)
     }
 
+    @Test func aDamagedCurrentBackupNeverReplacesTheGoodPreviousOne() throws {
+        let store = try makeStore()
+        defer { try? FileManager.default.removeItem(at: store.root) }
+        let first = BackupSamples.backup()
+        try store.write(first, writerID: writer)
+        try store.write(BackupSamples.backup(gifts: []), writerID: writer)
+        let folder = store.root.appending(path: writer)
+        try Data("damaged".utf8).write(to: folder.appending(path: BackupFolderStore.currentFileName))
+        let previous = folder.appending(path: BackupFolderStore.previousFileName)
+        let goodPrevious = try Data(contentsOf: previous)
+
+        try store.write(BackupSamples.backup(people: [], gifts: []), writerID: writer)
+
+        #expect(try Data(contentsOf: previous) == goodPrevious)
+    }
+
+    @Test func aPhotoThatCannotBeReadFailsTheLoadUntilItArrives() throws {
+        let store = try makeStore()
+        defer { try? FileManager.default.removeItem(at: store.root) }
+        try store.write(BackupSamples.backup(), writerID: writer)
+        let photo = store.root.appending(path: writer).appending(path: BackupFolderStore.photosFolderName)
+            .appending(path: DataBackupCodec.photoFileName(for: BackupSamples.photo))
+        let parked = store.root.appending(path: "parked.photo")
+        try FileManager.default.moveItem(at: photo, to: parked)
+
+        #expect(throws: (any Error).self) { try store.load(folder: writer) }
+        // The restore list still shows it: its summary needs no photo.
+        #expect(store.candidates(thisWriterID: writer).count == 1)
+
+        try FileManager.default.moveItem(at: parked, to: photo)
+        #expect(try store.load(folder: writer).people.first?.photo == BackupSamples.photo)
+    }
+
     @Test func listsEveryInstallNewestFirstAndIgnoresOtherFolders() throws {
         let store = try makeStore()
         defer { try? FileManager.default.removeItem(at: store.root) }
@@ -382,6 +445,23 @@ struct BackupFolderStoreTests {
         #expect(candidates.map(\.folderName) == [writer, older])
         #expect(candidates.map(\.isThisDevice) == [false, true])
         #expect(throws: (any Error).self) { try store.write(BackupSamples.backup(), writerID: "../escape") }
+    }
+
+    @Test func anEmptiedJournalStillListsItsEarlierCopy() throws {
+        let store = try makeStore()
+        defer { try? FileManager.default.removeItem(at: store.root) }
+        let full = BackupSamples.backup()
+        try store.write(full, writerID: writer)
+        try store.write(BackupSamples.backup(people: [], gifts: [], selfPersonID: nil), writerID: writer)
+
+        let candidates = store.candidates(thisWriterID: UUID().uuidString)
+        #expect(candidates.count == 2)
+        let earlier = try #require(candidates.first { $0.isPreviousCopy })
+        #expect(earlier.summary.giftsCount == 1)
+        #expect(try store.load(folder: writer, previousCopy: true) == full)
+
+        try store.delete(folder: writer, previousCopyOnly: true)
+        #expect(store.candidates(thisWriterID: UUID().uuidString).map(\.isPreviousCopy) == [false])
     }
 
     @Test func deletesOneInstallsBackup() throws {
@@ -525,6 +605,24 @@ struct ICloudBackupServiceTests {
         #expect(BackupFolderStore(root: root, usesFileCoordination: false).hasBackup(writerID: settings.writerID))
     }
 
+    @Test func aBackupDeletedElsewhereIsWrittenAgainEvenWithoutChanges() async throws {
+        let root = try makeTemporaryDirectory()
+        let (settings, defaults, suite) = makeSettings()
+        defer {
+            try? FileManager.default.removeItem(at: root)
+            defaults.removePersistentDomain(forName: suite)
+        }
+        let service = makeService(root: root, settings: settings)
+        await service.start { BackupSamples.backup() }
+        await service.backUpNow()
+        let store = BackupFolderStore(root: root, usesFileCoordination: false)
+        // Another device removes this install's backup from the shared iCloud folder.
+        try store.delete(folder: settings.writerID)
+
+        await service.backUpNow()
+        #expect(store.hasBackup(writerID: settings.writerID))
+    }
+
     @Test func togglingIsTracked() {
         let (settings, defaults, suite) = makeSettings()
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -563,7 +661,12 @@ struct BackupStatusTextTests {
     }
 
     @Test func saysWhyTheDataIsNotInICloud() {
-        #expect(describe(isEnabled: false) == String(localized: "iCloud backup is off. Your data is only on this device."))
+        #expect(
+            describe(isEnabled: false)
+                == String(
+                    localized:
+                        "iCloud backup is off. New changes stay only on this device. Earlier backups remain in iCloud until you delete them in Restore from iCloud."
+                ))
         #expect(describe(availability: .checking) == String(localized: "Checking iCloud…"))
         #expect(
             describe(lastWriteFailed: true)
