@@ -19,14 +19,16 @@ struct SettingsView: View {
                         SettingsValueRow(
                             icon: "banknote.fill",
                             tint: Color.brandFill,
-                            label: "Currency",
+                            label: "Default currency",
                             value: currencyDisplayName
                         )
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("settings.currency")
-                    .accessibilityValue(composition.currencyCode)
+                    .accessibilityValue(composition.defaultCurrency.code)
                 }
+                SettingsFootnote(text: "settings.default-currency.footnote")
+                    .padding(.top, 7)
 
                 SectionHeader(text: "About").padding(.top, 24).padding(.bottom, 7)
                 Card {
@@ -70,11 +72,21 @@ struct SettingsView: View {
     }
 
     private var currencyDisplayName: String {
-        let locale = Locale.autoupdatingCurrent
-        let name =
-            locale.localizedString(forCurrencyCode: composition.currencyCode)
-            ?? composition.currencyCode
-        return "\(name) \(currencySymbol(code: composition.currencyCode, locale: locale))"
+        let code = composition.defaultCurrency.code
+        return "\(currencyName(code: code)) \(currencySymbol(code: code))"
+    }
+}
+
+/// Secondary text below a settings card, in the inset of the card's content.
+private struct SettingsFootnote: View {
+    let text: LocalizedStringResource
+
+    var body: some View {
+        Text(text)
+            .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -137,63 +149,74 @@ private struct CurrencyPickerView: View {
     let composition: AppComposition
 
     var body: some View {
-        List(CurrencyOption.all) { option in
-            Button {
-                composition.setCurrencyCode(option.code)
-            } label: {
-                HStack(spacing: 12) {
-                    Text(option.symbol)
-                        .font(Font.app(16, .semibold))
-                        .foregroundColor(Color.brand)
-                        .frame(width: 42, alignment: .leading)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(option.name)
-                            .font(Font.app(16, .regular))
-                            .foregroundColor(Color.textPrimary)
-                        Text(verbatim: option.code)
-                            .font(Font.app(13, .regular))
-                            .foregroundColor(Color.textSecondary)
-                    }
-                    Spacer(minLength: 8)
-                    if composition.currencyCode == option.code {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(Color.brand)
-                            .accessibilityHidden(true)
-                    }
+        List {
+            Section {
+                ForEach(CurrencyOption.all) { option in
+                    row(option)
                 }
-                .contentShape(Rectangle())
+            } footer: {
+                Text("settings.default-currency.footnote")
             }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("settings.currency.\(option.code)")
-            .accessibilityValue(option.code)
         }
         .listStyle(.insetGrouped)
         .readableColumn()
         .accessibilityIdentifier("settings.currency.list")
         .scrollContentBackground(.hidden)
         .background(Color.appBackground)
-        .navigationTitle("Currency")
+        .navigationTitle("Default currency")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func row(_ option: CurrencyOption) -> some View {
+        Button {
+            composition.setDefaultCurrency(option.currency)
+        } label: {
+            HStack(spacing: 12) {
+                Text(option.symbol)
+                    .font(Font.app(16, .semibold))
+                    .foregroundColor(Color.brand)
+                    .frame(width: 42, alignment: .leading)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(option.name)
+                        .font(Font.app(16, .regular))
+                        .foregroundColor(Color.textPrimary)
+                    Text(verbatim: option.code)
+                        .font(Font.app(13, .regular))
+                        .foregroundColor(Color.textSecondary)
+                }
+                Spacer(minLength: 8)
+                if composition.defaultCurrency == option.currency {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(Color.brand)
+                        .accessibilityHidden(true)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("settings.currency.\(option.code)")
+        .accessibilityValue(option.code)
     }
 }
 
 private struct CurrencyOption: Identifiable {
-    let code: String
+    let currency: SupportedCurrency
     let name: String
     let symbol: String
 
+    var code: String { currency.code }
     var id: String { code }
 
     static let all: [CurrencyOption] = {
         let locale = Locale.autoupdatingCurrent
         // Only the currencies the app supports; the icon Worker has price buckets for just these.
-        return SupportedCurrency.allCases.map(\.code)
-            .map { code in
+        return SupportedCurrency.allCases
+            .map { currency in
                 CurrencyOption(
-                    code: code,
-                    name: locale.localizedString(forCurrencyCode: code) ?? code,
-                    symbol: currencySymbol(code: code, locale: locale)
+                    currency: currency,
+                    name: currencyName(code: currency.code, locale: locale),
+                    symbol: currencySymbol(code: currency.code, locale: locale)
                 )
             }
             .sorted { lhs, rhs in

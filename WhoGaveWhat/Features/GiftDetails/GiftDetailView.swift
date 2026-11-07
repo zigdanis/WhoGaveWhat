@@ -85,7 +85,7 @@ struct GiftDetailView: View {
                 Spacer(minLength: 8)
             }
             HStack(spacing: 6) {
-                Text(formattedCurrency(g.value, code: composition.currencyCode))
+                Text(formattedCurrency(g.value, code: g.currency.code))
                     .font(Font.app(17, .semibold, rounded: true)).foregroundColor(Color.textPrimary)
                 Spacer(minLength: 0)
             }

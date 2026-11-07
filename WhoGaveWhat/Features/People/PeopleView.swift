@@ -98,7 +98,7 @@ struct PeopleView: View {
                 imageData: person.imageData,
                 isSelf: composition.data.isSelf(person.id),
                 gifts: gifts(for: person.id),
-                currencyCode: composition.currencyCode)
+                preferredCurrency: composition.defaultCurrency)
         }
         .listRowInsets(EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 12))
         .swipeToDelete(
@@ -170,7 +170,8 @@ struct PersonRow: View {
     let imageData: Data?
     let isSelf: Bool
     let gifts: [Gift]
-    let currencyCode: String
+    /// Listed first when the person's gifts are in several currencies.
+    let preferredCurrency: SupportedCurrency
 
     var body: some View {
         let r = gifts.filter {
@@ -204,7 +205,7 @@ struct PersonRow: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Text(formattedCurrency(gifts.totalValue, code: currencyCode))
+            AmountsText(amounts: gifts.totals, preferred: preferredCurrency, alignment: .trailing)
                 .font(Font.app(15, .semibold, rounded: true)).foregroundColor(Color.textPrimary)
                 .lineLimit(1)
                 .layoutPriority(1)

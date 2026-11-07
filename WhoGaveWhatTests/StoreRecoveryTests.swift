@@ -57,7 +57,7 @@ private func person(_ id: String) -> Person {
 private func gift(_ id: String, from giverID: String, to recipientID: String) -> Gift {
     Gift(
         id: id, emoji: "🎁", name: "Gift \(id)", giverID: giverID, recipientID: recipientID, paidByYou: false,
-        occasion: "Birthday", date: Date(timeIntervalSince1970: 1_000), value: 10,
+        occasion: "Birthday", date: Date(timeIntervalSince1970: 1_000), value: 10, currency: .usd,
         createdAt: Date(timeIntervalSince1970: 1_000))
 }
 

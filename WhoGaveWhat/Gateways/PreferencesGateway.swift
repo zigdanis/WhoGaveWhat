@@ -1,6 +1,9 @@
 @MainActor
 protocol PreferencesGateway: AnyObject {
     var currencyCode: String { get }
+    /// The currency for gifts saved before each gift had its own (1.2.0 and earlier): the currency
+    /// preference the first time this is read, kept from then on so a later change cannot relabel them.
+    var legacyGiftCurrency: SupportedCurrency { get }
     var selfPersonID: String? { get }
     var installID: String { get }
     func setCurrencyCode(_ currencyCode: String)
@@ -11,4 +14,11 @@ protocol PreferencesGateway: AnyObject {
     /// Days of use, new gifts and past requests that time the App Store rating request.
     var reviewPromptState: ReviewPromptState { get }
     func setReviewPromptState(_ state: ReviewPromptState)
+}
+
+extension PreferencesGateway {
+    /// The currency new gifts start in. It never changes gifts that are already saved.
+    var defaultCurrency: SupportedCurrency {
+        SupportedCurrency(rawValue: currencyCode) ?? .usd
+    }
 }

@@ -72,11 +72,14 @@ struct PersonDetailView: View {
                 HStack(spacing: 10) {
                     statCard(
                         arrow: "↙", label: "Received", color: Color.received,
-                        count: recv.count, value: recv.totalValue)
+                        count: recv.count, value: recv.totals)
                     statCard(
                         arrow: "↗", label: "Given", color: Color.given,
-                        count: given.count, value: given.totalValue)
+                        count: given.count, value: given.totals)
                 }
+                // Both cards take the taller one's height, so a caption that wraps (several currencies)
+                // keeps them aligned.
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 18)
 
                 Segmented(options: filterOptions, selected: filter) { key in
@@ -104,8 +107,7 @@ struct PersonDetailView: View {
                             GiftRow(
                                 gift: gift,
                                 subtitle: composition.data.giftSubtitle(gift),
-                                dateLabel: gift.date.giftShortLabel(),
-                                currencyCode: composition.currencyCode)
+                                dateLabel: gift.date.giftShortLabel())
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
                         .swipeToDelete(
@@ -209,7 +211,7 @@ struct PersonDetailView: View {
         composition.data.gifts.filter { $0.giverID == entityId || $0.recipientID == entityId }.count
     }
 
-    private func statCard(arrow: String, label: String, color: Color, count: Int, value: Double) -> some View {
+    private func statCard(arrow: String, label: String, color: Color, count: Int, value: CurrencyAmounts) -> some View {
         Card {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
@@ -219,12 +221,14 @@ struct PersonDetailView: View {
                 .foregroundColor(color)
                 Text("\(count)").font(Font.app(25, .bold, rounded: true)).tracking(-0.4).foregroundColor(Color.textPrimary).padding(.top, 9)
                 // The count is shown above; the caption only needs the plural form of "gifts".
-                Text("person.stat-caption \(count) \(formattedCurrency(value, code: composition.currencyCode))")
+                // Several currencies are listed side by side, never added together.
+                Text("person.stat-caption \(count) \(formattedAmounts(value, preferred: composition.defaultCurrency))")
                     .font(Font.app(13, .regular)).foregroundColor(Color.textSecondary).padding(.top, 2)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(15)
+            .frame(maxHeight: .infinity, alignment: .top)
         }
     }
 }

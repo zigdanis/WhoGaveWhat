@@ -39,7 +39,7 @@ struct AddGiftSheet: View {
     private var valueSummary: GiftDetailsValueSummary? {
         guard let value = state.effectiveValue, value > 0 else { return nil }
         return GiftDetailsValueSummary(
-            amount: formattedCurrency(Double(value), code: composition.currencyCode),
+            amount: formattedCurrency(Double(value), code: state.currency.code),
             isEstimate: state.showsEstimate
         )
     }
@@ -91,10 +91,10 @@ struct AddGiftSheet: View {
                             dateLabel: state.draft.date.giftInputLabel(),
                             occasionLabel: state.draft.occasion.map(composition.data.localizedOccasion),
                             value: $state.valueText,
+                            currency: $state.currency,
                             focus: $focus,
                             accent: fm.main,
                             tint: fm.tint,
-                            currencyCode: composition.currencyCode,
                             showsEstimate: state.showsEstimate,
                             onSelectDate: { state.open(.date) },
                             onSelectOccasion: { state.open(.occasion) },
@@ -379,10 +379,10 @@ private struct GiftDetailsSection: View {
     let dateLabel: String
     let occasionLabel: String?
     @Binding var value: String
+    @Binding var currency: SupportedCurrency
     @FocusState.Binding var focus: AddGiftField?
     let accent: Color
     let tint: Color
-    let currencyCode: String
     let showsEstimate: Bool
     let onSelectDate: () -> Void
     let onSelectOccasion: () -> Void
@@ -415,10 +415,10 @@ private struct GiftDetailsSection: View {
                 RowDivider().padding(.leading, 58)
                 ApproximateValueRow(
                     value: $value,
+                    currency: $currency,
                     focus: $focus,
                     accent: accent,
                     tint: tint,
-                    currencyCode: currencyCode,
                     showsEstimate: showsEstimate
                 )
             }
@@ -492,10 +492,10 @@ private struct GiftEntryIconView: View {
 
 private struct ApproximateValueRow: View {
     @Binding var value: String
+    @Binding var currency: SupportedCurrency
     @FocusState.Binding var focus: AddGiftField?
     let accent: Color
     let tint: Color
-    let currencyCode: String
     /// The shown number is a suggestion from the name, not something the user entered.
     let showsEstimate: Bool
 
@@ -528,12 +528,41 @@ private struct ApproximateValueRow: View {
                 .frame(minWidth: 60, maxWidth: 110)
                 .accessibilityValue(showsEstimate ? String(localized: "Estimated \(value)") : value)
                 .accessibilityIdentifier("add-gift.value")
-            Text(currencySymbol(code: currencyCode))
-                .font(Font.app(16, .semibold)).foregroundColor(Color.textSecondary)
+            GiftCurrencyMenu(currency: $currency, accent: accent)
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
         .contentShape(Rectangle())
         .onTapGesture { focus = .value }
+    }
+}
+
+/// The currency of this gift's value, next to the amount. A new gift starts in the default currency
+/// from Settings; any gift can use another without changing the others.
+private struct GiftCurrencyMenu: View {
+    @Binding var currency: SupportedCurrency
+    let accent: Color
+
+    var body: some View {
+        Menu {
+            Picker("Currency", selection: $currency) {
+                ForEach(SupportedCurrency.allCases) { option in
+                    Text(verbatim: "\(currencyName(code: option.code)) \(currencySymbol(code: option.code))")
+                        .tag(option)
+                }
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Text(verbatim: currencySymbol(code: currency.code))
+                    .font(Font.app(16, .semibold)).foregroundColor(accent)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 10, weight: .semibold)).foregroundColor(Color.textTertiary)
+            }
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .accessibilityLabel(Text("Currency"))
+        .accessibilityValue(Text(verbatim: currencyName(code: currency.code)))
+        .accessibilityIdentifier("add-gift.currency")
     }
 }
 

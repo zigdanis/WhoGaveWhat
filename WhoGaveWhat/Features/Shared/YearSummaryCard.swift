@@ -5,7 +5,8 @@ import SwiftUI
 struct YearSummaryCard: View {
     let summary: YearSummary
     let hasViewpoint: Bool
-    let currencyCode: String
+    /// Listed first when amounts are in several currencies.
+    let preferredCurrency: SupportedCurrency
     let years: [Int]
     @Binding var selectedYear: Int
     /// Shows the "mark yourself" hint when there is no viewpoint; nil leaves it out.
@@ -70,7 +71,7 @@ struct YearSummaryCard: View {
                 Text("Balance")
                     .font(Font.app(15, .semibold)).foregroundColor(Color.textPrimary)
                 Spacer(minLength: 8)
-                NetBadge(net: summary.net, currencyCode: currencyCode)
+                NetBadge(net: summary.net, preferredCurrency: preferredCurrency)
             }
         }
     }
@@ -78,7 +79,7 @@ struct YearSummaryCard: View {
     private var circulatedContent: some View {
         VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(formattedCurrency(summary.circulatedValue, code: currencyCode))
+                AmountsText(amounts: summary.circulatedValue, preferred: preferredCurrency)
                     .font(Font.app(32, .bold, rounded: true)).tracking(-0.6).foregroundColor(Color.textPrimary)
                     .lineLimit(1).minimumScaleFactor(0.6)
                     // Scales only to fit the width. A two-column iPad layout can offer less height while a
@@ -105,7 +106,7 @@ struct YearSummaryCard: View {
         }
     }
 
-    private func flowTile(_ direction: GiftDirection, value: Double, count: Int) -> some View {
+    private func flowTile(_ direction: GiftDirection, value: CurrencyAmounts, count: Int) -> some View {
         let appearance = direction.appearance
         return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 4) {
@@ -113,7 +114,7 @@ struct YearSummaryCard: View {
                 if let label = appearance.label { Text(label) }
             }
             .font(Font.app(13, .semibold)).foregroundColor(appearance.main)
-            Text(formattedCurrency(value, code: currencyCode))
+            AmountsText(amounts: value, preferred: preferredCurrency)
                 .font(Font.app(24, .bold, rounded: true)).foregroundColor(Color.textPrimary)
                 .lineLimit(1).minimumScaleFactor(0.6)
             Text(verbatim: LocalizedCount.gifts(count))

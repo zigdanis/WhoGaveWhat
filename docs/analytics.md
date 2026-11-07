@@ -25,7 +25,7 @@ outside the cases listed under "When nothing is sent". The full list lives in
 | `gift_suggestion_completed` | `provider` cloud/on_device (whichever answered; cloud when none did), `outcome`, `has_icon`, `has_price`, `latency_ms` | An icon/price inference returns |
 | `occasion_added` | – | A custom occasion is typed |
 | `gift_save_attempted` | `mode` | Save is tapped with a complete form; `gift_saved` or `gift_save_failed` follows |
-| `gift_saved` | `mode`, `direction` received/given/unrelated/no_viewpoint, `icon_source`, `value_source` user/estimate/none, `occasion` (built-in key or `custom`), `paid_by_you`, `date_offset`, `gifts_count` | A gift is stored |
+| `gift_saved` | `mode`, `direction` received/given/unrelated/no_viewpoint, `icon_source`, `value_source` user/estimate/none, `occasion` (built-in key or `custom`), `currency` (the gift's own ISO code, never its amount), `paid_by_you`, `date_offset`, `gifts_count` | A gift is stored |
 | `gift_save_failed` | `mode` | The store refused the gift, or the records on screen could not be reloaded first; the sheet stays open with everything entered and Save can be tapped again |
 | `gift_deleted` | `source` home/person_detail/gift_detail, `gifts_count` | A gift is removed (not after a failed deletion, which only reports `delete_gift`) |
 | `gift_detail_viewed` | – | A gift screen appears |
@@ -36,23 +36,24 @@ outside the cases listed under "When nothing is sent". The full list lives in
 | `viewpoint_changed` | `is_set` | "This is me" is switched |
 | `insights_person_picked` | `slot` subject/compareA/compareB | An Insights picker choice |
 | `insights_year_changed` | `is_current_year` | The Insights year menu |
-| `currency_changed` | `currency` | Settings → Currency |
+| `currency_changed` | `currency` | Settings → Default currency (applies to new gifts only) |
 | `privacy_policy_opened`, `licenses_opened` | – | Settings → About |
 | `app_opened_from_spotlight` | – | The Spotlight launcher opened the app |
 | `review_prompt_requested` | `active_days`, `days_since_first_launch`, `gifts_count`, `people_count`, `request_number` | The app asked iOS for the App Store rating sheet (see [rating prompt](rating-prompt.md)); iOS may not show it |
 
 PostHog adds its own `Application Installed / Opened / Updated / Backgrounded` events and attaches
 these super properties to everything: `app_environment` (testflight/appstore), `gifts_count`,
-`people_count`, `has_viewpoint`, `currency`. The same values travel to Sentry as the
+`people_count`, `has_viewpoint`, `currency` (the default currency for new gifts). The same values travel to Sentry as the
 `app_state` context, and every product event becomes a Sentry breadcrumb.
 
 Handled failures (`AnalyticsFailure`) go to Sentry only, tagged with `operation`: `open_store`
-(the store could not be opened at launch or on Retry; extra `attempt`), `load_gifts` and `load_people`
-(extra `has_snapshot`: whether earlier records stay on screen), `save_gift`, `delete_gift`,
-`create_person`, `rename_person`, `update_person`, `delete_person`, `load_person_photo`,
-`cloud_icon_request`, `cloud_icon_decode`, `on_device_inference`, `spotlight_index`. A duplicate person
-name, being offline and cancellation are ordinary and are not reported. A change refused because the
-records could not be reloaded first is reported once, as that load failure.
+(the store could not be opened at launch or on Retry; extra `attempt`), `migrate_gift_currency` (the store
+opened but could not save the currency of gifts from 1.2.0 and earlier; they still show in it and the next
+open tries again), `load_gifts` and `load_people` (extra `has_snapshot`: whether earlier records stay on
+screen), `save_gift`, `delete_gift`, `create_person`, `rename_person`, `update_person`, `delete_person`,
+`load_person_photo`, `cloud_icon_request`, `cloud_icon_decode`, `on_device_inference`, `spotlight_index`.
+A duplicate person name, being offline and cancellation are ordinary and are not reported. A change
+refused because the records could not be reloaded first is reported once, as that load failure.
 
 ## When nothing is sent
 

@@ -107,7 +107,7 @@ struct InsightsView: View {
         YearSummaryCard(
             summary: useCase.summary(gifts: data.gifts, relativeTo: selfPerson?.id, year: year),
             hasViewpoint: selfPerson != nil,
-            currencyCode: composition.currencyCode,
+            preferredCurrency: composition.defaultCurrency,
             years: useCase.availableYears(gifts: data.gifts),
             selectedYear: yearBinding,
             onMarkSelf: selfPerson == nil ? { composition.router.tab = .people } : nil,
@@ -252,7 +252,7 @@ struct InsightsView: View {
                 VStack(spacing: 0) {
                     ForEach(balances) { balance in
                         NavigationLink(value: balance.person.id) {
-                            BalanceRow(balance: balance, currencyCode: composition.currencyCode)
+                            BalanceRow(balance: balance, preferredCurrency: composition.defaultCurrency)
                         }
                         .buttonStyle(.plain)
                         if balance.id != balances.last?.id { RowDivider().padding(.leading, 14) }
@@ -327,30 +327,36 @@ struct InsightsView: View {
             flowRow(
                 from: comparison.b, to: comparison.a, value: comparison.bToAValue, count: comparison.bToACount,
                 color: Color.received)
-            PairBar(
-                first: comparison.aToBValue,
-                second: comparison.bToAValue,
-                firstColor: Color.given,
-                secondColor: Color.received)
+            // Values in different currencies cannot be set against each other, so the bar shows only
+            // when every gift between the two is in the same currency.
+            if let values = comparison.comparableValues {
+                PairBar(
+                    first: values.aToB,
+                    second: values.bToA,
+                    firstColor: Color.given,
+                    secondColor: Color.received)
+            }
             RowDivider()
             HStack {
                 Text("Net for \(comparison.a.name)")
                     .font(Font.app(15, .semibold)).foregroundColor(Color.textPrimary)
                 Spacer(minLength: 8)
-                NetBadge(net: comparison.net, currencyCode: composition.currencyCode)
+                NetBadge(net: comparison.net, preferredCurrency: composition.defaultCurrency)
             }
         }
     }
 
     /// `color` is the direction as seen by Person A, shared with the bar: given by A, then received by A.
-    private func flowRow(from giver: Person, to recipient: Person, value: Double, count: Int, color: Color) -> some View {
+    private func flowRow(
+        from giver: Person, to recipient: Person, value: CurrencyAmounts, count: Int, color: Color
+    ) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Circle().fill(color).frame(width: 10, height: 10)
             Text(verbatim: "\(giver.name) → \(recipient.name)")
                 .font(Font.app(15, .regular)).foregroundColor(Color.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
             VStack(alignment: .trailing, spacing: 2) {
-                Text(formattedCurrency(value, code: composition.currencyCode))
+                AmountsText(amounts: value, preferred: composition.defaultCurrency, alignment: .trailing)
                     .font(Font.app(15, .semibold, rounded: true)).foregroundColor(Color.textPrimary)
                 Text(verbatim: LocalizedCount.gifts(count))
                     .font(Font.app(12, .regular)).foregroundColor(Color.textSecondary)
@@ -396,7 +402,8 @@ struct InsightsView: View {
 
 private struct BalanceRow: View {
     let balance: PersonBalance
-    let currencyCode: String
+    /// Listed first when the balance is in several currencies.
+    let preferredCurrency: SupportedCurrency
 
     var body: some View {
         HStack(spacing: 12) {
@@ -416,7 +423,7 @@ private struct BalanceRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             VStack(alignment: .trailing, spacing: 3) {
                 CountBalanceBadge(net: balance.countNet)
-                Text(verbatim: formattedSignedCurrency(balance.net, code: currencyCode))
+                AmountsText(amounts: balance.net, preferred: preferredCurrency, signed: true, alignment: .trailing)
                     .font(Font.app(12, .regular, rounded: true)).foregroundColor(Color.textSecondary)
                     .lineLimit(1)
                     .fixedSize()

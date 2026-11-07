@@ -12,14 +12,19 @@ final class SwiftDataStore {
 
     /// Opens the app's store in Application Support. It throws instead of trapping, so the root can
     /// show a recoverable error and try again; nothing here deletes, moves or recreates the files.
-    static func openPersistent() throws -> SwiftDataStore {
-        try SwiftDataStore()
+    /// Gifts saved before each gift had its own currency (1.2.0 and earlier) were all shown in the
+    /// currency preference, so opening such a store gives them that currency.
+    /// `url` replaces the Application Support location; only tests pass one.
+    static func openPersistent(at url: URL? = nil, preferences: PreferencesGateway) throws -> SwiftDataStore {
+        let legacyGiftCurrency = preferences.legacyGiftCurrency
+        if let url { return try SwiftDataStore(url: url, legacyGiftCurrency: legacyGiftCurrency) }
+        return try SwiftDataStore(legacyGiftCurrency: legacyGiftCurrency)
     }
 
     /// The seeded in-memory store for screenshot launches. Sample amounts follow the currency the app
     /// resolves for this device, as the screenshots show them.
     static func makePreview() throws -> SwiftDataStore {
-        let currency = SupportedCurrency(rawValue: UserDefaultsPreferencesGateway().currencyCode) ?? .usd
+        let currency = UserDefaultsPreferencesGateway().defaultCurrency
         return try SwiftDataStore(inMemory: true, seed: true, sampleCurrency: currency)
     }
 
@@ -27,35 +32,89 @@ final class SwiftDataStore {
 
     let container: ModelContainer
     let context: ModelContext
+    /// The currency gifts from before per-gift currencies take; nil when the store has none to migrate.
+    let legacyGiftCurrency: SupportedCurrency?
+    /// Why storing `legacyGiftCurrency` on those gifts failed at open, such as a full disk. The store
+    /// still opens: `SwiftDataGiftGateway` shows them in the same currency, and the next open tries again.
+    private(set) var legacyGiftCurrencyError: Error?
+    /// Saves the legacy currency; tests replace it to make the save fail.
+    private let saveLegacyGiftCurrency: (ModelContext) throws -> Void
 
+    /// - Parameters:
+    ///   - legacyGiftCurrency: The currency for gifts saved before each gift had its own (1.2.0 and
+    ///     earlier), which were shown in the currency preference of the time. Nil leaves them without
+    ///     one, and loading them fails instead of guessing. A failure to store it is kept in
+    ///     `legacyGiftCurrencyError` rather than thrown, so it never stops the store from opening.
+    ///   - saveLegacyGiftCurrency: Saves that change; only tests pass another, to simulate a failed save.
     convenience init(
         inMemory: Bool = false,
         seed: Bool = false,
-        sampleCurrency: SupportedCurrency = .rub
+        sampleCurrency: SupportedCurrency = .rub,
+        legacyGiftCurrency: SupportedCurrency? = nil,
+        saveLegacyGiftCurrency: @escaping (ModelContext) throws -> Void = { try $0.save() }
     ) throws {
         try self.init(
             configuration: ModelConfiguration(Self.storeName, schema: Self.schema, isStoredInMemoryOnly: inMemory),
             seed: seed,
-            sampleCurrency: sampleCurrency)
+            sampleCurrency: sampleCurrency,
+            legacyGiftCurrency: legacyGiftCurrency,
+            saveLegacyGiftCurrency: saveLegacyGiftCurrency)
     }
 
     /// The store file at `url`; tests open copies of the databases earlier releases wrote.
-    convenience init(url: URL) throws {
-        try self.init(configuration: ModelConfiguration(Self.storeName, schema: Self.schema, url: url))
+    convenience init(
+        url: URL,
+        legacyGiftCurrency: SupportedCurrency? = nil,
+        saveLegacyGiftCurrency: @escaping (ModelContext) throws -> Void = { try $0.save() }
+    ) throws {
+        try self.init(
+            configuration: ModelConfiguration(Self.storeName, schema: Self.schema, url: url),
+            legacyGiftCurrency: legacyGiftCurrency,
+            saveLegacyGiftCurrency: saveLegacyGiftCurrency)
     }
 
     private init(
         configuration: ModelConfiguration,
         seed: Bool = false,
-        sampleCurrency: SupportedCurrency = .rub
+        sampleCurrency: SupportedCurrency = .rub,
+        legacyGiftCurrency: SupportedCurrency?,
+        saveLegacyGiftCurrency: @escaping (ModelContext) throws -> Void
     ) throws {
         container = try ModelContainer(for: Self.schema, configurations: [configuration])
         context = ModelContext(container)
         context.autosaveEnabled = false
+        self.legacyGiftCurrency = legacyGiftCurrency
+        self.saveLegacyGiftCurrency = saveLegacyGiftCurrency
 
+        if let legacyGiftCurrency {
+            do {
+                try assignLegacyGiftCurrency(legacyGiftCurrency)
+            } catch {
+                legacyGiftCurrencyError = error
+            }
+        }
         if seed {
             try seedIfNeeded(currency: sampleCurrency)
         }
+    }
+
+    /// Gives every gift without a currency `currency` and saves, or rolls back and throws. Opening an
+    /// older store adds the attribute empty; this fills it once, and later opens find nothing to change.
+    @discardableResult
+    func assignLegacyGiftCurrency(_ currency: SupportedCurrency) throws -> Int {
+        let descriptor = FetchDescriptor<StoredGift>(predicate: #Predicate { $0.currencyCode == nil })
+        let gifts = try context.fetch(descriptor)
+        guard !gifts.isEmpty else { return 0 }
+        for gift in gifts {
+            gift.currencyCode = currency.code
+        }
+        do {
+            try saveLegacyGiftCurrency(context)
+        } catch {
+            context.rollback()
+            throw error
+        }
+        return gifts.count
     }
 
     private func seedIfNeeded(currency: SupportedCurrency) throws {
@@ -127,7 +186,8 @@ final class SwiftDataStore {
                     occasion: gift.6,
                     date: date,
                     value: currency == .usd ? gift.9 : gift.8,
-                    createdAt: date.addingTimeInterval(TimeInterval(index))
+                    createdAt: date.addingTimeInterval(TimeInterval(index)),
+                    currencyCode: currency.code
                 ))
         }
 

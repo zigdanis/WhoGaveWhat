@@ -39,6 +39,7 @@ enum StoreFixtures {
             let createdAt: Date
             let emojiPickedByUser: Bool?
             let lastSavedAt: Date?
+            let currencyCode: String
         }
 
         let people: [Person]
@@ -95,13 +96,23 @@ enum StoreFixtures {
         }
     }
 
-    /// The gifts that schema version could hold; attributes it lacked take their migration defaults.
-    static func expectedGifts(for fixture: Fixture) -> [WhoGaveWhat.Gift] {
+    /// The currency the migration tests open stores with. The dataset has rubles too, so a gift that keeps
+    /// rubles proves it kept its own currency and one that turns into dollars proves it took this one.
+    static let migrationCurrency = SupportedCurrency.usd
+
+    /// The gifts that schema version could hold; attributes it lacked take their migration defaults, and
+    /// gifts from before per-gift currencies take `legacyCurrency`.
+    static func expectedGifts(
+        for fixture: Fixture, legacyCurrency: SupportedCurrency = migrationCurrency
+    ) -> [WhoGaveWhat.Gift] {
         manifest.dataset.gifts.map { gift in
-            WhoGaveWhat.Gift(
+            let currency =
+                fixture.features.contains("currencyCode")
+                ? SupportedCurrency(rawValue: gift.currencyCode) ?? legacyCurrency : legacyCurrency
+            return WhoGaveWhat.Gift(
                 id: gift.id, emoji: gift.emoji, name: gift.name, giverID: gift.giverID,
                 recipientID: gift.recipientID, paidByYou: gift.paidByYou, occasion: gift.occasion, date: gift.date,
-                value: gift.value, createdAt: gift.createdAt,
+                value: gift.value, currency: currency, createdAt: gift.createdAt,
                 emojiPickedByUser: fixture.features.contains("emojiPickedByUser")
                     ? (gift.emojiPickedByUser ?? false) : false,
                 lastSavedAt: fixture.features.contains("lastSavedAt") ? gift.lastSavedAt : nil)
@@ -126,7 +137,8 @@ struct StoreFixtureMigrationTests {
         defer { try? FileManager.default.removeItem(at: directory) }
 
         do {
-            let store = try SwiftDataStore(url: url)
+            let store = try SwiftDataStore(url: url, legacyGiftCurrency: StoreFixtures.migrationCurrency)
+            #expect(store.legacyGiftCurrencyError == nil)
             let gifts = try SwiftDataGiftGateway(context: store.context).loadGifts().sorted { $0.id < $1.id }
             let people = try SwiftDataPeopleGateway(context: store.context).loadPeople().people
 
@@ -137,17 +149,20 @@ struct StoreFixtureMigrationTests {
             let added = WhoGaveWhat.Gift(
                 id: "g-after-migration", emoji: "🎂", name: "Cake", giverID: "p-mark", recipientID: "p-anna",
                 paidByYou: true, occasion: "Birthday", date: Date(timeIntervalSince1970: 1_790_000_000), value: 25,
-                createdAt: Date(timeIntervalSince1970: 1_790_000_000), lastSavedAt: Date(timeIntervalSince1970: 1_790_000_100))
+                currency: .rub, createdAt: Date(timeIntervalSince1970: 1_790_000_000), lastSavedAt: Date(timeIntervalSince1970: 1_790_000_100))
             try SwiftDataGiftGateway(context: store.context).save(added)
             let stored = try store.context.fetch(FetchDescriptor<StoredPerson>())
             #expect(stored.first { $0.id == "p-anna" }?.giftsReceived.count == 3)
         }
 
-        // Reopening the migrated file finds the old records and the new one.
-        let reopened = try SwiftDataStore(url: url)
+        // Reopening the migrated file finds the old records and the new one, and the migration currency is
+        // stored: another one now changes nothing.
+        let reopened = try SwiftDataStore(url: url, legacyGiftCurrency: .rub)
+        #expect(try reopened.assignLegacyGiftCurrency(.rub) == 0)
         let gifts = try SwiftDataGiftGateway(context: reopened.context).loadGifts()
         #expect(gifts.count == StoreFixtures.manifest.dataset.gifts.count + 1)
         #expect(gifts.first { $0.id == "g-after-migration" }?.lastSavedAt == Date(timeIntervalSince1970: 1_790_000_100))
+        #expect(gifts.first { $0.id == "g-after-migration" }?.currency == .rub)
         #expect(
             gifts.filter { $0.id != "g-after-migration" }.sorted { $0.id < $1.id }
                 == StoreFixtures.expectedGifts(for: fixture))

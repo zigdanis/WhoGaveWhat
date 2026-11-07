@@ -1,5 +1,5 @@
 {
-  "comment": "SwiftData stores written with the model code of shipped builds. scripts/store-fixtures/generate.py writes each file from `dataset`; StoreFixtureMigrationTests opens copies with the current schema and expects `dataset`, minus the fields that schema did not have yet. Add a fixture here when the schema changes.",
+  "comment": "SwiftData stores written with the model code of shipped builds. scripts/store-fixtures/generate.py writes each file from `dataset`; StoreFixtureMigrationTests opens copies with the current schema and expects `dataset`, minus the fields that schema did not have yet. Gifts from a fixture without `currencyCode` take the migration currency the test opens it with. Add a fixture here when the schema changes.",
   "fixtures": [
     {
       "file": "StoreFixture-1.0.2.store",
@@ -24,6 +24,12 @@
       "commit": "d7f0af8",
       "builds": "TestFlight 1.0.10 and later, App Store 1.0-1.2.0",
       "features": ["imageData", "emojiPickedByUser", "lastSavedAt"]
+    },
+    {
+      "file": "StoreFixture-1.3.0.store",
+      "commit": "b9430cb",
+      "builds": "Per-gift currency (issue #87), the first build after App Store 1.2.0",
+      "features": ["imageData", "emojiPickedByUser", "lastSavedAt", "currencyCode"]
     }
   ],
   "dataset": {
@@ -69,6 +75,7 @@
         "occasion": "Birthday",
         "date": "2025-12-31T21:00:00Z",
         "value": 1234.5,
+        "currencyCode": "RUB",
         "createdAt": "2026-01-01T09:15:00Z"
       },
       {
@@ -81,6 +88,7 @@
         "occasion": "Выпускной в садике",
         "date": "2026-06-02T00:00:00Z",
         "value": 0,
+        "currencyCode": "RUB",
         "createdAt": "2026-06-02T10:00:00Z",
         "emojiPickedByUser": true
       },
@@ -94,6 +102,7 @@
         "occasion": "Just because",
         "date": "2026-09-14T12:00:00Z",
         "value": 99.99,
+        "currencyCode": "USD",
         "createdAt": "2026-09-14T12:30:00Z",
         "lastSavedAt": "2026-10-01T08:00:00Z"
       }

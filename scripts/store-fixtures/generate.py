@@ -33,6 +33,7 @@ FEATURE_FLAGS = {
     "imageData": "HAS_IMAGE_DATA",
     "emojiPickedByUser": "HAS_EMOJI_PICKED_BY_USER",
     "lastSavedAt": "HAS_LAST_SAVED_AT",
+    "currencyCode": "HAS_CURRENCY_CODE",
 }
 
 

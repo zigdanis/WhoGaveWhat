@@ -1,19 +1,19 @@
 import Foundation
 
-/// What the viewpoint person exchanged with one other person.
+/// What the viewpoint person exchanged with one other person. Values are kept per currency.
 struct PersonBalance: Identifiable, Equatable {
     let person: Person
     /// Gifts the viewpoint person received from `person`.
-    let receivedValue: Double
+    let receivedValue: CurrencyAmounts
     let receivedCount: Int
     /// Gifts the viewpoint person gave to `person`.
-    let givenValue: Double
+    let givenValue: CurrencyAmounts
     let givenCount: Int
 
     var id: String { person.id }
-    /// Positive when the viewpoint person received more than they gave.
-    var net: Double { receivedValue - givenValue }
-    var isEven: Bool { net.rounded() == 0 }
+    /// Per currency, positive when the viewpoint person received more than they gave.
+    var net: CurrencyAmounts { receivedValue - givenValue }
+    var isEven: Bool { net.isEven }
     /// Gift count balance, oriented like `net`: positive when the viewpoint person received
     /// more gifts from `person` than they gave them.
     var countNet: Int { receivedCount - givenCount }
@@ -21,33 +21,42 @@ struct PersonBalance: Identifiable, Equatable {
     var isCountEven: Bool { countNet == 0 }
 }
 
-/// Gifts exchanged between two people, in both directions.
+/// Gifts exchanged between two people, in both directions. Values are kept per currency.
 struct PersonComparison: Equatable {
     let a: Person
     let b: Person
-    let aToBValue: Double
+    let aToBValue: CurrencyAmounts
     let aToBCount: Int
-    let bToAValue: Double
+    let bToAValue: CurrencyAmounts
     let bToACount: Int
 
-    /// From A's side: positive when A received more from B than A gave to B.
-    var net: Double { bToAValue - aToBValue }
-    var isEven: Bool { net.rounded() == 0 }
+    /// From A's side, per currency: positive when A received more from B than A gave to B.
+    var net: CurrencyAmounts { bToAValue - aToBValue }
+    var isEven: Bool { net.isEven }
+
+    /// Both directions' values as plain numbers, for setting them against each other. Nil when
+    /// non-zero amounts are in more than one currency: they are never converted, so they cannot be compared.
+    var comparableValues: (aToB: Double, bToA: Double)? {
+        let currencies = Set(aToBValue.nonZeroCurrencies + bToAValue.nonZeroCurrencies)
+        guard currencies.count <= 1 else { return nil }
+        guard let currency = currencies.first else { return (0, 0) }
+        return (aToBValue[currency], bToAValue[currency])
+    }
 }
 
-/// Totals for one year. Received and given are relative to the viewpoint person
-/// and stay at zero without one.
+/// Totals for one year, one per currency. Received and given are relative to the viewpoint person
+/// and stay empty without one.
 struct YearSummary: Equatable {
     let year: Int
-    let circulatedValue: Double
+    let circulatedValue: CurrencyAmounts
     let giftCount: Int
-    let receivedValue: Double
+    let receivedValue: CurrencyAmounts
     let receivedCount: Int
-    let givenValue: Double
+    let givenValue: CurrencyAmounts
     let givenCount: Int
 
-    var net: Double { receivedValue - givenValue }
-    var isEven: Bool { net.rounded() == 0 }
+    var net: CurrencyAmounts { receivedValue - givenValue }
+    var isEven: Bool { net.isEven }
 }
 
 struct BuildInsightsUseCase {
@@ -88,18 +97,18 @@ struct BuildInsightsUseCase {
         let given = yearGifts.filter { $0.direction(relativeTo: selfPersonID) == .given }
         return YearSummary(
             year: year,
-            circulatedValue: yearGifts.totalValue,
+            circulatedValue: yearGifts.totals,
             giftCount: yearGifts.count,
-            receivedValue: received.totalValue,
+            receivedValue: received.totals,
             receivedCount: received.count,
-            givenValue: given.totalValue,
+            givenValue: given.totals,
             givenCount: given.count
         )
     }
 
     /// One entry per person the viewpoint person exchanged gifts with, largest absolute
-    /// count balance first, then largest absolute money net, then by name. People
-    /// without a shared gift are left out.
+    /// count balance first, then largest absolute money net (compared currency by currency, never
+    /// converted), then by name. People without a shared gift are left out.
     func balances(
         gifts: [Gift],
         people: [Person],
@@ -120,15 +129,15 @@ struct BuildInsightsUseCase {
                 guard !received.isEmpty || !given.isEmpty else { return nil }
                 return PersonBalance(
                     person: person,
-                    receivedValue: received.totalValue,
+                    receivedValue: received.totals,
                     receivedCount: received.count,
-                    givenValue: given.totalValue,
+                    givenValue: given.totals,
                     givenCount: given.count
                 )
             }
             .sorted { lhs, rhs in
                 if abs(lhs.countNet) != abs(rhs.countNet) { return abs(lhs.countNet) > abs(rhs.countNet) }
-                if abs(lhs.net) != abs(rhs.net) { return abs(lhs.net) > abs(rhs.net) }
+                if let larger = CurrencyAmounts.largerMagnitude(lhs.net, rhs.net) { return larger }
                 return lhs.person.name.localizedStandardCompare(rhs.person.name) == .orderedAscending
             }
     }
@@ -140,9 +149,9 @@ struct BuildInsightsUseCase {
         return PersonComparison(
             a: a,
             b: b,
-            aToBValue: aToB.totalValue,
+            aToBValue: aToB.totals,
             aToBCount: aToB.count,
-            bToAValue: bToA.totalValue,
+            bToAValue: bToA.totals,
             bToACount: bToA.count
         )
     }
@@ -170,8 +179,4 @@ struct BuildInsightsUseCase {
     func alphabetical(_ people: [Person]) -> [Person] {
         people.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
-}
-
-extension Collection where Element == Gift {
-    var totalValue: Double { reduce(0) { $0 + $1.value } }
 }

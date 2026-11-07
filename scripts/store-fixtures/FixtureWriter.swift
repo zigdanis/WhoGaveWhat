@@ -2,7 +2,7 @@
 //
 // generate.py compiles this file together with that build's `SwiftDataModels.swift`, taken
 // unchanged from Git, and sets one `-D` flag for every attribute the build's schema had:
-// HAS_ROLE, HAS_IMAGE_DATA, HAS_EMOJI_PICKED_BY_USER, HAS_LAST_SAVED_AT. A later schema
+// HAS_ROLE, HAS_IMAGE_DATA, HAS_EMOJI_PICKED_BY_USER, HAS_LAST_SAVED_AT, HAS_CURRENCY_CODE. A later schema
 // version adds its own flag here and in generate.py.
 //
 // Usage: FixtureWriter MANIFEST.json OUTPUT.store
@@ -33,6 +33,7 @@ struct FixtureDataset: Decodable {
         let createdAt: Date
         let emojiPickedByUser: Bool?
         let lastSavedAt: Date?
+        let currencyCode: String?
     }
 
     let people: [Person]
@@ -90,10 +91,18 @@ struct FixtureWriter {
             guard let recipient = people[gift.recipientID] else {
                 throw FixtureWriterError.unknownPerson(gift.recipientID)
             }
-            let stored = StoredGift(
-                id: gift.id, emoji: gift.emoji, name: gift.name, giver: giver, recipient: recipient,
-                paidByYou: gift.paidByYou, occasion: gift.occasion, date: gift.date, value: gift.value,
-                createdAt: gift.createdAt)
+            // Since per-gift currencies the initializer takes the currency; earlier ones had no such attribute.
+            #if HAS_CURRENCY_CODE
+                let stored = StoredGift(
+                    id: gift.id, emoji: gift.emoji, name: gift.name, giver: giver, recipient: recipient,
+                    paidByYou: gift.paidByYou, occasion: gift.occasion, date: gift.date, value: gift.value,
+                    createdAt: gift.createdAt, currencyCode: gift.currencyCode)
+            #else
+                let stored = StoredGift(
+                    id: gift.id, emoji: gift.emoji, name: gift.name, giver: giver, recipient: recipient,
+                    paidByYou: gift.paidByYou, occasion: gift.occasion, date: gift.date, value: gift.value,
+                    createdAt: gift.createdAt)
+            #endif
             #if HAS_EMOJI_PICKED_BY_USER
                 stored.emojiPickedByUser = gift.emojiPickedByUser ?? false
             #endif
