@@ -776,6 +776,23 @@
         }
       }
     },
+    "Couldn't add this person. Try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't add this person. Try again."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось добавить человека. Попробуйте ещё раз."
+          }
+        }
+      }
+    },
     "Couldn't load your gifts" : {
       "extractionState" : "manual",
       "localizations" : {

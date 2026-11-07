@@ -952,6 +952,19 @@ private struct PersonPickerContent: View {
     }
 
     private var queryRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            queryField
+            if pickerState.creationFailed {
+                Text("Couldn't add this person. Try again.")
+                    .font(Font.app(13, .regular))
+                    .foregroundStyle(Color.destructive)
+                    .padding(.horizontal, 14)
+                    .accessibilityIdentifier("person-picker.add-failed")
+            }
+        }
+    }
+
+    private var queryField: some View {
         Card {
             HStack(spacing: 10) {
                 TextField("Add person", text: queryBinding)

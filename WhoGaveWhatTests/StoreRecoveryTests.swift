@@ -170,12 +170,13 @@ struct DataLoadRecoveryTests {
 
     @Test func changesWaitForAFreshSnapshot() throws {
         let analytics = RecordingAnalyticsGateway()
-        let gifts = ScriptedGiftGateway()
-        let people = ScriptedPeopleGateway(people: [person("me")])
+        let gifts = ScriptedGiftGateway(gifts: [gift("kept", from: "me", to: "ann")])
+        let people = ScriptedPeopleGateway(people: [person("me"), person("ann")])
         let (composition, _) = makeComposition(gifts: gifts, people: people, analytics: analytics)
 
         // "Dana" was stored, but the reload after it failed, so the screens still lack her.
         people.people.append(Person(id: "dana", name: "Dana", colorHex: 0x12805C))
+        let storedPeople = people.people.map(\.id)
         people.loadError = TestStoreError()
         #expect(!composition.reloadData())
 
@@ -186,16 +187,35 @@ struct DataLoadRecoveryTests {
         }
         #expect(!composition.saveGift(makeGiftInput(name: "Book", fromID: "me", toID: "dana")))
         composition.deletePerson(id: "dana", source: .peopleList)
-        #expect(people.people.map(\.id) == ["me", "dana"])
-        #expect(gifts.gifts.isEmpty)
+        composition.deleteGift(id: "kept", source: .home)
+        #expect(people.people.map(\.id) == storedPeople)
+        #expect(gifts.gifts.map(\.id) == ["kept"])
         #expect(!analytics.eventNames.contains("person_created"))
+        #expect(!analytics.eventNames.contains("gift_deleted"))
 
         // Once loading works again, the change runs against the fresh snapshot: no second Dana.
         people.loadError = nil
         #expect(composition.createPerson(name: "Dana", source: .peopleTab) == "dana")
-        #expect(people.people.map(\.id) == ["me", "dana"])
+        #expect(people.people.map(\.id) == storedPeople)
         #expect(!composition.data.isLoadFailing)
-        #expect(composition.data.people.map(\.id) == ["me", "dana"])
+        #expect(composition.data.people.map(\.id) == storedPeople)
+    }
+
+    @Test func pickerKeepsTheNameAndSaysSoWhenAddingFails() {
+        let picker = PersonPickerState(people: [person("ann")], selectedID: nil)
+        _ = picker.updateQuery("Dana")
+        var selected: [String] = []
+
+        #expect(picker.createAndSelectPerson(named: "Dana", create: { _ in nil }, select: { selected.append($0) }) == nil)
+        #expect(picker.creationFailed)
+        #expect(picker.query == "Dana")
+        #expect(selected.isEmpty)
+
+        _ = picker.updateQuery("Dana K")
+        #expect(!picker.creationFailed)
+        #expect(picker.createAndSelectPerson(named: "Dana K", create: { _ in "dana" }, select: { selected.append($0) }) == "dana")
+        #expect(!picker.creationFailed)
+        #expect(selected == ["dana"])
     }
 
     @Test func aCompleteSnapshotStillClearsAMissingViewpoint() {

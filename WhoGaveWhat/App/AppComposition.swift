@@ -296,7 +296,10 @@ final class AppComposition {
     }
 
     func deleteGift(id: String, source: GiftDeletionSource) {
-        guard refreshStaleSnapshot() else { return }
+        guard refreshStaleSnapshot() else {
+            noteReviewSetback()
+            return
+        }
         do {
             try deleteGiftUseCase.execute(id: id)
         } catch {
@@ -395,7 +398,10 @@ final class AppComposition {
     }
 
     func deletePerson(id: String, source: PersonDeletionSource) {
-        guard refreshStaleSnapshot() else { return }
+        guard refreshStaleSnapshot() else {
+            noteReviewSetback()
+            return
+        }
         let giftsRemoved = data.gifts.filter { $0.giverID == id || $0.recipientID == id }.count
         let deleted: Bool
         do {
