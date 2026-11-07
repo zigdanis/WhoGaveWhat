@@ -321,6 +321,32 @@ struct DataLoadRecoveryTests {
         #expect(composition.data.selfPersonID == nil)
     }
 
+    @Test func addingYourselfCanBeRetriedWhenTheViewpointCouldNotBeSet() {
+        let analytics = RecordingAnalyticsGateway()
+        let gifts = ScriptedGiftGateway()
+        let people = ScriptedPeopleGateway(people: [person("ann")])
+        let (composition, preferences) = makeComposition(gifts: gifts, people: people, analytics: analytics)
+
+        // "Add yourself": the person is stored, then every reload fails, so they cannot become "me".
+        gifts.loadError = TestStoreError()
+        let id = composition.createPerson(name: "Me", source: .peopleWelcome)
+        #expect(id == nil || people.people.contains { $0.id == id })
+        let stored = people.people.first { $0.name == "Me" }
+        #expect(stored != nil)
+        if let stored { #expect(!composition.markSelf(true, personID: stored.id)) }
+        #expect(composition.data.selfPersonID == nil)
+
+        // Saving the sheet again once loading works finds the same person and makes them "me".
+        gifts.loadError = nil
+        let retried = composition.createPerson(name: "Me", source: .peopleWelcome)
+        #expect(retried == stored?.id)
+        #expect(people.people.filter { $0.name == "Me" }.count == 1)
+        if let retried { #expect(composition.markSelf(true, personID: retried)) }
+        #expect(composition.data.selfPersonID == stored?.id)
+        #expect(preferences.selfPersonID == stored?.id)
+        #expect(analytics.eventNames.filter { $0 == "person_created" }.count == 1)
+    }
+
     @Test func aCompleteSnapshotStillClearsAMissingViewpoint() {
         let gifts = ScriptedGiftGateway()
         let people = ScriptedPeopleGateway(people: [person("ann")])

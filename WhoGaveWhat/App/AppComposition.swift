@@ -465,23 +465,26 @@ final class AppComposition {
     }
 
     /// Applies the "This is me" choice made on the person screen.
-    func markSelf(_ isSelf: Bool, personID id: String) {
+    /// Says whether the person now is (or is not) the viewpoint as asked.
+    @discardableResult
+    func markSelf(_ isSelf: Bool, personID id: String) -> Bool {
         if isSelf {
-            guard !data.isSelf(id) else { return }
+            guard !data.isSelf(id) else { return true }
             // Only someone in a current snapshot can become the viewpoint, never a person deleted while
             // loading kept failing. Clearing the viewpoint needs no check.
             guard refreshStaleSnapshot(), data.people.contains(where: { $0.id == id }) else {
                 haptics.play(.error)
-                return
+                return false
             }
             setSelfPerson(id)
         } else if data.isSelf(id) {
             setSelfPerson(nil)
         } else {
-            return
+            return true
         }
         analytics.track(.viewpointChanged(isSet: isSelf))
         publishAnalyticsContext()
+        return true
     }
 
     /// Marks exactly one person as the user's viewpoint, or clears it with nil.
