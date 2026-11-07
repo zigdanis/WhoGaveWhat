@@ -81,9 +81,9 @@ final class ICloudBackupService {
 
     /// The iCloud backup as the app's iCloud container holds it. The folder sits outside the container's
     /// `Documents`, so iCloud Drive and Files never list it.
-    static func iCloud(settings: BackupSettings = BackupSettings(), analytics: AnalyticsGateway) -> ICloudBackupService {
+    static func iCloud(settings: BackupSettings? = nil, analytics: AnalyticsGateway) -> ICloudBackupService {
         ICloudBackupService(
-            settings: settings,
+            settings: settings ?? BackupSettings(deviceID: UIDevice.current.identifierForVendor?.uuidString),
             analytics: analytics,
             observesAccountChanges: true,
             locateStore: {
@@ -337,10 +337,22 @@ final class BackupSettings {
     private let defaults: UserDefaults
     private let prefix: String
 
-    /// `prefix` keeps the Debug local-folder backup apart from the real one.
-    init(defaults: UserDefaults = .standard, prefix: String = "iCloudBackup.") {
+    /// - Parameters:
+    ///   - prefix: Keeps the Debug local-folder backup apart from the real one.
+    ///   - deviceID: This device's `identifierForVendor`. UserDefaults move to a new iPhone with Quick Start
+    ///     or a device backup, and two phones in use must not share one backup folder, so a different
+    ///     device starts its own folder. Nil (not known yet, e.g. before the first unlock) changes nothing.
+    init(defaults: UserDefaults = .standard, prefix: String = "iCloudBackup.", deviceID: String? = nil) {
         self.defaults = defaults
         self.prefix = prefix
+        guard let deviceID else { return }
+        let deviceKey = prefix + "writerDevice"
+        if let stored = defaults.string(forKey: deviceKey), stored != deviceID {
+            for key in ["writerID", "lastContentHash", "lastBackupAt"] {
+                defaults.removeObject(forKey: prefix + key)
+            }
+        }
+        defaults.set(deviceID, forKey: deviceKey)
     }
 
     var isEnabled: Bool {
@@ -349,7 +361,8 @@ final class BackupSettings {
     }
 
     /// This install's backup folder. UserDefaults go with the app, so a reinstall writes a new folder
-    /// and leaves the old one to restore from.
+    /// and leaves the old one to restore from; a Keychain item would survive deleting the app and must not
+    /// be used. A move to another device also gets a new folder (see `init`).
     var writerID: String {
         if let stored = defaults.string(forKey: prefix + "writerID"), UUID(uuidString: stored) != nil {
             return stored

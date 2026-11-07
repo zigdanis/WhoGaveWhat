@@ -637,6 +637,26 @@ struct ICloudBackupServiceTests {
         #expect(analytics.events == [.iCloudBackupToggled(isOn: false), .iCloudBackupToggled(isOn: true)])
     }
 
+    @Test func anotherDeviceGetsItsOwnFolderAfterUserDefaultsMove() {
+        let suite = "ICloudBackupServiceTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let original = BackupSettings(defaults: defaults, prefix: "test.", deviceID: "device-a")
+        let writer = original.writerID
+        original.lastContentHash = "hash"
+        original.lastBackupAt = .now
+
+        #expect(BackupSettings(defaults: defaults, prefix: "test.", deviceID: "device-a").writerID == writer)
+        #expect(BackupSettings(defaults: defaults, prefix: "test.", deviceID: nil).writerID == writer)
+
+        // Quick Start or a device backup brought these UserDefaults to another iPhone.
+        let moved = BackupSettings(defaults: defaults, prefix: "test.", deviceID: "device-b")
+        #expect(moved.writerID != writer)
+        #expect(moved.lastContentHash == nil)
+        #expect(moved.lastBackupAt == nil)
+        #expect(BackupSettings(defaults: defaults, prefix: "test.", deviceID: "device-b").writerID == moved.writerID)
+    }
+
     @Test func eachInstallKeepsItsOwnFolder() {
         let (first, firstDefaults, firstSuite) = makeSettings()
         let (second, secondDefaults, secondSuite) = makeSettings()

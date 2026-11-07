@@ -1,5 +1,6 @@
 #if DEBUG
     import Foundation
+    import UIKit
 
     /// Debug-only switches for verification launches. Each `KS_` flag is read from the environment or, for a
     /// launcher that cannot set it, from launch arguments (`-KS_BACKUP local`). Release builds compile none
@@ -37,7 +38,8 @@
                 defaults.removePersistentDomain(forName: suite)
                 settings = BackupSettings(defaults: defaults, prefix: "debugBackup.")
             } else {
-                settings = BackupSettings(prefix: "debugBackup.")
+                settings = BackupSettings(
+                    prefix: "debugBackup.", deviceID: UIDevice.current.identifierForVendor?.uuidString)
             }
             return ICloudBackupService(
                 settings: settings,
