@@ -143,7 +143,8 @@ enum AnalyticsEvent: Equatable {
     /// Save was tapped with a complete form; `giftSaved` or `giftSaveFailed` follows.
     case giftSaveAttempted(mode: GiftSheetMode)
     case giftSaved(GiftSavedProperties)
-    /// The store refused the gift; the sheet stays open with everything entered.
+    /// The store refused the gift, or the records on screen could not be reloaded first; the sheet stays
+    /// open with everything entered.
     case giftSaveFailed(mode: GiftSheetMode)
     case giftDeleted(source: GiftDeletionSource, giftsCount: Int)
     case personCreated(source: PersonCreationSource, peopleCount: Int)

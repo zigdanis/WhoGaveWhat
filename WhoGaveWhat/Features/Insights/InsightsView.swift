@@ -36,20 +36,25 @@ struct InsightsView: View {
         Group {
             if data.gifts.isEmpty {
                 // Before the first gift every number would be zero, so one centred column leads to it instead.
+                // Without a loaded snapshot an empty list means nothing, so only the failure shows.
                 VStack(alignment: .leading, spacing: 16) {
                     ScreenHeading(title: "Insights", topSpacing: ScreenHeading.scrollViewTopSpacing, bottomSpacing: 0)
-                    InsightsWelcome(router: composition.router)
-                        // The card is as wide as the Home and People welcomes.
-                        .padding(.horizontal, WelcomeMetrics.horizontalInset - InsightsLayout.horizontalPadding)
-                        .padding(.top, 8)
-                        .padding(.bottom, 24)
-                        .transition(.opacity)
+                    loadFailure
+                    if data.showsGiftsWelcome {
+                        InsightsWelcome(router: composition.router)
+                            // The card is as wide as the Home and People welcomes.
+                            .padding(.horizontal, WelcomeMetrics.horizontalInset - InsightsLayout.horizontalPadding)
+                            .padding(.top, 8)
+                            .padding(.bottom, 24)
+                            .transition(.opacity)
+                    }
                 }
                 .frame(maxWidth: InsightsLayout.columnWidth)
                 .frame(maxWidth: .infinity)
             } else if InsightsLayout.usesTwoColumns(width: width, dynamicTypeSize: dynamicTypeSize) {
                 VStack(alignment: .leading, spacing: 16) {
                     ScreenHeading(title: "Insights", topSpacing: ScreenHeading.scrollViewTopSpacing)
+                    loadFailure
                     HStack(alignment: .top, spacing: InsightsLayout.columnSpacing) {
                         VStack(alignment: .leading, spacing: 24) {
                             summaryCard
@@ -64,6 +69,7 @@ struct InsightsView: View {
             } else {
                 VStack(alignment: .leading, spacing: 24) {
                     ScreenHeading(title: "Insights", topSpacing: ScreenHeading.scrollViewTopSpacing, bottomSpacing: 0)
+                    loadFailure
                     summaryCard
                     balancesSection
                     compareSection
@@ -76,6 +82,7 @@ struct InsightsView: View {
         .padding(.horizontal, InsightsLayout.horizontalPadding)
         // The first saved gift and the last deleted one swap the welcome and the sections smoothly.
         .animation(.default, value: data.gifts.isEmpty)
+        .animation(.default, value: data.isLoadFailing)
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.size.width
         } action: { newWidth in
@@ -83,6 +90,16 @@ struct InsightsView: View {
         }
         .sheet(item: compactPicker) { slot in
             picker(for: slot)
+        }
+    }
+
+    /// The retry for gifts that could not be loaded, above whatever loaded last.
+    @ViewBuilder
+    private var loadFailure: some View {
+        if data.isLoadFailing {
+            LoadFailedCard { composition.reloadData() }
+                .padding(.horizontal, WelcomeMetrics.horizontalInset - InsightsLayout.horizontalPadding)
+                .padding(.top, 8)
         }
     }
 

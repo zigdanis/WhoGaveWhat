@@ -11,7 +11,10 @@ struct PeopleView: View {
     var body: some View {
         List {
             ScreenHeadingSection(title: "People")
-            if isEmpty {
+            if composition.data.isLoadFailing {
+                LoadFailedListSection { composition.reloadData() }
+            }
+            if composition.data.showsPeopleWelcome {
                 Section {
                     PeopleWelcome(
                         onAddYourself: { addMode = .yourself },
@@ -63,8 +66,10 @@ struct PeopleView: View {
                     guard let id = composition.createPerson(name: name, source: mode.source) else {
                         throw CocoaError(.validationMissingMandatoryProperty)
                     }
-                    if mode == .yourself {
-                        composition.markSelf(true, personID: id)
+                    // The person is stored, but if they could not become "me" the sheet stays with the error;
+                    // saving again finds the same person instead of adding another.
+                    if mode == .yourself, !composition.markSelf(true, personID: id) {
+                        throw StaleSnapshotError()
                     }
                     addMode = nil
                 }
@@ -72,6 +77,7 @@ struct PeopleView: View {
         }
         // The first saved person and the last deleted one swap the welcome, list and button smoothly.
         .animation(.default, value: isEmpty)
+        .animation(.default, value: composition.data.isLoadFailing)
     }
 
     private var isEmpty: Bool {

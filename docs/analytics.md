@@ -26,7 +26,7 @@ outside the cases listed under "When nothing is sent". The full list lives in
 | `occasion_added` | – | A custom occasion is typed |
 | `gift_save_attempted` | `mode` | Save is tapped with a complete form; `gift_saved` or `gift_save_failed` follows |
 | `gift_saved` | `mode`, `direction` received/given/unrelated/no_viewpoint, `icon_source`, `value_source` user/estimate/none, `occasion` (built-in key or `custom`), `paid_by_you`, `date_offset`, `gifts_count` | A gift is stored |
-| `gift_save_failed` | `mode` | The store refused the gift; the sheet stays open with everything entered and Save can be tapped again |
+| `gift_save_failed` | `mode` | The store refused the gift, or the records on screen could not be reloaded first; the sheet stays open with everything entered and Save can be tapped again |
 | `gift_deleted` | `source` home/person_detail/gift_detail, `gifts_count` | A gift is removed (not after a failed deletion, which only reports `delete_gift`) |
 | `gift_detail_viewed` | – | A gift screen appears |
 | `person_detail_viewed` | `is_self`, `gifts_count` | A person screen appears |
@@ -46,11 +46,13 @@ these super properties to everything: `app_environment` (testflight/appstore), `
 `people_count`, `has_viewpoint`, `currency`. The same values travel to Sentry as the
 `app_state` context, and every product event becomes a Sentry breadcrumb.
 
-Handled failures (`AnalyticsFailure`) go to Sentry only, tagged with `operation`: `load_gifts`,
-`load_people`, `save_gift`, `delete_gift`, `create_person`, `rename_person`, `update_person`,
-`delete_person`, `load_person_photo`, `cloud_icon_request`, `cloud_icon_decode`,
-`on_device_inference`, `spotlight_index`. A duplicate person name, being offline and cancellation
-are ordinary and are not reported.
+Handled failures (`AnalyticsFailure`) go to Sentry only, tagged with `operation`: `open_store`
+(the store could not be opened at launch or on Retry; extra `attempt`), `load_gifts` and `load_people`
+(extra `has_snapshot`: whether earlier records stay on screen), `save_gift`, `delete_gift`,
+`create_person`, `rename_person`, `update_person`, `delete_person`, `load_person_photo`,
+`cloud_icon_request`, `cloud_icon_decode`, `on_device_inference`, `spotlight_index`. A duplicate person
+name, being offline and cancellation are ordinary and are not reported. A change refused because the
+records could not be reloaded first is reported once, as that load failure.
 
 ## When nothing is sent
 
