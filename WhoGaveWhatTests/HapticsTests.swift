@@ -14,8 +14,8 @@ struct CompositionHapticsTests {
     @Test func everySuccessfulGiftSavePlaysSuccess() throws {
         let (composition, haptics) = try makeComposition()
 
-        #expect(composition.saveGift(makeGiftInput(name: "Scarf", fromID: "maria", toID: "anton")))
-        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "maria", toID: "anton")))
+        #expect(composition.saveGift(makeGiftInput(name: "Scarf", fromID: "maria", toID: "anton")) == .saved)
+        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "maria", toID: "anton")) == .saved)
 
         #expect(haptics.played == [.success, .success])
     }
@@ -27,7 +27,7 @@ struct CompositionHapticsTests {
         input.editingGiftID = gift.id
         input.createdAt = gift.createdAt
 
-        #expect(composition.saveGift(input))
+        #expect(composition.saveGift(input) == .saved)
 
         #expect(haptics.played == [.success])
     }
@@ -35,7 +35,7 @@ struct CompositionHapticsTests {
     @Test func aFailedGiftSaveIsSilent() throws {
         let (composition, haptics) = try makeComposition()
 
-        #expect(!composition.saveGift(makeGiftInput(name: "", fromID: "maria", toID: "anton")))
+        #expect(composition.saveGift(makeGiftInput(name: "", fromID: "maria", toID: "anton")) == .invalid)
 
         #expect(haptics.played.isEmpty)
     }

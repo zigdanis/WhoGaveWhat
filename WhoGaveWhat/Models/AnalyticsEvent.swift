@@ -22,10 +22,11 @@ enum GiftSheetSource: String, Equatable {
     case insightsWelcome = "insights_welcome"
 }
 
+/// How the gift sheet closed. A failed save keeps the sheet open, so it is not an outcome;
+/// `gift_save_failed` records it instead.
 enum GiftSheetOutcome: String, Equatable {
     case saved
     case cancelled
-    case failed
 }
 
 /// A picker inside the gift sheet.
@@ -141,7 +142,12 @@ enum AnalyticsEvent: Equatable {
     case giftPriceEdited(hadEstimate: Bool)
     case giftSuggestionCompleted(provider: SuggestionProvider, hasIcon: Bool, hasPrice: Bool, latencyMilliseconds: Int)
     case occasionAdded
+    /// Save was tapped with a complete form; `giftSaved` or `giftSaveFailed` follows.
+    case giftSaveAttempted(mode: GiftSheetMode)
     case giftSaved(GiftSavedProperties)
+    /// The store refused the gift, or the records on screen could not be reloaded first; the sheet stays
+    /// open with everything entered.
+    case giftSaveFailed(mode: GiftSheetMode)
     case giftDeleted(source: GiftDeletionSource, giftsCount: Int)
     case personCreated(source: PersonCreationSource, peopleCount: Int)
     case personUpdated(nameChanged: Bool, photo: PersonPhotoChange)
@@ -169,7 +175,9 @@ enum AnalyticsEvent: Equatable {
         case .giftPriceEdited: "gift_price_edited"
         case .giftSuggestionCompleted: "gift_suggestion_completed"
         case .occasionAdded: "occasion_added"
+        case .giftSaveAttempted: "gift_save_attempted"
         case .giftSaved: "gift_saved"
+        case .giftSaveFailed: "gift_save_failed"
         case .giftDeleted: "gift_deleted"
         case .personCreated: "person_created"
         case .personUpdated: "person_updated"
@@ -196,6 +204,8 @@ enum AnalyticsEvent: Equatable {
             [:]
         case .personDetailViewed(let isSelf, let giftsCount):
             ["is_self": .bool(isSelf), "gifts_count": .int(giftsCount)]
+        case .giftSaveAttempted(let mode), .giftSaveFailed(let mode):
+            ["mode": .string(mode.rawValue)]
         case .giftPickerOpened(let picker):
             ["picker": .string(picker.rawValue)]
         case .giftIconPicked(let custom):

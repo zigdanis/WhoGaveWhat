@@ -86,7 +86,7 @@ struct LegacyStoreMigrationTests {
         #expect(
             composition.saveGift(
                 makeGiftInput(
-                    name: "Gloves", fromID: "p-anna", toID: "p-mark", value: 40, valueTouched: true, currency: .usd)))
+                    name: "Gloves", fromID: "p-anna", toID: "p-mark", value: 40, valueTouched: true, currency: .usd)) == .saved)
 
         let byName = Dictionary(uniqueKeysWithValues: composition.data.gifts.map { ($0.name, $0) })
         #expect(byName["Gloves"]?.currency == .usd)
@@ -207,7 +207,7 @@ struct PerGiftCurrencyTests {
         state.previewTo(to)
         state.valueText = value
         if let currency { state.currency = currency }
-        return composition.saveGift(state.input)
+        return composition.saveGift(state.input) == .saved
     }
 
     private func gift(named name: String, in composition: AppComposition) throws -> Gift {
@@ -264,7 +264,7 @@ struct PerGiftCurrencyTests {
         state.currency = .rub
         #expect(state.valueText == "100")
         #expect(state.suggestionTask == nil)
-        #expect(composition.saveGift(state.input))
+        #expect(composition.saveGift(state.input) == .saved)
 
         let edited = try gift(named: "Headphones", in: composition)
         #expect(edited.id == headphones.id)
@@ -392,7 +392,7 @@ struct GiftCurrencyEstimateTests {
 
         #expect(gateway.currencies == [.rub])
         #expect(state.draft.estimatedCurrency == .rub)
-        #expect(composition.saveGift(state.input))
+        #expect(composition.saveGift(state.input) == .saved)
         let saved = try #require(composition.data.gifts.first { $0.name == "guitar" })
         #expect(saved.value == 10_000)
         #expect(saved.currency == .rub)
@@ -415,7 +415,7 @@ struct GiftCurrencyEstimateTests {
         #expect(gateway.currencies == [.rub, .usd])
         #expect(state.draft.estimatedValue == 150)
         #expect(state.draft.estimatedCurrency == .usd)
-        #expect(composition.saveGift(state.input))
+        #expect(composition.saveGift(state.input) == .saved)
         let saved = try #require(composition.data.gifts.first { $0.name == "guitar" })
         #expect(saved.value == 150)
         #expect(saved.currency == .usd)
@@ -450,7 +450,7 @@ struct GiftCurrencyEstimateTests {
         #expect(gateway.currencies == [.rub, .usd])
         #expect(state.draft.estimatedValue == 150)
         #expect(state.draft.estimatedCurrency == .usd)
-        #expect(composition.saveGift(state.input))
+        #expect(composition.saveGift(state.input) == .saved)
         let saved = try #require(composition.data.gifts.first { $0.name == "guitar" })
         #expect(saved.value == 150)
         #expect(saved.currency == .usd)
@@ -471,7 +471,7 @@ struct GiftCurrencyEstimateTests {
         #expect(state.suggestionTask == finishedRequest)
         #expect(gateway.currencies == [.rub])
         #expect(state.valueText == "250")
-        #expect(composition.saveGift(state.input))
+        #expect(composition.saveGift(state.input) == .saved)
         let saved = try #require(composition.data.gifts.first { $0.name == "guitar" })
         #expect(saved.value == 250)
         #expect(saved.currency == .usd)

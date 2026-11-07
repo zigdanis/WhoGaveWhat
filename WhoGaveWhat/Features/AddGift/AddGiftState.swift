@@ -7,6 +7,8 @@ final class AddGiftState {
     var draft = AddGiftDraft()
     var picker: AddGiftPicker?
     var aiLoading = false
+    /// True after a save the store refused, while the error is shown. The sheet and the draft stay as they were.
+    var isShowingSaveError = false
 
     private(set) var editingGiftID: String?
     private let suggestGift: SuggestGiftUseCase
@@ -254,12 +256,21 @@ final class AddGiftState {
         pickEmoji(emoji, custom: true)
     }
 
+    /// Closes the sheet only once the gift is stored. After a failure everything entered stays in the draft
+    /// and the error is shown, so Save can simply be tapped again.
     func save(using composition: AppComposition) {
         guard input.canSave else { return }
-        let saved = composition.saveGift(input)
-        // A programmatic switch, not a tab tap, so it sets the tab directly.
-        if saved, editingGiftID == nil { composition.router.tab = .home }
-        composition.router.dismissGiftSheet(outcome: saved ? .saved : .failed)
+        switch composition.saveGift(input) {
+        case .saved:
+            isShowingSaveError = false
+            // A programmatic switch, not a tab tap, so it sets the tab directly.
+            if editingGiftID == nil { composition.router.tab = .home }
+            composition.router.dismissGiftSheet(outcome: .saved)
+        case .failed:
+            isShowingSaveError = true
+        case .invalid:
+            break
+        }
     }
 
     func cancel() {

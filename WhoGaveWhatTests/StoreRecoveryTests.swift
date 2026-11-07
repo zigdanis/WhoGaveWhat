@@ -65,13 +65,13 @@ private func gift(_ id: String, from giverID: String, to recipientID: String) ->
 struct DataLoadRecoveryTests {
     private func makeComposition(
         gifts: ScriptedGiftGateway, people: ScriptedPeopleGateway, selfPersonID: String? = nil,
-        analytics: AnalyticsGateway = NoopAnalyticsGateway()
+        analytics: AnalyticsGateway = NoopAnalyticsGateway(), haptics: HapticsGateway = NoopHapticsGateway()
     ) -> (AppComposition, TestPreferencesGateway) {
         let preferences = TestPreferencesGateway()
         preferences.selfPersonID = selfPersonID
         let composition = AppComposition(
             giftGateway: gifts, peopleGateway: people, preferences: preferences,
-            intelligence: TestIntelligenceGateway(), launchEnvironment: [:], analytics: analytics)
+            intelligence: TestIntelligenceGateway(), launchEnvironment: [:], analytics: analytics, haptics: haptics)
         return (composition, preferences)
     }
 
@@ -170,9 +170,10 @@ struct DataLoadRecoveryTests {
 
     @Test func changesWaitForAFreshSnapshot() throws {
         let analytics = RecordingAnalyticsGateway()
+        let haptics = RecordingHapticsGateway()
         let gifts = ScriptedGiftGateway(gifts: [gift("kept", from: "me", to: "ann")])
         let people = ScriptedPeopleGateway(people: [person("me"), person("ann")])
-        let (composition, _) = makeComposition(gifts: gifts, people: people, analytics: analytics)
+        let (composition, _) = makeComposition(gifts: gifts, people: people, analytics: analytics, haptics: haptics)
 
         // "Dana" was stored, but the reload after it failed, so the screens still lack her.
         people.people.append(Person(id: "dana", name: "Dana", colorHex: 0x12805C))
@@ -185,13 +186,23 @@ struct DataLoadRecoveryTests {
         #expect(throws: StaleSnapshotError.self) {
             try composition.updatePerson(id: "me", name: "Me", imageData: nil)
         }
-        #expect(!composition.saveGift(makeGiftInput(name: "Book", fromID: "me", toID: "dana")))
-        composition.deletePerson(id: "dana", source: .peopleList)
-        composition.deleteGift(id: "kept", source: .home)
+        // A refused save is a failed save: the sheet keeps the draft and shows the error.
+        analytics.events.removeAll()
+        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "me", toID: "dana")) == .failed)
+        #expect(analytics.eventNames == ["gift_save_attempted", "gift_save_failed"])
+        #expect(haptics.played.last == .error)
+        // An incomplete form is still invalid, not a failure.
+        #expect(composition.saveGift(makeGiftInput(name: "Book")) == .invalid)
+        // Refused deletions fail the same way, so the screens keep the record and show the alert.
+        #expect(composition.deletePerson(id: "dana", source: .peopleList) == .failed)
+        #expect(composition.deleteGift(id: "kept", source: .home) == .failed)
+        #expect(haptics.played.suffix(2) == [.error, .error])
         #expect(people.people.map(\.id) == storedPeople)
         #expect(gifts.gifts.map(\.id) == ["kept"])
         #expect(!analytics.eventNames.contains("person_created"))
         #expect(!analytics.eventNames.contains("gift_deleted"))
+        #expect(!analytics.eventNames.contains("person_deleted"))
+        #expect(!analytics.eventNames.contains("gift_saved"))
 
         // Once loading works again, the change runs against the fresh snapshot: no second Dana.
         people.loadError = nil
@@ -238,7 +249,7 @@ struct DataLoadRecoveryTests {
             giftGateway: gifts, peopleGateway: people, preferences: preferences,
             intelligence: TestIntelligenceGateway(), launchEnvironment: [:], launchArguments: arguments)
 
-        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "ann", toID: "me")))
+        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "ann", toID: "me")) == .saved)
         #expect(composition.isReviewRequestPending == arguments.isEmpty)
     }
 
@@ -253,24 +264,87 @@ struct DataLoadRecoveryTests {
         let composition = AppComposition(
             giftGateway: gifts, peopleGateway: people, preferences: preferences,
             intelligence: TestIntelligenceGateway(), launchEnvironment: [:])
-        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "ann", toID: "me")))
+        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "ann", toID: "me")) == .saved)
         #expect(composition.isReviewRequestPending)
 
         gifts.loadError = TestStoreError()
         #expect(!composition.reloadData())
         if target == "gift" {
-            composition.deleteGift(id: "g1", source: .home)
+            #expect(composition.deleteGift(id: "g1", source: .home) == .failed)
             #expect(gifts.gifts.contains { $0.id == "g1" })
         } else {
-            composition.deletePerson(id: "bob", source: .peopleList)
+            #expect(composition.deletePerson(id: "bob", source: .peopleList) == .failed)
             #expect(people.people.contains { $0.id == "bob" })
         }
         #expect(!composition.isReviewRequestPending)
 
         // After recovery the setback still holds for this session.
         gifts.loadError = nil
-        #expect(composition.saveGift(makeGiftInput(name: "Scarf", fromID: "ann", toID: "me")))
+        #expect(composition.saveGift(makeGiftInput(name: "Scarf", fromID: "ann", toID: "me")) == .saved)
         #expect(!composition.isReviewRequestPending)
+    }
+
+    @Test func theViewpointNeedsAPersonFromACurrentSnapshot() {
+        let analytics = RecordingAnalyticsGateway()
+        let haptics = RecordingHapticsGateway()
+        let gifts = ScriptedGiftGateway()
+        let people = ScriptedPeopleGateway(people: [person("me"), person("ann"), person("bob")])
+        let (composition, preferences) = makeComposition(
+            gifts: gifts, people: people, selfPersonID: "me", analytics: analytics, haptics: haptics)
+
+        // Bob was deleted, but the reload after it failed, so he is still on screen.
+        people.people.removeAll { $0.id == "bob" }
+        people.loadError = TestStoreError()
+        #expect(!composition.reloadData())
+        composition.markSelf(true, personID: "bob")
+        #expect(composition.data.selfPersonID == "me")
+        #expect(preferences.selfPersonID == "me")
+        #expect(haptics.played.last == .error)
+        #expect(!analytics.eventNames.contains("viewpoint_changed"))
+
+        // With loading back, the fresh snapshot shows Bob is gone, so he still cannot be chosen.
+        people.loadError = nil
+        composition.markSelf(true, personID: "bob")
+        #expect(composition.data.selfPersonID == "me")
+        #expect(!composition.data.isLoadFailing)
+
+        // Someone who is still there can be.
+        composition.markSelf(true, personID: "ann")
+        #expect(composition.data.selfPersonID == "ann")
+        #expect(preferences.selfPersonID == "ann")
+        #expect(analytics.eventNames.last == "viewpoint_changed")
+
+        // Clearing it needs no fresh snapshot.
+        people.loadError = TestStoreError()
+        #expect(!composition.reloadData())
+        composition.markSelf(false, personID: "ann")
+        #expect(composition.data.selfPersonID == nil)
+    }
+
+    @Test func addingYourselfCanBeRetriedWhenTheViewpointCouldNotBeSet() {
+        let analytics = RecordingAnalyticsGateway()
+        let gifts = ScriptedGiftGateway()
+        let people = ScriptedPeopleGateway(people: [person("ann")])
+        let (composition, preferences) = makeComposition(gifts: gifts, people: people, analytics: analytics)
+
+        // "Add yourself": the person is stored, then every reload fails, so they cannot become "me".
+        gifts.loadError = TestStoreError()
+        let id = composition.createPerson(name: "Me", source: .peopleWelcome)
+        #expect(id == nil || people.people.contains { $0.id == id })
+        let stored = people.people.first { $0.name == "Me" }
+        #expect(stored != nil)
+        if let stored { #expect(!composition.markSelf(true, personID: stored.id)) }
+        #expect(composition.data.selfPersonID == nil)
+
+        // Saving the sheet again once loading works finds the same person and makes them "me".
+        gifts.loadError = nil
+        let retried = composition.createPerson(name: "Me", source: .peopleWelcome)
+        #expect(retried == stored?.id)
+        #expect(people.people.filter { $0.name == "Me" }.count == 1)
+        if let retried { #expect(composition.markSelf(true, personID: retried)) }
+        #expect(composition.data.selfPersonID == stored?.id)
+        #expect(preferences.selfPersonID == stored?.id)
+        #expect(analytics.eventNames.filter { $0 == "person_created" }.count == 1)
     }
 
     @Test func aCompleteSnapshotStillClearsAMissingViewpoint() {

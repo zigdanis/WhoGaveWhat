@@ -9,7 +9,8 @@ struct PersonEditorSheet: View {
     let focusesNameOnAppear: Bool
     let onCancel: () -> Void
     let onSave: (String, Data?) throws -> Void
-    let onDelete: (() -> Void)?
+    /// Runs after the user confirms Delete; on `failed` the sheet stays open and says nothing was deleted.
+    let onDelete: (() -> DeletionResult)?
 
     /// On a short window the hero photo would push Delete under the keyboard, so the photo card shrinks.
     @Environment(\.compactVerticalSpace) private var isCompact
@@ -25,6 +26,8 @@ struct PersonEditorSheet: View {
     @State private var photoSessionID = UUID()
     @State private var cropSession: PersonPhotoCropSession?
     @State private var errorMessage: String?
+    /// The alert title for `errorMessage`: a photo or name problem unless deleting failed.
+    @State private var errorTitle: LocalizedStringResource = "Photo and name"
     @State private var headerHeight: CGFloat = 0
     @State private var formHeight: CGFloat = 0
     @FocusState private var nameIsFocused: Bool
@@ -38,7 +41,7 @@ struct PersonEditorSheet: View {
         focusesNameOnAppear: Bool = true,
         onCancel: @escaping () -> Void,
         onSave: @escaping (String, Data?) throws -> Void,
-        onDelete: (() -> Void)? = nil
+        onDelete: (() -> DeletionResult)? = nil
     ) {
         self.title = title
         self.initialName = initialName
@@ -78,12 +81,12 @@ struct PersonEditorSheet: View {
                             onRemove: removePhoto
                         )
                     }
-                    if let onDelete {
+                    if onDelete != nil {
                         PersonEditorDeleteAction(
                             name: initialName,
                             confirmationMessage: deleteConfirmationMessage ?? "",
                             isDisabled: isLoadingPhoto,
-                            action: onDelete
+                            action: delete
                         )
                     }
                 }
@@ -138,7 +141,7 @@ struct PersonEditorSheet: View {
             )
         }
         .alert(
-            "Photo and name",
+            Text(errorTitle),
             isPresented: Binding(
                 get: { errorMessage != nil },
                 set: { if !$0 { errorMessage = nil } })
@@ -196,12 +199,23 @@ struct PersonEditorSheet: View {
         do {
             try onSave(name, imageData)
         } catch PersonUpdateError.duplicateName {
-            errorMessage = NSLocalizedString("A person with this name already exists.", comment: "")
+            showError(NSLocalizedString("A person with this name already exists.", comment: ""))
             haptics.play(.warning)
         } catch {
-            errorMessage = NSLocalizedString("Could not save person changes.", comment: "")
+            showError(NSLocalizedString("Could not save person changes.", comment: ""))
             haptics.play(.error)
         }
+    }
+
+    /// The composition already played the error haptic and reported the failure.
+    private func delete() {
+        guard onDelete?() == .failed else { return }
+        showError(NSLocalizedString("Nothing was deleted. Try again.", comment: ""), title: "Could not delete this person")
+    }
+
+    private func showError(_ message: String, title: LocalizedStringResource = "Photo and name") {
+        errorTitle = title
+        errorMessage = message
     }
 
     private func removePhoto() {
@@ -240,7 +254,7 @@ struct PersonEditorSheet: View {
                 // A photo removed or replaced mid-load is not a failure; only the live session reports.
                 guard !Task.isCancelled, photoSessionID == sessionID, selectedPhotoItem == item else { return }
                 analytics.report(AnalyticsFailure(operation: "load_person_photo", error: error))
-                errorMessage = NSLocalizedString("Could not load that photo.", comment: "")
+                showError(NSLocalizedString("Could not load that photo.", comment: ""))
                 isLoadingPhoto = false
                 selectedPhotoItem = nil
             }

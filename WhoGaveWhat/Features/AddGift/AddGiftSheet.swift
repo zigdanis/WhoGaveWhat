@@ -154,6 +154,12 @@ struct AddGiftSheet: View {
         .sheet(item: compactPicker) { kind in
             AddGiftPickerPresentation(kind: kind, state: state, composition: composition)
         }
+        // The sheet stays open with the draft, so the user can tap Save again.
+        .alert("Could not save the gift", isPresented: $state.isShowingSaveError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Everything you entered is still here. Tap Save to try again.")
+        }
         .onChange(of: state.picker) { _, picker in
             if picker == nil || !isKeyboardUp { popoverPicker = picker }
         }
