@@ -158,6 +158,11 @@ enum AnalyticsEvent: Equatable {
     case currencyChanged(currency: String)
     case privacyPolicyOpened
     case licensesOpened
+    /// Settings → Export all data wrote the file for the share sheet.
+    case dataExported(peopleCount: Int, giftsCount: Int)
+    /// A backup from iCloud or a file was added to the journal; counts only, nothing about the records.
+    case dataRestored(source: DataRestoreSource, peopleAdded: Int, giftsAdded: Int, intoEmptyJournal: Bool)
+    case iCloudBackupToggled(isOn: Bool)
     /// The app asked the system for an App Store rating; whether the sheet appeared is not known.
     case reviewPromptRequested(
         activeDays: Int, daysSinceFirstLaunch: Int, giftsCount: Int, peopleCount: Int, requestNumber: Int)
@@ -188,6 +193,9 @@ enum AnalyticsEvent: Equatable {
         case .currencyChanged: "currency_changed"
         case .privacyPolicyOpened: "privacy_policy_opened"
         case .licensesOpened: "licenses_opened"
+        case .dataExported: "data_exported"
+        case .dataRestored: "data_restored"
+        case .iCloudBackupToggled: "icloud_backup_toggled"
         case .reviewPromptRequested: "review_prompt_requested"
         }
     }
@@ -248,6 +256,17 @@ enum AnalyticsEvent: Equatable {
             ["is_current_year": .bool(isCurrentYear)]
         case .currencyChanged(let currency):
             ["currency": .string(currency)]
+        case .dataExported(let peopleCount, let giftsCount):
+            ["people_count": .int(peopleCount), "gifts_count": .int(giftsCount)]
+        case .dataRestored(let source, let peopleAdded, let giftsAdded, let intoEmptyJournal):
+            [
+                "source": .string(source.rawValue),
+                "people_added": .int(peopleAdded),
+                "gifts_added": .int(giftsAdded),
+                "into_empty_journal": .bool(intoEmptyJournal)
+            ]
+        case .iCloudBackupToggled(let isOn):
+            ["is_on": .bool(isOn)]
         case .reviewPromptRequested(let activeDays, let daysSinceFirstLaunch, let giftsCount, let peopleCount, let requestNumber):
             [
                 "active_days": .int(activeDays),

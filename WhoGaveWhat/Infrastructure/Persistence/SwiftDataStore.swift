@@ -30,6 +30,11 @@ final class SwiftDataStore {
 
     static let schema = Schema([StoredPerson.self, StoredGift.self])
 
+    // Every configuration passes `cloudKitDatabase: .none`. The default, `.automatic`, would start CloudKit
+    // mirroring as soon as the app has an iCloud container in its entitlements, which it does for the iCloud
+    // backup. This schema (unique ids, required relationships) cannot be mirrored, and the backup is
+    // `ICloudBackupService`'s files, not the store.
+
     let container: ModelContainer
     let context: ModelContext
     /// The currency gifts from before per-gift currencies take; nil when the store has none to migrate.
@@ -54,7 +59,8 @@ final class SwiftDataStore {
         saveLegacyGiftCurrency: @escaping (ModelContext) throws -> Void = { try $0.save() }
     ) throws {
         try self.init(
-            configuration: ModelConfiguration(Self.storeName, schema: Self.schema, isStoredInMemoryOnly: inMemory),
+            configuration: ModelConfiguration(
+                Self.storeName, schema: Self.schema, isStoredInMemoryOnly: inMemory, cloudKitDatabase: .none),
             seed: seed,
             sampleCurrency: sampleCurrency,
             legacyGiftCurrency: legacyGiftCurrency,
@@ -68,7 +74,7 @@ final class SwiftDataStore {
         saveLegacyGiftCurrency: @escaping (ModelContext) throws -> Void = { try $0.save() }
     ) throws {
         try self.init(
-            configuration: ModelConfiguration(Self.storeName, schema: Self.schema, url: url),
+            configuration: ModelConfiguration(Self.storeName, schema: Self.schema, url: url, cloudKitDatabase: .none),
             legacyGiftCurrency: legacyGiftCurrency,
             saveLegacyGiftCurrency: saveLegacyGiftCurrency)
     }

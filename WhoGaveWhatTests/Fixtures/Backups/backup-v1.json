@@ -1,0 +1,57 @@
+{
+  "appVersion" : "1.3.0 (30)",
+  "createdAt" : "2026-11-07T18:30:00.000Z",
+  "device" : "iPhone",
+  "format" : "whogavewhat-backup",
+  "futureKey" : "readers ignore keys they do not know",
+  "gifts" : [
+    {
+      "createdAt" : "2026-05-12T09:15:30.250Z",
+      "currency" : "RUB",
+      "date" : "2026-05-12T00:00:00.000Z",
+      "emoji" : "💐",
+      "emojiPickedByUser" : true,
+      "giverID" : "p-maria",
+      "id" : "g-roses",
+      "lastSavedAt" : "2026-05-13T10:00:00.000Z",
+      "name" : "Bouquet of roses",
+      "occasion" : "Birthday",
+      "paidByYou" : false,
+      "recipientID" : "p-anna",
+      "value" : 2000
+    },
+    {
+      "createdAt" : "2026-06-01T12:00:00Z",
+      "currency" : "USD",
+      "date" : "2026-06-01T00:00:00Z",
+      "emoji" : "📚",
+      "giverID" : "p-anna",
+      "id" : "g-books",
+      "name" : "Book set",
+      "occasion" : "Just because",
+      "paidByYou" : true,
+      "recipientID" : "p-maria",
+      "value" : 40.5
+    }
+  ],
+  "people" : [
+    {
+      "colorHex" : 1185308,
+      "id" : "p-anna",
+      "name" : "Anna",
+      "photo" : "AQID",
+      "sortIndex" : 0
+    },
+    {
+      "colorHex" : 8018123,
+      "id" : "p-maria",
+      "name" : "Aunt Maria",
+      "sortIndex" : 1
+    }
+  ],
+  "preferences" : {
+    "defaultCurrency" : "RUB",
+    "selfPersonID" : "p-anna"
+  },
+  "version" : 1
+}

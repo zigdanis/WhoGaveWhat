@@ -30,6 +30,9 @@ struct SettingsView: View {
                 SettingsFootnote(text: "settings.default-currency.footnote")
                     .padding(.top, 7)
 
+                DataBackupSettingsSection(composition: composition)
+                    .padding(.top, 24)
+
                 SectionHeader(text: "About").padding(.top, 24).padding(.bottom, 7)
                 Card {
                     VStack(spacing: 0) {
@@ -78,7 +81,7 @@ struct SettingsView: View {
 }
 
 /// Secondary text below a settings card, in the inset of the card's content.
-private struct SettingsFootnote: View {
+struct SettingsFootnote: View {
     let text: LocalizedStringResource
 
     var body: some View {
@@ -109,18 +112,22 @@ private struct SettingsValueRow: View {
     }
 }
 
-private struct SettingsActionRow: View {
+struct SettingsActionRow: View {
     let icon: String
     let tint: Color
     let label: LocalizedStringResource
     var opensInBrowser = false
+    /// Shows a spinner in place of the chevron while the row's action runs.
+    var isBusy = false
 
     var body: some View {
         HStack(spacing: 12) {
             SettingsIconTile(name: icon, tint: tint)
             Text(label).font(Font.app(16, .regular)).foregroundColor(Color.textPrimary)
             Spacer(minLength: 8)
-            if opensInBrowser {
+            if isBusy {
+                ProgressView()
+            } else if opensInBrowser {
                 Image(systemName: "arrow.up.forward")
                     .font(.system(size: 14, weight: .semibold)).foregroundColor(Color.textTertiary)
             } else {
@@ -132,7 +139,7 @@ private struct SettingsActionRow: View {
     }
 }
 
-private struct SettingsIconTile: View {
+struct SettingsIconTile: View {
     let name: String
     let tint: Color
 

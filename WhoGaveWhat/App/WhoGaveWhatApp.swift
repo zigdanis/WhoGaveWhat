@@ -22,12 +22,19 @@ struct WhoGaveWhatApp: App {
     }
 
     /// Opens the persistent store, or in Debug builds the seeded in-memory one when a screenshot
-    /// launch sets `KS_SAMPLE_DATA=1`, failing once when `KS_STORE_FAULT=open` (see `LaunchFault`).
+    /// launch sets `KS_SAMPLE_DATA=1` and an empty in-memory one for `KS_EMPTY_STORE=1`, failing once
+    /// when `KS_STORE_FAULT=open` (see `LaunchFault`).
     private static var storeOpener: () throws -> SwiftDataStore {
         #if DEBUG
             let environment = ProcessInfo.processInfo.environment
-            let open: () throws -> SwiftDataStore =
-                environment["KS_SAMPLE_DATA"] == "1" ? { try .makePreview() } : { try .openPersistent(preferences: UserDefaultsPreferencesGateway()) }
+            let open: () throws -> SwiftDataStore
+            if environment["KS_SAMPLE_DATA"] == "1" {
+                open = { try .makePreview() }
+            } else if LaunchFlags.opensEmptyStore {
+                open = { try SwiftDataStore(inMemory: true) }
+            } else {
+                open = { try .openPersistent(preferences: UserDefaultsPreferencesGateway()) }
+            }
             return LaunchFault()?.wrapOpen(open) ?? open
         #else
             return { try .openPersistent(preferences: UserDefaultsPreferencesGateway()) }

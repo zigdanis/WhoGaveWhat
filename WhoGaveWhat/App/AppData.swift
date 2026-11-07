@@ -51,6 +51,12 @@ final class AppData {
         hasLoadedSnapshot && !isLoadFailing && people.isEmpty
     }
 
+    /// No people and no gifts, according to a current snapshot: a first run, or a reinstall that may
+    /// have a backup to restore.
+    var isJournalEmpty: Bool {
+        hasLoadedSnapshot && !isLoadFailing && gifts.isEmpty && people.isEmpty
+    }
+
     func addOccasion(_ occasion: String) {
         let occasion = occasion.trimmingCharacters(in: .whitespaces)
         guard !occasion.isEmpty else { return }

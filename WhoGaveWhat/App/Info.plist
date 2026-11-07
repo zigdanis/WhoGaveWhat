@@ -8,6 +8,26 @@
     <string>$(POSTHOG_HOST)</string>
     <key>SentryDSN</key>
     <string>$(SENTRY_DSN)</string>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>pro.ziganshin.whogavewhat.backup</string>
+            <key>UTTypeDescription</key>
+            <string>Who Gave What Backup</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.json</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>whogavewhat</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
     <key>NSUserActivityTypes</key>
     <array>
         <string>com.apple.corespotlightitem</string>

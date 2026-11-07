@@ -38,6 +38,9 @@ outside the cases listed under "When nothing is sent". The full list lives in
 | `insights_year_changed` | `is_current_year` | The Insights year menu |
 | `currency_changed` | `currency` | Settings → Default currency (applies to new gifts only) |
 | `privacy_policy_opened`, `licenses_opened` | – | Settings → About |
+| `data_exported` | `people_count`, `gifts_count` | Settings → Export all data wrote the file for the share sheet |
+| `data_restored` | `source` icloud/file, `people_added`, `gifts_added`, `into_empty_journal` | A backup was added to the journal (Home's restore offer, Settings → Restore from iCloud, or Import from file) |
+| `icloud_backup_toggled` | `is_on` | Settings → iCloud backup is switched |
 | `app_opened_from_spotlight` | – | The Spotlight launcher opened the app |
 | `review_prompt_requested` | `active_days`, `days_since_first_launch`, `gifts_count`, `people_count`, `request_number` | The app asked iOS for the App Store rating sheet (see [rating prompt](rating-prompt.md)); iOS may not show it |
 
@@ -51,7 +54,10 @@ Handled failures (`AnalyticsFailure`) go to Sentry only, tagged with `operation`
 opened but could not save the currency of gifts from 1.2.0 and earlier; they still show in it and the next
 open tries again), `load_gifts` and `load_people` (extra `has_snapshot`: whether earlier records stay on
 screen), `save_gift`, `delete_gift`, `create_person`, `rename_person`, `update_person`, `delete_person`,
-`load_person_photo`, `cloud_icon_request`, `cloud_icon_decode`, `on_device_inference`, `spotlight_index`.
+`load_person_photo`, `cloud_icon_request`, `cloud_icon_decode`, `on_device_inference`, `spotlight_index`,
+`read_backup` (the journal could not be read for a backup or export), `write_backup` (the iCloud backup
+could not be written; once per launch), `restore_backup` (extra `source`: the store refused a restore,
+nothing was added) and `export_data`.
 A duplicate person name, being offline and cancellation are ordinary and are not reported. A change
 refused because the records could not be reloaded first is reported once, as that load failure.
 
