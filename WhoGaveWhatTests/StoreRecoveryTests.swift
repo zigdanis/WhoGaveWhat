@@ -65,13 +65,13 @@ private func gift(_ id: String, from giverID: String, to recipientID: String) ->
 struct DataLoadRecoveryTests {
     private func makeComposition(
         gifts: ScriptedGiftGateway, people: ScriptedPeopleGateway, selfPersonID: String? = nil,
-        analytics: AnalyticsGateway = NoopAnalyticsGateway()
+        analytics: AnalyticsGateway = NoopAnalyticsGateway(), haptics: HapticsGateway = NoopHapticsGateway()
     ) -> (AppComposition, TestPreferencesGateway) {
         let preferences = TestPreferencesGateway()
         preferences.selfPersonID = selfPersonID
         let composition = AppComposition(
             giftGateway: gifts, peopleGateway: people, preferences: preferences,
-            intelligence: TestIntelligenceGateway(), launchEnvironment: [:], analytics: analytics)
+            intelligence: TestIntelligenceGateway(), launchEnvironment: [:], analytics: analytics, haptics: haptics)
         return (composition, preferences)
     }
 
@@ -170,9 +170,10 @@ struct DataLoadRecoveryTests {
 
     @Test func changesWaitForAFreshSnapshot() throws {
         let analytics = RecordingAnalyticsGateway()
+        let haptics = RecordingHapticsGateway()
         let gifts = ScriptedGiftGateway(gifts: [gift("kept", from: "me", to: "ann")])
         let people = ScriptedPeopleGateway(people: [person("me"), person("ann")])
-        let (composition, _) = makeComposition(gifts: gifts, people: people, analytics: analytics)
+        let (composition, _) = makeComposition(gifts: gifts, people: people, analytics: analytics, haptics: haptics)
 
         // "Dana" was stored, but the reload after it failed, so the screens still lack her.
         people.people.append(Person(id: "dana", name: "Dana", colorHex: 0x12805C))
@@ -185,13 +186,23 @@ struct DataLoadRecoveryTests {
         #expect(throws: StaleSnapshotError.self) {
             try composition.updatePerson(id: "me", name: "Me", imageData: nil)
         }
-        #expect(!composition.saveGift(makeGiftInput(name: "Book", fromID: "me", toID: "dana")))
-        composition.deletePerson(id: "dana", source: .peopleList)
-        composition.deleteGift(id: "kept", source: .home)
+        // A refused save is a failed save: the sheet keeps the draft and shows the error.
+        analytics.events.removeAll()
+        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "me", toID: "dana")) == .failed)
+        #expect(analytics.eventNames == ["gift_save_attempted", "gift_save_failed"])
+        #expect(haptics.played.last == .error)
+        // An incomplete form is still invalid, not a failure.
+        #expect(composition.saveGift(makeGiftInput(name: "Book")) == .invalid)
+        // Refused deletions fail the same way, so the screens keep the record and show the alert.
+        #expect(composition.deletePerson(id: "dana", source: .peopleList) == .failed)
+        #expect(composition.deleteGift(id: "kept", source: .home) == .failed)
+        #expect(haptics.played.suffix(2) == [.error, .error])
         #expect(people.people.map(\.id) == storedPeople)
         #expect(gifts.gifts.map(\.id) == ["kept"])
         #expect(!analytics.eventNames.contains("person_created"))
         #expect(!analytics.eventNames.contains("gift_deleted"))
+        #expect(!analytics.eventNames.contains("person_deleted"))
+        #expect(!analytics.eventNames.contains("gift_saved"))
 
         // Once loading works again, the change runs against the fresh snapshot: no second Dana.
         people.loadError = nil
@@ -238,7 +249,7 @@ struct DataLoadRecoveryTests {
             giftGateway: gifts, peopleGateway: people, preferences: preferences,
             intelligence: TestIntelligenceGateway(), launchEnvironment: [:], launchArguments: arguments)
 
-        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "ann", toID: "me")))
+        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "ann", toID: "me")) == .saved)
         #expect(composition.isReviewRequestPending == arguments.isEmpty)
     }
 
@@ -253,23 +264,23 @@ struct DataLoadRecoveryTests {
         let composition = AppComposition(
             giftGateway: gifts, peopleGateway: people, preferences: preferences,
             intelligence: TestIntelligenceGateway(), launchEnvironment: [:])
-        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "ann", toID: "me")))
+        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "ann", toID: "me")) == .saved)
         #expect(composition.isReviewRequestPending)
 
         gifts.loadError = TestStoreError()
         #expect(!composition.reloadData())
         if target == "gift" {
-            composition.deleteGift(id: "g1", source: .home)
+            #expect(composition.deleteGift(id: "g1", source: .home) == .failed)
             #expect(gifts.gifts.contains { $0.id == "g1" })
         } else {
-            composition.deletePerson(id: "bob", source: .peopleList)
+            #expect(composition.deletePerson(id: "bob", source: .peopleList) == .failed)
             #expect(people.people.contains { $0.id == "bob" })
         }
         #expect(!composition.isReviewRequestPending)
 
         // After recovery the setback still holds for this session.
         gifts.loadError = nil
-        #expect(composition.saveGift(makeGiftInput(name: "Scarf", fromID: "ann", toID: "me")))
+        #expect(composition.saveGift(makeGiftInput(name: "Scarf", fromID: "ann", toID: "me")) == .saved)
         #expect(!composition.isReviewRequestPending)
     }
 

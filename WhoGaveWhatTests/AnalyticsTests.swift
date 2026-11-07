@@ -17,6 +17,8 @@ struct AnalyticsEventCatalogTests {
         .giftPriceEdited(hadEstimate: false),
         .giftSuggestionCompleted(provider: .cloud, hasIcon: true, hasPrice: false, latencyMilliseconds: 420),
         .occasionAdded,
+        .giftSaveAttempted(mode: .create),
+        .giftSaveFailed(mode: .edit),
         .giftSaved(
             GiftSavedProperties(
                 mode: .create, direction: .received, iconSource: .inferred, valueSource: .estimate,
@@ -85,7 +87,7 @@ struct CompositionAnalyticsTests {
         input.estimatedValue = 1_200
         input.occasion = "Birthday"
 
-        #expect(composition.saveGift(input))
+        #expect(composition.saveGift(input) == .saved)
 
         let saved = try #require(analytics.events.last)
         #expect(saved.name == "gift_saved")
@@ -103,7 +105,7 @@ struct CompositionAnalyticsTests {
         let analytics = RecordingAnalyticsGateway()
         let composition = try makeTestComposition(analytics: analytics)
 
-        #expect(!composition.saveGift(makeGiftInput(name: "", fromID: "maria", toID: "anton")))
+        #expect(composition.saveGift(makeGiftInput(name: "", fromID: "maria", toID: "anton")) == .invalid)
 
         #expect(analytics.events.isEmpty)
     }
@@ -119,12 +121,13 @@ struct CompositionAnalyticsTests {
         composition.saveGift(input)
         composition.deleteGift(id: gift.id, source: .giftDetail)
 
-        #expect(analytics.eventNames == ["gift_saved", "gift_deleted"])
-        #expect(analytics.events[0].properties["mode"] == .string("edit"))
-        #expect(analytics.events[0].properties["icon_source"] == .string("user"))
-        #expect(analytics.events[0].properties["value_source"] == .string("user"))
-        #expect(analytics.events[1].properties["source"] == .string("gift_detail"))
-        #expect(analytics.events[1].properties["gifts_count"] == .int(composition.data.gifts.count))
+        #expect(analytics.eventNames == ["gift_save_attempted", "gift_saved", "gift_deleted"])
+        #expect(analytics.events[0] == .giftSaveAttempted(mode: .edit))
+        #expect(analytics.events[1].properties["mode"] == .string("edit"))
+        #expect(analytics.events[1].properties["icon_source"] == .string("user"))
+        #expect(analytics.events[1].properties["value_source"] == .string("user"))
+        #expect(analytics.events[2].properties["source"] == .string("gift_detail"))
+        #expect(analytics.events[2].properties["gifts_count"] == .int(composition.data.gifts.count))
     }
 
     @Test func welcomeActionsReportTheirOwnSources() throws {

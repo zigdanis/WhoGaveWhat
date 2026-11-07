@@ -18,19 +18,21 @@ outside the cases listed under "When nothing is sent". The full list lives in
 |-------|------------|------------|
 | `tab_selected` | `tab` | A tab bar tap changes the tab |
 | `gift_sheet_opened` | `mode` create/edit, `source` welcome_card/insights_welcome/floating_button/toolbar_button/gift_detail | The Add or Edit gift sheet opens |
-| `gift_sheet_closed` | `mode`, `outcome` saved/cancelled/failed | The sheet closes |
+| `gift_sheet_closed` | `mode`, `outcome` saved/cancelled | The sheet closes. A failed save keeps it open, so it is not an outcome |
 | `gift_picker_opened` | `picker` giver/recipient/occasion/icon/date | A picker opens inside the sheet |
 | `gift_icon_picked` | `source` list/custom | The user overrides the inferred icon |
 | `gift_price_edited` | `had_estimate` | The first edit of the price field in a sheet |
 | `gift_suggestion_completed` | `provider` cloud/on_device (whichever answered; cloud when none did), `outcome`, `has_icon`, `has_price`, `latency_ms` | An icon/price inference returns |
 | `occasion_added` | – | A custom occasion is typed |
+| `gift_save_attempted` | `mode` | Save is tapped with a complete form; `gift_saved` or `gift_save_failed` follows |
 | `gift_saved` | `mode`, `direction` received/given/unrelated/no_viewpoint, `icon_source`, `value_source` user/estimate/none, `occasion` (built-in key or `custom`), `paid_by_you`, `date_offset`, `gifts_count` | A gift is stored |
-| `gift_deleted` | `source` home/person_detail/gift_detail, `gifts_count` | A gift is removed |
+| `gift_save_failed` | `mode` | The store refused the gift, or the records on screen could not be reloaded first; the sheet stays open with everything entered and Save can be tapped again |
+| `gift_deleted` | `source` home/person_detail/gift_detail, `gifts_count` | A gift is removed (not after a failed deletion, which only reports `delete_gift`) |
 | `gift_detail_viewed` | – | A gift screen appears |
 | `person_detail_viewed` | `is_self`, `gifts_count` | A person screen appears |
 | `person_created` | `source` people_tab/people_welcome/gift_picker, `people_count` | A new person is stored (not a duplicate name) |
 | `person_updated` | `name_changed`, `photo` added/replaced/removed/unchanged | The person editor saves |
-| `person_deleted` | `source` people_list/person_editor, `gifts_removed`, `people_count` | A person is removed |
+| `person_deleted` | `source` people_list/person_editor, `gifts_removed`, `people_count` | A person is removed (not after a failed deletion, which only reports `delete_person`) |
 | `viewpoint_changed` | `is_set` | "This is me" is switched |
 | `insights_person_picked` | `slot` subject/compareA/compareB | An Insights picker choice |
 | `insights_year_changed` | `is_current_year` | The Insights year menu |
@@ -48,8 +50,9 @@ Handled failures (`AnalyticsFailure`) go to Sentry only, tagged with `operation`
 (the store could not be opened at launch or on Retry; extra `attempt`), `load_gifts` and `load_people`
 (extra `has_snapshot`: whether earlier records stay on screen), `save_gift`, `delete_gift`,
 `create_person`, `rename_person`, `update_person`, `delete_person`, `load_person_photo`,
-`cloud_icon_request`, `cloud_icon_decode`, `on_device_inference`, `spotlight_index`. A duplicate person name, being offline and cancellation
-are ordinary and are not reported.
+`cloud_icon_request`, `cloud_icon_decode`, `on_device_inference`, `spotlight_index`. A duplicate person
+name, being offline and cancellation are ordinary and are not reported. A change refused because the
+records could not be reloaded first is reported once, as that load failure.
 
 ## When nothing is sent
 

@@ -74,11 +74,13 @@ final class AppComposition {
         intelligence: GiftIntelligenceGateway,
         launchEnvironment: [String: String] = ProcessInfo.processInfo.environment,
         analytics: AnalyticsGateway = NoopAnalyticsGateway(),
-        haptics: HapticsGateway = NoopHapticsGateway()
+        haptics: HapticsGateway = NoopHapticsGateway(),
+        giftGateway: GiftGateway? = nil,
+        peopleGateway: PeopleGateway? = nil
     ) {
         self.init(
-            giftGateway: SwiftDataGiftGateway(context: store.context),
-            peopleGateway: SwiftDataPeopleGateway(context: store.context),
+            giftGateway: giftGateway ?? SwiftDataGiftGateway(context: store.context),
+            peopleGateway: peopleGateway ?? SwiftDataPeopleGateway(context: store.context),
             preferences: preferences,
             intelligence: intelligence,
             launchEnvironment: launchEnvironment,
@@ -97,6 +99,8 @@ final class AppComposition {
         analytics: AnalyticsGateway = NoopAnalyticsGateway(),
         haptics: HapticsGateway = NoopHapticsGateway()
     ) {
+        let (giftGateway, peopleGateway) = Self.applyingWriteFailures(
+            gifts: giftGateway, people: peopleGateway, launchEnvironment: launchEnvironment)
         let suggestGift = SuggestGiftUseCase(intelligenceGateway: intelligence)
         let createPerson = CreatePersonUseCase(gateway: peopleGateway)
 
@@ -127,6 +131,18 @@ final class AppComposition {
         }
         data.setSelfPerson(preferences.selfPersonID)
         reloadData()
+    }
+
+    /// Debug verification launches can make writes fail on purpose (`KS_FAIL_SAVE`, `KS_FAIL_DELETE`) to show
+    /// the error states; Release ignores both.
+    private static func applyingWriteFailures(
+        gifts: GiftGateway, people: PeopleGateway, launchEnvironment: [String: String]
+    ) -> (GiftGateway, PeopleGateway) {
+        #if DEBUG
+            return WriteFailureInjection(launchEnvironment: launchEnvironment).wrap(gifts: gifts, people: people)
+        #else
+            return (gifts, people)
+        #endif
     }
 
     /// Verification launches never ask for a rating, except `KS_REVIEW_PROMPT=ready`, which starts on
@@ -209,22 +225,32 @@ final class AppComposition {
         return recognized
     }
 
-    /// Saves the gift and reports whether it was stored.
+    /// Saves the gift and says whether it was stored. Only a stored gift counts as saved and plays the
+    /// success haptic; after a failure the store is unchanged and the same input can be saved again.
     @discardableResult
-    func saveGift(_ input: SaveGiftInput) -> Bool {
+    func saveGift(_ input: SaveGiftInput) -> GiftSaveResult {
+        guard input.canSave else { return .invalid }
+        let mode: GiftSheetMode = input.editingGiftID == nil ? .create : .edit
+        analytics.track(.giftSaveAttempted(mode: mode))
+        // A save against records that could not be reloaded fails like a refused write: the sheet keeps the
+        // draft and shows the error. The load failure itself was already reported by `reloadData`.
         guard refreshStaleSnapshot() else {
+            analytics.track(.giftSaveFailed(mode: mode))
+            haptics.play(.error)
             noteReviewSetback()
-            return false
+            return .failed
         }
-        let gift: Gift?
+        let gift: Gift
         do {
-            gift = try saveGiftUseCase.execute(input)
+            guard let saved = try saveGiftUseCase.execute(input) else { return .invalid }
+            gift = saved
         } catch {
             analytics.report(AnalyticsFailure(operation: "save_gift", error: error))
+            analytics.track(.giftSaveFailed(mode: mode))
+            haptics.play(.error)
             noteReviewSetback()
-            return false
+            return .failed
         }
-        guard let gift else { return false }
         reloadData()
         analytics.track(.giftSaved(giftSavedProperties(for: gift, input: input)))
         haptics.play(.success)
@@ -233,7 +259,7 @@ final class AppComposition {
         {
             isReviewRequestPending = true
         }
-        return true
+        return .saved
     }
 
     // MARK: - App Store rating request
@@ -300,22 +326,27 @@ final class AppComposition {
             giftsCount: data.gifts.count)
     }
 
-    func deleteGift(id: String, source: GiftDeletionSource) {
+    /// Deletes the gift and says whether it is gone; after a failure it is still stored and shown.
+    @discardableResult
+    func deleteGift(id: String, source: GiftDeletionSource) -> DeletionResult {
         guard refreshStaleSnapshot() else {
+            haptics.play(.error)
             noteReviewSetback()
-            return
+            return .failed
         }
         do {
             try deleteGiftUseCase.execute(id: id)
         } catch {
             analytics.report(AnalyticsFailure(operation: "delete_gift", error: error))
+            haptics.play(.error)
             noteReviewSetback()
             reloadData()
-            return
+            return .failed
         }
         noteReviewSetback()
         reloadData()
         analytics.track(.giftDeleted(source: source, giftsCount: data.gifts.count))
+        return .deleted
     }
 
     /// People ordered for a picker by recent use in `role`; `data.gifts` is reloaded after every save and delete.
@@ -402,10 +433,14 @@ final class AppComposition {
         }
     }
 
-    func deletePerson(id: String, source: PersonDeletionSource) {
+    /// Deletes the person with their gifts and says whether they are gone; after a failure the person,
+    /// their gifts and the viewpoint are unchanged.
+    @discardableResult
+    func deletePerson(id: String, source: PersonDeletionSource) -> DeletionResult {
         guard refreshStaleSnapshot() else {
+            haptics.play(.error)
             noteReviewSetback()
-            return
+            return .failed
         }
         let giftsRemoved = data.gifts.filter { $0.giverID == id || $0.recipientID == id }.count
         let deleted: Bool
@@ -414,6 +449,7 @@ final class AppComposition {
             deleted = true
         } catch {
             analytics.report(AnalyticsFailure(operation: "delete_person", error: error))
+            haptics.play(.error)
             deleted = false
         }
         // Removing someone, or failing to, is not a moment to ask for a rating.
@@ -423,9 +459,9 @@ final class AppComposition {
             setSelfPerson(nil)
         }
         reloadData()
-        if deleted {
-            analytics.track(.personDeleted(source: source, giftsRemoved: giftsRemoved, peopleCount: data.people.count))
-        }
+        guard deleted else { return .failed }
+        analytics.track(.personDeleted(source: source, giftsRemoved: giftsRemoved, peopleCount: data.people.count))
+        return .deleted
     }
 
     /// Applies the "This is me" choice made on the person screen.
