@@ -72,6 +72,9 @@ struct PersonDetailView: View {
                         arrow: "↗", label: "Given", color: Color.given,
                         count: given.count, value: given.totals)
                 }
+                // Both cards take the taller one's height, so a caption that wraps (several currencies)
+                // keeps them aligned.
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 18)
 
                 Segmented(options: filterOptions, selected: filter) { key in
@@ -200,6 +203,7 @@ struct PersonDetailView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(15)
+            .frame(maxHeight: .infinity, alignment: .top)
         }
     }
 }
