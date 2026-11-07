@@ -5,6 +5,8 @@ import Observation
 @Observable
 final class PersonPickerState {
     var query = ""
+    /// The last Add could not store the person; the typed name stays so the user can try again.
+    private(set) var creationFailed = false
     private(set) var visiblePeople: [Person]
     private(set) var selectedID: String?
 
@@ -35,6 +37,7 @@ final class PersonPickerState {
         // new person is not part of that snapshot.
         guard query != self.query else { return selectedID }
         self.query = query
+        creationFailed = false
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         visiblePeople =
             trimmedQuery.isEmpty
@@ -55,7 +58,11 @@ final class PersonPickerState {
         create: (String) -> String?,
         select: (String) -> Void
     ) -> String? {
-        guard let id = create(name) else { return nil }
+        guard let id = create(name) else {
+            creationFailed = true
+            return nil
+        }
+        creationFailed = false
         selectedID = id
         select(id)
         return id

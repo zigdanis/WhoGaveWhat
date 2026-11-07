@@ -38,6 +38,7 @@ final class AppComposition {
         haptics: HapticsGateway
     ) {
         let environment = ProcessInfo.processInfo.environment
+        let arguments = ProcessInfo.processInfo.arguments
         // Verification launches with `KS_CLOUD_ICONS=stub` get fixed answers only: no network, no on-device model.
         let intelligence: GiftIntelligenceGateway
         if environment["KS_CLOUD_ICONS"] == "stub" {
@@ -47,17 +48,27 @@ final class AppComposition {
                 cloud: CloudGiftIconGateway(preferences: preferences, analytics: analytics),
                 onDevice: FoundationModelsGiftIntelligenceGateway(analytics: analytics))
         }
+        var giftGateway: GiftGateway = SwiftDataGiftGateway(context: store.context)
+        var peopleGateway: PeopleGateway = SwiftDataPeopleGateway(context: store.context)
+        #if DEBUG
+            if let fault = LaunchFault(environment: environment, arguments: arguments) {
+                giftGateway = fault.wrap(giftGateway)
+                peopleGateway = fault.wrap(peopleGateway)
+            }
+        #endif
         self.init(
-            store: store,
+            giftGateway: giftGateway,
+            peopleGateway: peopleGateway,
             preferences: preferences,
             intelligence: intelligence,
             launchEnvironment: environment,
+            launchArguments: arguments,
             analytics: analytics,
             haptics: haptics
         )
     }
 
-    init(
+    convenience init(
         store: SwiftDataStore,
         preferences: PreferencesGateway,
         intelligence: GiftIntelligenceGateway,
@@ -65,8 +76,27 @@ final class AppComposition {
         analytics: AnalyticsGateway = NoopAnalyticsGateway(),
         haptics: HapticsGateway = NoopHapticsGateway()
     ) {
-        let giftGateway = SwiftDataGiftGateway(context: store.context)
-        let peopleGateway = SwiftDataPeopleGateway(context: store.context)
+        self.init(
+            giftGateway: SwiftDataGiftGateway(context: store.context),
+            peopleGateway: SwiftDataPeopleGateway(context: store.context),
+            preferences: preferences,
+            intelligence: intelligence,
+            launchEnvironment: launchEnvironment,
+            analytics: analytics,
+            haptics: haptics
+        )
+    }
+
+    init(
+        giftGateway: GiftGateway,
+        peopleGateway: PeopleGateway,
+        preferences: PreferencesGateway,
+        intelligence: GiftIntelligenceGateway,
+        launchEnvironment: [String: String] = ProcessInfo.processInfo.environment,
+        launchArguments: [String] = [],
+        analytics: AnalyticsGateway = NoopAnalyticsGateway(),
+        haptics: HapticsGateway = NoopHapticsGateway()
+    ) {
         let suggestGift = SuggestGiftUseCase(intelligenceGateway: intelligence)
         let createPerson = CreatePersonUseCase(gateway: peopleGateway)
 
@@ -77,7 +107,8 @@ final class AppComposition {
         self.peopleGateway = peopleGateway
         currencyCode = preferences.currencyCode
         router = AppRouter(launchEnvironment: launchEnvironment, analytics: analytics)
-        reviewPrompt = Self.makeReviewPrompt(preferences: preferences, launchEnvironment: launchEnvironment)
+        reviewPrompt = Self.makeReviewPrompt(
+            preferences: preferences, launchEnvironment: launchEnvironment, launchArguments: launchArguments)
         loadGiftsUseCase = LoadGiftsUseCase(gateway: giftGateway)
         saveGiftUseCase = SaveGiftUseCase(giftGateway: giftGateway, suggestGift: suggestGift)
         deleteGiftUseCase = DeleteGiftUseCase(gateway: giftGateway)
@@ -101,7 +132,7 @@ final class AppComposition {
     /// Verification launches never ask for a rating, except `KS_REVIEW_PROMPT=ready`, which starts on
     /// the third day of use so the next new gift (with five gifts in total) shows the request.
     private static func makeReviewPrompt(
-        preferences: PreferencesGateway, launchEnvironment: [String: String]
+        preferences: PreferencesGateway, launchEnvironment: [String: String], launchArguments: [String]
     ) -> ReviewPromptUseCase {
         let isReadyLaunch = launchEnvironment["KS_REVIEW_PROMPT"] == "ready"
         if isReadyLaunch {
@@ -114,26 +145,50 @@ final class AppComposition {
         }
         return ReviewPromptUseCase(
             preferences: preferences,
-            isEnabled: isReadyLaunch || !MonitoringConfiguration.isVerificationLaunch(launchEnvironment))
+            isEnabled: isReadyLaunch
+                || !MonitoringConfiguration.isVerificationLaunch(launchEnvironment, arguments: launchArguments))
     }
 
-    func reloadData() {
+    /// Loads gifts and people together and publishes them as one snapshot. When either fetch fails,
+    /// the previous snapshot and the viewpoint stay as they were, and the screens offer a retry.
+    @discardableResult
+    func reloadData() -> Bool {
+        let gifts: [Gift]
+        let people: PeopleSnapshot
         do {
-            data.replaceGifts(try loadGiftsUseCase.execute())
+            gifts = try loadGiftsUseCase.execute()
         } catch {
-            analytics.report(AnalyticsFailure(operation: "load_gifts", error: error))
+            noteLoadFailure(operation: "load_gifts", error: error)
+            return false
         }
         do {
-            let people = try loadPeopleUseCase.execute()
-            data.replacePeople(people)
-            // The viewpoint goes away with its person, including when they were deleted elsewhere.
-            if let selfID = data.selfPersonID, !people.people.contains(where: { $0.id == selfID }) {
-                setSelfPerson(nil)
-            }
+            people = try loadPeopleUseCase.execute()
         } catch {
-            analytics.report(AnalyticsFailure(operation: "load_people", error: error))
+            noteLoadFailure(operation: "load_people", error: error)
+            return false
+        }
+        data.replaceSnapshot(gifts: gifts, people: people)
+        // The viewpoint goes away with its person, including when they were deleted elsewhere.
+        if let selfID = data.selfPersonID, !people.people.contains(where: { $0.id == selfID }) {
+            setSelfPerson(nil)
         }
         publishAnalyticsContext()
+        return true
+    }
+
+    /// While the last load failed the screens show older records, so a change loads again first and is
+    /// refused when that fails too: it must not be checked against, or write over, newer stored data.
+    private func refreshStaleSnapshot() -> Bool {
+        guard data.isLoadFailing || !data.hasLoadedSnapshot else { return true }
+        return reloadData()
+    }
+
+    private func noteLoadFailure(operation: String, error: Error) {
+        analytics.report(
+            AnalyticsFailure(
+                operation: operation, error: error,
+                details: ["has_snapshot": .bool(data.hasLoadedSnapshot)]))
+        data.noteLoadFailed()
     }
 
     /// Counts and preferences that travel with every event and crash report.
@@ -157,6 +212,10 @@ final class AppComposition {
     /// Saves the gift and reports whether it was stored.
     @discardableResult
     func saveGift(_ input: SaveGiftInput) -> Bool {
+        guard refreshStaleSnapshot() else {
+            noteReviewSetback()
+            return false
+        }
         let gift: Gift?
         do {
             gift = try saveGiftUseCase.execute(input)
@@ -242,6 +301,10 @@ final class AppComposition {
     }
 
     func deleteGift(id: String, source: GiftDeletionSource) {
+        guard refreshStaleSnapshot() else {
+            noteReviewSetback()
+            return
+        }
         do {
             try deleteGiftUseCase.execute(id: id)
         } catch {
@@ -280,6 +343,7 @@ final class AppComposition {
 
     /// Creates the person, or returns the existing one with that name without counting a creation.
     func createPerson(name: String, source: PersonCreationSource) -> String? {
+        guard refreshStaleSnapshot() else { return nil }
         let id: String?
         do {
             id = try createPersonUseCase.execute(name: name, current: data.peopleSnapshot)
@@ -298,6 +362,7 @@ final class AppComposition {
     }
 
     func renamePerson(id: String, newName: String) {
+        guard refreshStaleSnapshot() else { return }
         do {
             try renamePersonUseCase.execute(id: id, newName: newName, current: data.peopleSnapshot)
         } catch {
@@ -309,6 +374,7 @@ final class AppComposition {
     }
 
     func updatePerson(id: String, name: String, imageData: Data?) throws {
+        guard refreshStaleSnapshot() else { throw StaleSnapshotError() }
         let previous = data.people.first { $0.id == id }
         do {
             try renamePersonUseCase.update(id: id, newName: name, imageData: imageData, current: data.peopleSnapshot)
@@ -337,6 +403,10 @@ final class AppComposition {
     }
 
     func deletePerson(id: String, source: PersonDeletionSource) {
+        guard refreshStaleSnapshot() else {
+            noteReviewSetback()
+            return
+        }
         let giftsRemoved = data.gifts.filter { $0.giverID == id || $0.recipientID == id }.count
         let deleted: Bool
         do {
@@ -386,3 +456,6 @@ final class AppComposition {
         publishAnalyticsContext()
     }
 }
+
+/// A change was refused because the records on screen could not be brought up to date first.
+struct StaleSnapshotError: Error {}

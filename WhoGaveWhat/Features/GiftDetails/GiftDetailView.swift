@@ -29,6 +29,11 @@ struct GiftDetailView: View {
             for: gift.direction(relativeTo: composition.data.selfPersonID))
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
+                if composition.data.isLoadFailing {
+                    LoadFailedCard { composition.reloadData() }
+                        .padding(.top, 8)
+                        .padding(.bottom, 18)
+                }
                 heroCard(gift, fm)
 
                 SectionHeader(text: "Details").padding(.top, 22).padding(.bottom, 7)

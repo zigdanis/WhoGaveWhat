@@ -623,6 +623,23 @@
         }
       }
     },
+    "Can't open your gifts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Can't open your gifts"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удаётся открыть подарки"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -755,6 +772,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось сохранить изменения."
+          }
+        }
+      }
+    },
+    "Couldn't add this person. Try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't add this person. Try again."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось добавить человека. Попробуйте ещё раз."
+          }
+        }
+      }
+    },
+    "Couldn't load your gifts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't load your gifts"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось загрузить подарки"
           }
         }
       }
@@ -1766,6 +1817,23 @@
         }
       }
     },
+    "Opening your gifts…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opening your gifts…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Открываем подарки…"
+          }
+        }
+      }
+    },
     "Paid by you" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2382,6 +2450,23 @@
         }
       }
     },
+    "They are still saved on this device. Try again in a moment." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "They are still saved on this device. Try again in a moment."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Они по-прежнему сохранены на этом устройстве. Попробуйте ещё раз чуть позже."
+          }
+        }
+      }
+    },
     "Third-party licenses" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2497,6 +2582,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отметьте, кто на самом деле заплатил"
+          }
+        }
+      }
+    },
+    "Try again" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Повторить"
           }
         }
       }
@@ -2769,6 +2871,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вы получили %@"
+          }
+        }
+      }
+    },
+    "Your gifts and people are still saved on this device, and nothing was deleted. Try again in a moment. If this keeps happening, restart the device." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your gifts and people are still saved on this device, and nothing was deleted. Try again in a moment. If this keeps happening, restart the device."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваши подарки и люди по-прежнему сохранены на этом устройстве, ничего не удалено. Попробуйте ещё раз чуть позже. Если ошибка повторяется, перезагрузите устройство."
           }
         }
       }

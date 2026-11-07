@@ -10,39 +10,46 @@ final class SwiftDataStore {
     /// The seeded person who represents the user's own viewpoint.
     static let seedSelfPersonID = "anton"
 
-    static let shared: SwiftDataStore = {
-        do {
-            return try SwiftDataStore()
-        } catch {
-            fatalError("SwiftData store failed to load: \(error)")
-        }
-    }()
+    /// Opens the app's store in Application Support. It throws instead of trapping, so the root can
+    /// show a recoverable error and try again; nothing here deletes, moves or recreates the files.
+    static func openPersistent() throws -> SwiftDataStore {
+        try SwiftDataStore()
+    }
 
-    /// Sample amounts follow the currency the app resolves for this device, as the screenshots show them.
-    static let preview: SwiftDataStore = {
-        do {
-            let currency = SupportedCurrency(rawValue: UserDefaultsPreferencesGateway().currencyCode) ?? .usd
-            return try SwiftDataStore(inMemory: true, seed: true, sampleCurrency: currency)
-        } catch {
-            fatalError("SwiftData preview store failed to load: \(error)")
-        }
-    }()
+    /// The seeded in-memory store for screenshot launches. Sample amounts follow the currency the app
+    /// resolves for this device, as the screenshots show them.
+    static func makePreview() throws -> SwiftDataStore {
+        let currency = SupportedCurrency(rawValue: UserDefaultsPreferencesGateway().currencyCode) ?? .usd
+        return try SwiftDataStore(inMemory: true, seed: true, sampleCurrency: currency)
+    }
+
+    static let schema = Schema([StoredPerson.self, StoredGift.self])
 
     let container: ModelContainer
     let context: ModelContext
 
-    init(
+    convenience init(
         inMemory: Bool = false,
         seed: Bool = false,
         sampleCurrency: SupportedCurrency = .rub
     ) throws {
-        let schema = Schema([StoredPerson.self, StoredGift.self])
-        let configuration = ModelConfiguration(
-            Self.storeName,
-            schema: schema,
-            isStoredInMemoryOnly: inMemory
-        )
-        container = try ModelContainer(for: schema, configurations: [configuration])
+        try self.init(
+            configuration: ModelConfiguration(Self.storeName, schema: Self.schema, isStoredInMemoryOnly: inMemory),
+            seed: seed,
+            sampleCurrency: sampleCurrency)
+    }
+
+    /// The store file at `url`; tests open copies of the databases earlier releases wrote.
+    convenience init(url: URL) throws {
+        try self.init(configuration: ModelConfiguration(Self.storeName, schema: Self.schema, url: url))
+    }
+
+    private init(
+        configuration: ModelConfiguration,
+        seed: Bool = false,
+        sampleCurrency: SupportedCurrency = .rub
+    ) throws {
+        container = try ModelContainer(for: Self.schema, configurations: [configuration])
         context = ModelContext(container)
         context.autosaveEnabled = false
 
