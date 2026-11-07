@@ -725,6 +725,40 @@
         }
       }
     },
+    "Could not delete the gift" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not delete the gift"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось удалить подарок"
+          }
+        }
+      }
+    },
+    "Could not delete this person" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not delete this person"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось удалить человека"
+          }
+        }
+      }
+    },
     "Could not load that photo." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -755,6 +789,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось сохранить изменения."
+          }
+        }
+      }
+    },
+    "Could not save the gift" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not save the gift"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось сохранить подарок"
           }
         }
       }
@@ -1112,6 +1163,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Поровну 🤝"
+          }
+        }
+      }
+    },
+    "Everything you entered is still here. Tap Save to try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everything you entered is still here. Tap Save to try again."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Всё, что вы ввели, на месте. Нажмите «Сохранить», чтобы попробовать ещё раз."
           }
         }
       }
@@ -1660,6 +1728,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не выбрано"
+          }
+        }
+      }
+    },
+    "Nothing was deleted. Try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing was deleted. Try again."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ничего не удалено. Попробуйте ещё раз."
           }
         }
       }
