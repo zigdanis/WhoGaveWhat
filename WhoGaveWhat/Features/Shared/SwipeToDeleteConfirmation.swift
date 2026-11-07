@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// A trailing trash swipe action that confirms with a system dialog.
+/// A trailing trash swipe action that confirms with a system dialog. When the deletion fails the row stays
+/// and an alert says so.
 ///
 /// The dialog is attached to the row itself, not the surrounding `List`: on iOS 26 a
 /// `confirmationDialog` is a popover anchored to the view that carries the modifier, so a
@@ -17,8 +18,10 @@ private struct SwipeToDeleteConfirmation: ViewModifier {
     let message: Text?
     let allowsFullSwipe: Bool
     let isEnabled: Bool
-    let onConfirm: () -> Void
+    let failureTitle: Text
+    let onConfirm: () -> DeletionResult
     @State private var confirming = false
+    @State private var failed = false
 
     func body(content: Content) -> some View {
         content
@@ -34,7 +37,9 @@ private struct SwipeToDeleteConfirmation: ViewModifier {
                 }
             }
             .confirmationDialog(title, isPresented: $confirming, titleVisibility: .visible) {
-                Button(role: .destructive, action: onConfirm) {
+                Button(role: .destructive) {
+                    failed = onConfirm() == .failed
+                } label: {
                     confirmLabel
                 }
                 Button("Cancel", role: .cancel) {}
@@ -43,18 +48,25 @@ private struct SwipeToDeleteConfirmation: ViewModifier {
                     message
                 }
             }
+            .alert(failureTitle, isPresented: $failed) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Nothing was deleted. Try again.")
+            }
     }
 }
 
 extension View {
-    /// Adds a red trailing trash swipe that asks for confirmation next to the row before `onConfirm` runs.
+    /// Adds a red trailing trash swipe that asks for confirmation next to the row before `onConfirm` runs,
+    /// and shows `failureTitle` when `onConfirm` reports that nothing was deleted.
     func swipeToDelete(
         title: Text,
         confirmLabel: Text = Text("Delete"),
         message: Text? = nil,
         allowsFullSwipe: Bool,
         isEnabled: Bool = true,
-        onConfirm: @escaping () -> Void
+        failureTitle: Text,
+        onConfirm: @escaping () -> DeletionResult
     ) -> some View {
         modifier(
             SwipeToDeleteConfirmation(
@@ -63,6 +75,7 @@ extension View {
                 message: message,
                 allowsFullSwipe: allowsFullSwipe,
                 isEnabled: isEnabled,
+                failureTitle: failureTitle,
                 onConfirm: onConfirm))
     }
 }

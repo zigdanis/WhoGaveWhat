@@ -178,7 +178,7 @@ struct ReviewPromptCompositionTests {
     @Test func aNewGiftOnTheThirdDayMakesTheRequestPending() throws {
         let analytics = RecordingAnalyticsGateway()
         let (composition, preferences) = try makeComposition(analytics: analytics)
-        #expect(composition.saveGift(newGift))
+        #expect(composition.saveGift(newGift) == .saved)
         #expect(composition.isReviewRequestPending)
 
         composition.reviewRequestPresented()
@@ -186,7 +186,7 @@ struct ReviewPromptCompositionTests {
         #expect(analytics.eventNames.last == "review_prompt_requested")
         #expect(preferences.reviewPromptState.requestCount == 1)
 
-        #expect(composition.saveGift(newGift))
+        #expect(composition.saveGift(newGift) == .saved)
         #expect(!composition.isReviewRequestPending)
     }
 
@@ -196,7 +196,7 @@ struct ReviewPromptCompositionTests {
         // The composition runs on the real clock, so the second day must be today.
         early.lastActiveDay = ReviewPromptPolicy.dayKey(for: Date(), calendar: .autoupdatingCurrent)
         let (earlyComposition, _) = try makeComposition(state: early)
-        #expect(earlyComposition.saveGift(newGift))
+        #expect(earlyComposition.saveGift(newGift) == .saved)
         #expect(!earlyComposition.isReviewRequestPending)
 
         let (composition, preferences) = try makeComposition()
@@ -204,7 +204,7 @@ struct ReviewPromptCompositionTests {
         var edit = newGift
         edit.editingGiftID = existing.id
         edit.createdAt = existing.createdAt
-        #expect(composition.saveGift(edit))
+        #expect(composition.saveGift(edit) == .saved)
         #expect(!composition.isReviewRequestPending)
         #expect(preferences.reviewPromptState.giftsCreatedSinceRequest == 0)
     }
@@ -213,27 +213,27 @@ struct ReviewPromptCompositionTests {
         let (composition, _) = try makeComposition()
         let existing = try #require(composition.data.gifts.first)
         composition.deleteGift(id: existing.id, source: .home)
-        #expect(composition.saveGift(newGift))
+        #expect(composition.saveGift(newGift) == .saved)
         #expect(!composition.isReviewRequestPending)
 
         composition.sceneEnteredBackground()
         #expect(!composition.isSceneActive)
         composition.sceneBecameActive()
         #expect(composition.isSceneActive)
-        #expect(composition.saveGift(newGift))
+        #expect(composition.saveGift(newGift) == .saved)
         #expect(composition.isReviewRequestPending)
 
         composition.sceneBecameInactive()
         #expect(!composition.isSceneActive)
         composition.reviewRequestSkipped()
         #expect(!composition.isReviewRequestPending)
-        #expect(composition.saveGift(newGift))
+        #expect(composition.saveGift(newGift) == .saved)
         #expect(composition.isReviewRequestPending)
     }
 
     @Test func aDeletionDuringThePauseCancelsTheWaitingRequest() throws {
         let (composition, _) = try makeComposition()
-        #expect(composition.saveGift(newGift))
+        #expect(composition.saveGift(newGift) == .saved)
         #expect(composition.isReviewRequestPending)
         let existing = try #require(composition.data.gifts.first)
         composition.deleteGift(id: existing.id, source: .home)
@@ -242,13 +242,13 @@ struct ReviewPromptCompositionTests {
 
     @Test func verificationLaunchesAskOnlyWhenReady() throws {
         let (silent, _) = try makeComposition(launchEnvironment: ["KS_TAB": "home"])
-        #expect(silent.saveGift(newGift))
+        #expect(silent.saveGift(newGift) == .saved)
         #expect(!silent.isReviewRequestPending)
 
         let (ready, preferences) = try makeComposition(
             state: ReviewPromptState(), launchEnvironment: ["KS_REVIEW_PROMPT": "ready"])
         #expect(preferences.reviewPromptState.activeDays == 3)
-        #expect(ready.saveGift(newGift))
+        #expect(ready.saveGift(newGift) == .saved)
         #expect(ready.isReviewRequestPending)
     }
 

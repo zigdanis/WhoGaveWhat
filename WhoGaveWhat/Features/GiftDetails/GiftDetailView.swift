@@ -2,12 +2,13 @@ import SwiftUI
 
 /// View / edit / delete a single saved gift. Reached by tapping a gift on Home.
 /// The gift is re-resolved from app data by id, so edits made in the Add sheet
-/// show immediately; the screen pops itself once the gift is deleted.
+/// show immediately; the screen pops itself once the gift is deleted, and stays with an error when it is not.
 struct GiftDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let giftId: String
     let composition: AppComposition
     @State private var confirmingDelete = false
+    @State private var deleteFailed = false
 
     var body: some View {
         Group {
@@ -163,10 +164,17 @@ struct GiftDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Delete", role: .destructive) {
-                composition.deleteGift(id: giftId, source: .giftDetail)
-                dismiss()
+                switch composition.deleteGift(id: giftId, source: .giftDetail) {
+                case .deleted: dismiss()
+                case .failed: deleteFailed = true
+                }
             }
             Button("Cancel", role: .cancel) {}
+        }
+        .alert("Could not delete the gift", isPresented: $deleteFailed) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Nothing was deleted. Try again.")
         }
     }
 }

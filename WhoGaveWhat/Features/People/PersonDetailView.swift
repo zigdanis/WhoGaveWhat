@@ -103,7 +103,10 @@ struct PersonDetailView: View {
                                 currencyCode: composition.currencyCode)
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
-                        .swipeToDelete(title: Text("Delete this gift?"), allowsFullSwipe: true) {
+                        .swipeToDelete(
+                            title: Text("Delete this gift?"), allowsFullSwipe: true,
+                            failureTitle: Text("Could not delete the gift")
+                        ) {
                             composition.deleteGift(id: gift.id, source: .personDetail)
                         }
                     }
@@ -159,8 +162,10 @@ struct PersonDetailView: View {
                 renaming = false
             },
             onDelete: {
-                composition.deletePerson(id: entityId, source: .personEditor)
-                dismiss()
+                // A failed deletion keeps this screen and the editor, which shows the error.
+                let result = composition.deletePerson(id: entityId, source: .personEditor)
+                if result == .deleted { dismiss() }
+                return result
             }
         )
     }

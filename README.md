@@ -15,6 +15,8 @@ xcodebuild -project WhoGaveWhat.xcodeproj -scheme WhoGaveWhat \
 
 Debug builds launched with `KS_SAMPLE_DATA=1` use the seeded in-memory sample store, for screenshots; Release builds ignore it.
 Its amounts are in the currency the device resolves (dollars or rubles).
+To show the save and delete error states, Debug builds launched with `KS_FAIL_SAVE=N` fail the next N gift saves and
+`KS_FAIL_DELETE=N` the next N gift or person deletions; later attempts go through. Release builds ignore both.
 
 App Store screenshots are plain captures of that sample data. The `Store screenshots` workflow (or
 `python3 scripts/store-screenshots.py OUT`) writes `screenshots/en-US` and `screenshots/ru` for fastlane;
