@@ -44,6 +44,9 @@ struct PersonDetailView: View {
         let list = filter == "received" ? recv : (filter == "given" ? given : gs)
 
         List {
+            if composition.data.isLoadFailing {
+                LoadFailedListSection { composition.reloadData() }
+            }
             // Header + stats + filter — quiet rows, no separators.
             Section {
                 VStack(spacing: 0) {

@@ -11,7 +11,10 @@ struct PeopleView: View {
     var body: some View {
         List {
             ScreenHeadingSection(title: "People")
-            if isEmpty {
+            if composition.data.isLoadFailing {
+                LoadFailedListSection { composition.reloadData() }
+            }
+            if composition.data.showsPeopleWelcome {
                 Section {
                     PeopleWelcome(
                         onAddYourself: { addMode = .yourself },
@@ -72,6 +75,7 @@ struct PeopleView: View {
         }
         // The first saved person and the last deleted one swap the welcome, list and button smoothly.
         .animation(.default, value: isEmpty)
+        .animation(.default, value: composition.data.isLoadFailing)
     }
 
     private var isEmpty: Bool {

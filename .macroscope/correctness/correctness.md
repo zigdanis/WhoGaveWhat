@@ -22,7 +22,7 @@ exclude:
 
 This file is the authoritative repository-specific review policy shared by Macroscope, CodeRabbit, and Codex.
 
-Review for concrete correctness, persistence, concurrency, localization, target-configuration, and user-visible regressions. Do not report formatting or style preferences. Do not request compatibility layers, migrations, or speculative abstractions: the app has not shipped and deliberately starts with a fresh schema. If a rule is unrelated to the changed code, ignore it. If there is no concrete issue, report no findings.
+Review for concrete correctness, persistence, concurrency, localization, target-configuration, and user-visible regressions. Do not report formatting or style preferences. Do not request compatibility layers or speculative abstractions. The app has shipped, so a store written by any earlier release must still open without data loss; `StoreFixtureMigrationTests` opens a fixture written by each shipped schema version. If a rule is unrelated to the changed code, ignore it. If there is no concrete issue, report no findings.
 
 ## Architecture and state
 
@@ -36,7 +36,7 @@ Review for concrete correctness, persistence, concurrency, localization, target-
 - A saved gift has nonempty trimmed text, distinct existing giver and recipient IDs, a stable ID, and a stable `createdAt` when edited. Its direction is never persisted: it is derived from the giver and recipient relative to the optional `selfPersonID` viewpoint, and is nil when there is no viewpoint or it is not an endpoint.
 - SwiftData writes must either save the full intended mutation or roll the context back and surface the error. Flag swallowed persistence failures, partial relationship updates, or deletes that leave related gifts invalid.
 - People are one flat, equal value model with no household, family, or contact roles; the only distinction is the optional single `selfPersonID` viewpoint, which must be cleared when that person is deleted. Creating, renaming, and deleting people must preserve gift endpoint validity and the product's explicit delete behavior.
-- The deliberately named `WhoGaveWhatSwiftData` store and the plain-value-model boundary are intentional. Do not introduce legacy imports, migration scaffolding, or alternate containers without a current product requirement.
+- The deliberately named `WhoGaveWhatSwiftData` store and the plain-value-model boundary are intentional. Do not introduce legacy imports, migration scaffolding, or alternate containers without a current product requirement. A store that cannot be opened is reported and left intact, never deleted, moved or recreated; the root offers Retry. Gifts and people are published together as one snapshot, a failed load keeps the previous snapshot and the viewpoint, and the empty-journal welcomes need a loaded snapshot.
 - Home timelines, person totals, and insights must agree on direction, dates, values, and filtering. Flag changes that make the same gift count differently across those views.
 
 ## Product behavior and localization

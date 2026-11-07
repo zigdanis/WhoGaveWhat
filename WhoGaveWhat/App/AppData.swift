@@ -8,6 +8,11 @@ final class AppData {
     private(set) var people: [Person] = []
     private(set) var selfPersonID: String?
     private(set) var occasions: [Occasion] = AppData.defaultOccasions
+    /// Whether `gifts` and `people` hold a complete snapshot from the store. Until the first load
+    /// succeeds both are empty without meaning that the journal is.
+    private(set) var hasLoadedSnapshot = false
+    /// Whether the latest load failed. The previous snapshot, if any, stays on screen meanwhile.
+    private(set) var isLoadFailing = false
 
     static let defaultOccasions = [
         Occasion(name: "Birthday"),
@@ -19,16 +24,31 @@ final class AppData {
         Occasion(name: "Just because")
     ]
 
-    func replaceGifts(_ gifts: [Gift]) {
+    /// Publishes gifts and people loaded together, so the screens never mix two loads.
+    func replaceSnapshot(gifts: [Gift], people: PeopleSnapshot) {
         self.gifts = gifts
+        self.people = people.people
         let savedOccasions = gifts.map(\.occasion).filter { !$0.isEmpty }
         occasions = savedOccasions.reduce(into: Self.defaultOccasions) { result, name in
             if !result.contains(where: { $0.name == name }) { result.append(Occasion(name: name)) }
         }
+        hasLoadedSnapshot = true
+        isLoadFailing = false
     }
 
-    func replacePeople(_ snapshot: PeopleSnapshot) {
-        people = snapshot.people
+    /// Keeps the last snapshot (or none) and lets the screens offer a retry.
+    func noteLoadFailed() {
+        isLoadFailing = true
+    }
+
+    /// The first-run welcomes stand for an empty journal, so they need a loaded snapshot that is current:
+    /// after a failed load an empty snapshot may be out of date.
+    var showsGiftsWelcome: Bool {
+        hasLoadedSnapshot && !isLoadFailing && gifts.isEmpty
+    }
+
+    var showsPeopleWelcome: Bool {
+        hasLoadedSnapshot && !isLoadFailing && people.isEmpty
     }
 
     func addOccasion(_ occasion: String) {

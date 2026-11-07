@@ -44,10 +44,13 @@ these super properties to everything: `app_environment` (testflight/appstore), `
 `people_count`, `has_viewpoint`, `currency` (the default currency for new gifts). The same values travel to Sentry as the
 `app_state` context, and every product event becomes a Sentry breadcrumb.
 
-Handled failures (`AnalyticsFailure`) go to Sentry only, tagged with `operation`: `load_gifts`,
-`load_people`, `migrate_gift_currency`, `save_gift`, `delete_gift`, `create_person`, `rename_person`, `update_person`,
-`delete_person`, `load_person_photo`, `cloud_icon_request`, `cloud_icon_decode`,
-`on_device_inference`, `spotlight_index`. A duplicate person name, being offline and cancellation
+Handled failures (`AnalyticsFailure`) go to Sentry only, tagged with `operation`: `open_store`
+(the store could not be opened at launch or on Retry; extra `attempt`), `migrate_gift_currency` (the store
+opened but could not save the currency of gifts from 1.2.0 and earlier; they still show in it and the next
+open tries again), `load_gifts` and `load_people` (extra `has_snapshot`: whether earlier records stay on
+screen), `save_gift`, `delete_gift`, `create_person`, `rename_person`, `update_person`, `delete_person`,
+`load_person_photo`, `cloud_icon_request`, `cloud_icon_decode`, `on_device_inference`, `spotlight_index`.
+A duplicate person name, being offline and cancellation
 are ordinary and are not reported.
 
 ## When nothing is sent

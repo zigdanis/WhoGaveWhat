@@ -1,16 +1,26 @@
 import SwiftUI
 
+/// The root: the app once its store is open, otherwise the wait or the failure with Retry.
 struct ContentView: View {
-    let composition: AppComposition
+    let launch: AppLaunch
 
     var body: some View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
-            RootAppView(composition: composition)
-                // The tab screens have no text fields; only sheets do, and they get their own keyboard inset.
-                // A sheet dismissed with the keyboard up in landscape on iPad can leave a stale keyboard inset on
-                // the other tabs, which then end their background at the keyboard's top edge.
-                .ignoresSafeArea(.keyboard)
+            switch launch.state {
+            case .ready(let composition):
+                RootAppView(composition: composition)
+                    // The tab screens have no text fields; only sheets do, and they get their own keyboard inset.
+                    // A sheet dismissed with the keyboard up in landscape on iPad can leave a stale keyboard inset
+                    // on the other tabs, which then end their background at the keyboard's top edge.
+                    .ignoresSafeArea(.keyboard)
+            case .opening:
+                StoreOpeningView()
+            case .failed:
+                StoreUnavailableView {
+                    Task { await launch.retry() }
+                }
+            }
         }
         // Set at the root so every screen and sheet sees the same short-window signal.
         .measuresCompactVerticalSpace()
@@ -22,8 +32,8 @@ struct ContentView: View {
         }
         .foregroundColor(Color.textPrimary)
         .preferredColorScheme(launchColorScheme)
-        .environment(\.analytics, composition.analytics)
-        .environment(\.haptics, composition.haptics)
+        .environment(\.analytics, launch.analytics)
+        .environment(\.haptics, launch.haptics)
     }
 
     /// Follows the system unless a verification launch sets `KS_APPEARANCE=dark|light`.

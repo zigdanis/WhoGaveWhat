@@ -4,44 +4,52 @@ import SwiftUI
 @main
 struct WhoGaveWhatApp: App {
     @Environment(\.scenePhase) private var scenePhase
-    @State private var composition: AppComposition
+    @State private var launch: AppLaunch
 
     init() {
-        // Monitoring starts before the store loads, so a failure there is already reported.
+        // Monitoring starts before the store opens, so a failure there is already reported.
         let analytics = Monitoring.makeAnalytics(configuration: .current())
-        _composition = State(
-            initialValue: AppComposition(
-                store: Self.launchStore, preferences: UserDefaultsPreferencesGateway(), analytics: analytics,
-                haptics: UIKitHapticsGateway()))
+        let haptics = UIKitHapticsGateway()
+        let launch = AppLaunch(
+            analytics: analytics, haptics: haptics, openStore: Self.storeOpener,
+            makeComposition: { store in
+                AppComposition(
+                    store: store, preferences: UserDefaultsPreferencesGateway(), analytics: analytics,
+                    haptics: haptics)
+            })
+        launch.start()
+        _launch = State(initialValue: launch)
     }
 
-    /// The persistent store, or in Debug builds the seeded in-memory one when a screenshot
-    /// launch sets `KS_SAMPLE_DATA=1`.
-    private static var launchStore: SwiftDataStore {
+    /// Opens the persistent store, or in Debug builds the seeded in-memory one when a screenshot
+    /// launch sets `KS_SAMPLE_DATA=1`, failing once when `KS_STORE_FAULT=open` (see `LaunchFault`).
+    private static var storeOpener: () throws -> SwiftDataStore {
         #if DEBUG
-            if ProcessInfo.processInfo.environment["KS_SAMPLE_DATA"] == "1" {
-                return .preview
-            }
+            let environment = ProcessInfo.processInfo.environment
+            let open: () throws -> SwiftDataStore =
+                environment["KS_SAMPLE_DATA"] == "1" ? { try .makePreview() } : { try .openPersistent(preferences: UserDefaultsPreferencesGateway()) }
+            return LaunchFault()?.wrapOpen(open) ?? open
+        #else
+            return { try .openPersistent(preferences: UserDefaultsPreferencesGateway()) }
         #endif
-        return .shared
     }
 
     var body: some Scene {
         WindowGroup {
-            ContentView(composition: composition)
+            ContentView(launch: launch)
                 .onContinueUserActivity(CSSearchableItemActionType) { activity in
-                    composition.continueAppDiscovery(activity)
+                    // Without an open store the activity has nothing to keep; the app is already in front.
+                    _ = launch.composition?.continueAppDiscovery(activity)
                 }
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             switch phase {
             case .active:
-                composition.sceneBecameActive()
-                Task { await composition.appDiscovery.refresh() }
+                launch.sceneBecameActive()
             case .background:
-                composition.sceneEnteredBackground()
+                launch.sceneEnteredBackground()
             default:
-                composition.sceneBecameInactive()
+                launch.sceneBecameInactive()
             }
         }
     }

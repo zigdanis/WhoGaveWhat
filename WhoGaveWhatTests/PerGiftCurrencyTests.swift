@@ -4,17 +4,18 @@ import Testing
 
 @testable import WhoGaveWhat
 
-private final class FixtureBundleToken {}
+/// The store App Store 1.0-1.2.0 wrote, from `Fixtures/StoreFixtures` (see `StoreFixtureMigrationTests`).
+private var fixture120: StoreFixtures.Fixture {
+    get throws {
+        try #require(StoreFixtures.manifest.fixtures.first { $0.file == "StoreFixture-1.2.0.store" })
+    }
+}
 
-/// A copy of `Fixtures/WhoGaveWhat-1.2.0.store`, a store written by the 1.2.0 model code
-/// (see `scripts/make-store-fixture.swift`), in its own temporary folder.
+/// A copy of the 1.2.0 store in its own temporary folder, because opening a store migrates it in place.
 private func copyOf120Store() throws -> URL {
-    let fixture = try #require(
-        Bundle(for: FixtureBundleToken.self).url(forResource: "WhoGaveWhat-1.2.0", withExtension: "store"))
-    let folder = FileManager.default.temporaryDirectory.appending(path: "PerGiftCurrencyTests-\(UUID().uuidString)")
-    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-    let url = folder.appending(path: "WhoGaveWhat.store")
-    try FileManager.default.copyItem(at: fixture, to: url)
+    let folder = try makeTemporaryDirectory()
+    let url = folder.appending(path: "\(SwiftDataStore.storeName).store")
+    try FileManager.default.copyItem(at: try StoreFixtures.url(of: try fixture120), to: url)
     return url
 }
 
@@ -31,10 +32,13 @@ private func defaultsSuite(preferring preference: SupportedCurrency) throws -> (
     return (defaults, { defaults.removePersistentDomain(forName: name) })
 }
 
-private func date(_ seconds: TimeInterval) -> Date { Date(timeIntervalSince1970: seconds) }
+/// How many gifts the fixture dataset holds.
+private var fixtureGiftCount: Int { StoreFixtures.manifest.dataset.gifts.count }
 
 @MainActor
 struct LegacyStoreMigrationTests {
+    /// Gifts from 1.2.0 were shown in the currency preference, so opening the app's store through the
+    /// preferences gives them that currency and keeps every other field.
     @Test(arguments: SupportedCurrency.allCases)
     func giftsFrom120TakeThePreferenceTheyWereShownIn(_ preference: SupportedCurrency) throws {
         let url = try copyOf120Store()
@@ -42,33 +46,14 @@ struct LegacyStoreMigrationTests {
         let (defaults, removeDefaults) = try defaultsSuite(preferring: preference)
         defer { removeDefaults() }
 
-        let store = try SwiftDataStore.persistent(url: url, preferences: UserDefaultsPreferencesGateway(defaults: defaults))
-        let gifts = try SwiftDataGiftGateway(context: store.context).loadGifts()
+        let store = try SwiftDataStore.openPersistent(
+            at: url, preferences: UserDefaultsPreferencesGateway(defaults: defaults))
+        let gifts = try SwiftDataGiftGateway(context: store.context).loadGifts().sorted { $0.id < $1.id }
         let people = try SwiftDataPeopleGateway(context: store.context).loadPeople().people
 
-        #expect(gifts.map(\.id) == ["fixture-zero", "fixture-book", "fixture-watch"])
+        #expect(gifts == StoreFixtures.expectedGifts(for: try fixture120, legacyCurrency: preference))
         #expect(gifts.allSatisfy { $0.currency == preference })
-        #expect(people.map(\.id) == ["anna", "boris", "vera"])
-        #expect(people.map(\.name) == ["Anna", "Boris", "Vera"])
-        // Every other field survives the migration unchanged.
-        let watch = try #require(gifts.first { $0.id == "fixture-watch" })
-        #expect(
-            watch
-                == Gift(
-                    id: "fixture-watch", emoji: "⌚", name: "Wristwatch", giverID: "boris", recipientID: "anna",
-                    paidByYou: false, occasion: "Birthday", date: date(1_767_225_600), value: 100,
-                    currency: preference, createdAt: date(1_767_229_200), emojiPickedByUser: true,
-                    lastSavedAt: date(1_767_232_800)))
-        let book = try #require(gifts.first { $0.id == "fixture-book" })
-        #expect(
-            book
-                == Gift(
-                    id: "fixture-book", emoji: "📚", name: "Book set", giverID: "anna", recipientID: "vera",
-                    paidByYou: true, occasion: "Graduation", date: date(1_772_323_200), value: 2_500,
-                    currency: preference, createdAt: date(1_772_326_800)))
-        let zero = try #require(gifts.first { $0.id == "fixture-zero" })
-        #expect(zero.value == 0)
-        #expect(zero.lastSavedAt == date(1_777_600_800))
+        #expect(people == StoreFixtures.expectedPeople(for: try fixture120))
     }
 
     @Test func theMigratedCurrencyIsStoredOnceAndLaterPreferencesDoNotChangeIt() throws {
@@ -77,12 +62,12 @@ struct LegacyStoreMigrationTests {
         let preferences = TestPreferencesGateway()
         preferences.setCurrencyCode("RUB")
         do {
-            let store = try SwiftDataStore.persistent(url: url, preferences: preferences)
+            let store = try SwiftDataStore.openPersistent(at: url, preferences: preferences)
             #expect(try SwiftDataGiftGateway(context: store.context).loadGifts().allSatisfy { $0.currency == .rub })
         }
 
         preferences.setCurrencyCode("USD")
-        let reopened = try SwiftDataStore.persistent(url: url, preferences: preferences)
+        let reopened = try SwiftDataStore.openPersistent(at: url, preferences: preferences)
 
         #expect(try reopened.assignLegacyGiftCurrency(.usd) == 0)
         #expect(try SwiftDataGiftGateway(context: reopened.context).loadGifts().allSatisfy { $0.currency == .rub })
@@ -94,19 +79,20 @@ struct LegacyStoreMigrationTests {
         let preferences = TestPreferencesGateway()
         preferences.setCurrencyCode("RUB")
         let composition = AppComposition(
-            store: try SwiftDataStore.persistent(url: url, preferences: preferences),
+            store: try SwiftDataStore.openPersistent(at: url, preferences: preferences),
             preferences: preferences,
             intelligence: TestIntelligenceGateway())
 
         #expect(
             composition.saveGift(
                 makeGiftInput(
-                    name: "Scarf", fromID: "anna", toID: "boris", value: 40, valueTouched: true, currency: .usd)))
+                    name: "Gloves", fromID: "p-anna", toID: "p-mark", value: 40, valueTouched: true, currency: .usd)))
 
         let byName = Dictionary(uniqueKeysWithValues: composition.data.gifts.map { ($0.name, $0) })
-        #expect(byName["Scarf"]?.currency == .usd)
-        #expect(byName["Wristwatch"]?.currency == .rub)
-        #expect(composition.data.gifts.count == 4)
+        #expect(byName["Gloves"]?.currency == .usd)
+        #expect(byName["Wool scarf"]?.currency == .rub)
+        #expect(byName["Concert tickets"]?.currency == .rub)
+        #expect(composition.data.gifts.count == fixtureGiftCount + 1)
     }
 
     /// Without a currency to give them, gifts from an old store fail to load instead of taking a guessed one.
@@ -118,7 +104,7 @@ struct LegacyStoreMigrationTests {
         #expect(throws: SwiftDataPersistenceError.self) {
             try SwiftDataGiftGateway(context: store.context).loadGifts()
         }
-        #expect(try store.assignLegacyGiftCurrency(.usd) == 3)
+        #expect(try store.assignLegacyGiftCurrency(.usd) == fixtureGiftCount)
         #expect(try SwiftDataGiftGateway(context: store.context).loadGifts().allSatisfy { $0.currency == .usd })
     }
 
@@ -131,7 +117,7 @@ struct LegacyStoreMigrationTests {
 
         let gifts = try SwiftDataGiftGateway(context: unmigrated.context, legacyGiftCurrency: .rub).loadGifts()
 
-        #expect(gifts.count == 3)
+        #expect(gifts.count == fixtureGiftCount)
         #expect(gifts.allSatisfy { $0.currency == .rub })
         #expect(unmigrated.legacyGiftCurrencyError == nil)
         // An unknown stored code is never replaced by the legacy currency.
@@ -160,13 +146,13 @@ struct LegacyStoreMigrationTests {
 
         #expect(failing.legacyGiftCurrencyError is DiskFull)
         #expect(analytics.failures.map(\.operation).contains("migrate_gift_currency"))
-        #expect(composition.data.gifts.count == 3)
+        #expect(composition.data.gifts.count == fixtureGiftCount)
         #expect(composition.data.gifts.allSatisfy { $0.currency == .rub })
         let unsaved = try failing.context.fetch(FetchDescriptor<StoredGift>(predicate: #Predicate { $0.currencyCode == nil }))
-        #expect(unsaved.count == 3)
+        #expect(unsaved.count == fixtureGiftCount)
 
         composition.setDefaultCurrency(.usd)
-        let reopened = try SwiftDataStore.persistent(url: url, preferences: preferences)
+        let reopened = try SwiftDataStore.openPersistent(at: url, preferences: preferences)
 
         #expect(reopened.legacyGiftCurrencyError == nil)
         #expect(try reopened.assignLegacyGiftCurrency(.usd) == 0)

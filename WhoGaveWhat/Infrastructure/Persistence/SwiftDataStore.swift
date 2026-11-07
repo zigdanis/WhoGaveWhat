@@ -10,63 +10,77 @@ final class SwiftDataStore {
     /// The seeded person who represents the user's own viewpoint.
     static let seedSelfPersonID = "anton"
 
-    static let shared: SwiftDataStore = {
-        do {
-            return try persistent(preferences: UserDefaultsPreferencesGateway())
-        } catch {
-            fatalError("SwiftData store failed to load: \(error)")
-        }
-    }()
-
-    /// Sample amounts follow the currency the app resolves for this device, as the screenshots show them.
-    static let preview: SwiftDataStore = {
-        do {
-            let currency = UserDefaultsPreferencesGateway().defaultCurrency
-            return try SwiftDataStore(inMemory: true, seed: true, sampleCurrency: currency)
-        } catch {
-            fatalError("SwiftData preview store failed to load: \(error)")
-        }
-    }()
-
-    /// The on-disk store. Gifts saved before each gift had its own currency (1.2.0 and earlier) were
-    /// all shown in the currency preference, so opening such a store gives them that currency.
-    static func persistent(url: URL? = nil, preferences: PreferencesGateway) throws -> SwiftDataStore {
-        try SwiftDataStore(url: url, legacyGiftCurrency: preferences.legacyGiftCurrency)
+    /// Opens the app's store in Application Support. It throws instead of trapping, so the root can
+    /// show a recoverable error and try again; nothing here deletes, moves or recreates the files.
+    /// Gifts saved before each gift had its own currency (1.2.0 and earlier) were all shown in the
+    /// currency preference, so opening such a store gives them that currency.
+    /// `url` replaces the Application Support location; only tests pass one.
+    static func openPersistent(at url: URL? = nil, preferences: PreferencesGateway) throws -> SwiftDataStore {
+        let legacyGiftCurrency = preferences.legacyGiftCurrency
+        if let url { return try SwiftDataStore(url: url, legacyGiftCurrency: legacyGiftCurrency) }
+        return try SwiftDataStore(legacyGiftCurrency: legacyGiftCurrency)
     }
+
+    /// The seeded in-memory store for screenshot launches. Sample amounts follow the currency the app
+    /// resolves for this device, as the screenshots show them.
+    static func makePreview() throws -> SwiftDataStore {
+        let currency = UserDefaultsPreferencesGateway().defaultCurrency
+        return try SwiftDataStore(inMemory: true, seed: true, sampleCurrency: currency)
+    }
+
+    static let schema = Schema([StoredPerson.self, StoredGift.self])
 
     let container: ModelContainer
     let context: ModelContext
     /// The currency gifts from before per-gift currencies take; nil when the store has none to migrate.
     let legacyGiftCurrency: SupportedCurrency?
-    /// Why storing `legacyGiftCurrency` on those gifts failed at open, such as a full disk. The app still
-    /// opens: `SwiftDataGiftGateway` shows them in the same currency, and the next open tries again.
+    /// Why storing `legacyGiftCurrency` on those gifts failed at open, such as a full disk. The store
+    /// still opens: `SwiftDataGiftGateway` shows them in the same currency, and the next open tries again.
     private(set) var legacyGiftCurrencyError: Error?
     /// Saves the legacy currency; tests replace it to make the save fail.
     private let saveLegacyGiftCurrency: (ModelContext) throws -> Void
 
     /// - Parameters:
-    ///   - url: Where the store file lives; nil uses the default location for `storeName`.
     ///   - legacyGiftCurrency: The currency for gifts saved before each gift had its own (1.2.0 and
     ///     earlier), which were shown in the currency preference of the time. Nil leaves them without
     ///     one, and loading them fails instead of guessing. A failure to store it is kept in
-    ///     `legacyGiftCurrencyError` rather than thrown, so it can never stop the app from opening.
+    ///     `legacyGiftCurrencyError` rather than thrown, so it never stops the store from opening.
     ///   - saveLegacyGiftCurrency: Saves that change; only tests pass another, to simulate a failed save.
-    init(
+    convenience init(
         inMemory: Bool = false,
-        url: URL? = nil,
         seed: Bool = false,
         sampleCurrency: SupportedCurrency = .rub,
         legacyGiftCurrency: SupportedCurrency? = nil,
         saveLegacyGiftCurrency: @escaping (ModelContext) throws -> Void = { try $0.save() }
     ) throws {
-        let schema = Schema([StoredPerson.self, StoredGift.self])
-        let configuration =
-            if let url {
-                ModelConfiguration(schema: schema, url: url)
-            } else {
-                ModelConfiguration(Self.storeName, schema: schema, isStoredInMemoryOnly: inMemory)
-            }
-        container = try ModelContainer(for: schema, configurations: [configuration])
+        try self.init(
+            configuration: ModelConfiguration(Self.storeName, schema: Self.schema, isStoredInMemoryOnly: inMemory),
+            seed: seed,
+            sampleCurrency: sampleCurrency,
+            legacyGiftCurrency: legacyGiftCurrency,
+            saveLegacyGiftCurrency: saveLegacyGiftCurrency)
+    }
+
+    /// The store file at `url`; tests open copies of the databases earlier releases wrote.
+    convenience init(
+        url: URL,
+        legacyGiftCurrency: SupportedCurrency? = nil,
+        saveLegacyGiftCurrency: @escaping (ModelContext) throws -> Void = { try $0.save() }
+    ) throws {
+        try self.init(
+            configuration: ModelConfiguration(Self.storeName, schema: Self.schema, url: url),
+            legacyGiftCurrency: legacyGiftCurrency,
+            saveLegacyGiftCurrency: saveLegacyGiftCurrency)
+    }
+
+    private init(
+        configuration: ModelConfiguration,
+        seed: Bool = false,
+        sampleCurrency: SupportedCurrency = .rub,
+        legacyGiftCurrency: SupportedCurrency?,
+        saveLegacyGiftCurrency: @escaping (ModelContext) throws -> Void
+    ) throws {
+        container = try ModelContainer(for: Self.schema, configurations: [configuration])
         context = ModelContext(container)
         context.autosaveEnabled = false
         self.legacyGiftCurrency = legacyGiftCurrency
