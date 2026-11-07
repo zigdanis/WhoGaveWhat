@@ -210,7 +210,8 @@ struct PerGiftCurrencyTests {
     /// Fills the Add gift form as a user would and saves it.
     @discardableResult
     private func addGift(
-        _ name: String, value: String, in composition: AppComposition, from: String = "kim", to: String = "me"
+        _ name: String, value: String, in composition: AppComposition, from: String = "kim", to: String = "me",
+        currency: SupportedCurrency? = nil
     ) -> Bool {
         let state = AddGiftState(
             route: .create, data: composition.data, suggestGift: composition.suggestGift,
@@ -219,6 +220,7 @@ struct PerGiftCurrencyTests {
         state.previewFrom(from)
         state.previewTo(to)
         state.valueText = value
+        if let currency { state.currency = currency }
         return composition.saveGift(state.input)
     }
 
@@ -321,14 +323,18 @@ struct PerGiftCurrencyTests {
     @Test func savedGiftAnalyticsNameTheCurrencyButNeverTheAmount() throws {
         let analytics = RecordingAnalyticsGateway()
         let (composition, _) = try makeComposition(analytics: analytics)
+        composition.setDefaultCurrency(.rub)
 
-        addGift("Headphones", value: "12345", in: composition)
+        addGift("Headphones", value: "12345", in: composition, currency: .usd)
 
+        #expect(try gift(named: "Headphones", in: composition).currency == .usd)
         guard case .giftSaved(let properties) = analytics.events.last else {
             Issue.record("No gift_saved event")
             return
         }
+        // The gift's own currency, not the default.
         #expect(properties.currency == "USD")
+        #expect(AnalyticsEvent.giftSaved(properties).properties["currency"] == .string("USD"))
         let values = AnalyticsEvent.giftSaved(properties).properties.values.map { "\($0)" }
         #expect(!values.contains { $0.contains("12345") })
     }
@@ -356,11 +362,20 @@ private final class PerCurrencyIntelligenceGateway: GiftIntelligenceGateway {
         waiting.removeValue(forKey: currency)?.resume()
     }
 
-    /// A request records its currency and starts waiting in the same main-actor step.
-    func waitForRequests(_ count: Int) async {
+    /// Answers every waiting request, so a failed test leaves nothing suspended.
+    func answerAll() {
+        let pending = waiting.values
+        waiting = [:]
+        pending.forEach { $0.resume() }
+    }
+
+    /// A request records its currency and starts waiting in the same main-actor step. False when
+    /// `count` requests did not arrive in time, so the test can stop instead of awaiting a task forever.
+    func waitForRequests(_ count: Int) async -> Bool {
         for _ in 0..<500 where currencies.count < count {
             try? await Task.sleep(for: .milliseconds(10))
         }
+        return currencies.count >= count
     }
 }
 
@@ -431,12 +446,13 @@ struct GiftCurrencyEstimateTests {
         let people = composition.data.people.map(\.id)
         state.previewFrom(people[0])
         state.previewTo(people[1])
+        defer { gateway.answerAll() }
         state.setName("guitar")
-        await gateway.waitForRequests(1)
+        try #require(await gateway.waitForRequests(1))
         let rubleRequest = try #require(state.suggestionTask)
 
         state.currency = .usd
-        await gateway.waitForRequests(2)
+        try #require(await gateway.waitForRequests(2))
         let dollarRequest = try #require(state.suggestionTask)
         // The new answer arrives first, then the one for the currency the user left.
         gateway.answer(.usd)
