@@ -211,11 +211,51 @@ struct DataLoadRecoveryTests {
         #expect(picker.query == "Dana")
         #expect(selected.isEmpty)
 
-        _ = picker.updateQuery("Dana K")
-        #expect(!picker.creationFailed)
-        #expect(picker.createAndSelectPerson(named: "Dana K", create: { _ in "dana" }, select: { selected.append($0) }) == "dana")
+        // UIKit can deliver the same text again; that is no new attempt, so the message stays.
+        _ = picker.updateQuery("Dana")
+        #expect(picker.creationFailed)
+
+        // Trying again with the same name and succeeding clears it.
+        #expect(picker.createAndSelectPerson(named: "Dana", create: { _ in "dana" }, select: { selected.append($0) }) == "dana")
         #expect(!picker.creationFailed)
         #expect(selected == ["dana"])
+
+        // Editing the name after a failure clears it too.
+        #expect(picker.createAndSelectPerson(named: "Dana", create: { _ in nil }, select: { selected.append($0) }) == nil)
+        #expect(picker.creationFailed)
+        _ = picker.updateQuery("Dana K")
+        #expect(!picker.creationFailed)
+    }
+
+    @Test(arguments: ["gift", "person"])
+    func aRefusedDeleteStillCancelsAndSuppressesTheRatingRequest(_ target: String) {
+        let preferences = TestPreferencesGateway()
+        preferences.selfPersonID = "me"
+        preferences.reviewPromptState = ReviewPromptState(
+            activeDays: 3, lastActiveDay: "2026-11-01", firstActiveDate: Date().addingTimeInterval(-2 * 86_400))
+        let gifts = ScriptedGiftGateway(gifts: (1...4).map { gift("g\($0)", from: "ann", to: "me") })
+        let people = ScriptedPeopleGateway(people: [person("me"), person("ann"), person("bob")])
+        let composition = AppComposition(
+            giftGateway: gifts, peopleGateway: people, preferences: preferences,
+            intelligence: TestIntelligenceGateway(), launchEnvironment: [:])
+        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "ann", toID: "me")))
+        #expect(composition.isReviewRequestPending)
+
+        gifts.loadError = TestStoreError()
+        #expect(!composition.reloadData())
+        if target == "gift" {
+            composition.deleteGift(id: "g1", source: .home)
+            #expect(gifts.gifts.contains { $0.id == "g1" })
+        } else {
+            composition.deletePerson(id: "bob", source: .peopleList)
+            #expect(people.people.contains { $0.id == "bob" })
+        }
+        #expect(!composition.isReviewRequestPending)
+
+        // After recovery the setback still holds for this session.
+        gifts.loadError = nil
+        #expect(composition.saveGift(makeGiftInput(name: "Scarf", fromID: "ann", toID: "me")))
+        #expect(!composition.isReviewRequestPending)
     }
 
     @Test func aCompleteSnapshotStillClearsAMissingViewpoint() {
