@@ -142,6 +142,37 @@ struct LegacyStoreMigrationTests {
         }
     }
 
+    /// A failed save of the migration never stops the app: the failure is reported, the gifts show in
+    /// the migration currency, and the next open stores that currency even if the default changed.
+    @Test func aFailedMigrationSaveKeepsTheJournalAndIsRetriedOnTheNextOpen() throws {
+        struct DiskFull: Error {}
+        let url = try copyOf120Store()
+        defer { removeCopy(url) }
+        let preferences = TestPreferencesGateway()
+        preferences.setCurrencyCode("RUB")
+        let analytics = RecordingAnalyticsGateway()
+
+        let failing = try SwiftDataStore(
+            url: url, legacyGiftCurrency: preferences.legacyGiftCurrency,
+            saveLegacyGiftCurrency: { _ in throw DiskFull() })
+        let composition = AppComposition(
+            store: failing, preferences: preferences, intelligence: TestIntelligenceGateway(), analytics: analytics)
+
+        #expect(failing.legacyGiftCurrencyError is DiskFull)
+        #expect(analytics.failures.map(\.operation).contains("migrate_gift_currency"))
+        #expect(composition.data.gifts.count == 3)
+        #expect(composition.data.gifts.allSatisfy { $0.currency == .rub })
+        let unsaved = try failing.context.fetch(FetchDescriptor<StoredGift>(predicate: #Predicate { $0.currencyCode == nil }))
+        #expect(unsaved.count == 3)
+
+        composition.setDefaultCurrency(.usd)
+        let reopened = try SwiftDataStore.persistent(url: url, preferences: preferences)
+
+        #expect(reopened.legacyGiftCurrencyError == nil)
+        #expect(try reopened.assignLegacyGiftCurrency(.usd) == 0)
+        #expect(try SwiftDataGiftGateway(context: reopened.context).loadGifts().allSatisfy { $0.currency == .rub })
+    }
+
     /// The migration currency is fixed the first time it is read, so changing the default currency
     /// before the migration is stored (for example after a failed save) cannot relabel old gifts.
     @Test func theLegacyCurrencyIsPinnedOnFirstRead() throws {

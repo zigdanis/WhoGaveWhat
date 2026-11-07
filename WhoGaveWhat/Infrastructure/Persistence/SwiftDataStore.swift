@@ -41,6 +41,8 @@ final class SwiftDataStore {
     /// Why storing `legacyGiftCurrency` on those gifts failed at open, such as a full disk. The app still
     /// opens: `SwiftDataGiftGateway` shows them in the same currency, and the next open tries again.
     private(set) var legacyGiftCurrencyError: Error?
+    /// Saves the legacy currency; tests replace it to make the save fail.
+    private let saveLegacyGiftCurrency: (ModelContext) throws -> Void
 
     /// - Parameters:
     ///   - url: Where the store file lives; nil uses the default location for `storeName`.
@@ -48,12 +50,14 @@ final class SwiftDataStore {
     ///     earlier), which were shown in the currency preference of the time. Nil leaves them without
     ///     one, and loading them fails instead of guessing. A failure to store it is kept in
     ///     `legacyGiftCurrencyError` rather than thrown, so it can never stop the app from opening.
+    ///   - saveLegacyGiftCurrency: Saves that change; only tests pass another, to simulate a failed save.
     init(
         inMemory: Bool = false,
         url: URL? = nil,
         seed: Bool = false,
         sampleCurrency: SupportedCurrency = .rub,
-        legacyGiftCurrency: SupportedCurrency? = nil
+        legacyGiftCurrency: SupportedCurrency? = nil,
+        saveLegacyGiftCurrency: @escaping (ModelContext) throws -> Void = { try $0.save() }
     ) throws {
         let schema = Schema([StoredPerson.self, StoredGift.self])
         let configuration =
@@ -66,6 +70,7 @@ final class SwiftDataStore {
         context = ModelContext(container)
         context.autosaveEnabled = false
         self.legacyGiftCurrency = legacyGiftCurrency
+        self.saveLegacyGiftCurrency = saveLegacyGiftCurrency
 
         if let legacyGiftCurrency {
             do {
@@ -90,7 +95,7 @@ final class SwiftDataStore {
             gift.currencyCode = currency.code
         }
         do {
-            try context.save()
+            try saveLegacyGiftCurrency(context)
         } catch {
             context.rollback()
             throw error

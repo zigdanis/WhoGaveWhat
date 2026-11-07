@@ -18,6 +18,8 @@ struct NetBadge: View {
                     in: RoundedRectangle(cornerRadius: DesignMetrics.radiusSmall, style: .continuous))
             }
         }
+        // Sized before its row's label, so it is offered the row's free width rather than a share of it.
+        .layoutPriority(1)
     }
 
     private func chip(_ content: some View, in shape: some Shape) -> some View {
