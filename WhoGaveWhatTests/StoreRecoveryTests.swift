@@ -227,6 +227,21 @@ struct DataLoadRecoveryTests {
         #expect(!picker.creationFailed)
     }
 
+    @Test(arguments: [[], ["-KS_STORE_FAULT", "open"]])
+    func verificationLaunchArgumentsKeepTheRatingRequestOff(_ arguments: [String]) {
+        let preferences = TestPreferencesGateway()
+        preferences.reviewPromptState = ReviewPromptState(
+            activeDays: 3, lastActiveDay: "2026-11-01", firstActiveDate: Date().addingTimeInterval(-2 * 86_400))
+        let gifts = ScriptedGiftGateway(gifts: (1...4).map { gift("g\($0)", from: "ann", to: "me") })
+        let people = ScriptedPeopleGateway(people: [person("me"), person("ann")])
+        let composition = AppComposition(
+            giftGateway: gifts, peopleGateway: people, preferences: preferences,
+            intelligence: TestIntelligenceGateway(), launchEnvironment: [:], launchArguments: arguments)
+
+        #expect(composition.saveGift(makeGiftInput(name: "Book", fromID: "ann", toID: "me")))
+        #expect(composition.isReviewRequestPending == arguments.isEmpty)
+    }
+
     @Test(arguments: ["gift", "person"])
     func aRefusedDeleteStillCancelsAndSuppressesTheRatingRequest(_ target: String) {
         let preferences = TestPreferencesGateway()

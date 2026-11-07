@@ -38,6 +38,7 @@ final class AppComposition {
         haptics: HapticsGateway
     ) {
         let environment = ProcessInfo.processInfo.environment
+        let arguments = ProcessInfo.processInfo.arguments
         // Verification launches with `KS_CLOUD_ICONS=stub` get fixed answers only: no network, no on-device model.
         let intelligence: GiftIntelligenceGateway
         if environment["KS_CLOUD_ICONS"] == "stub" {
@@ -50,7 +51,7 @@ final class AppComposition {
         var giftGateway: GiftGateway = SwiftDataGiftGateway(context: store.context)
         var peopleGateway: PeopleGateway = SwiftDataPeopleGateway(context: store.context)
         #if DEBUG
-            if let fault = LaunchFault(environment: environment, arguments: ProcessInfo.processInfo.arguments) {
+            if let fault = LaunchFault(environment: environment, arguments: arguments) {
                 giftGateway = fault.wrap(giftGateway)
                 peopleGateway = fault.wrap(peopleGateway)
             }
@@ -61,6 +62,7 @@ final class AppComposition {
             preferences: preferences,
             intelligence: intelligence,
             launchEnvironment: environment,
+            launchArguments: arguments,
             analytics: analytics,
             haptics: haptics
         )
@@ -91,6 +93,7 @@ final class AppComposition {
         preferences: PreferencesGateway,
         intelligence: GiftIntelligenceGateway,
         launchEnvironment: [String: String] = ProcessInfo.processInfo.environment,
+        launchArguments: [String] = [],
         analytics: AnalyticsGateway = NoopAnalyticsGateway(),
         haptics: HapticsGateway = NoopHapticsGateway()
     ) {
@@ -104,7 +107,8 @@ final class AppComposition {
         self.peopleGateway = peopleGateway
         currencyCode = preferences.currencyCode
         router = AppRouter(launchEnvironment: launchEnvironment, analytics: analytics)
-        reviewPrompt = Self.makeReviewPrompt(preferences: preferences, launchEnvironment: launchEnvironment)
+        reviewPrompt = Self.makeReviewPrompt(
+            preferences: preferences, launchEnvironment: launchEnvironment, launchArguments: launchArguments)
         loadGiftsUseCase = LoadGiftsUseCase(gateway: giftGateway)
         saveGiftUseCase = SaveGiftUseCase(giftGateway: giftGateway, suggestGift: suggestGift)
         deleteGiftUseCase = DeleteGiftUseCase(gateway: giftGateway)
@@ -128,7 +132,7 @@ final class AppComposition {
     /// Verification launches never ask for a rating, except `KS_REVIEW_PROMPT=ready`, which starts on
     /// the third day of use so the next new gift (with five gifts in total) shows the request.
     private static func makeReviewPrompt(
-        preferences: PreferencesGateway, launchEnvironment: [String: String]
+        preferences: PreferencesGateway, launchEnvironment: [String: String], launchArguments: [String]
     ) -> ReviewPromptUseCase {
         let isReadyLaunch = launchEnvironment["KS_REVIEW_PROMPT"] == "ready"
         if isReadyLaunch {
@@ -141,7 +145,8 @@ final class AppComposition {
         }
         return ReviewPromptUseCase(
             preferences: preferences,
-            isEnabled: isReadyLaunch || !MonitoringConfiguration.isVerificationLaunch(launchEnvironment))
+            isEnabled: isReadyLaunch
+                || !MonitoringConfiguration.isVerificationLaunch(launchEnvironment, arguments: launchArguments))
     }
 
     /// Loads gifts and people together and publishes them as one snapshot. When either fetch fails,
