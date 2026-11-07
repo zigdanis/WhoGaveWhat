@@ -4,8 +4,9 @@
     /// Debug-only verification launches that make the store fail once, so the recovery screens can be
     /// walked on a simulator without touching the data there. `KS_STORE_FAULT=open` fails the first attempt
     /// to open the store, `load` the first gifts fetch and `people` the first people fetch (with the gifts
-    /// already fetched); the next attempt works. Release builds compile none of this, so the variable
-    /// does nothing there, and like every `KS_` launch it keeps monitoring off.
+    /// already fetched); the next attempt works. A launcher that cannot set the environment passes
+    /// `-KS_STORE_FAULT open` as launch arguments instead. Release builds compile none of this, so the
+    /// setting does nothing there, and like every `KS_` launch it keeps monitoring off.
     struct LaunchFault {
         enum Kind: String {
             case open
@@ -17,8 +18,14 @@
 
         let kind: Kind
 
-        init?(environment: [String: String] = ProcessInfo.processInfo.environment) {
-            guard let kind = environment["KS_STORE_FAULT"].flatMap(Kind.init(rawValue:)) else { return nil }
+        init?(
+            environment: [String: String] = ProcessInfo.processInfo.environment,
+            arguments: [String] = ProcessInfo.processInfo.arguments
+        ) {
+            let flag = arguments.firstIndex(of: "-KS_STORE_FAULT").flatMap { index in
+                arguments.indices.contains(index + 1) ? arguments[index + 1] : nil
+            }
+            guard let kind = (environment["KS_STORE_FAULT"] ?? flag).flatMap(Kind.init(rawValue:)) else { return nil }
             self.kind = kind
         }
 

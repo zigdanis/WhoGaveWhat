@@ -28,7 +28,7 @@ struct WhoGaveWhatApp: App {
             let environment = ProcessInfo.processInfo.environment
             let open: () throws -> SwiftDataStore =
                 environment["KS_SAMPLE_DATA"] == "1" ? { try .makePreview() } : { try .openPersistent() }
-            return LaunchFault(environment: environment)?.wrapOpen(open) ?? open
+            return LaunchFault()?.wrapOpen(open) ?? open
         #else
             return { try .openPersistent() }
         #endif

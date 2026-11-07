@@ -369,20 +369,25 @@ struct StoreOpenRecoveryTests {
 
     #if DEBUG
         @Test func debugLaunchFaultsFailOnlyTheFirstAttempt() throws {
-            #expect(LaunchFault(environment: [:]) == nil)
-            #expect(LaunchFault(environment: ["KS_STORE_FAULT": "unknown"]) == nil)
+            #expect(LaunchFault(environment: [:], arguments: []) == nil)
+            #expect(LaunchFault(environment: ["KS_STORE_FAULT": "unknown"], arguments: []) == nil)
+            #expect(LaunchFault(environment: [:], arguments: ["App", "-KS_STORE_FAULT"]) == nil)
+            #expect(LaunchFault(environment: [:], arguments: ["App", "-KS_STORE_FAULT", "people"])?.kind == .people)
+            #expect(
+                MonitoringConfiguration.isVerificationLaunch([:], arguments: ["App", "-KS_STORE_FAULT", "open"]))
+            #expect(!MonitoringConfiguration.isVerificationLaunch([:], arguments: ["App", "-NSDoubleLocalizedStrings"]))
 
-            let open = try #require(LaunchFault(environment: ["KS_STORE_FAULT": "open"]))
+            let open = try #require(LaunchFault(environment: ["KS_STORE_FAULT": "open"], arguments: []))
                 .wrapOpen { try SwiftDataStore(inMemory: true) }
             #expect(throws: LaunchFault.InjectedError.self) { try open() }
             _ = try open()
 
-            let gifts = try #require(LaunchFault(environment: ["KS_STORE_FAULT": "load"]))
+            let gifts = try #require(LaunchFault(environment: ["KS_STORE_FAULT": "load"], arguments: []))
                 .wrap(ScriptedGiftGateway(gifts: [gift("g1", from: "a", to: "b")]))
             #expect(throws: LaunchFault.InjectedError.self) { try gifts.loadGifts() }
             #expect(try gifts.loadGifts().map(\.id) == ["g1"])
 
-            let people = try #require(LaunchFault(environment: ["KS_STORE_FAULT": "people"]))
+            let people = try #require(LaunchFault(environment: ["KS_STORE_FAULT": "people"], arguments: []))
                 .wrap(ScriptedPeopleGateway(people: [person("a")]))
             #expect(throws: LaunchFault.InjectedError.self) { try people.loadPeople() }
             #expect(try people.loadPeople().people.map(\.id) == ["a"])

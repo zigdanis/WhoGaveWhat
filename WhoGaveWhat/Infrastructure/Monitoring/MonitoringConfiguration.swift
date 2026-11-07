@@ -42,6 +42,7 @@ struct MonitoringConfiguration: Equatable {
     static func current(
         info: [String: Any] = Bundle.main.infoDictionary ?? [:],
         launchEnvironment: [String: String] = ProcessInfo.processInfo.environment,
+        launchArguments: [String] = ProcessInfo.processInfo.arguments,
         receiptURL: URL? = Bundle.main.appStoreReceiptURL
     ) -> MonitoringConfiguration {
         #if DEBUG
@@ -60,14 +61,15 @@ struct MonitoringConfiguration: Equatable {
             sentryDSN: info[sentryDSNInfoKey] as? String,
             isDebugBuild: isDebugBuild,
             isSimulator: isSimulator,
-            isVerificationLaunch: isVerificationLaunch(launchEnvironment),
+            isVerificationLaunch: isVerificationLaunch(launchEnvironment, arguments: launchArguments),
             isTestFlight: receiptURL?.lastPathComponent == "sandboxReceipt"
         )
     }
 
-    /// Screenshot, smoke and UI-test launches set `KS_` variables; none of them is a real user.
-    static func isVerificationLaunch(_ environment: [String: String]) -> Bool {
-        environment.keys.contains { $0.hasPrefix("KS_") }
+    /// Screenshot, smoke and UI-test launches set `KS_` variables, or pass them as `-KS_…` launch
+    /// arguments when the launcher cannot set the environment; none of them is a real user.
+    static func isVerificationLaunch(_ environment: [String: String], arguments: [String] = []) -> Bool {
+        environment.keys.contains { $0.hasPrefix("KS_") } || arguments.contains { $0.hasPrefix("-KS_") }
     }
 
     var isReportingAllowed: Bool {

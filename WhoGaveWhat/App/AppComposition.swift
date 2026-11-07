@@ -50,7 +50,7 @@ final class AppComposition {
         var giftGateway: GiftGateway = SwiftDataGiftGateway(context: store.context)
         var peopleGateway: PeopleGateway = SwiftDataPeopleGateway(context: store.context)
         #if DEBUG
-            if let fault = LaunchFault(environment: environment) {
+            if let fault = LaunchFault(environment: environment, arguments: ProcessInfo.processInfo.arguments) {
                 giftGateway = fault.wrap(giftGateway)
                 peopleGateway = fault.wrap(peopleGateway)
             }
