@@ -1,6 +1,6 @@
 import Foundation
 
-struct AddGiftDraft {
+struct AddGiftDraft: Equatable {
     var name = ""
     var emoji: String?
     var value: Int?

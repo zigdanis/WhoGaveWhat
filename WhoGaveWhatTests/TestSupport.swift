@@ -112,3 +112,101 @@ func makeGiftInput(
         occasion: nil, date: AppDate.today, createdAt: nil
     )
 }
+
+/// The error a failing fake throws. Like a sanitized store error, it carries no user data.
+struct TestWriteFailure: Error {}
+
+/// Wraps a real gift gateway and refuses the next `failingSaves` saves and `failingDeletes` deletions
+/// without writing anything, like SwiftData rolling back a failed save.
+@MainActor
+final class FailingGiftGateway: GiftGateway {
+    private let base: GiftGateway
+    var failingSaves = 0
+    var failingDeletes = 0
+
+    init(base: GiftGateway) { self.base = base }
+
+    func loadGifts() throws -> [Gift] { try base.loadGifts() }
+
+    func save(_ gift: Gift) throws {
+        if failingSaves > 0 {
+            failingSaves -= 1
+            throw TestWriteFailure()
+        }
+        try base.save(gift)
+    }
+
+    func deleteGift(id: String) throws {
+        if failingDeletes > 0 {
+            failingDeletes -= 1
+            throw TestWriteFailure()
+        }
+        try base.deleteGift(id: id)
+    }
+}
+
+/// Wraps a real people gateway and refuses the next `failingDeletes` deletions without writing anything.
+@MainActor
+final class FailingPeopleGateway: PeopleGateway {
+    private let base: PeopleGateway
+    var failingDeletes = 0
+
+    init(base: PeopleGateway) { self.base = base }
+
+    func loadPeople() throws -> PeopleSnapshot { try base.loadPeople() }
+
+    func createPerson(id: String, name: String, colorHex: UInt, sortIndex: Int) throws {
+        try base.createPerson(id: id, name: name, colorHex: colorHex, sortIndex: sortIndex)
+    }
+
+    func renamePerson(id: String, name: String) throws { try base.renamePerson(id: id, name: name) }
+
+    func updatePerson(id: String, name: String, imageData: Data?) throws {
+        try base.updatePerson(id: id, name: name, imageData: imageData)
+    }
+
+    func deletePerson(id: String) throws {
+        if failingDeletes > 0 {
+            failingDeletes -= 1
+            throw TestWriteFailure()
+        }
+        try base.deletePerson(id: id)
+    }
+}
+
+/// A seeded in-memory composition whose writes can be made to fail, plus direct read access to its store.
+@MainActor
+struct FailableComposition {
+    let composition: AppComposition
+    let gifts: FailingGiftGateway
+    let people: FailingPeopleGateway
+    let preferences: TestPreferencesGateway
+    private let store: SwiftDataStore
+
+    init(
+        selfPersonID: String? = SwiftDataStore.seedSelfPersonID,
+        launchEnvironment: [String: String] = [:],
+        analytics: AnalyticsGateway = NoopAnalyticsGateway(),
+        haptics: HapticsGateway = NoopHapticsGateway()
+    ) throws {
+        store = try SwiftDataStore(inMemory: true, seed: true)
+        preferences = TestPreferencesGateway()
+        preferences.selfPersonID = selfPersonID
+        gifts = FailingGiftGateway(base: SwiftDataGiftGateway(context: store.context))
+        people = FailingPeopleGateway(base: SwiftDataPeopleGateway(context: store.context))
+        composition = AppComposition(
+            store: store,
+            preferences: preferences,
+            intelligence: TestIntelligenceGateway(),
+            launchEnvironment: launchEnvironment,
+            analytics: analytics,
+            haptics: haptics,
+            giftGateway: gifts,
+            peopleGateway: people
+        )
+    }
+
+    /// What the store holds right now, read past the composition's cached data.
+    func storedGifts() throws -> [Gift] { try SwiftDataGiftGateway(context: store.context).loadGifts() }
+    func storedPeople() throws -> [Person] { try SwiftDataPeopleGateway(context: store.context).loadPeople().people }
+}

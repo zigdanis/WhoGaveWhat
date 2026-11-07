@@ -100,7 +100,8 @@ struct PeopleView: View {
             confirmLabel: Text(verbatim: deletePersonActionLabel(count)),
             message: Text(verbatim: personDeleteMessage(person.name, count: count)),
             allowsFullSwipe: false,
-            isEnabled: composition.deletePersonUseCase.canDelete(id: person.id)
+            isEnabled: composition.deletePersonUseCase.canDelete(id: person.id),
+            failureTitle: Text("Could not delete this person")
         ) {
             composition.deletePerson(id: person.id, source: .peopleList)
         }
