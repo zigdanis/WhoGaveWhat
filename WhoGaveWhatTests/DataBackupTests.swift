@@ -664,7 +664,10 @@ struct ICloudBackupServiceTests {
             firstDefaults.removePersistentDomain(forName: firstSuite)
             secondDefaults.removePersistentDomain(forName: secondSuite)
         }
-        #expect(first.writerID == first.writerID)
+        // The first read creates the ID; later reads return the same one.
+        let created = first.writerID
+        let readAgain = first.writerID
+        #expect(created == readAgain)
         #expect(first.writerID != second.writerID)
         #expect(UUID(uuidString: first.writerID) != nil)
     }
