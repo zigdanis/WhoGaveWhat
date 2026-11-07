@@ -37,7 +37,10 @@ struct HomeView: View {
                                     currencyCode: composition.currencyCode)
                             }
                             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
-                            .swipeToDelete(title: Text("Delete this gift?"), allowsFullSwipe: true) {
+                            .swipeToDelete(
+                                title: Text("Delete this gift?"), allowsFullSwipe: true,
+                                failureTitle: Text("Could not delete the gift")
+                            ) {
                                 composition.deleteGift(id: gift.id, source: .home)
                             }
                         }
