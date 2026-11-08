@@ -7,11 +7,22 @@ struct GiftRow: View {
     let gift: Gift
     let subtitle: String
     let dateLabel: String
+    /// True while the gift's icon is still being inferred after Save; the icon shows a spinner meanwhile.
+    var isInferringIcon = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             GiftSquare(emoji: gift.emoji, tint: Color.fillTrack)
+                .overlay(alignment: .bottomTrailing) {
+                    if isInferringIcon {
+                        ProgressView().controlSize(.mini).padding(2)
+                            .transition(.opacity)
+                    }
+                }
+                // The late icon replaces the saved one with a short crossfade.
+                .animation(.easeInOut(duration: 0.3), value: gift.emoji)
+                .animation(.easeInOut(duration: 0.2), value: isInferringIcon)
             if dynamicTypeSize >= .accessibility1 {
                 VStack(alignment: .leading, spacing: 6) {
                     names
