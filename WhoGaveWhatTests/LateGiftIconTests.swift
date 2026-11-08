@@ -208,6 +208,21 @@ struct LateGiftIconTests {
         #expect(fixture.composition.pendingGiftIcons.giftIDs.isEmpty)
     }
 
+    @Test func deletingAPersonStopsTheirGiftsRequests() async throws {
+        let fixture = try makeFixture()
+        fixture.cloud.holdsRequests = true
+        let sheet = fixture.makeSheet()
+        fill(sheet, name: "Skateboard")
+        await fixture.cloud.waitForRequests(1)
+        saveAndClose(sheet, in: fixture.composition)
+        #expect(!fixture.composition.pendingGiftIcons.giftIDs.isEmpty)
+
+        #expect(fixture.composition.deletePerson(id: "marina", source: .peopleList) == .deleted)
+
+        #expect(fixture.composition.pendingGiftIcons.giftIDs.isEmpty)
+        fixture.cloud.releaseRequests()
+    }
+
     @Test func anEditSheetOpenWhileTheIconLandsKeepsIt() async throws {
         let fixture = try makeFixture()
         fixture.cloud.holdsRequests = true

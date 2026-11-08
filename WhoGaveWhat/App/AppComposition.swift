@@ -508,11 +508,14 @@ final class AppComposition {
             noteReviewSetback()
             return .failed
         }
-        let giftsRemoved = data.gifts.filter { $0.giverID == id || $0.recipientID == id }.count
+        let removedGiftIDs = data.gifts.filter { $0.giverID == id || $0.recipientID == id }.map(\.id)
+        let giftsRemoved = removedGiftIDs.count
         let deleted: Bool
         do {
             try deletePersonUseCase.execute(id: id)
             deleted = true
+            // Their gifts went with them, so nothing waits for those icons any more.
+            removedGiftIDs.forEach { pendingGiftIcons.stop(giftID: $0) }
         } catch {
             analytics.report(AnalyticsFailure(operation: "delete_person", error: error))
             haptics.play(.error)
