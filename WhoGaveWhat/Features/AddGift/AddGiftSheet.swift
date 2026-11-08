@@ -285,6 +285,7 @@ private struct GiftBasicsSection: View {
                     onTap: onSelectFrom
                 )
                 .modifier(pickerPopover(.from))
+                .accessibilityActions { swapAction }
                 RowDivider().padding(.leading, 58)
                 GiftEntryRow(
                     icon: .asset("ArrowRightToLine"),
@@ -296,7 +297,16 @@ private struct GiftBasicsSection: View {
                     onTap: onSelectTo
                 )
                 .modifier(pickerPopover(.to))
+                .accessibilityActions { swapAction }
             }
+        }
+    }
+
+    /// VoiceOver can swap from either row, including at accessibility text sizes, where the button is hidden.
+    @ViewBuilder
+    private var swapAction: some View {
+        if canSwapPeople {
+            Button("Swap From and To", action: onSwapPeople)
         }
     }
 
