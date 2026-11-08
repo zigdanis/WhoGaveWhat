@@ -20,6 +20,8 @@ enum GiftSheetSource: String, Equatable {
     case toolbarButton = "toolbar_button"
     case giftDetail = "gift_detail"
     case insightsWelcome = "insights_welcome"
+    /// The floating or toolbar button on a person's screen.
+    case personDetail = "person_detail"
 }
 
 /// How the gift sheet closed. A failed save keeps the sheet open, so it is not an outcome;
@@ -140,8 +142,12 @@ enum AnalyticsEvent: Equatable {
     case giftPickerOpened(GiftPickerKind)
     case giftIconPicked(custom: Bool)
     case giftPriceEdited(hadEstimate: Bool)
-    case giftSuggestionCompleted(provider: SuggestionProvider, hasIcon: Bool, hasPrice: Bool, latencyMilliseconds: Int)
+    /// `afterSave` marks an answer that arrived after a quick Save had already closed the sheet.
+    case giftSuggestionCompleted(
+        provider: SuggestionProvider, hasIcon: Bool, hasPrice: Bool, latencyMilliseconds: Int, afterSave: Bool = false)
     case occasionAdded
+    /// The swap button turned the gift's giver and recipient around.
+    case giftPeopleSwapped
     /// Save was tapped with a complete form; `giftSaved` or `giftSaveFailed` follows.
     case giftSaveAttempted(mode: GiftSheetMode)
     case giftSaved(GiftSavedProperties)
@@ -180,6 +186,7 @@ enum AnalyticsEvent: Equatable {
         case .giftPriceEdited: "gift_price_edited"
         case .giftSuggestionCompleted: "gift_suggestion_completed"
         case .occasionAdded: "occasion_added"
+        case .giftPeopleSwapped: "gift_people_swapped"
         case .giftSaveAttempted: "gift_save_attempted"
         case .giftSaved: "gift_saved"
         case .giftSaveFailed: "gift_save_failed"
@@ -208,7 +215,8 @@ enum AnalyticsEvent: Equatable {
             ["mode": .string(mode.rawValue), "source": .string(source.rawValue)]
         case .giftSheetClosed(let mode, let outcome):
             ["mode": .string(mode.rawValue), "outcome": .string(outcome.rawValue)]
-        case .giftDetailViewed, .openedFromSpotlight, .occasionAdded, .privacyPolicyOpened, .licensesOpened:
+        case .giftDetailViewed, .openedFromSpotlight, .occasionAdded, .giftPeopleSwapped, .privacyPolicyOpened,
+            .licensesOpened:
             [:]
         case .personDetailViewed(let isSelf, let giftsCount):
             ["is_self": .bool(isSelf), "gifts_count": .int(giftsCount)]
@@ -220,13 +228,14 @@ enum AnalyticsEvent: Equatable {
             ["source": .string(custom ? "custom" : "list")]
         case .giftPriceEdited(let hadEstimate):
             ["had_estimate": .bool(hadEstimate)]
-        case .giftSuggestionCompleted(let provider, let hasIcon, let hasPrice, let latency):
+        case .giftSuggestionCompleted(let provider, let hasIcon, let hasPrice, let latency, let afterSave):
             [
                 "provider": .string(provider.rawValue),
                 "outcome": .string(hasIcon || hasPrice ? "suggested" : "empty"),
                 "has_icon": .bool(hasIcon),
                 "has_price": .bool(hasPrice),
-                "latency_ms": .int(latency)
+                "latency_ms": .int(latency),
+                "after_save": .bool(afterSave)
             ]
         case .giftSaved(let gift):
             [

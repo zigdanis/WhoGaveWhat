@@ -68,7 +68,7 @@ struct CloudIconSuggestionStateTests {
         await state.suggestionTask?.value
 
         let providers = analytics.events.compactMap { event -> SuggestionProvider? in
-            if case .giftSuggestionCompleted(let provider, _, _, _) = event { provider } else { nil }
+            if case .giftSuggestionCompleted(let provider, _, _, _, _) = event { provider } else { nil }
         }
         #expect(providers == [.cloud, .onDevice])
         #expect(state.draft.aiEmoji == "👟")

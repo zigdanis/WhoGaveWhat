@@ -17,13 +17,14 @@ outside the cases listed under "When nothing is sent". The full list lives in
 | Event | Properties | Fires when |
 |-------|------------|------------|
 | `tab_selected` | `tab` | A tab bar tap changes the tab |
-| `gift_sheet_opened` | `mode` create/edit, `source` welcome_card/insights_welcome/floating_button/toolbar_button/gift_detail | The Add or Edit gift sheet opens |
+| `gift_sheet_opened` | `mode` create/edit, `source` welcome_card/insights_welcome/floating_button/toolbar_button/gift_detail/person_detail | The Add or Edit gift sheet opens; `person_detail` (the floating or toolbar button on a person's screen) opens it with that person already in it |
 | `gift_sheet_closed` | `mode`, `outcome` saved/cancelled | The sheet closes. A failed save keeps it open, so it is not an outcome |
 | `gift_picker_opened` | `picker` giver/recipient/occasion/icon/date | A picker opens inside the sheet |
 | `gift_icon_picked` | `source` list/custom | The user overrides the inferred icon |
 | `gift_price_edited` | `had_estimate` | The first edit of the price field in a sheet |
-| `gift_suggestion_completed` | `provider` cloud/on_device (whichever answered; cloud when none did), `outcome`, `has_icon`, `has_price`, `latency_ms` | An icon/price inference returns |
+| `gift_suggestion_completed` | `provider` cloud/on_device (whichever answered; cloud when none did), `outcome`, `has_icon`, `has_price`, `latency_ms`, `after_save` | An icon/price inference returns. `after_save` is true when Save had already closed the sheet: the app kept the request running and gives the saved gift the icon (never the price) |
 | `occasion_added` | – | A custom occasion is typed |
+| `gift_people_swapped` | – | The swap button in the gift sheet turns From and To around |
 | `gift_save_attempted` | `mode` | Save is tapped with a complete form; `gift_saved` or `gift_save_failed` follows |
 | `gift_saved` | `mode`, `direction` received/given/unrelated/no_viewpoint, `icon_source`, `value_source` user/estimate/none, `occasion` (built-in key or `custom`), `currency` (the gift's own ISO code, never its amount), `paid_by_you`, `date_offset`, `gifts_count` | A gift is stored |
 | `gift_save_failed` | `mode` | The store refused the gift, or the records on screen could not be reloaded first; the sheet stays open with everything entered and Save can be tapped again |
@@ -53,7 +54,8 @@ Handled failures (`AnalyticsFailure`) go to Sentry only, tagged with `operation`
 (the store could not be opened at launch or on Retry; extra `attempt`), `migrate_gift_currency` (the store
 opened but could not save the currency of gifts from 1.2.0 and earlier; they still show in it and the next
 open tries again), `load_gifts` and `load_people` (extra `has_snapshot`: whether earlier records stay on
-screen), `save_gift`, `delete_gift`, `create_person`, `rename_person`, `update_person`, `delete_person`,
+screen), `save_gift`, `save_late_gift_icon` (an icon that arrived after Save could not be stored; the gift keeps
+the icon it was saved with), `delete_gift`, `create_person`, `rename_person`, `update_person`, `delete_person`,
 `load_person_photo`, `cloud_icon_request`, `cloud_icon_decode`, `on_device_inference`, `spotlight_index`,
 `read_backup` (the journal could not be read for a backup or export), `write_backup` (the iCloud backup
 could not be written; once per launch), `restore_backup` (extra `source`: the store refused a restore,

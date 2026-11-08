@@ -3,8 +3,8 @@ import SwiftUI
 
 /// Native iOS 26 shell: a Liquid Glass tab bar floating over four navigation
 /// stacks (Home, People, Insights, Settings), with a floating "Add a gift" glass button
-/// pinned just above it on Home. Person detail is a native push; "Add a gift"
-/// is a native sheet.
+/// pinned just above it on Home and on a person's screen. Person detail is a native push;
+/// "Add a gift" is a native sheet.
 struct RootAppView: View {
     let composition: AppComposition
     @Environment(\.requestReview) private var requestReview
@@ -117,42 +117,49 @@ struct ScreenScroll<Content: View>: View {
 /// The floating "Add a gift" button, pinned just above the tab bar on Home.
 /// A regular-width iPad window shows `ToolbarAddButton` in the top toolbar instead.
 struct AddGiftFAB: View {
-    let router: AppRouter
+    let action: () -> Void
 
     var body: some View {
-        FloatingActionButton(title: "Add a gift", systemImage: "plus") {
-            router.presentNewGift(from: .floatingButton)
-        }
-        .accessibilityLabel("Add a gift")
+        FloatingActionButton(title: "Add a gift", systemImage: "plus", action: action)
+            .accessibilityLabel("Add a gift")
     }
 }
 
 extension View {
     /// The "Add a gift" action while `isVisible`: pinned above the bottom tab bar, or in the top toolbar of a
     /// regular-width iPad window, where the tab bar sits at the top and the bottom center is out of reach.
-    func addGiftAction(composition: AppComposition, isVisible: Bool = true) -> some View {
-        modifier(AddGiftAction(router: composition.router, isVisible: isVisible))
+    /// On a person's screen `personID` opens the sheet with that person already in it.
+    func addGiftAction(composition: AppComposition, isVisible: Bool = true, personID: String? = nil) -> some View {
+        modifier(AddGiftAction(router: composition.router, isVisible: isVisible, personID: personID))
     }
 }
 
 private struct AddGiftAction: ViewModifier {
     let router: AppRouter
     let isVisible: Bool
+    let personID: String?
     @Environment(\.adaptiveLayout) private var layout
 
     func body(content: Content) -> some View {
         content
             .safeAreaInset(edge: .bottom) {
-                if isVisible && !layout.placesAddActionInToolbar { AddGiftFAB(router: router) }
+                if isVisible && !layout.placesAddActionInToolbar {
+                    AddGiftFAB { present(from: .floatingButton) }
+                }
             }
             .toolbar {
                 if isVisible && layout.placesAddActionInToolbar {
                     ToolbarItem(placement: .primaryAction) {
                         ToolbarAddButton(title: "Add a gift") {
-                            router.presentNewGift(from: .toolbarButton)
+                            present(from: .toolbarButton)
                         }
                     }
                 }
             }
+    }
+
+    /// A person's screen reports its own source whichever button was used.
+    private func present(from source: GiftSheetSource) {
+        router.presentNewGift(from: personID == nil ? source : .personDetail, personID: personID)
     }
 }
