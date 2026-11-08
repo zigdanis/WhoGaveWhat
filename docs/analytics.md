@@ -22,7 +22,7 @@ outside the cases listed under "When nothing is sent". The full list lives in
 | `gift_picker_opened` | `picker` giver/recipient/occasion/icon/date | A picker opens inside the sheet |
 | `gift_icon_picked` | `source` list/custom | The user overrides the inferred icon |
 | `gift_price_edited` | `had_estimate` | The first edit of the price field in a sheet |
-| `gift_suggestion_completed` | `provider` cloud/on_device (whichever answered; cloud when none did), `outcome`, `has_icon`, `has_price`, `latency_ms` | An icon/price inference returns |
+| `gift_suggestion_completed` | `provider` cloud/on_device (whichever answered; cloud when none did), `outcome`, `has_icon`, `has_price`, `latency_ms`, `after_save` | An icon/price inference returns. `after_save` is true when Save had already closed the sheet: the app kept the request running and gives the saved gift the icon (never the price) |
 | `occasion_added` | – | A custom occasion is typed |
 | `gift_people_swapped` | – | The swap button in the gift sheet turns From and To around |
 | `gift_save_attempted` | `mode` | Save is tapped with a complete form; `gift_saved` or `gift_save_failed` follows |
@@ -51,7 +51,8 @@ Handled failures (`AnalyticsFailure`) go to Sentry only, tagged with `operation`
 (the store could not be opened at launch or on Retry; extra `attempt`), `migrate_gift_currency` (the store
 opened but could not save the currency of gifts from 1.2.0 and earlier; they still show in it and the next
 open tries again), `load_gifts` and `load_people` (extra `has_snapshot`: whether earlier records stay on
-screen), `save_gift`, `delete_gift`, `create_person`, `rename_person`, `update_person`, `delete_person`,
+screen), `save_gift`, `save_late_gift_icon` (an icon that arrived after Save could not be stored; the gift keeps
+the icon it was saved with), `delete_gift`, `create_person`, `rename_person`, `update_person`, `delete_person`,
 `load_person_photo`, `cloud_icon_request`, `cloud_icon_decode`, `on_device_inference`, `spotlight_index`.
 A duplicate person name, being offline and cancellation are ordinary and are not reported. A change
 refused because the records could not be reloaded first is reported once, as that load failure.

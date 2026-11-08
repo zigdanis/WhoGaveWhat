@@ -24,6 +24,9 @@ final class AppComposition {
     let saveGiftUseCase: SaveGiftUseCase
     let deleteGiftUseCase: DeleteGiftUseCase
     let suggestGift: SuggestGiftUseCase
+    /// Icon inferences that keep running after a quick Save closed the gift sheet.
+    let pendingGiftIcons: PendingGiftIcons
+    private let applyLateGiftIcon: ApplyLateGiftIconUseCase
     let buildTimeline = BuildGiftTimelineUseCase()
     let loadPersonGifts = LoadPersonGiftsUseCase()
     let loadPeopleUseCase: LoadPeopleUseCase
@@ -127,6 +130,8 @@ final class AppComposition {
         saveGiftUseCase = SaveGiftUseCase(giftGateway: giftGateway, suggestGift: suggestGift)
         deleteGiftUseCase = DeleteGiftUseCase(gateway: giftGateway)
         self.suggestGift = suggestGift
+        pendingGiftIcons = PendingGiftIcons(suggestGift: suggestGift)
+        applyLateGiftIcon = ApplyLateGiftIconUseCase(giftGateway: giftGateway)
         loadPeopleUseCase = LoadPeopleUseCase(gateway: peopleGateway)
         createPersonUseCase = createPerson
         renamePersonUseCase = RenamePersonUseCase(
@@ -237,8 +242,10 @@ final class AppComposition {
 
     /// Saves the gift and says whether it was stored. Only a stored gift counts as saved and plays the
     /// success haptic; after a failure the store is unchanged and the same input can be saved again.
+    /// `iconRequest` is an icon inference that had not answered yet: once the gift is stored the app
+    /// keeps following it and gives the gift its icon when the answer arrives.
     @discardableResult
-    func saveGift(_ input: SaveGiftInput) -> GiftSaveResult {
+    func saveGift(_ input: SaveGiftInput, iconRequest: GiftIconRequest? = nil) -> GiftSaveResult {
         guard input.canSave else { return .invalid }
         let mode: GiftSheetMode = input.editingGiftID == nil ? .create : .edit
         analytics.track(.giftSaveAttempted(mode: mode))
@@ -249,6 +256,13 @@ final class AppComposition {
             haptics.play(.error)
             noteReviewSetback()
             return .failed
+        }
+        var input = input
+        // Read only now: the refresh above may have brought a late icon the sheet never saw.
+        if input.keepsStoredEmoji, input.emoji == nil, let id = input.editingGiftID,
+            let stored = data.gifts.first(where: { $0.id == id }), !stored.emojiPickedByUser
+        {
+            input.aiEmoji = stored.emoji
         }
         let gift: Gift
         do {
@@ -264,12 +278,52 @@ final class AppComposition {
         reloadData()
         analytics.track(.giftSaved(giftSavedProperties(for: gift, input: input)))
         haptics.play(.success)
+        if let iconRequest {
+            followIcon(iconRequest, giftID: gift.id)
+        } else if input.keepsStoredEmoji {
+            // The icon was left to the gift, so a late one may still replace it if the name is unchanged.
+            pendingGiftIcons.stopIfOutdated(giftID: gift.id, current: gift)
+        } else {
+            // This save decided the icon itself; an older request must not overwrite it.
+            pendingGiftIcons.stop(giftID: gift.id)
+        }
         if input.editingGiftID == nil,
             reviewPrompt.newGiftSaved(giftsCount: data.gifts.count, peopleCount: data.people.count)
         {
             isReviewRequestPending = true
         }
         return .saved
+    }
+
+    // MARK: - Icons that arrive after Save
+
+    private func followIcon(_ request: GiftIconRequest, giftID: String) {
+        pendingGiftIcons.follow(request, giftID: giftID) { [weak self] result in
+            self?.lateIconArrived(result, for: request, giftID: giftID)
+        }
+    }
+
+    /// Stores the late icon on the gift unless the gift moved on meanwhile. Like any change, it is not
+    /// written over records that could not be reloaded; the gift then keeps the icon it was saved with.
+    private func lateIconArrived(_ result: GiftIntelligenceResult?, for request: GiftIconRequest, giftID: String) {
+        analytics.track(
+            .giftSuggestionCompleted(
+                provider: result?.provider ?? .cloud,
+                hasIcon: result?.emoji != nil,
+                hasPrice: result?.value != nil,
+                latencyMilliseconds: Int(Date().timeIntervalSince(request.startedAt) * 1_000),
+                afterSave: true))
+        guard let emoji = result?.emoji, refreshStaleSnapshot() else { return }
+        do {
+            guard
+                try applyLateGiftIcon.execute(
+                    emoji: emoji, giftID: giftID, requestedName: request.name, gifts: data.gifts)
+            else { return }
+        } catch {
+            analytics.report(AnalyticsFailure(operation: "save_late_gift_icon", error: error))
+            return
+        }
+        reloadData()
     }
 
     // MARK: - App Store rating request
@@ -355,6 +409,7 @@ final class AppComposition {
             return .failed
         }
         noteReviewSetback()
+        pendingGiftIcons.stop(giftID: id)
         reloadData()
         analytics.track(.giftDeleted(source: source, giftsCount: data.gifts.count))
         return .deleted
@@ -453,11 +508,14 @@ final class AppComposition {
             noteReviewSetback()
             return .failed
         }
-        let giftsRemoved = data.gifts.filter { $0.giverID == id || $0.recipientID == id }.count
+        let removedGiftIDs = data.gifts.filter { $0.giverID == id || $0.recipientID == id }.map(\.id)
+        let giftsRemoved = removedGiftIDs.count
         let deleted: Bool
         do {
             try deletePersonUseCase.execute(id: id)
             deleted = true
+            // Their gifts went with them, so nothing waits for those icons any more.
+            removedGiftIDs.forEach { pendingGiftIcons.stop(giftID: $0) }
         } catch {
             analytics.report(AnalyticsFailure(operation: "delete_person", error: error))
             haptics.play(.error)

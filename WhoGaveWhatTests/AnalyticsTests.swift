@@ -53,6 +53,10 @@ struct AnalyticsEventCatalogTests {
         #expect(event.properties["provider"] == .string("on_device"))
         #expect(event.properties["outcome"] == .string("suggested"))
         #expect(event.properties["latency_ms"] == .int(90))
+        #expect(event.properties["after_save"] == .bool(false))
+        let late = AnalyticsEvent.giftSuggestionCompleted(
+            provider: .cloud, hasIcon: true, hasPrice: false, latencyMilliseconds: 2_400, afterSave: true)
+        #expect(late.properties["after_save"] == .bool(true))
         #expect(AnalyticsEvent.giftIconPicked(custom: false).properties["source"] == .string("list"))
     }
 

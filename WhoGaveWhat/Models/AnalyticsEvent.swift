@@ -142,7 +142,9 @@ enum AnalyticsEvent: Equatable {
     case giftPickerOpened(GiftPickerKind)
     case giftIconPicked(custom: Bool)
     case giftPriceEdited(hadEstimate: Bool)
-    case giftSuggestionCompleted(provider: SuggestionProvider, hasIcon: Bool, hasPrice: Bool, latencyMilliseconds: Int)
+    /// `afterSave` marks an answer that arrived after a quick Save had already closed the sheet.
+    case giftSuggestionCompleted(
+        provider: SuggestionProvider, hasIcon: Bool, hasPrice: Bool, latencyMilliseconds: Int, afterSave: Bool = false)
     case occasionAdded
     /// The swap button turned the gift's giver and recipient around.
     case giftPeopleSwapped
@@ -218,13 +220,14 @@ enum AnalyticsEvent: Equatable {
             ["source": .string(custom ? "custom" : "list")]
         case .giftPriceEdited(let hadEstimate):
             ["had_estimate": .bool(hadEstimate)]
-        case .giftSuggestionCompleted(let provider, let hasIcon, let hasPrice, let latency):
+        case .giftSuggestionCompleted(let provider, let hasIcon, let hasPrice, let latency, let afterSave):
             [
                 "provider": .string(provider.rawValue),
                 "outcome": .string(hasIcon || hasPrice ? "suggested" : "empty"),
                 "has_icon": .bool(hasIcon),
                 "has_price": .bool(hasPrice),
-                "latency_ms": .int(latency)
+                "latency_ms": .int(latency),
+                "after_save": .bool(afterSave)
             ]
         case .giftSaved(let gift):
             [

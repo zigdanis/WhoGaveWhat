@@ -18,8 +18,15 @@ final class AddGiftState {
     private let analytics: AnalyticsGateway
     private var hasEditedPrice = false
     private(set) var suggestionTask: Task<Void, Never>?
+    /// The trimmed name whose inference is scheduled or running and has not answered yet.
+    private var pendingSuggestionName: String?
+    /// The request that inference sent, once it was sent. Saving can hand it over to the app.
+    private var inFlightRequest: GiftIconRequest?
     /// The automatically chosen emoji a gift being edited already has; kept until a rename yields a better guess.
     private var storedEmoji: String?
+    /// True while the inferred icon is still the one the edited gift was stored with: nothing in this sheet
+    /// replaced it. Saving then keeps whatever icon the stored gift has by then, including a late one.
+    private var inheritsStoredEmoji = false
 
     init(
         route: GiftSheetRoute,
@@ -55,7 +62,10 @@ final class AddGiftState {
                 createdAt: gift.createdAt,
                 aiEmoji: gift.emojiPickedByUser ? nil : gift.emoji
             )
-            if !gift.emojiPickedByUser { storedEmoji = gift.emoji }
+            if !gift.emojiPickedByUser {
+                storedEmoji = gift.emoji
+                inheritsStoredEmoji = true
+            }
         } else if let personID = route.prefilledPersonID {
             prefill(personID: personID, data: data)
         }
@@ -109,7 +119,8 @@ final class AddGiftState {
             paidByYou: draft.paidByYou,
             occasion: draft.occasion,
             date: draft.date,
-            createdAt: draft.createdAt
+            createdAt: draft.createdAt,
+            keepsStoredEmoji: draft.emoji == nil && inheritsStoredEmoji
         )
     }
 
@@ -150,11 +161,7 @@ final class AddGiftState {
             draft.value = digits.isEmpty ? nil : Int(digits)
             draft.valueTouched = true
             // With a hand-picked emoji too, nothing an answer brings could still be used.
-            if draft.emoji != nil {
-                suggestionTask?.cancel()
-                suggestionTask = nil
-                aiLoading = false
-            }
+            if draft.emoji != nil { cancelSuggestion() }
         }
     }
 
@@ -179,14 +186,14 @@ final class AddGiftState {
         }
         draft.name = name
         // Without a specific keyword match, keep the emoji the gift already had instead of the generic one.
-        draft.aiEmoji = suggestGift.keywordSuggestion(for: name) == nil ? storedEmoji : nil
+        let keepsStoredEmoji = suggestGift.keywordSuggestion(for: name) == nil && storedEmoji != nil
+        draft.aiEmoji = keepsStoredEmoji ? storedEmoji : nil
+        inheritsStoredEmoji = keepsStoredEmoji
         scheduleSuggestion(after: debounce)
     }
 
     private func scheduleSuggestion(after delay: Duration) {
-        suggestionTask?.cancel()
-        suggestionTask = nil
-        aiLoading = false
+        cancelSuggestion()
         let trimmed = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
         // A hand-picked emoji still leaves the price to estimate while the user hasn't entered one.
         let wantsAnswer = draft.emoji == nil || !draft.valueTouched
@@ -195,6 +202,7 @@ final class AddGiftState {
             clearEstimate()
             return
         }
+        pendingSuggestionName = trimmed
         suggestionTask = Task {
             try? await Task.sleep(for: delay)
             guard !isStale(trimmed) else { return }
@@ -203,9 +211,16 @@ final class AddGiftState {
             let started = Date()
             // The price comes back in the currency it was asked for, which the gift keeps if saved with it.
             let currency = draft.currency
-            let result = await suggestGift.intelligentSuggestion(for: trimmed, currency: currency)
+            // A separate task, so that a Save can hand the request over instead of cutting it off.
+            let suggestGift = suggestGift
+            let request = Task { await suggestGift.intelligentSuggestion(for: trimmed, currency: currency) }
+            inFlightRequest = GiftIconRequest(name: trimmed, currency: currency, startedAt: started, task: request)
+            let result = await request.value
             // A request the user typed past was cancelled; only answers that arrive are measured.
+            // After a Save handed it over, the app measures and uses the answer instead.
             guard !isStale(trimmed) else { return }
+            pendingSuggestionName = nil
+            inFlightRequest = nil
             analytics.track(
                 .giftSuggestionCompleted(
                     provider: result?.provider ?? .cloud,
@@ -213,7 +228,10 @@ final class AddGiftState {
                     hasPrice: result?.value != nil,
                     latencyMilliseconds: Int(Date().timeIntervalSince(started) * 1_000)))
             aiLoading = false
-            if let emoji = result?.emoji, draft.emoji == nil { draft.aiEmoji = emoji }
+            if let emoji = result?.emoji, draft.emoji == nil {
+                draft.aiEmoji = emoji
+                inheritsStoredEmoji = false
+            }
             // The user's own value always wins; an answer without a price clears an earlier estimate.
             // A price for a currency the user has since switched away from is dropped; the switch asked again.
             if !draft.valueTouched, draft.currency == currency {
@@ -221,6 +239,25 @@ final class AddGiftState {
                 draft.estimatedCurrency = result?.value == nil ? nil : currency
             }
         }
+    }
+
+    /// Stops the inference in progress, including a request already sent.
+    private func cancelSuggestion() {
+        suggestionTask?.cancel()
+        suggestionTask = nil
+        inFlightRequest?.task?.cancel()
+        inFlightRequest = nil
+        pendingSuggestionName = nil
+        aiLoading = false
+    }
+
+    /// The icon inference to keep following after Save: the icon is still inferred and the model has not
+    /// answered for the saved name yet. It reuses the request already sent, if any.
+    var pendingIconRequest: GiftIconRequest? {
+        let trimmed = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard draft.emoji == nil, pendingSuggestionName == trimmed else { return nil }
+        if let inFlightRequest, inFlightRequest.name == trimmed { return inFlightRequest }
+        return GiftIconRequest(name: trimmed, currency: draft.currency, startedAt: Date(), task: nil)
     }
 
     private func clearEstimate() {
@@ -272,10 +309,7 @@ final class AddGiftState {
         draft.emoji = emoji
         analytics.track(.giftIconPicked(custom: custom))
         // An answer still on its way can bring the price; it never replaces the picked emoji.
-        if draft.valueTouched {
-            suggestionTask?.cancel()
-            suggestionTask = nil
-        }
+        if draft.valueTouched { cancelSuggestion() }
         aiLoading = false
         picker = nil
     }
@@ -291,8 +325,12 @@ final class AddGiftState {
     /// and the error is shown, so Save can simply be tapped again.
     func save(using composition: AppComposition) {
         guard input.canSave else { return }
-        switch composition.saveGift(input) {
+        let iconRequest = pendingIconRequest
+        switch composition.saveGift(input, iconRequest: iconRequest) {
         case .saved:
+            // The app now owns the request and keeps it running after the sheet closes.
+            if iconRequest != nil { inFlightRequest = nil }
+            cancel()
             isShowingSaveError = false
             // A programmatic switch, not a tab tap, so it sets the tab directly.
             if returnsHomeAfterSave { composition.router.tab = .home }
@@ -305,9 +343,7 @@ final class AddGiftState {
     }
 
     func cancel() {
-        suggestionTask?.cancel()
-        suggestionTask = nil
-        aiLoading = false
+        cancelSuggestion()
     }
 }
 
