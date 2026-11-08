@@ -26,7 +26,8 @@ CANDIDATES=
 for WORKFLOW in tests.yml simulator-app.yml; do
   CANDIDATES+=$(gh run list --repo "$REPO" --workflow "$WORKFLOW" --status success "${FILTER[@]}" \
     --limit 20 --json databaseId,headSha,event 2>/dev/null \
-    | jq -c --arg target "$TARGET" '.[] | select($target != "master" or .event != "pull_request")' || true)
+    | jq -c --arg target "$TARGET" --arg workflow "$WORKFLOW" \
+      '.[] | select($target != "master" or .event != "pull_request") | . + {workflow: $workflow}' || true)
   CANDIDATES+=$'\n'
 done
 while read -r CANDIDATE; do
@@ -43,6 +44,9 @@ test -n "$RUN" || {
   exit 1
 }
 RUN_ID=$(jq -r .databaseId <<< "$RUN")
+if [ "$(jq -r .workflow <<< "$RUN")" = simulator-app.yml ]; then
+  echo "warning: no tested Debug app for $TARGET; this is the retired Release build, which ignores KS_SAMPLE_DATA and the other KS_ variables. Push the branch after merging master to get a Debug one." >&2
+fi
 
 APP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/whogavewhat-simulator-app.XXXXXX")
 gh run download "$RUN_ID" --repo "$REPO" --name simulator-app --dir "$APP_DIR"

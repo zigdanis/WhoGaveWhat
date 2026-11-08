@@ -14,7 +14,8 @@ DIRECTORY=$1
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 python3 "$ROOT/scripts/store-screenshots.py" "$DIRECTORY" --check >&2
 
-REPO=$(gh api 'repos/{owner}/{repo}' --jq .full_name)
+# The App Store metadata workflow runs only in this repository, so the draft must be created here.
+REPO=zigdanis/WhoGaveWhat
 HEAD_SHA=$(jq -r .head_sha "$DIRECTORY/iphone-6.3/metadata.json")
 [[ "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "error: no commit in $DIRECTORY/iphone-6.3/metadata.json" >&2; exit 1; }
 gh api "repos/$REPO/commits/$HEAD_SHA" --silent \

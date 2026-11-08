@@ -45,8 +45,9 @@ IPHONE_63 = Display("iphone-6.3", "6.3-inch", frozenset({(1206, 2622), (1179, 25
                     (r"iPhone (\d+) Pro",))
 # Without a Dynamic Island large set Apple also requires Face ID large, the 6.5-inch set; the MacPro pool keeps
 # iPhone 14 Plus for it, so only one Dynamic Island set is shot.
+# Only models whose screen is one of these sizes: iPhone 15 Plus and 14 Pro Max onwards are 1290×2796.
 IPHONE_65 = Display("iphone-6.5", "6.5-inch", frozenset({(1284, 2778), (1242, 2688)}), "large_", None,
-                    (r"iPhone (\d+) Plus", r"iPhone (\d+) Pro Max"))
+                    (r"iPhone 14 Plus", r"iPhone 1[1-3] Pro Max"))
 # The iPhone Duo Simulator boots folded, so its screenshots show the outer display.
 IPHONE_DUO = Display("iphone-duo", "iPhone Duo outer display", frozenset({(1398, 2034)}), "duo_", "iPhone Duo", ())
 # Apple requires the 13-inch iPad set once the app runs on iPad; smaller iPads get it scaled down. fastlane deliver
@@ -348,9 +349,23 @@ def check_upload(directory):
     missing = [key for key in DISPLAYS if key not in {display.key for display, _metadata, _shots in sets}]
     if missing:
         raise ValueError(f"{directory} lacks the screenshot sets {missing}; the upload would delete them from the store")
-    commits = {metadata.get("head_sha") for _display, metadata, _shots in sets}
+    for display, metadata, _shots in sets:
+        if not re.fullmatch(r"[0-9a-f]{40}", str(metadata.get("head_sha", ""))):
+            raise ValueError(f"The {display.key} set names no commit (head_sha) in its metadata.json")
+    commits = {metadata["head_sha"] for _display, metadata, _shots in sets}
     if len(commits) != 1:
-        raise ValueError(f"The sets come from different commits: {sorted(map(str, commits))}")
+        raise ValueError(f"The sets come from different commits: {sorted(commits)}")
+    # deliver uploads every image in a language folder, so nothing may sit there that the sets did not validate.
+    languages = sorted(path.name for path in (directory / "screenshots").iterdir())
+    if languages != sorted(LOCALES):
+        raise ValueError(f"Expected the language folders {sorted(LOCALES)}, got {languages}")
+    for locale in LOCALES:
+        expected = {output_name(number, slug, display.prefix)
+                    for display, _metadata, shots_by_locale in sets for number, slug, _size in shots_by_locale[locale]}
+        unexpected = sorted(path.name for path in (directory / "screenshots" / locale).iterdir()
+                            if path.name not in expected)
+        if unexpected:
+            raise ValueError(f"{locale} holds files outside the checked sets: {unexpected}")
     return sets
 
 
@@ -479,8 +494,9 @@ def run(directory, simulator_id, locales=LOCALES, display=IPHONE_63):
                           BUILD_TIMEOUT_SECONDS, cwd=ROOT)
         metadata["built"] = True
         if simulator["state"] != "Booted":
-            tools.run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
+            # Set first: a boot command that fails or times out may still have started the device.
             booted_here = True
+            tools.run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
         tools.run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
                           tools.COLD_BOOT_TIMEOUT_SECONDS)
         # Overridden after the boot settles: right after a cold boot the override can hang.

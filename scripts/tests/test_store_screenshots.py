@@ -50,7 +50,9 @@ POOL = devices(('iOS 27.0', 'iPhone 17 Pro', 'C47B0285', 'Shutdown'),
                ('iOS 27.0', 'iPhone SE (3rd generation)', 'F808ED1F', 'Shutdown'),
                ('iOS 27.1', 'iPhone Duo', '079EE4B9', 'Shutdown'),
                ('iOS 27.0', 'iPad Pro 13-inch (M5)', '61C17472', 'Shutdown'),
-               ('iOS 27.0', 'iPad Pro 11-inch (M5)', 'AAAAAAAA', 'Shutdown'))
+               ('iOS 27.0', 'iPad Pro 11-inch (M5)', 'AAAAAAAA', 'Shutdown'),
+               ('iOS 27.0', 'iPhone 14 Pro Max', 'BBBBBBBB', 'Shutdown'),
+               ('iOS 27.0', 'iPhone 16 Plus', 'CCCCCCCC', 'Shutdown'))
 
 
 class DeviceSelectionTests(unittest.TestCase):
@@ -67,7 +69,9 @@ class DeviceSelectionTests(unittest.TestCase):
     def test_a_device_of_the_wrong_model_is_refused(self):
         for display, udid in ((shots.IPHONE_63, 'FCBC882C'), (shots.IPHONE_65, 'C47B0285'),
                               (shots.IPHONE_DUO, 'C47B0285'), (shots.IPAD_13, 'AAAAAAAA'),
-                              (shots.IPHONE_63, 'F808ED1F'), (shots.IPAD_13, '079EE4B9')):
+                              (shots.IPHONE_63, 'F808ED1F'), (shots.IPAD_13, '079EE4B9'),
+                              # 1290x2796 screens: they would fail the 6.5-inch sizes after the whole capture.
+                              (shots.IPHONE_65, 'BBBBBBBB'), (shots.IPHONE_65, 'CCCCCCCC')):
             with self.subTest(display=display.key, udid=udid), \
                     self.assertRaisesRegex(ValueError, f'does not produce the {display.title} set'):
                 shots.pool_device(POOL, udid, display)
@@ -279,6 +283,18 @@ class CombineTests(unittest.TestCase):
             shots.combine_sets(parts, out)
             self.assertEqual(list(shots.DISPLAYS), [display.key for display, _, _ in shots.check_upload(out)])
             self.assertEqual(0, shots.main([str(out), '--check']))
+            stray = out / 'screenshots/en-US/extra_01_home.png'
+            stray.write_bytes(png(1206, 2622))
+            with self.assertRaisesRegex(ValueError, "en-US holds files outside the checked sets: \\['extra_01_home.png'\\]"):
+                shots.check_upload(out)
+            stray.unlink()
+            (out / 'screenshots/de-DE').mkdir()
+            with self.assertRaisesRegex(ValueError, 'language folders'):
+                shots.check_upload(out)
+            (out / 'screenshots/de-DE').rmdir()
+            (out / 'iphone-duo/metadata.json').write_text(json.dumps({'device': 'iPhone Duo'}))
+            with self.assertRaisesRegex(ValueError, 'iphone-duo set names no commit'):
+                shots.check_upload(out)
             (out / 'iphone-duo/metadata.json').write_text(json.dumps({'head_sha': 'c' * 40}))
             with self.assertRaisesRegex(ValueError, 'different commits'):
                 shots.check_upload(out)
@@ -501,6 +517,23 @@ class RunTests(unittest.TestCase):
                 shots.run(directory, 'C47B0285')
             metadata = json.loads((directory / 'metadata.json').read_text())
             self.assertEqual('success', metadata['outcome'])
+
+    def test_a_failed_boot_still_shuts_the_device_down(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            commands, _ = self.run_with(directory)
+            original = shots.tools.run_command.side_effect
+
+            def failing(directory_, label, command, timeout, *, cwd=None):
+                if label == 'simulator-boot':
+                    raise shots.tools.NativeCommandError('simulator-boot timed out after 60s')
+                return original(directory_, label, command, timeout, cwd=cwd)
+
+            shots.tools.run_command.side_effect = failing
+
+            with self.assertRaisesRegex(shots.tools.NativeCommandError, 'simulator-boot timed out'):
+                shots.run(directory, 'C47B0285')
+            self.assertEqual('simulator-shutdown', commands[-1][0])
 
     def test_a_capture_needs_a_pool_device(self):
         with tempfile.TemporaryDirectory() as temporary, patch('sys.stderr'), self.assertRaises(SystemExit):
