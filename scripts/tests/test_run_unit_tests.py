@@ -65,10 +65,12 @@ class UnitTestRunTests(unittest.TestCase):
             (directory / 'DerivedData').mkdir()
             runner.run(directory, runtime='iOS 27.1', device_name='iPhone Duo')
             labels = [call.args[1] for call in native.call_args_list]
-            self.assertEqual(['simulator-list', 'xcodebuild-build', 'simulator-bootstatus', 'xcodebuild-test',
+            # The built app is checked before the Simulator boots, so a booting Simulator slows neither.
+            self.assertEqual(['simulator-list', 'xcodebuild-build',
                               'bundle-names-en', 'bundle-spotlight-name-en', 'bundle-names-ru',
-                              'bundle-spotlight-name-ru', 'bundle-info', 'localization-check'], labels)
-            build_call, test_call = native.call_args_list[1], native.call_args_list[3]
+                              'bundle-spotlight-name-ru', 'bundle-info', 'localization-check',
+                              'simulator-bootstatus', 'xcodebuild-test'], labels)
+            build_call, test_call = native.call_args_list[1], native.call_args_list[-1]
             build = build_call.args[2]
             # The whole scheme builds, so the UI test target keeps compiling without running.
             self.assertEqual(['xcodebuild', 'build-for-testing'], build[:2])
@@ -80,7 +82,7 @@ class UnitTestRunTests(unittest.TestCase):
             self.assertFalse(any('WhoGaveWhatUITests' in argument for argument in command))
             self.assertEqual(ROOT, build_call.kwargs['cwd'])
             self.assertEqual(ROOT, test_call.kwargs['cwd'])
-            localization = native.call_args_list[-1].args[2]
+            localization = native.call_args_list[7].args[2]
             self.assertEqual(str(ROOT / 'scripts/sync-localizations.py'), localization[1])
             self.assertEqual(['--derived-data', str(directory / 'DerivedData'), '--check'], localization[2:])
             cleanup.assert_called_once()
@@ -101,27 +103,19 @@ class UnitTestRunTests(unittest.TestCase):
             self.assertEqual(('iOS 27.1', 'iPhone Duo'), (create.call_args.args[2], create.call_args.args[4]))
             labels = [call.args[1] for call in native.call_args_list]
             # The Simulator boots after the build, so its first-boot work does not slow the compiler down.
-            self.assertEqual(['simulator-list', 'xcodebuild-build', 'simulator-boot', 'simulator-bootstatus', 'xcodebuild-test'], labels[:5])
+            self.assertEqual(['localization-check', 'simulator-boot', 'simulator-bootstatus', 'xcodebuild-test'], labels[-4:])
+            self.assertEqual(['simulator-list', 'xcodebuild-build'], labels[:2])
             self.assertEqual([SIMULATOR_ID], [call.args[2][-1] for call in native.call_args_list if call.args[1] == 'simulator-boot'])
             cleanup.assert_called_once()
 
-    def test_the_compilation_cache_reaches_only_the_build(self):
+    def test_the_archived_app_keeps_every_asset_scale_and_idiom(self):
         with tempfile.TemporaryDirectory() as temporary, \
                 patch.object(runner.tools, 'run_command', side_effect=native_outputs()) as native, \
                 patch.object(runner.tools, 'cleanup_ci_simulator'):
-            directory = Path(temporary)
-            runner.run(directory / 'out', compilation_cache=directory / 'cas')
+            runner.run(Path(temporary))
             commands = {call.args[1]: call.args[2] for call in native.call_args_list}
-            build, test = commands['xcodebuild-build'], commands['xcodebuild-test']
-            for command in (build, test):
-                self.assertIn('ENABLE_ONLY_ACTIVE_RESOURCES=NO', command)
-            self.assertIn('COMPILATION_CACHE_ENABLE_CACHING=YES', build)
-            self.assertIn(f'COMPILATION_CACHE_CAS_PATH={(directory / "cas").resolve()}', build)
-            self.assertIn(f'COMPILATION_CACHE_LIMIT_SIZE={runner.COMPILATION_CACHE_LIMIT}', build)
-            self.assertFalse(any(argument.startswith('COMPILATION_CACHE') for argument in test))
-
-    def test_without_cache_folders_xcodebuild_keeps_its_defaults(self):
-        self.assertEqual([], runner.build_settings())
+            for label in ('xcodebuild-build', 'xcodebuild-test'):
+                self.assertIn('ENABLE_ONLY_ACTIVE_RESOURCES=NO', commands[label])
 
     def test_app_archive_holds_the_app_without_hosted_test_bundles(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -158,7 +152,7 @@ class UnitTestRunTests(unittest.TestCase):
                     archive.assert_called_once_with(directory.resolve(), directory / 'app.tar.gz')
 
     def test_native_failure_keeps_the_error_metadata_and_owned_teardown(self):
-        for failed_label in ('xcodebuild-build', 'xcodebuild-test', 'localization-check'):
+        for failed_label in ('xcodebuild-build', 'localization-check', 'xcodebuild-test'):
             with self.subTest(failure=failed_label), tempfile.TemporaryDirectory() as temporary, \
                     patch.object(runner.tools, 'run_command', side_effect=native_outputs(failures=(failed_label,))) as native, \
                     patch.object(runner.tools, 'cleanup_ci_simulator') as cleanup:
@@ -221,7 +215,6 @@ class WorkflowTests(unittest.TestCase):
         tests = (ROOT / '.github/workflows/tests.yml').read_text()
         self.assertIn('--app-archive "$RUNNER_TEMP/simulator-app/WhoGaveWhat-simulator.tar.gz"', tests)
         self.assertIn('name: simulator-app\n', tests)
-        self.assertIn('--compilation-cache "$COMPILATION_CACHE"', tests)
         self.assertNotIn('SourcePackages', tests)
         self.assertFalse((ROOT / '.github/workflows/simulator-app.yml').exists())
         script = (ROOT / 'scripts/simulator-app.sh').read_text()

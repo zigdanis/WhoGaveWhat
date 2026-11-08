@@ -58,10 +58,6 @@ jobs:
         run: |
           swift --version
           xcodebuild -version
-      # Outside DerivedData, which the test runner deletes, so the cache steps can keep it.
-      - name: Choose the compilation cache folder
-        run: |
-          echo "COMPILATION_CACHE=$HOME/.cache/whogavewhat/CompilationCache" >> "$GITHUB_ENV"
       # Format and lint first: a formatting slip fails in a minute instead of after the build.
       - name: Install SwiftLint
         run: brew install swiftlint
@@ -71,21 +67,13 @@ jobs:
         run: scripts/lint-swift.sh
       - name: Install the iOS Simulator runtime for the selected Xcode
         run: scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME" "$SIMULATOR_DEVICE"
-      # The Swift packages are not cached: Sentry's binary frameworks make them 1 GB compressed, and on 2026-11-08 the
-      # restore took 2 minutes and timed out, while xcodebuild fetches them in well under a minute.
-      # A PR restores its own newest compilation cache first, then master's.
-      - name: Restore Xcode compilation cache
-        id: compilation
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ env.COMPILATION_CACHE }}
-          key: xcode-cas-27.1-${{ github.sha }}-${{ github.run_attempt }}
-          restore-keys: xcode-cas-27.1-
+      # No build caches: on 2026-11-08 the Swift package cache (1 GB compressed, Sentry's binary frameworks) restored at
+      # 8 MB/s and timed out after two minutes, and Xcode's compilation cache restored fine but gave no faster build
+      # (SwiftCompile 157 s warm against 102 s cold on the same commit). xcodebuild fetches the packages in under a minute.
       - name: Run unit tests and check the built app's names and String Catalog
         run: |
           python3 scripts/run-unit-tests.py "$RUNNER_TEMP/unit-tests" --runtime "$SIMULATOR_RUNTIME" --device "$SIMULATOR_DEVICE" --fresh-ci-simulator \
-            --app-archive "$RUNNER_TEMP/simulator-app/WhoGaveWhat-simulator.tar.gz" \
-            --compilation-cache "$COMPILATION_CACHE"
+            --app-archive "$RUNNER_TEMP/simulator-app/WhoGaveWhat-simulator.tar.gz"
       - name: Upload simulator app
         uses: actions/upload-artifact@v4
         with:
@@ -94,22 +82,10 @@ jobs:
           if-no-files-found: error
           overwrite: true
           retention-days: 14
-      # Where the build spent its time, so a slower build or a cold cache shows in the job log.
-      - name: Show build timing and cache size
-        id: keys
+      # Where the build spent its time, so a slow runner or a slower build shows in the job log.
+      - name: Show build timing
         if: ${{ !cancelled() }}
-        run: |
-          sed -n '/Build Timing Summary/,/^\*\* /p' "$RUNNER_TEMP/unit-tests/xcodebuild-build.log" | head -30 || true
-          if [ -d "$COMPILATION_CACHE" ]; then
-            echo "compilation=true" >> "$GITHUB_OUTPUT"
-            du -sh "$COMPILATION_CACHE"
-          fi
-      - name: Save Xcode compilation cache
-        if: ${{ !cancelled() && steps.keys.outputs.compilation == 'true' }}
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ env.COMPILATION_CACHE }}
-          key: xcode-cas-27.1-${{ github.sha }}-${{ github.run_attempt }}
+        run: sed -n '/Build Timing Summary/,/^\*\* /p' "$RUNNER_TEMP/unit-tests/xcodebuild-build.log" | head -30 || true
       - name: Upload test logs and result bundle
         if: failure()
         uses: actions/upload-artifact@v4

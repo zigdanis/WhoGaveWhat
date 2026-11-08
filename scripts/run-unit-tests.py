@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Run the WhoGaveWhatTests unit suite on an iOS Simulator and check the built app's resources.
 
-The app is built before the Simulator boots: a freshly booted Simulator keeps the CPU busy for minutes, which more
-than doubled the build on GitHub's three-core runners. `--app-archive` keeps the tested Debug app as a tarball (the
-`simulator-app` artifact that scripts/simulator-app.sh downloads); `--compilation-cache` keeps Xcode's compilation
-cache outside DerivedData so CI can cache it between runs.
+The app is built and its resources are checked before the Simulator boots: a freshly booted Simulator keeps the CPU
+busy for minutes, which more than doubled the build on GitHub's three-core runners and pushed the String Catalog check
+past its timeout. `--app-archive` keeps the tested Debug app as a tarball (the `simulator-app` artifact that
+scripts/simulator-app.sh downloads).
 """
 import argparse
 import importlib.util
@@ -29,9 +29,7 @@ TEST_TIMEOUT_SECONDS = 900
 GENERATED_OUTPUTS = ("Tests.xcresult", "DerivedData", "metadata.json")
 GENERATED_LOG_PREFIXES = ("simulator-", "xcodebuild-", "bundle-", "localization-check")
 APP_RELATIVE_PATH = Path("DerivedData/Build/Products/Debug-iphonesimulator/WhoGaveWhat.app")
-# Upper bound for Xcode's on-disk compilation cache; Xcode prunes it after the build. GitHub keeps 10 GB of caches per
-# repository, so this leaves room for the Swift packages and a few branches.
-COMPILATION_CACHE_LIMIT = "2G"
+LOCALIZATION_TIMEOUT_SECONDS = 180
 
 
 def clear_previous_outputs(directory):
@@ -85,18 +83,7 @@ def archive_app(directory, archive):
         output.add(bundle, arcname=bundle.name, filter=without_tests)
 
 
-def build_settings(compilation_cache=None):
-    """Build settings that enable Xcode's compilation cache in a folder CI can keep between runs."""
-    arguments = []
-    if compilation_cache is not None:
-        arguments += ["COMPILATION_CACHE_ENABLE_CACHING=YES",
-                      f"COMPILATION_CACHE_CAS_PATH={Path(compilation_cache).resolve()}",
-                      f"COMPILATION_CACHE_LIMIT_SIZE={COMPILATION_CACHE_LIMIT}"]
-    return arguments
-
-
-def run(directory, runtime=None, device_name=None, fresh_ci_simulator=False, app_archive=None,
-        compilation_cache=None):
+def run(directory, runtime=None, device_name=None, fresh_ci_simulator=False, app_archive=None):
     """Build and run the unit tests, then verify the built app's names and String Catalog."""
     if fresh_ci_simulator and (os.environ.get("GITHUB_ACTIONS") != "true" or runtime is None):
         raise ValueError("Fresh CI Simulator requires GitHub Actions and an explicit --runtime")
@@ -129,13 +116,16 @@ def run(directory, runtime=None, device_name=None, fresh_ci_simulator=False, app
                   "-derivedDataPath", str(directory / "DerivedData"), "-parallel-testing-enabled", "NO"]
         # Every asset scale and idiom stays in the app, so the archived app looks right on any Simulator model.
         signing = ["CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-", "ENABLE_ONLY_ACTIVE_RESOURCES=NO"]
-        caching = build_settings(compilation_cache)
         # Building the whole scheme keeps the UI test target (store screenshots) compiling, but only
         # the unit suite runs: XCUITest journeys hang on Simulator keyboard and animation stalls.
         tools.run_command(directory, "xcodebuild-build", [
-            "xcodebuild", "build-for-testing", *target, *signing, *caching, "-showBuildTimingSummary"],
+            "xcodebuild", "build-for-testing", *target, *signing, "-showBuildTimingSummary"],
             BUILD_TIMEOUT_SECONDS, cwd=ROOT)
-        # Booted only now: a booting Simulator competes with the compiler for the runner's few cores.
+        verify_built_app_names(directory, metadata)
+        tools.run_command(directory, "localization-check", [
+            sys.executable, str(ROOT / "scripts/sync-localizations.py"), "--derived-data",
+            str(directory / "DerivedData"), "--check"], LOCALIZATION_TIMEOUT_SECONDS, cwd=ROOT)
+        # Booted only now: a booting Simulator competes with the compiler and xcstringstool for the runner's few cores.
         if simulator.get("state") != "Booted":
             tools.run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
         tools.run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
@@ -145,10 +135,6 @@ def run(directory, runtime=None, device_name=None, fresh_ci_simulator=False, app
             "xcodebuild", "test-without-building", *target, "-resultBundlePath", str(result_bundle),
             "-collect-test-diagnostics", "never", f"-only-testing:{UNIT_TEST_TARGET}", *signing],
             TEST_TIMEOUT_SECONDS, cwd=ROOT)
-        verify_built_app_names(directory, metadata)
-        tools.run_command(directory, "localization-check", [
-            sys.executable, str(ROOT / "scripts/sync-localizations.py"), "--derived-data",
-            str(directory / "DerivedData"), "--check"], 60, cwd=ROOT)
         if app_archive is not None:
             archive_app(directory, Path(app_archive))
             metadata["app_archive"] = str(app_archive)
@@ -176,10 +162,8 @@ def main():
                         help="On GitHub Actions, create a disposable Simulator of the model and delete it afterwards")
     parser.add_argument("--app-archive", type=Path, metavar="TAR_GZ",
                         help="After a passing run, write the tested Debug WhoGaveWhat.app to this .tar.gz")
-    parser.add_argument("--compilation-cache", type=Path, metavar="DIR",
-                        help="Enable Xcode's compilation cache and keep it in this folder")
     args = parser.parse_args()
-    run(args.directory, args.runtime, args.device, args.fresh_ci_simulator, args.app_archive, args.compilation_cache)
+    run(args.directory, args.runtime, args.device, args.fresh_ci_simulator, args.app_archive)
 
 
 if __name__ == "__main__":
