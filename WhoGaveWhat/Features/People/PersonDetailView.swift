@@ -3,6 +3,7 @@ import SwiftUI
 /// A person's gift history. Built as a native `List` so its rows open / swipe-to-
 /// delete exactly like Home, reusing `GiftRow` + `GiftDetailView`. The header
 /// (avatar, per-side stats, All/Received/Given filter) rides as a quiet section.
+/// Like Home, it has the floating "Add a gift" button, which opens the sheet with this person in it.
 struct PersonDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let entityId: String
@@ -124,9 +125,11 @@ struct PersonDetailView: View {
         .listStyle(.insetGrouped)
         .readableColumn()
         .scrollContentBackground(.hidden)
+        .softBottomScrollEdge()
         .background(Color.appBackground)
         .navigationTitle(name)
         .navigationBarTitleDisplayMode(.inline)
+        .addGiftAction(composition: composition, personID: entityId)
         .onAppear { composition.analytics.track(.personDetailViewed(isSelf: isSelf, giftsCount: gs.count)) }
         // The person was deleted elsewhere, for example from People while this screen sat in Home's stack.
         // Only a current snapshot can say so; after a failed load the screen stays with its retry card.

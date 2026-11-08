@@ -2484,6 +2484,23 @@
         }
       }
     },
+    "Swap From and To" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swap From and To"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поменять местами «От» и «Кому»"
+          }
+        }
+      }
+    },
     "Swap people" : {
       "extractionState" : "manual",
       "localizations" : {

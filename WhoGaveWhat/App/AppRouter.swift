@@ -10,13 +10,22 @@ enum AppTab: String, Equatable {
 
 enum GiftSheetRoute: Identifiable, Equatable {
     case create
+    /// A new gift from a person's screen: the sheet starts with that person already in it.
+    case createWithPerson(personID: String)
     case edit(giftID: String)
 
     var id: String {
         switch self {
         case .create: "create"
+        case .createWithPerson(let personID): "create-with-\(personID)"
         case .edit(let giftID): "edit-\(giftID)"
         }
+    }
+
+    /// The person a new gift starts with, if it was opened from their screen.
+    var prefilledPersonID: String? {
+        if case .createWithPerson(let personID) = self { return personID }
+        return nil
     }
 
     var editingGiftID: String? {
@@ -56,8 +65,9 @@ final class AppRouter {
         analytics.track(.tabSelected(tab: tab.rawValue))
     }
 
-    func presentNewGift(from source: GiftSheetSource) {
-        giftSheet = .create
+    /// Opens a new gift; from a person's screen `personID` puts that person in the sheet up front.
+    func presentNewGift(from source: GiftSheetSource, personID: String? = nil) {
+        giftSheet = personID.map { .createWithPerson(personID: $0) } ?? .create
         analytics.track(.giftSheetOpened(mode: .create, source: source))
     }
 

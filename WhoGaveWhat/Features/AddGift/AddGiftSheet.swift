@@ -77,6 +77,10 @@ struct AddGiftSheet: View {
                         toAccessibilityIdentifier: "add-gift.to",
                         onSelectFrom: { state.open(.from) },
                         onSelectTo: { state.open(.to) },
+                        canSwapPeople: state.canSwapPeople,
+                        onSwapPeople: {
+                            withAnimation(.easeOut(duration: 0.18)) { state.swapPeople() }
+                        },
                         pickerPopover: pickerPopover
                     )
                     GiftDetailsDisclosure(
@@ -244,7 +248,10 @@ private struct GiftBasicsSection: View {
     let toAccessibilityIdentifier: String
     let onSelectFrom: () -> Void
     let onSelectTo: () -> Void
+    let canSwapPeople: Bool
+    let onSwapPeople: () -> Void
     let pickerPopover: (AddGiftPicker) -> AddGiftPickerPopover
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         VStack(spacing: 12) {
@@ -254,31 +261,52 @@ private struct GiftBasicsSection: View {
                 nameField
             }
 
-            Card {
-                VStack(spacing: 0) {
-                    GiftEntryRow(
-                        icon: .asset("ArrowRightFromLine"),
-                        label: "From",
-                        value: fromName,
-                        accent: accent,
-                        tint: tint,
-                        accessibilityIdentifier: fromAccessibilityIdentifier,
-                        onTap: onSelectFrom
-                    )
-                    .modifier(pickerPopover(.from))
-                    RowDivider().padding(.leading, 58)
-                    GiftEntryRow(
-                        icon: .asset("ArrowRightToLine"),
-                        label: "To",
-                        value: toName,
-                        accent: accent,
-                        tint: tint,
-                        accessibilityIdentifier: toAccessibilityIdentifier,
-                        onTap: onSelectTo
-                    )
-                    .modifier(pickerPopover(.to))
+            // The swap button sits beside the two rows, as in Maps directions, so it never covers a name.
+            // Accessibility text sizes need that width for the names, so there the pickers alone remain.
+            HStack(spacing: 8) {
+                peopleCard
+                if !dynamicTypeSize.isAccessibilitySize {
+                    GiftSwapButton(isEnabled: canSwapPeople, accent: accent, action: onSwapPeople)
                 }
             }
+        }
+    }
+
+    private var peopleCard: some View {
+        Card {
+            VStack(spacing: 0) {
+                GiftEntryRow(
+                    icon: .asset("ArrowRightFromLine"),
+                    label: "From",
+                    value: fromName,
+                    accent: accent,
+                    tint: tint,
+                    accessibilityIdentifier: fromAccessibilityIdentifier,
+                    onTap: onSelectFrom
+                )
+                .modifier(pickerPopover(.from))
+                .accessibilityActions { swapAction }
+                RowDivider().padding(.leading, 58)
+                GiftEntryRow(
+                    icon: .asset("ArrowRightToLine"),
+                    label: "To",
+                    value: toName,
+                    accent: accent,
+                    tint: tint,
+                    accessibilityIdentifier: toAccessibilityIdentifier,
+                    onTap: onSelectTo
+                )
+                .modifier(pickerPopover(.to))
+                .accessibilityActions { swapAction }
+            }
+        }
+    }
+
+    /// VoiceOver can swap from either row, including at accessibility text sizes, where the button is hidden.
+    @ViewBuilder
+    private var swapAction: some View {
+        if canSwapPeople {
+            Button("Swap From and To", action: onSwapPeople)
         }
     }
 
@@ -321,6 +349,33 @@ private struct GiftBasicsSection: View {
     private var fieldSurface: some View {
         RoundedRectangle(cornerRadius: DesignMetrics.radiusLarge, style: .continuous)
             .fill(Color.surface)
+    }
+}
+
+/// Turns the gift around: whoever is in From moves to To and back.
+private struct GiftSwapButton: View {
+    let isEnabled: Bool
+    let accent: Color
+    let action: () -> Void
+    @Environment(\.haptics) private var haptics
+
+    var body: some View {
+        Button {
+            haptics.play(.selection)
+            action()
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(isEnabled ? accent : Color.textTertiary)
+                .frame(width: 40, height: 40)
+                .background(Circle().fill(Color.surface))
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!isEnabled)
+        .accessibilityLabel("Swap From and To")
+        .accessibilityIdentifier("add-gift.swap")
     }
 }
 
