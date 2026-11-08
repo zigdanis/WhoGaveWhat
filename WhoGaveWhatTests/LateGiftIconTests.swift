@@ -6,6 +6,7 @@ import Testing
 /// A gift saved before the model answered still gets its icon: the request outlives the sheet.
 @MainActor
 struct LateGiftIconTests {
+    @MainActor
     private struct Fixture {
         let composition: AppComposition
         let cloud: ScriptedIntelligenceGateway
