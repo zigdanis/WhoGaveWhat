@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import plistlib
 import subprocess
+import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -64,10 +65,10 @@ class UnitTestRunTests(unittest.TestCase):
             (directory / 'DerivedData').mkdir()
             runner.run(directory, runtime='iOS 27.1', device_name='iPhone Duo')
             labels = [call.args[1] for call in native.call_args_list]
-            self.assertEqual(['simulator-list', 'simulator-bootstatus', 'xcodebuild-build', 'xcodebuild-test',
+            self.assertEqual(['simulator-list', 'xcodebuild-build', 'simulator-bootstatus', 'xcodebuild-test',
                               'bundle-names-en', 'bundle-spotlight-name-en', 'bundle-names-ru',
                               'bundle-spotlight-name-ru', 'bundle-info', 'localization-check'], labels)
-            build_call, test_call = native.call_args_list[2:4]
+            build_call, test_call = native.call_args_list[1], native.call_args_list[3]
             build = build_call.args[2]
             # The whole scheme builds, so the UI test target keeps compiling without running.
             self.assertEqual(['xcodebuild', 'build-for-testing'], build[:2])
@@ -99,9 +100,63 @@ class UnitTestRunTests(unittest.TestCase):
             runner.run(Path(temporary), runtime='iOS 27.1', device_name='iPhone Duo', fresh_ci_simulator=True)
             self.assertEqual(('iOS 27.1', 'iPhone Duo'), (create.call_args.args[2], create.call_args.args[4]))
             labels = [call.args[1] for call in native.call_args_list]
-            self.assertEqual(['simulator-list', 'simulator-boot', 'simulator-bootstatus', 'xcodebuild-build', 'xcodebuild-test'], labels[:5])
+            # The Simulator boots after the build, so its first-boot work does not slow the compiler down.
+            self.assertEqual(['simulator-list', 'xcodebuild-build', 'simulator-boot', 'simulator-bootstatus', 'xcodebuild-test'], labels[:5])
             self.assertEqual([SIMULATOR_ID], [call.args[2][-1] for call in native.call_args_list if call.args[1] == 'simulator-boot'])
             cleanup.assert_called_once()
+
+    def test_cache_folders_reach_both_xcodebuild_steps_and_the_cache_only_the_build(self):
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(runner.tools, 'run_command', side_effect=native_outputs()) as native, \
+                patch.object(runner.tools, 'cleanup_ci_simulator'):
+            directory = Path(temporary)
+            runner.run(directory / 'out', source_packages=directory / 'packages', compilation_cache=directory / 'cas')
+            commands = {call.args[1]: call.args[2] for call in native.call_args_list}
+            build, test = commands['xcodebuild-build'], commands['xcodebuild-test']
+            for command in (build, test):
+                index = command.index('-clonedSourcePackagesDirPath')
+                self.assertEqual(str((directory / 'packages').resolve()), command[index + 1])
+                self.assertIn('ENABLE_ONLY_ACTIVE_RESOURCES=NO', command)
+            self.assertIn('COMPILATION_CACHE_ENABLE_CACHING=YES', build)
+            self.assertIn(f'COMPILATION_CACHE_CAS_PATH={(directory / "cas").resolve()}', build)
+            self.assertIn(f'COMPILATION_CACHE_LIMIT_SIZE={runner.COMPILATION_CACHE_LIMIT}', build)
+            self.assertFalse(any(argument.startswith('COMPILATION_CACHE') for argument in test))
+
+    def test_without_cache_folders_xcodebuild_keeps_its_defaults(self):
+        self.assertEqual([], runner.build_settings())
+
+    def test_app_archive_holds_the_app_without_hosted_test_bundles(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            app = directory / runner.APP_RELATIVE_PATH
+            (app / 'PlugIns/WhoGaveWhatTests.xctest').mkdir(parents=True)
+            (app / 'PlugIns/WhoGaveWhatTests.xctest/WhoGaveWhatTests').write_text('test')
+            (app / 'PlugIns/Widget.appex').mkdir()
+            executable = app / 'WhoGaveWhat'
+            executable.write_text('binary')
+            executable.chmod(0o755)
+            archive = directory / 'package/WhoGaveWhat-simulator.tar.gz'
+            runner.archive_app(directory, archive)
+            with tarfile.open(archive) as members:
+                names = sorted(members.getnames())
+                self.assertEqual(0o755, members.getmember('WhoGaveWhat.app/WhoGaveWhat').mode & 0o777)
+            self.assertEqual(['WhoGaveWhat.app', 'WhoGaveWhat.app/PlugIns', 'WhoGaveWhat.app/PlugIns/Widget.appex',
+                              'WhoGaveWhat.app/WhoGaveWhat'], names)
+
+    def test_app_archive_is_written_only_after_a_passing_run(self):
+        for failures in ((), ('localization-check',)):
+            with self.subTest(failures=failures), tempfile.TemporaryDirectory() as temporary, \
+                    patch.object(runner.tools, 'run_command', side_effect=native_outputs(failures=failures)), \
+                    patch.object(runner.tools, 'cleanup_ci_simulator'), \
+                    patch.object(runner, 'archive_app') as archive:
+                directory = Path(temporary)
+                if failures:
+                    with self.assertRaises(runner.tools.NativeCommandError):
+                        runner.run(directory, app_archive=directory / 'app.tar.gz')
+                    archive.assert_not_called()
+                else:
+                    runner.run(directory, app_archive=directory / 'app.tar.gz')
+                    archive.assert_called_once_with(directory.resolve(), directory / 'app.tar.gz')
 
     def test_native_failure_keeps_the_error_metadata_and_owned_teardown(self):
         for failed_label in ('xcodebuild-build', 'xcodebuild-test', 'localization-check'):
@@ -151,13 +206,33 @@ class WorkflowTests(unittest.TestCase):
             self.assertNotIn(removed, workflow)
         self.assertFalse((ROOT / '.github/workflows/pr-evidence.yml').exists())
 
-    def test_lightweight_checks_remain_automatic_with_the_existing_check_names_and_commands(self):
+    def test_lightweight_checks_stay_on_linux_and_swift_quality_runs_before_the_one_build(self):
         checks = (ROOT / '.github/workflows/checks.yml').read_text()
         self.assertIn('python3 -m unittest discover -s scripts/tests -v', checks)
         self.assertIn('scripts/check-secrets.sh', checks)
-        self.assertIn('scripts/check-formatting.sh', checks)
-        self.assertIn('scripts/lint-swift.sh', checks)
+        self.assertNotIn('macos', checks)
+        self.assertNotIn('xcode-', checks)
         self.assertNotIn('ffmpeg', checks)
+        tests = (ROOT / '.github/workflows/tests.yml').read_text()
+        order = [tests.index(marker) for marker in (
+            'scripts/check-formatting.sh', 'scripts/lint-swift.sh', 'scripts/run-unit-tests.py')]
+        self.assertEqual(sorted(order), order)
+
+    def test_the_tested_app_is_the_simulator_app_and_no_other_workflow_builds_it(self):
+        tests = (ROOT / '.github/workflows/tests.yml').read_text()
+        self.assertIn('--app-archive "$RUNNER_TEMP/simulator-app/WhoGaveWhat-simulator.tar.gz"', tests)
+        self.assertIn('name: simulator-app\n', tests)
+        self.assertIn('--source-packages "$SOURCE_PACKAGES" --compilation-cache "$COMPILATION_CACHE"', tests)
+        self.assertFalse((ROOT / '.github/workflows/simulator-app.yml').exists())
+        script = (ROOT / 'scripts/simulator-app.sh').read_text()
+        self.assertIn('for WORKFLOW in tests.yml simulator-app.yml', script)
+        self.assertIn('--name simulator-app', script)
+
+    def test_app_store_screenshots_are_never_shot_in_ci(self):
+        workflows = sorted((ROOT / '.github/workflows').glob('*.yml'))
+        self.assertFalse((ROOT / '.github/workflows/store-screenshots.yml').exists())
+        for workflow in workflows:
+            self.assertNotIn('store-screenshots.py', workflow.read_text(), workflow.name)
 
     def test_no_repository_file_points_at_the_removed_evidence_tooling(self):
         tracked = subprocess.check_output(['git', 'ls-files'], cwd=ROOT, text=True).split()

@@ -2,8 +2,9 @@
 
 set -euo pipefail
 
-# Requires authenticated gh and jq. Downloads the Release simulator app that the Simulator app workflow
-# built for a PR head, or for the newest master build without an argument, and prints the WhoGaveWhat.app path.
+# Requires authenticated gh and jq. Downloads the Debug simulator app that the Tests workflow built and tested for a
+# PR head, or for the newest master build without an argument, and prints the WhoGaveWhat.app path. Being a Debug
+# build, it honours KS_SAMPLE_DATA and the other KS_ launch variables.
 REPO=$(gh api 'repos/{owner}/{repo}' --jq .full_name)
 if [ $# -gt 0 ]; then
   PR=$(gh api "repos/$REPO/pulls/$1")
@@ -19,7 +20,15 @@ else
 fi
 
 # Artifacts expire after 14 days while their runs stay successful, so take the newest run that still has one.
+# Runs of the retired Simulator app workflow (a Release build) are the fallback until their artifacts expire.
 RUN=
+CANDIDATES=
+for WORKFLOW in tests.yml simulator-app.yml; do
+  CANDIDATES+=$(gh run list --repo "$REPO" --workflow "$WORKFLOW" --status success "${FILTER[@]}" \
+    --limit 20 --json databaseId,headSha,event 2>/dev/null \
+    | jq -c --arg target "$TARGET" '.[] | select($target != "master" or .event != "pull_request")' || true)
+  CANDIDATES+=$'\n'
+done
 while read -r CANDIDATE; do
   test -n "$CANDIDATE" || continue
   ARTIFACT_ID=$(gh api "repos/$REPO/actions/runs/$(jq -r .databaseId <<< "$CANDIDATE")/artifacts" \
@@ -28,11 +37,9 @@ while read -r CANDIDATE; do
     RUN=$CANDIDATE
     break
   fi
-done <<< "$(gh run list --repo "$REPO" --workflow simulator-app.yml --status success "${FILTER[@]}" \
-  --limit 20 --json databaseId,headSha,event \
-  | jq -c --arg target "$TARGET" '.[] | select($target != "master" or .event != "pull_request")')"
+done <<< "$CANDIDATES"
 test -n "$RUN" || {
-  echo "No unexpired simulator app for $TARGET. Build one: gh workflow run simulator-app.yml --repo $REPO --ref $BRANCH" >&2
+  echo "No unexpired simulator app for $TARGET. Wait for the Tests run of that commit, or start one: gh workflow run tests.yml --repo $REPO --ref $BRANCH" >&2
   exit 1
 }
 RUN_ID=$(jq -r .databaseId <<< "$RUN")

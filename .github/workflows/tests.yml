@@ -1,5 +1,8 @@
 name: Tests
 
+# The one macOS workflow that runs on its own: Swift format and lint, one Debug build, the unit suite, and the tested
+# app kept as the `simulator-app` artifact that scripts/simulator-app.sh downloads for simulator checks. App Store
+# screenshots are never shot in CI; see the app-store-screenshots skill.
 on:
   push:
     branches: [master]
@@ -45,18 +48,82 @@ jobs:
       SIMULATOR_RUNTIME: iOS 27.1
       SIMULATOR_DEVICE: iPhone Duo
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_INSTALL_CLEANUP: '1'
+      # Outside DerivedData, which the test runner deletes, so the cache steps can keep them.
+      SOURCE_PACKAGES: /Users/runner/.cache/whogavewhat/SourcePackages
+      COMPILATION_CACHE: /Users/runner/.cache/whogavewhat/CompilationCache
+      PACKAGE_RESOLVED: WhoGaveWhat.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Show tool versions
         run: |
           swift --version
           xcodebuild -version
-          xcodebuild -showsdks
-          xcrun simctl help
+      # Format and lint first: a formatting slip fails in a minute instead of after the build.
+      - name: Install SwiftLint
+        run: brew install swiftlint
+      - name: Check Swift formatting
+        run: scripts/check-formatting.sh
+      - name: Lint Swift
+        run: scripts/lint-swift.sh
       - name: Install the iOS Simulator runtime for the selected Xcode
         run: scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME" "$SIMULATOR_DEVICE"
+      # Package.resolved is not committed, so the newest saved checkout is restored and xcodebuild only fetches what
+      # changed. A PR restores its own newest cache first, then master's.
+      - name: Restore Swift packages
+        id: packages
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.SOURCE_PACKAGES }}
+          key: spm-xcode-27.1-${{ github.sha }}
+          restore-keys: spm-xcode-27.1-
+      - name: Restore Xcode compilation cache
+        id: compilation
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.COMPILATION_CACHE }}
+          key: xcode-cas-27.1-${{ github.sha }}-${{ github.run_attempt }}
+          restore-keys: xcode-cas-27.1-
       - name: Run unit tests and check the built app's names and String Catalog
-        run: python3 scripts/run-unit-tests.py "$RUNNER_TEMP/unit-tests" --runtime "$SIMULATOR_RUNTIME" --device "$SIMULATOR_DEVICE" --fresh-ci-simulator
+        run: |
+          python3 scripts/run-unit-tests.py "$RUNNER_TEMP/unit-tests" --runtime "$SIMULATOR_RUNTIME" --device "$SIMULATOR_DEVICE" --fresh-ci-simulator \
+            --app-archive "$RUNNER_TEMP/simulator-app/WhoGaveWhat-simulator.tar.gz" \
+            --source-packages "$SOURCE_PACKAGES" --compilation-cache "$COMPILATION_CACHE"
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-app
+          path: ${{ runner.temp }}/simulator-app/WhoGaveWhat-simulator.tar.gz
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 14
+      # Keys for the saves: the packages are saved again only when the resolved versions changed.
+      - name: Prepare cache keys
+        id: keys
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -f "$PACKAGE_RESOLVED" ]; then
+            echo "packages=spm-xcode-27.1-$(shasum -a 256 "$PACKAGE_RESOLVED" | cut -c1-16)" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -d "$COMPILATION_CACHE" ]; then
+            echo "compilation=true" >> "$GITHUB_OUTPUT"
+          fi
+          du -sh "$SOURCE_PACKAGES" "$COMPILATION_CACHE" 2>/dev/null || true
+      - name: Save Swift packages
+        if: ${{ !cancelled() && steps.keys.outputs.packages != '' && steps.keys.outputs.packages != steps.packages.outputs.cache-matched-key }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.SOURCE_PACKAGES }}
+          key: ${{ steps.keys.outputs.packages }}
+      - name: Save Xcode compilation cache
+        if: ${{ !cancelled() && steps.keys.outputs.compilation == 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.COMPILATION_CACHE }}
+          key: xcode-cas-27.1-${{ github.sha }}-${{ github.run_attempt }}
       - name: Upload test logs and result bundle
         if: failure()
         uses: actions/upload-artifact@v4
