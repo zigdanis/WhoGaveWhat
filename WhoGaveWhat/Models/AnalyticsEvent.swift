@@ -20,8 +20,6 @@ enum GiftSheetSource: String, Equatable {
     case toolbarButton = "toolbar_button"
     case giftDetail = "gift_detail"
     case insightsWelcome = "insights_welcome"
-    /// The card on a person's screen before their first gift.
-    case personWelcome = "person_welcome"
     /// The floating or toolbar button on a person's screen.
     case personDetail = "person_detail"
 }

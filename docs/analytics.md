@@ -17,7 +17,7 @@ outside the cases listed under "When nothing is sent". The full list lives in
 | Event | Properties | Fires when |
 |-------|------------|------------|
 | `tab_selected` | `tab` | A tab bar tap changes the tab |
-| `gift_sheet_opened` | `mode` create/edit, `source` welcome_card/insights_welcome/floating_button/toolbar_button/gift_detail/person_welcome/person_detail | The Add or Edit gift sheet opens; `person_welcome` and `person_detail` open it with that person already in it |
+| `gift_sheet_opened` | `mode` create/edit, `source` welcome_card/insights_welcome/floating_button/toolbar_button/gift_detail/person_detail | The Add or Edit gift sheet opens; `person_detail` (the floating or toolbar button on a person's screen) opens it with that person already in it |
 | `gift_sheet_closed` | `mode`, `outcome` saved/cancelled | The sheet closes. A failed save keeps it open, so it is not an outcome |
 | `gift_picker_opened` | `picker` giver/recipient/occasion/icon/date | A picker opens inside the sheet |
 | `gift_icon_picked` | `source` list/custom | The user overrides the inferred icon |

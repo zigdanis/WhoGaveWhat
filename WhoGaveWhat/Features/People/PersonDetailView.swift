@@ -3,8 +3,7 @@ import SwiftUI
 /// A person's gift history. Built as a native `List` so its rows open / swipe-to-
 /// delete exactly like Home, reusing `GiftRow` + `GiftDetailView`. The header
 /// (avatar, per-side stats, All/Received/Given filter) rides as a quiet section.
-/// Like Home, it offers "Add a gift" as a welcome card before the person's first gift
-/// and as the floating button after it; either opens the sheet with this person in it.
+/// Like Home, it has the floating "Add a gift" button, which opens the sheet with this person in it.
 struct PersonDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let entityId: String
@@ -46,8 +45,6 @@ struct PersonDetailView: View {
         }
         let isSelf = composition.data.isSelf(entityId)
         let list = filter == "received" ? recv : (filter == "given" ? given : gs)
-        // Only a current snapshot can say the person has no gifts; after a failed load the retry card stays alone.
-        let showsWelcome = composition.data.hasLoadedSnapshot && !composition.data.isLoadFailing && gs.isEmpty
 
         List {
             if composition.data.isLoadFailing {
@@ -86,32 +83,16 @@ struct PersonDetailView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 18)
 
-                // Nothing to filter until the first gift.
-                if !showsWelcome {
-                    Segmented(options: filterOptions, selected: filter) { key in
-                        withAnimation(.easeOut(duration: 0.18)) { filter = key }
-                    }
-                    .padding(.top, 18)
+                Segmented(options: filterOptions, selected: filter) { key in
+                    withAnimation(.easeOut(duration: 0.18)) { filter = key }
                 }
+                .padding(.top, 18)
             }
             .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 8, trailing: 16))
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
 
-            if showsWelcome {
-                Section {
-                    WelcomeCard(
-                        title: "Add a gift", identifier: "person-detail.welcome.add",
-                        action: { composition.router.presentNewGift(from: .personWelcome, personID: entityId) }
-                    ) {
-                        IconMark(size: 48)
-                    }
-                    .padding(.top, 10)
-                }
-                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 8, trailing: 16))
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            } else if list.isEmpty {
+            if list.isEmpty {
                 Section {
                     Text(LocalizedStringKey(emptyText))
                         .font(Font.app(14, .regular)).foregroundColor(Color.textTertiary)
@@ -147,8 +128,7 @@ struct PersonDetailView: View {
         .background(Color.appBackground)
         .navigationTitle(name)
         .navigationBarTitleDisplayMode(.inline)
-        // The welcome card carries the only "Add a gift" action until the person's first gift.
-        .addGiftAction(composition: composition, isVisible: !showsWelcome, personID: entityId)
+        .addGiftAction(composition: composition, personID: entityId)
         .onAppear { composition.analytics.track(.personDetailViewed(isSelf: isSelf, giftsCount: gs.count)) }
         // The person was deleted elsewhere, for example from People while this screen sat in Home's stack.
         // Only a current snapshot can say so; after a failed load the screen stays with its retry card.

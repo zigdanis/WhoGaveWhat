@@ -27,9 +27,6 @@ struct PersonAddGiftTests {
         #expect(composition.router.giftSheet?.mode == .create)
         #expect(analytics.events.last == .giftSheetOpened(mode: .create, source: .personDetail))
         #expect(analytics.events.last?.properties["source"] == .string("person_detail"))
-
-        composition.router.presentNewGift(from: .personWelcome, personID: "maria")
-        #expect(analytics.events.last?.properties["source"] == .string("person_welcome"))
     }
 
     @Test func thePersonGivesToTheViewpoint() throws {
