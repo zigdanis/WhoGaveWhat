@@ -11,6 +11,8 @@ final class AddGiftState {
     var isShowingSaveError = false
 
     private(set) var editingGiftID: String?
+    /// A new gift from a person's screen stays there once saved; any other new gift switches to Home.
+    private let returnsHomeAfterSave: Bool
     private let suggestGift: SuggestGiftUseCase
     private let debounce: Duration
     private let analytics: AnalyticsGateway
@@ -31,6 +33,7 @@ final class AddGiftState {
         self.debounce = debounce
         self.analytics = analytics
         editingGiftID = route.editingGiftID
+        returnsHomeAfterSave = route == .create
         // A new gift starts in the default currency; an edited one keeps its own below.
         draft.currency = preferences?.defaultCurrency ?? .usd
 
@@ -53,7 +56,35 @@ final class AddGiftState {
                 aiEmoji: gift.emojiPickedByUser ? nil : gift.emoji
             )
             if !gift.emojiPickedByUser { storedEmoji = gift.emoji }
+        } else if let personID = route.prefilledPersonID {
+            prefill(personID: personID, data: data)
         }
+    }
+
+    /// From a person's screen the person is usually the giver and the viewpoint ("This is me") the recipient;
+    /// on the viewpoint's own screen they are the recipient. The swap button turns either around.
+    private func prefill(personID: String, data: AppData) {
+        guard data.people.contains(where: { $0.id == personID }) else { return }
+        guard let selfID = data.selfPersonID, data.people.contains(where: { $0.id == selfID }) else {
+            draft.fromID = personID
+            return
+        }
+        if selfID == personID {
+            draft.toID = personID
+        } else {
+            draft.fromID = personID
+            draft.toID = selfID
+        }
+    }
+
+    /// True when at least one side is chosen, so swapping would change something.
+    var canSwapPeople: Bool { draft.fromID != nil || draft.toID != nil }
+
+    /// Turns the gift around: the giver becomes the recipient and back.
+    func swapPeople() {
+        guard canSwapPeople else { return }
+        (draft.fromID, draft.toID) = (draft.toID, draft.fromID)
+        analytics.track(.giftPeopleSwapped)
     }
 
     /// Loads the selected model while the sheet opens so the first inference is fast.
@@ -264,7 +295,7 @@ final class AddGiftState {
         case .saved:
             isShowingSaveError = false
             // A programmatic switch, not a tab tap, so it sets the tab directly.
-            if editingGiftID == nil { composition.router.tab = .home }
+            if returnsHomeAfterSave { composition.router.tab = .home }
             composition.router.dismissGiftSheet(outcome: .saved)
         case .failed:
             isShowingSaveError = true

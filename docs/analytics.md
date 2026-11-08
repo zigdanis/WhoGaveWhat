@@ -17,13 +17,14 @@ outside the cases listed under "When nothing is sent". The full list lives in
 | Event | Properties | Fires when |
 |-------|------------|------------|
 | `tab_selected` | `tab` | A tab bar tap changes the tab |
-| `gift_sheet_opened` | `mode` create/edit, `source` welcome_card/insights_welcome/floating_button/toolbar_button/gift_detail | The Add or Edit gift sheet opens |
+| `gift_sheet_opened` | `mode` create/edit, `source` welcome_card/insights_welcome/floating_button/toolbar_button/gift_detail/person_welcome/person_detail | The Add or Edit gift sheet opens; `person_welcome` and `person_detail` open it with that person already in it |
 | `gift_sheet_closed` | `mode`, `outcome` saved/cancelled | The sheet closes. A failed save keeps it open, so it is not an outcome |
 | `gift_picker_opened` | `picker` giver/recipient/occasion/icon/date | A picker opens inside the sheet |
 | `gift_icon_picked` | `source` list/custom | The user overrides the inferred icon |
 | `gift_price_edited` | `had_estimate` | The first edit of the price field in a sheet |
 | `gift_suggestion_completed` | `provider` cloud/on_device (whichever answered; cloud when none did), `outcome`, `has_icon`, `has_price`, `latency_ms` | An icon/price inference returns |
 | `occasion_added` | – | A custom occasion is typed |
+| `gift_people_swapped` | – | The swap button in the gift sheet turns From and To around |
 | `gift_save_attempted` | `mode` | Save is tapped with a complete form; `gift_saved` or `gift_save_failed` follows |
 | `gift_saved` | `mode`, `direction` received/given/unrelated/no_viewpoint, `icon_source`, `value_source` user/estimate/none, `occasion` (built-in key or `custom`), `currency` (the gift's own ISO code, never its amount), `paid_by_you`, `date_offset`, `gifts_count` | A gift is stored |
 | `gift_save_failed` | `mode` | The store refused the gift, or the records on screen could not be reloaded first; the sheet stays open with everything entered and Save can be tapped again |

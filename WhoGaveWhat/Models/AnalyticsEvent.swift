@@ -20,6 +20,10 @@ enum GiftSheetSource: String, Equatable {
     case toolbarButton = "toolbar_button"
     case giftDetail = "gift_detail"
     case insightsWelcome = "insights_welcome"
+    /// The card on a person's screen before their first gift.
+    case personWelcome = "person_welcome"
+    /// The floating or toolbar button on a person's screen.
+    case personDetail = "person_detail"
 }
 
 /// How the gift sheet closed. A failed save keeps the sheet open, so it is not an outcome;
@@ -142,6 +146,8 @@ enum AnalyticsEvent: Equatable {
     case giftPriceEdited(hadEstimate: Bool)
     case giftSuggestionCompleted(provider: SuggestionProvider, hasIcon: Bool, hasPrice: Bool, latencyMilliseconds: Int)
     case occasionAdded
+    /// The swap button turned the gift's giver and recipient around.
+    case giftPeopleSwapped
     /// Save was tapped with a complete form; `giftSaved` or `giftSaveFailed` follows.
     case giftSaveAttempted(mode: GiftSheetMode)
     case giftSaved(GiftSavedProperties)
@@ -175,6 +181,7 @@ enum AnalyticsEvent: Equatable {
         case .giftPriceEdited: "gift_price_edited"
         case .giftSuggestionCompleted: "gift_suggestion_completed"
         case .occasionAdded: "occasion_added"
+        case .giftPeopleSwapped: "gift_people_swapped"
         case .giftSaveAttempted: "gift_save_attempted"
         case .giftSaved: "gift_saved"
         case .giftSaveFailed: "gift_save_failed"
@@ -200,7 +207,8 @@ enum AnalyticsEvent: Equatable {
             ["mode": .string(mode.rawValue), "source": .string(source.rawValue)]
         case .giftSheetClosed(let mode, let outcome):
             ["mode": .string(mode.rawValue), "outcome": .string(outcome.rawValue)]
-        case .giftDetailViewed, .openedFromSpotlight, .occasionAdded, .privacyPolicyOpened, .licensesOpened:
+        case .giftDetailViewed, .openedFromSpotlight, .occasionAdded, .giftPeopleSwapped, .privacyPolicyOpened,
+            .licensesOpened:
             [:]
         case .personDetailViewed(let isSelf, let giftsCount):
             ["is_self": .bool(isSelf), "gifts_count": .int(giftsCount)]
