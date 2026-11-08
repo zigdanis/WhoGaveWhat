@@ -5,8 +5,8 @@ description: Capture, inspect and attach WhoGaveWhat Simulator screenshots (and 
 
 # Visual acceptance
 
-- **Capture** and inspect screenshots that show the requested UI change, then attach them to the PR. For non-UI changes, report functional checks instead. The `Tests` workflow runs no UI tests (only the `Store screenshots` workflow drives the UI, for the App Store set), so every PR capture is manual.
-- **App:** wait for the PR head's `Simulator app` workflow, then `scripts/simulator-app.sh PR_NUMBER` prints the Release `WhoGaveWhat.app` for it (the Release build ignores `KS_SAMPLE_DATA`, so enter the data the scenario needs). Its bundle ID is `pro.ziganshin.WhoGaveWhat`.
+- **Capture** and inspect screenshots that show the requested UI change, then attach them to the PR. For non-UI changes, report functional checks instead. CI runs no UI tests, so every PR capture is manual.
+- **App:** wait for the PR head's `Tests` run to pass, then `scripts/simulator-app.sh PR_NUMBER` prints the Debug `WhoGaveWhat.app` that run built and tested; don't build your own copy. Being a Debug build it honours `KS_SAMPLE_DATA=1` and the other `KS_` launch variables (pass them at launch); like any simulator build it never reports analytics or crashes. Its bundle ID is `pro.ziganshin.WhoGaveWhat`. While waiting for CI, draft the scenario; for a PR opened early with `[skip ci]`, the app exists only after the final push.
 - **Device:** everything about the simulator (which pool device, the queue, reaching MacPro from Linux, installing, data left by other threads, the keyboard, errors, the cloud fallback and cleanup) is in the Fleet `simulator-queue` skill (`~/myai/fleet/skills/simulator-queue/SKILL.md`); follow it. Show a layout change on the default iPhone and, when the layout adapts, on the compact-height and regular-width pool devices too.
 - **Show:** walk the changed scenario by hand and screenshot each state that proves it.
 - **Limit:** use 2–6 screenshots. Skip duplicates and unrelated screens.

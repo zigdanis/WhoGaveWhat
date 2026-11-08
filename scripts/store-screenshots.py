@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Capture the plain App Store screenshots in every store language and lay them out for fastlane deliver.
 
-The Debug app runs with its sample data on a fresh Simulator, once per language, through
-WhoGaveWhatUITests/StoreScreenshotsUITests. `--display iphone-6.9` (the default) uses a 6.9-inch iPhone and
-writes `<out>/screenshots/<locale>/NN_slug.png`; `--display iphone-6.3` uses iPhone 18 Pro and writes
-`medium_NN_slug.png`; `--display iphone-duo` uses iPhone Duo, which boots folded, and writes the outer display as
-`duo_NN_slug.png`; `--display ipad-13` uses the newest 13-inch iPad Pro and writes `ipad_NN_slug.png` in portrait.
-Each run also writes metadata.json and an index.html contact sheet. `--combine PARTS` merges the sets' artifacts into
-one folder per language, the layout the App Store metadata workflow uploads, with a review page of every set;
-`--review-page FILE` turns such a folder into one self-contained page with the images embedded.
+Runs only on MacPro, on an existing pool Simulator chosen by `--simulator UDID` (the Fleet simulator-queue skill
+says which device and how to take the queue slot); it never creates or deletes a Simulator and is never run in CI.
+The Debug app runs with its sample data once per language through WhoGaveWhatUITests/StoreScreenshotsUITests.
+`--display iphone-6.3` (Dynamic Island medium, iPhone 17 Pro or newer Pro) writes `medium_NN_slug.png`;
+`--display iphone-6.5` (Face ID large, iPhone 14 Plus) writes `large_NN_slug.png`; `--display iphone-duo` uses
+iPhone Duo, which boots folded, and writes the outer display as `duo_NN_slug.png`; `--display ipad-13` uses a
+13-inch iPad Pro or Air and writes `ipad_NN_slug.png` in portrait. Each run writes
+`<out>/screenshots/<locale>/`, metadata.json and an index.html contact sheet. `--combine PARTS` merges the sets
+(`PARTS/store-screenshots-<display>/`) into one folder per language, the layout that is uploaded, with a review page
+of every set; `--review-page FILE` turns such a folder into one self-contained page with the images embedded.
 """
 import argparse
 import base64
@@ -38,27 +40,32 @@ LOCALES = ("en-US", "ru")
 # Simulator model the set needs or the model name patterns it accepts, most preferred first. A pattern's number
 # group, when it has one, prefers the newest model.
 Display = collections.namedtuple("Display", "key title sizes prefix device models")
-IPHONE_69 = Display("iphone-6.9", "6.9-inch", frozenset({(1320, 2868), (1290, 2796), (1260, 2736)}), "", None,
-                    (r"iPhone 18 Pro Max", r"iPhone (\d+) Pro Max", r"iPhone (\d+) Plus"))
 # Apple requires at least one screenshot for iPhone with Dynamic Island (medium display), the 6.3-inch set.
-IPHONE_63 = Display("iphone-6.3", "6.3-inch", frozenset({(1206, 2622), (1179, 2556)}), "medium_", "iPhone 18 Pro", ())
+IPHONE_63 = Display("iphone-6.3", "6.3-inch", frozenset({(1206, 2622), (1179, 2556)}), "medium_", None,
+                    (r"iPhone (\d+) Pro",))
+# Without a Dynamic Island large set Apple also requires Face ID large, the 6.5-inch set; the MacPro pool keeps
+# iPhone 14 Plus for it, so only one Dynamic Island set is shot.
+IPHONE_65 = Display("iphone-6.5", "6.5-inch", frozenset({(1284, 2778), (1242, 2688)}), "large_", None,
+                    (r"iPhone (\d+) Plus", r"iPhone (\d+) Pro Max"))
 # The iPhone Duo Simulator boots folded, so its screenshots show the outer display.
 IPHONE_DUO = Display("iphone-duo", "iPhone Duo outer display", frozenset({(1398, 2034)}), "duo_", "iPhone Duo", ())
 # Apple requires the 13-inch iPad set once the app runs on iPad; smaller iPads get it scaled down. fastlane deliver
 # files both sizes under the 13-inch display type (APP_IPAD_PRO_3GEN_129).
 IPAD_13 = Display("ipad-13", "13-inch iPad", frozenset({(2064, 2752), (2048, 2732)}), "ipad_", None,
                   (r"iPad Pro 13-inch \(M(\d+)\)", r"iPad Air 13-inch \(M(\d+)\)"))
-DISPLAYS = {display.key: display for display in (IPHONE_69, IPHONE_63, IPHONE_DUO, IPAD_13)}
-ALLOWED_SIZES = IPHONE_69.sizes
+DISPLAYS = {display.key: display for display in (IPHONE_63, IPHONE_65, IPHONE_DUO, IPAD_13)}
 MIN_SHOTS = 5
 MAX_SHOTS = 10  # App Store Connect accepts at most ten screenshots per set.
 STATUS_BAR_ARGUMENTS = (
     "--time", "9:41", "--dataNetwork", "wifi", "--wifiMode", "active", "--wifiBars", "3",
     "--cellularMode", "active", "--cellularBars", "4", "--batteryState", "charged", "--batteryLevel", "100")
 TEST_CLASS = "WhoGaveWhatUITests/StoreScreenshotsUITests"
+# The UI test runner the capture installs; removed afterwards so the shared pool device keeps only what it had.
+UI_TEST_RUNNER = "pro.ziganshin.WhoGaveWhatUITests.xctrunner"
 # xcodebuild forwards TEST_RUNNER_<NAME> to the test runner as <NAME>; the test is skipped without them.
 ATTACHMENT_NAME = re.compile(r"store-(?P<locale>en-US|ru)-(?P<number>\d{2})-(?P<slug>[a-z0-9]+(?:-[a-z0-9]+)*)")
 BUILD_TIMEOUT_SECONDS = 1800
+SHUTDOWN_TIMEOUT_SECONDS = 180
 STATUS_BAR_ATTEMPTS = 3
 STATUS_BAR_TIMEOUT_SECONDS = 90
 TEST_TIMEOUT_SECONDS = 900
@@ -66,56 +73,39 @@ TEST_TIMEOUT_SECONDS = 900
 
 # MARK: Device selection
 
-def _ios_runtimes(payload):
-    return [runtime for runtime in payload.get("runtimes", [])
-            if runtime.get("isAvailable") and str(runtime.get("name", "")).startswith("iOS")]
+def _runtime_name(identifier):
+    """`com.apple.CoreSimulator.SimRuntime.iOS-27-0` -> `iOS 27.0`."""
+    match = re.fullmatch(r"com\.apple\.CoreSimulator\.SimRuntime\.(\w+?)-(\d+(?:-\d+)*)", identifier)
+    return f"{match[1]} {match[2].replace('-', '.')}" if match else identifier
 
 
-def _device_preference(name, display):
-    """Sort key for a candidate model: the earlier pattern of `display.models` first, then the newest model."""
-    for group, pattern in enumerate(display.models):
-        match = re.fullmatch(pattern, name)
-        if match:
-            return (group, -int(match.group(1)) if match.groups() else 0)
-    return None
-
-
-def choose_device(payload, device=None, runtime=None, display=IPHONE_69):
-    """Pick the Simulator model for `display` and the newest available iOS runtime that supports it.
-
-    `payload` is the JSON of `simctl list runtimes available` (or `simctl list -j`). Without `device`, only the models
-    matching the set's patterns qualify: for the 6.9-inch set iPhone 18 Pro Max, other Pro Max and Plus models; for
-    the 13-inch iPad set the 13-inch iPad Pro, then the 13-inch iPad Air. iPhone Duo is accepted only for its own
-    set. A set tied to one model, such as iPhone Duo, accepts only that model.
-    """
-    runtimes = _ios_runtimes(payload)
-    if runtime is not None:
-        runtimes = [item for item in runtimes if item.get("name") == runtime]
-    supported = {}
-    for item in runtimes:
-        for device_type in item.get("supportedDeviceTypes", []):
-            supported.setdefault(device_type.get("name", ""), []).append(item)
+def fits_display(name, display):
+    """Whether a Simulator model can produce `display`: its one model, or a name matching one of its patterns."""
     if display.device is not None:
-        if device not in (None, display.device):
-            raise ValueError(f"The {display.title} screenshots need {display.device}, not {device}")
-        device = display.device
-        names = [device] if device in supported else []
-    elif device is not None:
-        if "Duo" in device:
-            raise ValueError(f"iPhone Duo does not produce {display.title} App Store screenshot sizes")
-        names = [device] if device in supported else []
-    else:
-        names = sorted((name for name in supported if _device_preference(name, display) is not None),
-                       key=lambda name: _device_preference(name, display))
-    if not names:
-        family = "iPad" if display is IPAD_13 else "iPhone"
-        wanted = device or ("13-inch iPad" if display is IPAD_13 else "6.9-inch (Pro Max or Plus) iPhone")
-        available = ", ".join(sorted(name for name in supported if name.startswith(family))) or "none"
-        raise ValueError(
-            f"No available {wanted} Simulator{f' on {runtime}' if runtime else ''}; available {family}s: {available}")
-    name = names[0]
-    chosen = max(supported[name], key=lambda item: tools._runtime_version(item["name"]))
-    return {"device": name, "runtime": chosen["name"], "runtime_identifier": chosen.get("identifier")}
+        return name == display.device
+    return any(re.fullmatch(pattern, name) for pattern in display.models)
+
+
+def pool_device(payload, simulator_id, display):
+    """The existing Simulator `simulator_id` from `simctl list devices --json`, checked against `display`.
+
+    Returns `{"udid", "device", "runtime", "state"}`. The capture never creates a device: it uses the MacPro pool
+    device the simulator-queue skill names for the set.
+    """
+    wanted = simulator_id.upper()
+    for runtime_identifier, devices in payload.get("devices", {}).items():
+        for device in devices:
+            if device.get("udid", "").upper() != wanted:
+                continue
+            if not device.get("isAvailable", True):
+                raise ValueError(f"Simulator {simulator_id} ({device.get('name')}) is unavailable")
+            name = device.get("name", "")
+            if not fits_display(name, display):
+                expected = display.device or " or ".join(display.models)
+                raise ValueError(f"{name} does not produce the {display.title} set; it needs {expected}")
+            return {"udid": device["udid"], "device": name, "runtime": _runtime_name(runtime_identifier),
+                    "state": device.get("state")}
+    raise ValueError(f"No Simulator with UDID {simulator_id}; pick a pool device from `xcrun simctl list devices`")
 
 
 # MARK: Attachments and layout
@@ -151,7 +141,7 @@ def png_size(path):
     return struct.unpack(">II", header[16:24])
 
 
-def validate_size(width, height, name, display=IPHONE_69):
+def validate_size(width, height, name, display=IPHONE_63):
     if width >= height:
         raise ValueError(f"{name} is {width}x{height}; store screenshots must be portrait")
     if (width, height) not in display.sizes:
@@ -159,7 +149,7 @@ def validate_size(width, height, name, display=IPHONE_69):
         raise ValueError(f"{name} is {width}x{height}; the {display.title} sizes are {allowed}")
 
 
-def validate_set(shots_by_locale, display=IPHONE_69):
+def validate_set(shots_by_locale, display=IPHONE_63):
     """Check numbering, locale parity and sizes. `shots_by_locale` maps locale -> [(number, slug, (w, h))]."""
     reference = None
     sizes = set()
@@ -182,7 +172,7 @@ def validate_set(shots_by_locale, display=IPHONE_69):
     return next(iter(sizes)) if sizes else None
 
 
-def export_locale(directory, locale, result_bundle, display=IPHONE_69):
+def export_locale(directory, locale, result_bundle, display=IPHONE_63):
     """Export one run's attachments and copy its store screenshots to `screenshots/<locale>/`."""
     attachments = directory / f"attachments-{locale}"
     tools.export_xcresult_attachments(result_bundle, attachments, directory)
@@ -287,7 +277,7 @@ def render_review(sets, title="WhoGaveWhat App Store screenshots: every set", so
 def combine_sets(parts, out, displays=tuple(DISPLAYS)):
     """Merge the per-set artifacts `<parts>/store-screenshots-<display>` into `<out>/screenshots/<locale>/`.
 
-    This is the layout the App Store metadata workflow uploads: one folder per language holding every set. Each
+    This is the layout that is uploaded: one folder per language holding every set. Each
     set's metadata and contact sheet stay in `<out>/<display>/`, and `<out>/index.html` shows every set. Returns
     `[(display, metadata, shots_by_locale)]` in the order of `DISPLAYS`.
     """
@@ -348,6 +338,19 @@ def read_combined(directory):
         sets.append((display, metadata, shots_by_locale))
     if not sets:
         raise ValueError(f"{directory} holds no combined screenshot sets")
+    return sets
+
+
+def check_upload(directory):
+    """Validate a combined folder before upload: deliver replaces every set of each language, so all sets of
+    `DISPLAYS` must be there, from one commit."""
+    sets = read_combined(directory)
+    missing = [key for key in DISPLAYS if key not in {display.key for display, _metadata, _shots in sets}]
+    if missing:
+        raise ValueError(f"{directory} lacks the screenshot sets {missing}; the upload would delete them from the store")
+    commits = {metadata.get("head_sha") for _display, metadata, _shots in sets}
+    if len(commits) != 1:
+        raise ValueError(f"The sets come from different commits: {sorted(map(str, commits))}")
     return sets
 
 
@@ -429,7 +432,27 @@ def override_status_bar(directory, simulator_id, attempts=STATUS_BAR_ATTEMPTS):
     return "real"
 
 
-def run(directory, device=None, runtime=None, locales=LOCALES, display=IPHONE_69):
+def release_device(directory, metadata, simulator_id, booted_here):
+    """Leave the pool device as it was found: clear the status bar, remove the UI test runner, and shut it down
+    only when this run booted it. Returns the errors instead of raising, so the capture's own result wins."""
+    errors = []
+    steps = []
+    if metadata.get("status_bar") == "overridden":
+        steps.append(("status-bar-clear", ["xcrun", "simctl", "status_bar", simulator_id, "clear"], 60))
+    if metadata.get("built"):
+        steps.append(("uninstall-ui-test-runner", ["xcrun", "simctl", "uninstall", simulator_id, UI_TEST_RUNNER], 60))
+    if booted_here:
+        steps.append(("simulator-shutdown", ["xcrun", "simctl", "shutdown", simulator_id], SHUTDOWN_TIMEOUT_SECONDS))
+    for label, command, timeout in steps:
+        try:
+            tools.run_command(directory, label, command, timeout)
+        except (tools.NativeCommandError, OSError, subprocess.SubprocessError) as error:
+            errors.append(f"{label}: {error}")
+    return errors
+
+
+def run(directory, simulator_id, locales=LOCALES, display=IPHONE_63):
+    """Capture one set on the existing Simulator `simulator_id`. The caller holds MacPro's simulator queue slot."""
     directory = directory.resolve()
     directory.mkdir(parents=True, exist_ok=True)
     clear_previous_outputs(directory)
@@ -440,27 +463,27 @@ def run(directory, device=None, runtime=None, locales=LOCALES, display=IPHONE_69
                 "outcome": "failure"}
     shots_by_locale = {}
     failed_bundles = []
+    booted_here = False
+    release_errors = []
     try:
-        runtimes = tools.run_command(directory, "simulator-runtimes-list", [
-            "xcrun", "simctl", "list", "runtimes", "available", "--json"], 30)
-        choice = choose_device(json.loads(runtimes.stdout), device, runtime, display)
-        metadata.update(device=choice["device"], runtime=choice["runtime"])
-        listing = tools.run_command(directory, "simulator-list", [
-            "xcrun", "simctl", "list", "devices", "available", "--json"], 30)
-        simulator = tools.create_ci_simulator(
-            directory, json.loads(listing.stdout), choice["runtime"], metadata, choice["device"])
+        listing = tools.run_command(directory, "simulator-list", ["xcrun", "simctl", "list", "devices", "--json"], 30)
+        simulator = pool_device(json.loads(listing.stdout), simulator_id, display)
         simulator_id = simulator["udid"]
-        metadata["simulator_id"] = simulator_id
-        tools.run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
-        tools.run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
-                          tools.COLD_BOOT_TIMEOUT_SECONDS)
+        metadata.update(device=simulator["device"], runtime=simulator["runtime"], simulator_id=simulator_id)
         target = ["-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
                   "-destination", f"platform=iOS Simulator,id={simulator_id}",
                   "-derivedDataPath", str(directory / "DerivedData"), "-parallel-testing-enabled", "NO"]
         signing = ["CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-"]
+        # Built before booting, so a booting Simulator does not compete with the compiler.
         tools.run_command(directory, "xcodebuild-build", ["xcodebuild", "build-for-testing", *target, *signing],
                           BUILD_TIMEOUT_SECONDS, cwd=ROOT)
-        # Overridden after the build: right after a cold boot the override can hang while the Simulator settles.
+        metadata["built"] = True
+        if simulator["state"] != "Booted":
+            tools.run_command(directory, "simulator-boot", ["xcrun", "simctl", "boot", simulator_id], 60)
+            booted_here = True
+        tools.run_command(directory, "simulator-bootstatus", ["xcrun", "simctl", "bootstatus", simulator_id, "-b"],
+                          tools.COLD_BOOT_TIMEOUT_SECONDS)
+        # Overridden after the boot settles: right after a cold boot the override can hang.
         metadata["status_bar"] = override_status_bar(directory, simulator_id)
         for locale in locales:
             bundle = directory / f"{locale}.xcresult"
@@ -485,7 +508,9 @@ def run(directory, device=None, runtime=None, locales=LOCALES, display=IPHONE_69
         raise
     finally:
         try:
-            tools.cleanup_ci_simulator(directory, metadata)
+            if "simulator_id" in metadata:
+                release_errors = release_device(directory, metadata, simulator_id, booted_here)
+                metadata["release"] = {"booted_here": booted_here, "errors": release_errors}
         finally:
             try:
                 (directory / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
@@ -497,9 +522,9 @@ def run(directory, device=None, runtime=None, locales=LOCALES, display=IPHONE_69
                     if bundle not in failed_bundles:
                         shutil.rmtree(bundle, ignore_errors=True)
                         shutil.rmtree(directory / f"attachments-{locale}", ignore_errors=True)
-    fixture = metadata.get("simulator_fixture", {})
-    if fixture.get("cleanup_outcome") == "failure":
-        raise ValueError(f"Screenshots were captured but the Simulator was not cleaned up: {fixture.get('cleanup_error')}")
+    if release_errors:
+        raise ValueError("Screenshots were captured but the pool device was not left as found: "
+                         + "; ".join(release_errors))
 
 
 def main(argv=None):
@@ -512,11 +537,13 @@ def main(argv=None):
                         help="Instead of capturing, write a self-contained review page of the combined folder "
                              "(a store-screenshots artifact) to FILE, with the images embedded")
     parser.add_argument("--note", help="A line of context for --review-page, such as the run it shows")
-    parser.add_argument("--display", choices=sorted(DISPLAYS), default=IPHONE_69.key,
+    parser.add_argument("--check", action="store_true",
+                        help="Instead of capturing, check that the combined folder holds every set from one commit")
+    parser.add_argument("--display", choices=sorted(DISPLAYS), default=IPHONE_63.key,
                         help="App Store screenshot set to capture (default: %(default)s)")
-    parser.add_argument("--device", help="Simulator model for the 6.9-inch or iPad set (default: iPhone 18 Pro Max, else the "
-                        "newest Pro Max or Plus; for iPad the newest 13-inch iPad Pro, else iPad Air)")
-    parser.add_argument("--runtime", help="Require a runtime such as 'iOS 27.0' (default: newest one supporting the model)")
+    parser.add_argument("--simulator", metavar="UDID",
+                        help="Existing MacPro pool Simulator to capture on (required for a capture; see the "
+                             "simulator-queue skill for the device of each set)")
     parser.add_argument("--locale", action="append", choices=LOCALES, help="Store language to capture (default: all)")
     args = parser.parse_args(argv)
     if args.review_page:
@@ -527,6 +554,14 @@ def main(argv=None):
             return 1
         print(args.review_page)
         return 0
+    if args.check:
+        try:
+            for display, metadata, shots_by_locale in check_upload(args.directory):
+                print(display.key, metadata.get("device"), {locale: len(shots) for locale, shots in shots_by_locale.items()})
+        except (OSError, ValueError, json.JSONDecodeError) as error:
+            print(f"error: {error}", file=sys.stderr)
+            return 1
+        return 0
     if args.combine:
         try:
             for display, _metadata, shots_by_locale in combine_sets(args.combine, args.directory):
@@ -536,8 +571,10 @@ def main(argv=None):
             print(f"error: {error}", file=sys.stderr)
             return 1
         return 0
+    if not args.simulator:
+        parser.error("a capture needs --simulator UDID of an existing pool device")
     try:
-        run(args.directory, args.device, args.runtime, tuple(args.locale or LOCALES), DISPLAYS[args.display])
+        run(args.directory, args.simulator, tuple(args.locale or LOCALES), DISPLAYS[args.display])
     except (tools.NativeCommandError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1

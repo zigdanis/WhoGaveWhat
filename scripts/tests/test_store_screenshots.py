@@ -36,81 +36,49 @@ def set_for(*sizes, count=len(SLUGS)):
     return [(index + 1, SLUGS[index], sizes[0]) for index in range(count)]
 
 
+def devices(*entries):
+    """A `simctl list devices --json` payload from (runtime, name, udid, state) entries."""
+    payload = {'devices': {}}
+    for runtime_name, name, udid, state in entries:
+        key = 'com.apple.CoreSimulator.SimRuntime.' + runtime_name.replace(' ', '-').replace('.', '-')
+        payload['devices'].setdefault(key, []).append(dict(name=name, udid=udid, state=state, isAvailable=True))
+    return payload
+
+
+POOL = devices(('iOS 27.0', 'iPhone 17 Pro', 'C47B0285', 'Shutdown'),
+               ('iOS 27.0', 'iPhone 14 Plus', 'FCBC882C', 'Booted'),
+               ('iOS 27.0', 'iPhone SE (3rd generation)', 'F808ED1F', 'Shutdown'),
+               ('iOS 27.1', 'iPhone Duo', '079EE4B9', 'Shutdown'),
+               ('iOS 27.0', 'iPad Pro 13-inch (M5)', '61C17472', 'Shutdown'),
+               ('iOS 27.0', 'iPad Pro 11-inch (M5)', 'AAAAAAAA', 'Shutdown'))
+
+
 class DeviceSelectionTests(unittest.TestCase):
-    def test_prefers_the_18_pro_max_on_the_runtime_that_supports_it(self):
-        payload = {'runtimes': [
-            runtime('iOS 27.1', ['iPhone Duo']),
-            runtime('iOS 27.0', ['iPhone 17 Pro Max', 'iPhone 18 Pro', 'iPhone 18 Pro Max', 'iPhone Duo'])]}
+    def test_each_set_takes_its_pool_device_by_udid(self):
+        for display, udid, name, runtime_name, state in (
+                (shots.IPHONE_63, 'C47B0285', 'iPhone 17 Pro', 'iOS 27.0', 'Shutdown'),
+                (shots.IPHONE_65, 'fcbc882c', 'iPhone 14 Plus', 'iOS 27.0', 'Booted'),
+                (shots.IPHONE_DUO, '079EE4B9', 'iPhone Duo', 'iOS 27.1', 'Shutdown'),
+                (shots.IPAD_13, '61C17472', 'iPad Pro 13-inch (M5)', 'iOS 27.0', 'Shutdown')):
+            with self.subTest(display=display.key):
+                self.assertEqual({'udid': udid.upper(), 'device': name, 'runtime': runtime_name, 'state': state},
+                                 shots.pool_device(POOL, udid, display))
 
-        choice = shots.choose_device(payload)
+    def test_a_device_of_the_wrong_model_is_refused(self):
+        for display, udid in ((shots.IPHONE_63, 'FCBC882C'), (shots.IPHONE_65, 'C47B0285'),
+                              (shots.IPHONE_DUO, 'C47B0285'), (shots.IPAD_13, 'AAAAAAAA'),
+                              (shots.IPHONE_63, 'F808ED1F'), (shots.IPAD_13, '079EE4B9')):
+            with self.subTest(display=display.key, udid=udid), \
+                    self.assertRaisesRegex(ValueError, f'does not produce the {display.title} set'):
+                shots.pool_device(POOL, udid, display)
 
-        self.assertEqual('iPhone 18 Pro Max', choice['device'])
-        self.assertEqual('iOS 27.0', choice['runtime'])
-
-    def test_falls_back_to_the_newest_pro_max_then_plus(self):
-        pro_max = {'runtimes': [runtime('iOS 26.4', ['iPhone 16 Pro Max', 'iPhone 17 Pro Max', 'iPhone 17 Pro'])]}
-        plus = {'runtimes': [runtime('iOS 26.4', ['iPhone 16 Plus', 'iPhone 17', 'iPhone 15 Plus'])]}
-
-        self.assertEqual('iPhone 17 Pro Max', shots.choose_device(pro_max)['device'])
-        self.assertEqual('iPhone 16 Plus', shots.choose_device(plus)['device'])
-
-    def test_picks_the_newest_runtime_for_the_model(self):
-        payload = {'runtimes': [runtime('iOS 26.4', ['iPhone 18 Pro Max']), runtime('iOS 27.0', ['iPhone 18 Pro Max'])]}
-
-        self.assertEqual('iOS 27.0', shots.choose_device(payload)['runtime'])
-        self.assertEqual('iOS 26.4', shots.choose_device(payload, runtime='iOS 26.4')['runtime'])
-
-    def test_never_selects_duo_or_unavailable_runtimes_and_explains_the_failure(self):
-        payload = {'runtimes': [runtime('iOS 27.1', ['iPhone Duo', 'iPhone 18 Pro']),
-                                runtime('iOS 27.0', ['iPhone 18 Pro Max'], available=False)]}
-
-        with self.assertRaisesRegex(ValueError, 'No available 6.9-inch.*iPhone 18 Pro, iPhone Duo'):
-            shots.choose_device(payload)
-        with self.assertRaisesRegex(ValueError, 'Duo'):
-            shots.choose_device(payload, device='iPhone Duo')
-
-    def test_the_duo_set_uses_iphone_duo_on_its_runtime(self):
-        payload = {'runtimes': [runtime('iOS 27.1', ['iPhone Duo']), runtime('iOS 27.0', ['iPhone 18 Pro Max'])]}
-
-        choice = shots.choose_device(payload, display=shots.IPHONE_DUO)
-
-        self.assertEqual(('iPhone Duo', 'iOS 27.1'), (choice['device'], choice['runtime']))
-        self.assertEqual('iPhone Duo', shots.choose_device(payload, 'iPhone Duo', display=shots.IPHONE_DUO)['device'])
-        with self.assertRaisesRegex(ValueError, 'need iPhone Duo, not iPhone 18 Pro Max'):
-            shots.choose_device(payload, 'iPhone 18 Pro Max', display=shots.IPHONE_DUO)
-        with self.assertRaisesRegex(ValueError, 'No available iPhone Duo Simulator on iOS 27.0'):
-            shots.choose_device(payload, runtime='iOS 27.0', display=shots.IPHONE_DUO)
-
-    def test_the_6_3_inch_set_uses_iphone_18_pro(self):
-        payload = {'runtimes': [runtime('iOS 27.1', ['iPhone Duo']),
-                                runtime('iOS 27.0', ['iPhone 18 Pro', 'iPhone 18 Pro Max'])]}
-
-        choice = shots.choose_device(payload, display=shots.IPHONE_63)
-
-        self.assertEqual(('iPhone 18 Pro', 'iOS 27.0'), (choice['device'], choice['runtime']))
-        shots.validate_size(1206, 2622, 'shot', shots.IPHONE_63)
-        with self.assertRaisesRegex(ValueError, '6.3-inch sizes are 1206x2622, 1179x2556'):
-            shots.validate_size(1320, 2868, 'shot', shots.IPHONE_63)
-
-    def test_the_ipad_set_prefers_the_newest_13_inch_ipad_pro_then_air(self):
-        payload = {'runtimes': [runtime('iOS 27.1', ['iPhone Duo']), runtime('iOS 27.0', [
-            'iPhone 18 Pro Max', 'iPad Air 13-inch (M4)', 'iPad Pro 11-inch (M5)', 'iPad Pro 13-inch (M4)',
-            'iPad Pro 13-inch (M5)', 'iPad mini (A17 Pro)'])]}
-        air = {'runtimes': [runtime('iOS 27.0', ['iPad Air 11-inch (M4)', 'iPad Air 13-inch (M3)', 'iPad Air 13-inch (M4)'])]}
-
-        choice = shots.choose_device(payload, display=shots.IPAD_13)
-
-        self.assertEqual(('iPad Pro 13-inch (M5)', 'iOS 27.0'), (choice['device'], choice['runtime']))
-        self.assertEqual('iPad Air 13-inch (M4)', shots.choose_device(air, display=shots.IPAD_13)['device'])
-
-    def test_the_ipad_set_never_falls_back_to_a_smaller_ipad_or_an_iphone(self):
-        payload = {'runtimes': [runtime('iOS 27.0', ['iPhone 18 Pro Max', 'iPad Pro 11-inch (M5)', 'iPad mini (A17 Pro)'])]}
-
-        with self.assertRaisesRegex(ValueError, r'No available 13-inch iPad Simulator; available iPads: '
-                                                r'iPad Pro 11-inch \(M5\), iPad mini'):
-            shots.choose_device(payload, display=shots.IPAD_13)
-        with self.assertRaisesRegex(ValueError, 'Duo does not produce 13-inch iPad'):
-            shots.choose_device(payload, 'iPhone Duo', display=shots.IPAD_13)
+    def test_an_unknown_or_unavailable_device_is_refused(self):
+        with self.assertRaisesRegex(ValueError, 'No Simulator with UDID 12345678'):
+            shots.pool_device(POOL, '12345678', shots.IPHONE_63)
+        payload = devices(('iOS 27.0', 'iPhone 17 Pro', 'C47B0285', 'Shutdown'))
+        payload['devices']['com.apple.CoreSimulator.SimRuntime.iOS-27-0'][0]['isAvailable'] = False
+        with self.assertRaisesRegex(ValueError, 'unavailable'):
+            shots.pool_device(payload, 'C47B0285', shots.IPHONE_63)
 
     def test_only_apples_portrait_13_inch_ipad_sizes_pass_for_ipad(self):
         for size in [(2064, 2752), (2048, 2732)]:
@@ -123,13 +91,6 @@ class DeviceSelectionTests(unittest.TestCase):
     def test_every_set_has_its_own_file_prefix(self):
         prefixes = [display.prefix for display in shots.DISPLAYS.values()]
         self.assertEqual(len(prefixes), len(set(prefixes)))
-
-    def test_an_explicit_model_must_exist(self):
-        payload = {'runtimes': [runtime('iOS 27.0', ['iPhone 18 Pro Max', 'iPhone 18'])]}
-
-        self.assertEqual('iPhone 18', shots.choose_device(payload, device='iPhone 18')['device'])
-        with self.assertRaisesRegex(ValueError, 'No available iPhone 17 Pro Max'):
-            shots.choose_device(payload, device='iPhone 17 Pro Max')
 
 
 class PngSizeTests(unittest.TestCase):
@@ -147,12 +108,15 @@ class PngSizeTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'not a PNG'):
                     shots.png_size(path)
 
-    def test_only_apples_portrait_6_9_inch_sizes_pass(self):
-        for size in sorted(shots.ALLOWED_SIZES):
+    def test_only_apples_portrait_iphone_sizes_pass_for_each_set(self):
+        for size in sorted(shots.IPHONE_63.sizes):
             shots.validate_size(*size, 'shot')
-        for size in [(1206, 2622), (1320, 2867), (2868, 1320), (2868, 2868)]:
-            with self.subTest(size=size), self.assertRaises(ValueError):
-                shots.validate_size(*size, 'shot')
+        for size in [(1284, 2778), (1242, 2688)]:
+            shots.validate_size(*size, 'shot', shots.IPHONE_65)
+        for display, size in ((shots.IPHONE_63, (1320, 2868)), (shots.IPHONE_63, (1206, 2621)),
+                              (shots.IPHONE_65, (1290, 2796)), (shots.IPHONE_65, (2778, 1284))):
+            with self.subTest(display=display.key, size=size), self.assertRaises(ValueError):
+                shots.validate_size(*size, 'shot', display)
 
     def test_only_the_duo_outer_display_size_passes_for_duo(self):
         shots.validate_size(1398, 2034, 'shot', shots.IPHONE_DUO)
@@ -164,9 +128,9 @@ class PngSizeTests(unittest.TestCase):
 
     def test_a_landscape_error_names_the_problem(self):
         with self.assertRaisesRegex(ValueError, 'portrait'):
-            shots.validate_size(2868, 1320, 'en-US/01_home.png')
-        with self.assertRaisesRegex(ValueError, '1206x2622.*1320x2868'):
-            shots.validate_size(1206, 2622, 'en-US/01_home.png')
+            shots.validate_size(2622, 1206, 'en-US/01_home.png')
+        with self.assertRaisesRegex(ValueError, '1320x2868.*1206x2622'):
+            shots.validate_size(1320, 2868, 'en-US/01_home.png')
 
 
 class ManifestTests(unittest.TestCase):
@@ -210,43 +174,43 @@ class ManifestTests(unittest.TestCase):
 
     def test_duo_names_share_the_language_folder_without_clashing(self):
         self.assertEqual('duo_01_home.png', shots.output_name(1, 'home', shots.IPHONE_DUO.prefix))
-        self.assertNotEqual(shots.IPHONE_69.prefix, shots.IPHONE_DUO.prefix)
+        self.assertNotEqual(shots.IPHONE_63.prefix, shots.IPHONE_DUO.prefix)
 
 
 class SetValidationTests(unittest.TestCase):
     def sets(self, **changes):
-        base = {'en-US': set_for((1320, 2868)), 'ru': set_for((1320, 2868))}
+        base = {'en-US': set_for((1206, 2622)), 'ru': set_for((1206, 2622))}
         base.update(changes)
         return base
 
     def test_matching_sets_pass_and_report_their_size(self):
-        self.assertEqual((1320, 2868), shots.validate_set(self.sets()))
+        self.assertEqual((1206, 2622), shots.validate_set(self.sets()))
 
     def test_locales_need_the_same_slugs_in_the_same_order(self):
-        swapped = set_for((1320, 2868))
-        swapped[2] = (3, 'person', (1320, 2868))
+        swapped = set_for((1206, 2622))
+        swapped[2] = (3, 'person', (1206, 2622))
         with self.assertRaisesRegex(ValueError, 'ru screenshots .* differ from en-US'):
             shots.validate_set(self.sets(ru=swapped))
         with self.assertRaisesRegex(ValueError, 'ru screenshots .*differ|not numbered'):
-            shots.validate_set(self.sets(ru=set_for((1320, 2868), count=6)))
+            shots.validate_set(self.sets(ru=set_for((1206, 2622), count=6)))
 
     def test_numbers_must_be_contiguous(self):
-        gap = [(1, 'home', (1320, 2868)), (3, 'add-gift', (1320, 2868))] + set_for((1320, 2868))[2:]
+        gap = [(1, 'home', (1206, 2622)), (3, 'add-gift', (1206, 2622))] + set_for((1206, 2622))[2:]
         with self.assertRaisesRegex(ValueError, 'not numbered'):
             shots.validate_set(self.sets(**{'en-US': gap}))
 
     def test_count_must_fit_the_store_limits(self):
         with self.assertRaisesRegex(ValueError, 'expected 5 to 10'):
-            shots.validate_set({'en-US': set_for((1320, 2868), count=4), 'ru': set_for((1320, 2868), count=4)})
-        many = [(index, f'shot-{index}', (1320, 2868)) for index in range(1, 12)]
+            shots.validate_set({'en-US': set_for((1206, 2622), count=4), 'ru': set_for((1206, 2622), count=4)})
+        many = [(index, f'shot-{index}', (1206, 2622)) for index in range(1, 12)]
         with self.assertRaisesRegex(ValueError, 'expected 5 to 10'):
             shots.validate_set({'en-US': many, 'ru': many})
 
     def test_wrong_or_mixed_sizes_fail(self):
-        with self.assertRaisesRegex(ValueError, '1206x2622'):
-            shots.validate_set(self.sets(ru=set_for((1206, 2622))))
-        mixed = set_for((1320, 2868))
-        mixed[0] = (1, 'home', (1290, 2796))
+        with self.assertRaisesRegex(ValueError, '1320x2868'):
+            shots.validate_set(self.sets(ru=set_for((1320, 2868))))
+        mixed = set_for((1206, 2622))
+        mixed[0] = (1, 'home', (1179, 2556))
         with self.assertRaisesRegex(ValueError, 'mix sizes'):
             shots.validate_set(self.sets(ru=mixed))
 
@@ -261,7 +225,7 @@ class IndexTests(unittest.TestCase):
 
 
 class CombineTests(unittest.TestCase):
-    SIZES = {'iphone-6.9': (1320, 2868), 'iphone-6.3': (1206, 2622), 'iphone-duo': (1398, 2034), 'ipad-13': (2064, 2752)}
+    SIZES = {'iphone-6.3': (1206, 2622), 'iphone-6.5': (1284, 2778), 'iphone-duo': (1398, 2034), 'ipad-13': (2064, 2752)}
 
     def write_parts(self, parts, sizes=None, slugs=SLUGS):
         for key, (width, height) in (sizes or self.SIZES).items():
@@ -282,7 +246,7 @@ class CombineTests(unittest.TestCase):
 
             sets = shots.combine_sets(parts, out)
 
-            self.assertEqual(['iphone-6.9', 'iphone-6.3', 'iphone-duo', 'ipad-13'], [display.key for display, _, _ in sets])
+            self.assertEqual(['iphone-6.3', 'iphone-6.5', 'iphone-duo', 'ipad-13'], [display.key for display, _, _ in sets])
             names = sorted(path.name for path in (out / 'screenshots/ru').iterdir())
             self.assertEqual(4 * len(SLUGS), len(names))
             self.assertIn('ipad_01_home.png', names)
@@ -292,9 +256,9 @@ class CombineTests(unittest.TestCase):
             page = (out / 'index.html').read_text()
             for text in ('13-inch iPad (ipad-13 model, iOS 27.0) &middot; 14 screenshots', 'Commit bbbbbbbbbbbb',
                          'src="screenshots/ru/ipad_07_people.png"', 'medium_07_people.png (1206x2622)',
-                         'src="screenshots/en-US/duo_01_home.png"'):
+                         'src="screenshots/en-US/duo_01_home.png"', 'large_01_home.png (1284x2778)'):
                 self.assertIn(text, page)
-            self.assertLess(page.index('6.9-inch'), page.index('13-inch iPad'))
+            self.assertLess(page.index('6.3-inch'), page.index('13-inch iPad'))
 
     def test_a_missing_set_or_wrong_size_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -307,6 +271,20 @@ class CombineTests(unittest.TestCase):
             self.write_parts(parts, {**self.SIZES, 'ipad-13': (1668, 2420)})
             with self.assertRaisesRegex(ValueError, '13-inch iPad sizes'):
                 shots.combine_sets(parts, Path(temporary) / 'out')
+
+    def test_the_upload_check_needs_every_set_from_one_commit(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            parts, out = Path(temporary) / 'parts', Path(temporary) / 'out'
+            self.write_parts(parts)
+            shots.combine_sets(parts, out)
+            self.assertEqual(list(shots.DISPLAYS), [display.key for display, _, _ in shots.check_upload(out)])
+            self.assertEqual(0, shots.main([str(out), '--check']))
+            (out / 'iphone-duo/metadata.json').write_text(json.dumps({'head_sha': 'c' * 40}))
+            with self.assertRaisesRegex(ValueError, 'different commits'):
+                shots.check_upload(out)
+            (out / 'iphone-duo/metadata.json').unlink()
+            with self.assertRaisesRegex(ValueError, "lacks the screenshot sets \\['iphone-duo'\\]"):
+                shots.check_upload(out)
 
     def test_a_self_contained_review_page_embeds_every_set(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -340,7 +318,7 @@ class CombineTests(unittest.TestCase):
 
 
 class RunTests(unittest.TestCase):
-    def fake_environment(self, directory, width=1320, height=2868, ru_slugs=None, display=None):
+    def fake_environment(self, directory, width=1206, height=2622, ru_slugs=None, payload=POOL):
         commands = []
         environments = []
 
@@ -349,18 +327,8 @@ class RunTests(unittest.TestCase):
             if label == 'xcodebuild-test-en-US' or label == 'xcodebuild-test-ru':
                 environments.append((os.environ.get('TEST_RUNNER_KS_STORE_SCREENSHOTS'),
                                      os.environ.get('TEST_RUNNER_KS_STORE_LOCALE')))
-            output = ''
-            if label == 'simulator-runtimes-list':
-                output = json.dumps({'runtimes': [runtime('iOS 27.1', ['iPhone Duo']),
-                                                  runtime('iOS 27.0', ['iPhone 18 Pro Max', 'iPad Pro 13-inch (M5)'])]})
-            if label == 'simulator-list':
-                output = json.dumps({'devices': {}})
+            output = json.dumps(payload) if label == 'simulator-list' else ''
             return subprocess.CompletedProcess(command, 0, output, '')
-
-        def create(_directory, _payload, requested_runtime, metadata, device_name):
-            metadata['simulator_fixture'] = {'created_simulator_id': 'UDID'}
-            commands.append(('create', [requested_runtime, device_name]))
-            return {'udid': 'UDID'}
 
         def export(bundle, attachments, _directory):
             locale = 'ru' if 'ru' in bundle.name else 'en-US'
@@ -373,14 +341,8 @@ class RunTests(unittest.TestCase):
                                 'suggestedHumanReadableName': f'store-{locale}-{number:02d}-{slug}_0_X.png'})
             (attachments / 'manifest.json').write_text(json.dumps([{'attachments': entries}]))
 
-        def cleanup(_directory, metadata):
-            commands.append(('cleanup', [metadata['simulator_fixture']['created_simulator_id']]))
-            metadata['simulator_fixture']['cleanup_outcome'] = 'success'
-
         patches = [patch.object(shots.tools, 'run_command', side_effect=run_command),
-                   patch.object(shots.tools, 'create_ci_simulator', side_effect=create),
                    patch.object(shots.tools, 'export_xcresult_attachments', side_effect=export),
-                   patch.object(shots.tools, 'cleanup_ci_simulator', side_effect=cleanup),
                    patch.dict(os.environ, {'HEAD_SHA': 'a' * 40})]
         return commands, environments, patches
 
@@ -391,79 +353,108 @@ class RunTests(unittest.TestCase):
             self.addCleanup(item.stop)
         return commands, environments
 
-    def test_a_good_run_lays_out_fastlane_folders_and_cleans_up(self):
+    def test_a_good_run_builds_before_booting_and_leaves_the_pool_device_as_found(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             commands, environments = self.run_with(directory)
 
-            shots.run(directory)
+            shots.run(directory, 'C47B0285')
 
-            self.assertEqual(sorted(f'{number:02d}_{slug}.png' for number, slug in enumerate(SLUGS, start=1)),
+            self.assertEqual(sorted(f'medium_{number:02d}_{slug}.png' for number, slug in enumerate(SLUGS, start=1)),
                              sorted(path.name for path in (directory / 'screenshots/en-US').iterdir()))
             self.assertEqual(sorted(path.name for path in (directory / 'screenshots/en-US').iterdir()),
                              sorted(path.name for path in (directory / 'screenshots/ru').iterdir()))
             metadata = json.loads((directory / 'metadata.json').read_text())
             self.assertEqual('success', metadata['outcome'])
-            self.assertEqual(['1320x2868'], metadata['sizes'])
-            self.assertEqual(('iPhone 18 Pro Max', 'iOS 27.0'), (metadata['device'], metadata['runtime']))
+            self.assertEqual(['1206x2622'], metadata['sizes'])
+            self.assertEqual(('iPhone 17 Pro', 'iOS 27.0', 'C47B0285'),
+                             (metadata['device'], metadata['runtime'], metadata['simulator_id']))
+            self.assertEqual({'booted_here': True, 'errors': []}, metadata['release'])
             self.assertEqual('a' * 40, metadata['head_sha'])
             self.assertTrue((directory / 'index.html').is_file())
             self.assertEqual([('1', 'en-US'), ('1', 'ru')], environments)
             self.assertNotIn('TEST_RUNNER_KS_STORE_LOCALE', os.environ)
             labels = [label for label, _ in commands]
-            self.assertLess(labels.index('xcodebuild-build'), labels.index('status-bar-1'))
-            self.assertLess(labels.index('status-bar-1'), labels.index('xcodebuild-test-en-US'))
-            self.assertEqual('cleanup', labels[-1])
-            self.assertEqual('overridden', metadata['status_bar'])
+            self.assertEqual(['simulator-list', 'xcodebuild-build', 'simulator-boot', 'simulator-bootstatus',
+                              'status-bar-1', 'xcodebuild-test-en-US', 'xcodebuild-test-ru', 'status-bar-clear',
+                              'uninstall-ui-test-runner', 'simulator-shutdown'], labels)
+            self.assertNotIn('create', ' '.join(' '.join(command) for _, command in commands))
+            self.assertNotIn('delete', ' '.join(' '.join(command) for _, command in commands))
+            self.assertEqual(['xcrun', 'simctl', 'uninstall', 'C47B0285', shots.UI_TEST_RUNNER],
+                             dict(commands)['uninstall-ui-test-runner'])
             status = dict(commands)['status-bar-1']
             self.assertEqual(['override', '--time', '9:41'], status[4:7])
             tests = dict(commands)['xcodebuild-test-ru']
             self.assertIn('test-without-building', tests)
+            self.assertIn('platform=iOS Simulator,id=C47B0285', tests)
             self.assertIn('-only-testing:WhoGaveWhatUITests/StoreScreenshotsUITests', tests)
             self.assertIn('-collect-test-diagnostics', tests)
             self.assertFalse((directory / 'ru.xcresult').exists())
 
+    def test_an_already_booted_device_is_not_shut_down(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            commands, _ = self.run_with(directory, width=1284, height=2778)
+
+            shots.run(directory, 'FCBC882C', display=shots.IPHONE_65)
+
+            labels = [label for label, _ in commands]
+            self.assertNotIn('simulator-boot', labels)
+            self.assertNotIn('simulator-shutdown', labels)
+            self.assertEqual('uninstall-ui-test-runner', labels[-1])
+            self.assertEqual(sorted(f'large_{number:02d}_{slug}.png' for number, slug in enumerate(SLUGS, start=1)),
+                             sorted(path.name for path in (directory / 'screenshots/ru').iterdir()))
+
     def test_a_duo_run_names_its_files_for_the_duo_set(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
-            commands, _ = self.run_with(directory, width=1398, height=2034)
+            self.run_with(directory, width=1398, height=2034)
 
-            shots.run(directory, display=shots.IPHONE_DUO)
+            shots.run(directory, '079EE4B9', display=shots.IPHONE_DUO)
 
             self.assertEqual(sorted(f'duo_{number:02d}_{slug}.png' for number, slug in enumerate(SLUGS, start=1)),
                              sorted(path.name for path in (directory / 'screenshots/ru').iterdir()))
             metadata = json.loads((directory / 'metadata.json').read_text())
             self.assertEqual(('iphone-duo', 'iPhone Duo', 'iOS 27.1', ['1398x2034']),
                              (metadata['display'], metadata['device'], metadata['runtime'], metadata['sizes']))
-            self.assertIn(['iOS 27.1', 'iPhone Duo'], [arguments for label, arguments in commands if label == 'create'])
             self.assertIn('src="screenshots/en-US/duo_01_home.png"', (directory / 'index.html').read_text())
 
     def test_an_ipad_run_names_its_files_for_the_ipad_set(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
-            commands, _ = self.run_with(directory, width=2064, height=2752)
+            self.run_with(directory, width=2064, height=2752)
 
-            shots.run(directory, display=shots.IPAD_13)
+            shots.run(directory, '61C17472', display=shots.IPAD_13)
 
             self.assertEqual(sorted(f'ipad_{number:02d}_{slug}.png' for number, slug in enumerate(SLUGS, start=1)),
                              sorted(path.name for path in (directory / 'screenshots/en-US').iterdir()))
             metadata = json.loads((directory / 'metadata.json').read_text())
             self.assertEqual(('ipad-13', 'iPad Pro 13-inch (M5)', 'iOS 27.0', ['2064x2752']),
                              (metadata['display'], metadata['device'], metadata['runtime'], metadata['sizes']))
-            self.assertIn(['iOS 27.0', 'iPad Pro 13-inch (M5)'], [arguments for label, arguments in commands if label == 'create'])
 
-    def test_wrong_screenshot_size_fails_clearly_and_still_cleans_up(self):
+    def test_a_wrong_device_fails_before_building(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
-            commands, _ = self.run_with(directory, width=1206, height=2622)
+            commands, _ = self.run_with(directory)
 
-            with self.assertRaisesRegex(ValueError, '1206x2622'):
-                shots.run(directory)
+            with self.assertRaisesRegex(ValueError, 'does not produce the 6.3-inch set'):
+                shots.run(directory, 'FCBC882C')
 
-            self.assertEqual('cleanup', commands[-1][0])
+            self.assertEqual(['simulator-list'], [label for label, _ in commands])
+            self.assertEqual('failure', json.loads((directory / 'metadata.json').read_text())['outcome'])
+
+    def test_wrong_screenshot_size_fails_clearly_and_still_releases_the_device(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            commands, _ = self.run_with(directory, width=1320, height=2868)
+
+            with self.assertRaisesRegex(ValueError, '1320x2868'):
+                shots.run(directory, 'C47B0285')
+
+            self.assertEqual('simulator-shutdown', commands[-1][0])
             metadata = json.loads((directory / 'metadata.json').read_text())
             self.assertEqual('failure', metadata['outcome'])
-            self.assertIn('1206x2622', metadata['error'])
+            self.assertIn('1320x2868', metadata['error'])
 
     def test_locale_mismatch_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -471,9 +462,9 @@ class RunTests(unittest.TestCase):
             self.run_with(directory, ru_slugs=SLUGS[:-1] + ['settings'])
 
             with self.assertRaisesRegex(ValueError, 'differ from en-US'):
-                shots.run(directory)
+                shots.run(directory, 'C47B0285')
 
-    def test_a_failed_test_run_keeps_diagnostics_and_cleans_up(self):
+    def test_a_failed_test_run_keeps_diagnostics_and_releases_the_device(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             commands, _ = self.run_with(directory)
@@ -487,13 +478,33 @@ class RunTests(unittest.TestCase):
             shots.tools.run_command.side_effect = failing
 
             with self.assertRaisesRegex(shots.tools.NativeCommandError, 'exited 65'):
-                shots.run(directory)
+                shots.run(directory, 'C47B0285')
 
-            self.assertEqual('cleanup', commands[-1][0])
+            self.assertEqual('simulator-shutdown', commands[-1][0])
             self.assertEqual('failure', json.loads((directory / 'metadata.json').read_text())['outcome'])
             self.assertFalse((directory / 'DerivedData').exists())
 
+    def test_a_failed_release_step_is_reported_after_a_good_capture(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.run_with(directory)
+            original = shots.tools.run_command.side_effect
 
+            def failing(directory_, label, command, timeout, *, cwd=None):
+                if label == 'simulator-shutdown':
+                    raise shots.tools.NativeCommandError('simulator-shutdown timed out')
+                return original(directory_, label, command, timeout, cwd=cwd)
+
+            shots.tools.run_command.side_effect = failing
+
+            with self.assertRaisesRegex(ValueError, 'not left as found: simulator-shutdown'):
+                shots.run(directory, 'C47B0285')
+            metadata = json.loads((directory / 'metadata.json').read_text())
+            self.assertEqual('success', metadata['outcome'])
+
+    def test_a_capture_needs_a_pool_device(self):
+        with tempfile.TemporaryDirectory() as temporary, patch('sys.stderr'), self.assertRaises(SystemExit):
+            shots.main([temporary, '--display', 'iphone-6.3'])
 
 
 class StatusBarTests(unittest.TestCase):

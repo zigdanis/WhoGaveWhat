@@ -131,6 +131,7 @@ class UnitTestRunTests(unittest.TestCase):
             app = directory / runner.APP_RELATIVE_PATH
             (app / 'PlugIns/WhoGaveWhatTests.xctest').mkdir(parents=True)
             (app / 'PlugIns/WhoGaveWhatTests.xctest/WhoGaveWhatTests').write_text('test')
+            (app / 'PlugIns/WhoGaveWhatTests.xctest.dSYM').mkdir()
             (app / 'PlugIns/Widget.appex').mkdir()
             executable = app / 'WhoGaveWhat'
             executable.write_text('binary')
@@ -232,7 +233,14 @@ class WorkflowTests(unittest.TestCase):
         workflows = sorted((ROOT / '.github/workflows').glob('*.yml'))
         self.assertFalse((ROOT / '.github/workflows/store-screenshots.yml').exists())
         for workflow in workflows:
-            self.assertNotIn('store-screenshots.py', workflow.read_text(), workflow.name)
+            text = workflow.read_text()
+            # Checking an uploaded folder is fine; capturing (a display or a Simulator) is not.
+            self.assertNotRegex(text, r'store-screenshots\.py[^\n]*--(display|simulator)', workflow.name)
+            self.assertNotIn('StoreScreenshotsUITests', text, workflow.name)
+        metadata = (ROOT / '.github/workflows/app-store-metadata.yml').read_text()
+        self.assertIn('screenshots_release:', metadata)
+        self.assertNotIn('screenshots_run_id', metadata)
+        self.assertIn('store-screenshots.py "$STORE_TEMP/downloaded" --check', metadata)
 
     def test_no_repository_file_points_at_the_removed_evidence_tooling(self):
         tracked = subprocess.check_output(['git', 'ls-files'], cwd=ROOT, text=True).split()

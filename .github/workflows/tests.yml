@@ -50,9 +50,6 @@ jobs:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       HOMEBREW_NO_AUTO_UPDATE: '1'
       HOMEBREW_NO_INSTALL_CLEANUP: '1'
-      # Outside DerivedData, which the test runner deletes, so the cache steps can keep them.
-      SOURCE_PACKAGES: /Users/runner/.cache/whogavewhat/SourcePackages
-      COMPILATION_CACHE: /Users/runner/.cache/whogavewhat/CompilationCache
       PACKAGE_RESOLVED: WhoGaveWhat.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
     steps:
       - uses: actions/checkout@v4
@@ -62,6 +59,11 @@ jobs:
         run: |
           swift --version
           xcodebuild -version
+      # Outside DerivedData, which the test runner deletes, so the cache steps can keep them.
+      - name: Choose cache folders
+        run: |
+          echo "SOURCE_PACKAGES=$HOME/.cache/whogavewhat/SourcePackages" >> "$GITHUB_ENV"
+          echo "COMPILATION_CACHE=$HOME/.cache/whogavewhat/CompilationCache" >> "$GITHUB_ENV"
       # Format and lint first: a formatting slip fails in a minute instead of after the build.
       - name: Install SwiftLint
         run: brew install swiftlint

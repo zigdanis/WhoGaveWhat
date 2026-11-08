@@ -77,7 +77,7 @@ def archive_app(directory, archive):
 
     def without_tests(info):
         parts = Path(info.name).parts
-        if len(parts) >= 3 and parts[1] == "PlugIns" and parts[2].endswith(".xctest"):
+        if len(parts) >= 3 and parts[1] == "PlugIns" and parts[2].endswith((".xctest", ".xctest.dSYM")):
             return None
         return info
 
