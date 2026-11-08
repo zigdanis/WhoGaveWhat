@@ -45,7 +45,7 @@ test -n "$RUN" || {
 }
 RUN_ID=$(jq -r .databaseId <<< "$RUN")
 if [ "$(jq -r .workflow <<< "$RUN")" = simulator-app.yml ]; then
-  echo "warning: no tested Debug app for $TARGET; this is the retired Release build, which ignores KS_SAMPLE_DATA and the other KS_ variables. Push the branch after merging master to get a Debug one." >&2
+  echo "warning: no tested Debug app for $TARGET; this is the retired Release build, which ignores KS_SAMPLE_DATA and the other KS_ variables. A Tests run of a newer commit (with master merged in) provides the Debug app." >&2
 fi
 
 APP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/whogavewhat-simulator-app.XXXXXX")
