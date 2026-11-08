@@ -50,7 +50,6 @@ jobs:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       HOMEBREW_NO_AUTO_UPDATE: '1'
       HOMEBREW_NO_INSTALL_CLEANUP: '1'
-      PACKAGE_RESOLVED: WhoGaveWhat.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,10 +58,9 @@ jobs:
         run: |
           swift --version
           xcodebuild -version
-      # Outside DerivedData, which the test runner deletes, so the cache steps can keep them.
-      - name: Choose cache folders
+      # Outside DerivedData, which the test runner deletes, so the cache steps can keep it.
+      - name: Choose the compilation cache folder
         run: |
-          echo "SOURCE_PACKAGES=$HOME/.cache/whogavewhat/SourcePackages" >> "$GITHUB_ENV"
           echo "COMPILATION_CACHE=$HOME/.cache/whogavewhat/CompilationCache" >> "$GITHUB_ENV"
       # Format and lint first: a formatting slip fails in a minute instead of after the build.
       - name: Install SwiftLint
@@ -73,15 +71,9 @@ jobs:
         run: scripts/lint-swift.sh
       - name: Install the iOS Simulator runtime for the selected Xcode
         run: scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME" "$SIMULATOR_DEVICE"
-      # Package.resolved is not committed, so the newest saved checkout is restored and xcodebuild only fetches what
-      # changed. A PR restores its own newest cache first, then master's.
-      - name: Restore Swift packages
-        id: packages
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ env.SOURCE_PACKAGES }}
-          key: spm-xcode-27.1-${{ github.sha }}
-          restore-keys: spm-xcode-27.1-
+      # The Swift packages are not cached: Sentry's binary frameworks make them 1 GB compressed, and on 2026-11-08 the
+      # restore took 2 minutes and timed out, while xcodebuild fetches them in well under a minute.
+      # A PR restores its own newest compilation cache first, then master's.
       - name: Restore Xcode compilation cache
         id: compilation
         uses: actions/cache/restore@v4
@@ -93,7 +85,7 @@ jobs:
         run: |
           python3 scripts/run-unit-tests.py "$RUNNER_TEMP/unit-tests" --runtime "$SIMULATOR_RUNTIME" --device "$SIMULATOR_DEVICE" --fresh-ci-simulator \
             --app-archive "$RUNNER_TEMP/simulator-app/WhoGaveWhat-simulator.tar.gz" \
-            --source-packages "$SOURCE_PACKAGES" --compilation-cache "$COMPILATION_CACHE"
+            --compilation-cache "$COMPILATION_CACHE"
       - name: Upload simulator app
         uses: actions/upload-artifact@v4
         with:
@@ -102,24 +94,16 @@ jobs:
           if-no-files-found: error
           overwrite: true
           retention-days: 14
-      # Keys for the saves: the packages are saved again only when the resolved versions changed.
-      - name: Prepare cache keys
+      # Where the build spent its time, so a slower build or a cold cache shows in the job log.
+      - name: Show build timing and cache size
         id: keys
         if: ${{ !cancelled() }}
         run: |
-          if [ -f "$PACKAGE_RESOLVED" ]; then
-            echo "packages=spm-xcode-27.1-$(shasum -a 256 "$PACKAGE_RESOLVED" | cut -c1-16)" >> "$GITHUB_OUTPUT"
-          fi
+          sed -n '/Build Timing Summary/,/^\*\* /p' "$RUNNER_TEMP/unit-tests/xcodebuild-build.log" | head -30 || true
           if [ -d "$COMPILATION_CACHE" ]; then
             echo "compilation=true" >> "$GITHUB_OUTPUT"
+            du -sh "$COMPILATION_CACHE"
           fi
-          du -sh "$SOURCE_PACKAGES" "$COMPILATION_CACHE" 2>/dev/null || true
-      - name: Save Swift packages
-        if: ${{ !cancelled() && steps.keys.outputs.packages != '' && steps.keys.outputs.packages != steps.packages.outputs.cache-matched-key }}
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ env.SOURCE_PACKAGES }}
-          key: ${{ steps.keys.outputs.packages }}
       - name: Save Xcode compilation cache
         if: ${{ !cancelled() && steps.keys.outputs.compilation == 'true' }}
         uses: actions/cache/save@v4

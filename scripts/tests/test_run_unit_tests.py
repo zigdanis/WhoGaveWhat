@@ -105,17 +105,15 @@ class UnitTestRunTests(unittest.TestCase):
             self.assertEqual([SIMULATOR_ID], [call.args[2][-1] for call in native.call_args_list if call.args[1] == 'simulator-boot'])
             cleanup.assert_called_once()
 
-    def test_cache_folders_reach_both_xcodebuild_steps_and_the_cache_only_the_build(self):
+    def test_the_compilation_cache_reaches_only_the_build(self):
         with tempfile.TemporaryDirectory() as temporary, \
                 patch.object(runner.tools, 'run_command', side_effect=native_outputs()) as native, \
                 patch.object(runner.tools, 'cleanup_ci_simulator'):
             directory = Path(temporary)
-            runner.run(directory / 'out', source_packages=directory / 'packages', compilation_cache=directory / 'cas')
+            runner.run(directory / 'out', compilation_cache=directory / 'cas')
             commands = {call.args[1]: call.args[2] for call in native.call_args_list}
             build, test = commands['xcodebuild-build'], commands['xcodebuild-test']
             for command in (build, test):
-                index = command.index('-clonedSourcePackagesDirPath')
-                self.assertEqual(str((directory / 'packages').resolve()), command[index + 1])
                 self.assertIn('ENABLE_ONLY_ACTIVE_RESOURCES=NO', command)
             self.assertIn('COMPILATION_CACHE_ENABLE_CACHING=YES', build)
             self.assertIn(f'COMPILATION_CACHE_CAS_PATH={(directory / "cas").resolve()}', build)
@@ -223,7 +221,8 @@ class WorkflowTests(unittest.TestCase):
         tests = (ROOT / '.github/workflows/tests.yml').read_text()
         self.assertIn('--app-archive "$RUNNER_TEMP/simulator-app/WhoGaveWhat-simulator.tar.gz"', tests)
         self.assertIn('name: simulator-app\n', tests)
-        self.assertIn('--source-packages "$SOURCE_PACKAGES" --compilation-cache "$COMPILATION_CACHE"', tests)
+        self.assertIn('--compilation-cache "$COMPILATION_CACHE"', tests)
+        self.assertNotIn('SourcePackages', tests)
         self.assertFalse((ROOT / '.github/workflows/simulator-app.yml').exists())
         script = (ROOT / 'scripts/simulator-app.sh').read_text()
         self.assertIn('for WORKFLOW in tests.yml simulator-app.yml', script)

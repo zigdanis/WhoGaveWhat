@@ -3,8 +3,8 @@
 
 The app is built before the Simulator boots: a freshly booted Simulator keeps the CPU busy for minutes, which more
 than doubled the build on GitHub's three-core runners. `--app-archive` keeps the tested Debug app as a tarball (the
-`simulator-app` artifact that scripts/simulator-app.sh downloads); `--source-packages` and `--compilation-cache` put
-the Swift packages and Xcode's compilation cache outside DerivedData so CI can cache them between runs.
+`simulator-app` artifact that scripts/simulator-app.sh downloads); `--compilation-cache` keeps Xcode's compilation
+cache outside DerivedData so CI can cache it between runs.
 """
 import argparse
 import importlib.util
@@ -85,11 +85,9 @@ def archive_app(directory, archive):
         output.add(bundle, arcname=bundle.name, filter=without_tests)
 
 
-def build_settings(source_packages=None, compilation_cache=None):
-    """xcodebuild arguments that move the Swift packages and the compilation cache to cacheable folders."""
+def build_settings(compilation_cache=None):
+    """Build settings that enable Xcode's compilation cache in a folder CI can keep between runs."""
     arguments = []
-    if source_packages is not None:
-        arguments += ["-clonedSourcePackagesDirPath", str(Path(source_packages).resolve())]
     if compilation_cache is not None:
         arguments += ["COMPILATION_CACHE_ENABLE_CACHING=YES",
                       f"COMPILATION_CACHE_CAS_PATH={Path(compilation_cache).resolve()}",
@@ -98,7 +96,7 @@ def build_settings(source_packages=None, compilation_cache=None):
 
 
 def run(directory, runtime=None, device_name=None, fresh_ci_simulator=False, app_archive=None,
-        source_packages=None, compilation_cache=None):
+        compilation_cache=None):
     """Build and run the unit tests, then verify the built app's names and String Catalog."""
     if fresh_ci_simulator and (os.environ.get("GITHUB_ACTIONS") != "true" or runtime is None):
         raise ValueError("Fresh CI Simulator requires GitHub Actions and an explicit --runtime")
@@ -126,13 +124,12 @@ def run(directory, runtime=None, device_name=None, fresh_ci_simulator=False, app
             simulator = tools.select_simulator(payload, requested_runtime=runtime, device_name=device_name)
         simulator_id = simulator["udid"]
         metadata.update(device=simulator["name"], simulator_id=simulator_id, runtime=simulator["runtime"])
-        packages = build_settings(source_packages)
         target = ["-project", "WhoGaveWhat.xcodeproj", "-scheme", "WhoGaveWhat",
                   "-destination", f"platform=iOS Simulator,id={simulator_id}",
-                  "-derivedDataPath", str(directory / "DerivedData"), "-parallel-testing-enabled", "NO", *packages]
+                  "-derivedDataPath", str(directory / "DerivedData"), "-parallel-testing-enabled", "NO"]
         # Every asset scale and idiom stays in the app, so the archived app looks right on any Simulator model.
         signing = ["CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-", "ENABLE_ONLY_ACTIVE_RESOURCES=NO"]
-        caching = build_settings(compilation_cache=compilation_cache)
+        caching = build_settings(compilation_cache)
         # Building the whole scheme keeps the UI test target (store screenshots) compiling, but only
         # the unit suite runs: XCUITest journeys hang on Simulator keyboard and animation stalls.
         tools.run_command(directory, "xcodebuild-build", [
@@ -179,13 +176,10 @@ def main():
                         help="On GitHub Actions, create a disposable Simulator of the model and delete it afterwards")
     parser.add_argument("--app-archive", type=Path, metavar="TAR_GZ",
                         help="After a passing run, write the tested Debug WhoGaveWhat.app to this .tar.gz")
-    parser.add_argument("--source-packages", type=Path, metavar="DIR",
-                        help="Folder for the resolved Swift packages (xcodebuild -clonedSourcePackagesDirPath)")
     parser.add_argument("--compilation-cache", type=Path, metavar="DIR",
                         help="Enable Xcode's compilation cache and keep it in this folder")
     args = parser.parse_args()
-    run(args.directory, args.runtime, args.device, args.fresh_ci_simulator, args.app_archive,
-        args.source_packages, args.compilation_cache)
+    run(args.directory, args.runtime, args.device, args.fresh_ci_simulator, args.app_archive, args.compilation_cache)
 
 
 if __name__ == "__main__":
