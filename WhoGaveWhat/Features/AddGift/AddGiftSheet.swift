@@ -251,6 +251,7 @@ private struct GiftBasicsSection: View {
     let canSwapPeople: Bool
     let onSwapPeople: () -> Void
     let pickerPopover: (AddGiftPicker) -> AddGiftPickerPopover
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         VStack(spacing: 12) {
@@ -261,9 +262,12 @@ private struct GiftBasicsSection: View {
             }
 
             // The swap button sits beside the two rows, as in Maps directions, so it never covers a name.
+            // Accessibility text sizes need that width for the names, so there the pickers alone remain.
             HStack(spacing: 8) {
                 peopleCard
-                GiftSwapButton(isEnabled: canSwapPeople, accent: accent, action: onSwapPeople)
+                if !dynamicTypeSize.isAccessibilitySize {
+                    GiftSwapButton(isEnabled: canSwapPeople, accent: accent, action: onSwapPeople)
+                }
             }
         }
     }
