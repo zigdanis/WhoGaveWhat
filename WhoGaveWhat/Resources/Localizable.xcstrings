@@ -453,6 +453,36 @@
         }
       }
     },
+    "Backing up…" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Создание копии…"
+          }
+        }
+      }
+    },
+    "Backup" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Резервная копия"
+          }
+        }
+      }
+    },
+    "Backup restored" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Копия восстановлена"
+          }
+        }
+      }
+    },
     "Balance" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -674,6 +704,16 @@
         }
       }
     },
+    "Checking iCloud…" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проверка iCloud…"
+          }
+        }
+      }
+    },
     "Choose" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -844,6 +884,26 @@
         }
       }
     },
+    "Couldn't delete the backup" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось удалить копию"
+          }
+        }
+      }
+    },
+    "Couldn't export the data" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось экспортировать данные"
+          }
+        }
+      }
+    },
     "Couldn't load your gifts" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -857,6 +917,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось загрузить подарки"
+          }
+        }
+      }
+    },
+    "Couldn't open the backup" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось открыть копию"
+          }
+        }
+      }
+    },
+    "Couldn't read the backup. Check your internet connection and try again." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось прочитать копию. Проверьте подключение к интернету и попробуйте ещё раз."
+          }
+        }
+      }
+    },
+    "Couldn't restore the backup" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось восстановить копию"
+          }
+        }
+      }
+    },
+    "Couldn't save the backup. Check that this device has free space." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось сохранить копию. Проверьте, есть ли свободное место на устройстве."
+          }
+        }
+      }
+    },
+    "Couldn't upload the backup. Check that your iCloud storage is not full." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось выгрузить копию в iCloud. Проверьте, не заполнено ли хранилище iCloud."
           }
         }
       }
@@ -997,6 +1107,16 @@
         }
       }
     },
+    "Delete Backup" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить копию"
+          }
+        }
+      }
+    },
     "Delete gift" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1044,6 +1164,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалить человека и подарки (%lld)"
+          }
+        }
+      }
+    },
+    "Delete this backup from iCloud?" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить эту копию из iCloud?"
           }
         }
       }
@@ -1112,6 +1242,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Готово"
+          }
+        }
+      }
+    },
+    "Earlier copy" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Предыдущая копия"
           }
         }
       }
@@ -1235,6 +1375,16 @@
         }
       }
     },
+    "Everything in this backup is already in the app." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Всё из этой копии уже есть в приложении."
+          }
+        }
+      }
+    },
     "Everything you entered is still here. Tap Save to try again." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1248,6 +1398,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Всё, что вы ввели, на месте. Нажмите «Сохранить», чтобы попробовать ещё раз."
+          }
+        }
+      }
+    },
+    "Export all data" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Экспортировать все данные"
           }
         }
       }
@@ -1320,6 +1480,23 @@
         }
       }
     },
+    "Gifts added: %lld. People added: %lld." : {
+      "comment" : "After a restore: how many records were added.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Gifts added: %1$lld. People added: %2$lld."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавлено подарков: %lld. Добавлено людей: %lld."
+          }
+        }
+      }
+    },
     "Gifts in %@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1333,6 +1510,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подарки в %@ году"
+          }
+        }
+      }
+    },
+    "Gifts not added because both people have the same name here: %lld." : {
+      "comment" : "After a restore: gifts between two backup people who match one person in the app.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не добавлено подарков, у которых оба человека здесь с одинаковым именем: %lld."
+          }
+        }
+      }
+    },
+    "Gifts: %lld · People: %lld" : {
+      "comment" : "What a backup holds.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Gifts: %1$lld · People: %2$lld"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подарков: %lld · Людей: %lld"
           }
         }
       }
@@ -1494,6 +1699,16 @@
         }
       }
     },
+    "Import from file" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Импортировать из файла"
+          }
+        }
+      }
+    },
     "Insights" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1524,6 +1739,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Просто так"
+          }
+        }
+      }
+    },
+    "Last backup %@." : {
+      "comment" : "Relative time, e.g. 2 minutes ago.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Последняя копия: %@."
+          }
+        }
+      }
+    },
+    "Last backup %@. Uploading to iCloud…" : {
+      "comment" : "Relative time, e.g. 2 minutes ago.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Последняя копия: %@. Выгрузка в iCloud…"
           }
         }
       }
@@ -1575,6 +1812,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Информация о лицензиях недоступна."
+          }
+        }
+      }
+    },
+    "Looking for backups…" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поиск копий…"
           }
         }
       }
@@ -1681,6 +1928,16 @@
         }
       }
     },
+    "No backups in iCloud yet." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В iCloud пока нет копий."
+          }
+        }
+      }
+    },
     "No gifts given yet." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1783,6 +2040,16 @@
         }
       }
     },
+    "Not now" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не сейчас"
+          }
+        }
+      }
+    },
     "Not selected" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1796,6 +2063,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не выбрано"
+          }
+        }
+      }
+    },
+    "Nothing was added." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ничего не добавлено."
+          }
+        }
+      }
+    },
+    "Nothing was changed. Try again." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ничего не изменилось. Попробуйте ещё раз."
           }
         }
       }
@@ -2259,6 +2546,56 @@
         }
       }
     },
+    "Restore" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Восстановить"
+          }
+        }
+      }
+    },
+    "Restore from iCloud" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Восстановить из iCloud"
+          }
+        }
+      }
+    },
+    "Restore from iCloud?" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Восстановить из iCloud?"
+          }
+        }
+      }
+    },
+    "Restore this backup?" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Восстановить эту копию?"
+          }
+        }
+      }
+    },
+    "Restoring adds only what is missing. Nothing in the app is changed or deleted." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "При восстановлении добавляется только то, чего не хватает. Ничего в приложении не меняется и не удаляется."
+          }
+        }
+      }
+    },
     "Ruble ₽" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2357,6 +2694,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сохранить полученное"
+          }
+        }
+      }
+    },
+    "Saved %@. %@.\n\nOnly what is missing is added. Nothing in the app is changed or deleted." : {
+      "comment" : "Before restoring a backup: when it was saved and what it holds.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Saved %1$@. %2$@.\n\nOnly what is missing is added. Nothing in the app is changed or deleted."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранена %@. %@.\n\nДобавится только то, чего не хватает. Ничего в приложении не изменится и не удалится."
           }
         }
       }
@@ -2603,6 +2957,16 @@
         }
       }
     },
+    "This backup was made by a newer version of the app. Update Who Gave What and try again." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эта копия создана в более новой версии приложения. Обновите приложение и попробуйте ещё раз."
+          }
+        }
+      }
+    },
     "This can't be undone." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2616,6 +2980,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Это действие нельзя отменить."
+          }
+        }
+      }
+    },
+    "This device" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Это устройство"
+          }
+        }
+      }
+    },
+    "This file is not a Who Gave What backup, or it is damaged." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Этот файл не является копией приложения или повреждён."
           }
         }
       }
@@ -2718,6 +3102,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Повторить"
+          }
+        }
+      }
+    },
+    "Try again in a moment." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Попробуйте ещё раз чуть позже."
           }
         }
       }
@@ -2994,6 +3388,37 @@
         }
       }
     },
+    "Your backup from %@." : {
+      "comment" : "Home's restore offer: the backup's date.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваша копия от %@."
+          }
+        }
+      }
+    },
+    "Your data is backed up to iCloud after each change." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Данные сохраняются в iCloud после каждого изменения."
+          }
+        }
+      }
+    },
+    "Your data is still saved on this device. Try again in a moment." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Данные по-прежнему сохранены на этом устройстве. Попробуйте ещё раз чуть позже."
+          }
+        }
+      }
+    },
     "Your gifts and people are still saved on this device, and nothing was deleted. Try again in a moment. If this keeps happening, restart the device." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3007,6 +3432,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ваши подарки и люди по-прежнему сохранены на этом устройстве, ничего не удалено. Попробуйте ещё раз чуть позже. Если ошибка повторяется, перезагрузите устройство."
+          }
+        }
+      }
+    },
+    "Your gifts and people in the app stay as they are." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подарки и люди в приложении останутся как есть."
           }
         }
       }
@@ -3042,6 +3477,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "оценка"
+          }
+        }
+      }
+    },
+    "iCloud backup" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Копия в iCloud"
+          }
+        }
+      }
+    },
+    "iCloud backup is off. New changes stay only on this device. Earlier backups remain in iCloud until you delete them in Restore from iCloud." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Копия в iCloud выключена. Новые изменения хранятся только на этом устройстве. Прежние копии остаются в iCloud, пока вы не удалите их в разделе «Восстановить из iCloud»."
+          }
+        }
+      }
+    },
+    "iCloud backups" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Копии в iCloud"
+          }
+        }
+      }
+    },
+    "iCloud is not available. To keep a backup, sign in to iCloud in the Settings app and turn on iCloud Drive." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud недоступен. Чтобы хранить копию, войдите в iCloud в приложении «Настройки» и включите iCloud Drive."
           }
         }
       }
@@ -3133,6 +3608,40 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "settings.backup.export-footnote" : {
+      "comment" : "Below the export and import rows when there is no iCloud backup.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export saves all your gifts, people and photos to one file. Import adds what is missing from such a file and never deletes anything."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Экспорт сохраняет все подарки, людей и фото в один файл. Импорт добавляет из такого файла то, чего не хватает, и ничего не удаляет."
+          }
+        }
+      }
+    },
+    "settings.backup.footnote" : {
+      "comment" : "Below the backup settings: what the iCloud backup keeps and where.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your gifts, people and photos are kept in your iCloud, so they stay safe if you delete the app or change phones. The backup doesn't appear in iCloud Drive."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подарки, люди и фото хранятся в вашем iCloud, поэтому не потеряются, если удалить приложение или сменить телефон. Копия не появляется в iCloud Drive."
           }
         }
       }

@@ -3,10 +3,12 @@ import SwiftUI
 /// Home timeline as a native `List` — so swipe-to-delete and tap-to-open are the
 /// system's own gestures (smooth, reliable) rather than a hand-rolled drag. Before the
 /// first gift it shows `HomeWelcome` instead, and `LoadFailedCard` when the gifts could not be loaded.
+/// An empty journal with a backup in iCloud also offers to restore it (`RestoreOfferCard`).
 /// Shows the full timeline across all years, grouped by month; past years carry
 /// their year in month headers and dates. The year summary lives in Insights.
 struct HomeView: View {
     let composition: AppComposition
+    @State private var restoreNotice: String?
 
     var body: some View {
         let year = currentYear
@@ -14,6 +16,22 @@ struct HomeView: View {
             ScreenHeadingSection(title: "Who gave what")
             if composition.data.isLoadFailing {
                 LoadFailedListSection { composition.reloadData() }
+            }
+            if composition.data.isJournalEmpty, let backup = composition.iCloudBackup,
+                let offer = backup.restoreOffer
+            {
+                Section {
+                    RestoreOfferCard(
+                        composition: composition, backup: backup, offer: offer,
+                        onPartialRestore: { restoreNotice = $0 }
+                    )
+                    .padding(.horizontal, WelcomeMetrics.horizontalInset)
+                    .padding(.top, 8)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                }
+                .zeroHorizontalListSectionMargins()
             }
             if composition.data.showsGiftsWelcome {
                 Section {
@@ -63,6 +81,16 @@ struct HomeView: View {
         // The first saved gift and the last deleted one swap the welcome, timeline and button smoothly.
         .animation(.default, value: composition.data.gifts.isEmpty)
         .animation(.default, value: composition.data.isLoadFailing)
+        .animation(.default, value: composition.iCloudBackup?.restoreOffer?.id)
+        .alert(
+            "Backup restored",
+            isPresented: Binding(get: { restoreNotice != nil }, set: { if !$0 { restoreNotice = nil } }),
+            presenting: restoreNotice
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { notice in
+            Text(verbatim: notice)
+        }
     }
 
     /// Months and dates omit the year only for the current calendar year.

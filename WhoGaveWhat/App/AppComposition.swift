@@ -19,6 +19,11 @@ final class AppComposition {
     let reviewPrompt: ReviewPromptUseCase
     let preferences: PreferencesGateway
     private let peopleGateway: PeopleGateway
+    /// The whole journal for exports and backups, and where restores add records; nil only in tests
+    /// that build the app from bare gateways.
+    let journalArchive: JournalArchiveGateway?
+    /// The automatic backup in the user's iCloud; nil in tests and verification launches.
+    let iCloudBackup: ICloudBackupService?
 
     let loadGiftsUseCase: LoadGiftsUseCase
     let saveGiftUseCase: SaveGiftUseCase
@@ -54,6 +59,8 @@ final class AppComposition {
         }
         var giftGateway: GiftGateway = Self.giftGateway(for: store, analytics: analytics)
         var peopleGateway: PeopleGateway = SwiftDataPeopleGateway(context: store.context)
+        let iCloudBackup = Self.makeICloudBackup(
+            environment: environment, arguments: arguments, analytics: analytics)
         #if DEBUG
             if let fault = LaunchFault(environment: environment, arguments: arguments) {
                 giftGateway = fault.wrap(giftGateway)
@@ -68,7 +75,9 @@ final class AppComposition {
             launchEnvironment: environment,
             launchArguments: arguments,
             analytics: analytics,
-            haptics: haptics
+            haptics: haptics,
+            journalArchive: Self.makeJournalArchive(for: store),
+            iCloudBackup: iCloudBackup
         )
     }
 
@@ -80,7 +89,9 @@ final class AppComposition {
         analytics: AnalyticsGateway = NoopAnalyticsGateway(),
         haptics: HapticsGateway = NoopHapticsGateway(),
         giftGateway: GiftGateway? = nil,
-        peopleGateway: PeopleGateway? = nil
+        peopleGateway: PeopleGateway? = nil,
+        journalArchive: JournalArchiveGateway? = nil,
+        iCloudBackup: ICloudBackupService? = nil
     ) {
         self.init(
             giftGateway: giftGateway ?? Self.giftGateway(for: store, analytics: analytics),
@@ -89,8 +100,14 @@ final class AppComposition {
             intelligence: intelligence,
             launchEnvironment: launchEnvironment,
             analytics: analytics,
-            haptics: haptics
+            haptics: haptics,
+            journalArchive: journalArchive ?? Self.makeJournalArchive(for: store),
+            iCloudBackup: iCloudBackup
         )
+    }
+
+    private static func makeJournalArchive(for store: SwiftDataStore) -> SwiftDataJournalArchiveGateway {
+        SwiftDataJournalArchiveGateway(context: store.context, legacyGiftCurrency: store.legacyGiftCurrency)
     }
 
     /// The store's gift gateway. Gifts from 1.2.0 and earlier show in the store's migration currency even when
@@ -110,7 +127,9 @@ final class AppComposition {
         launchEnvironment: [String: String] = ProcessInfo.processInfo.environment,
         launchArguments: [String] = [],
         analytics: AnalyticsGateway = NoopAnalyticsGateway(),
-        haptics: HapticsGateway = NoopHapticsGateway()
+        haptics: HapticsGateway = NoopHapticsGateway(),
+        journalArchive: JournalArchiveGateway? = nil,
+        iCloudBackup: ICloudBackupService? = nil
     ) {
         let (giftGateway, peopleGateway) = Self.applyingWriteFailures(
             gifts: giftGateway, people: peopleGateway, launchEnvironment: launchEnvironment)
@@ -122,6 +141,8 @@ final class AppComposition {
         self.haptics = haptics
         appDiscovery = AppDiscoveryIndexer(analytics: analytics)
         self.peopleGateway = peopleGateway
+        self.journalArchive = journalArchive
+        self.iCloudBackup = iCloudBackup
         defaultCurrency = preferences.defaultCurrency
         router = AppRouter(launchEnvironment: launchEnvironment, analytics: analytics)
         reviewPrompt = Self.makeReviewPrompt(
@@ -146,6 +167,7 @@ final class AppComposition {
         }
         data.setSelfPerson(preferences.selfPersonID)
         reloadData()
+        startICloudBackup()
     }
 
     /// Debug verification launches can make writes fail on purpose (`KS_FAIL_SAVE`, `KS_FAIL_DELETE`) to show
@@ -184,6 +206,7 @@ final class AppComposition {
     /// the previous snapshot and the viewpoint stay as they were, and the screens offer a retry.
     @discardableResult
     func reloadData() -> Bool {
+        let wasLoadFailing = data.isLoadFailing
         let gifts: [Gift]
         let people: PeopleSnapshot
         do {
@@ -204,12 +227,15 @@ final class AppComposition {
             setSelfPerson(nil)
         }
         publishAnalyticsContext()
+        iCloudBackup?.journalChanged()
+        // A journal that only now loaded may be an empty reinstall with a backup to offer.
+        if wasLoadFailing { lookForBackupToRestore() }
         return true
     }
 
     /// While the last load failed the screens show older records, so a change loads again first and is
     /// refused when that fails too: it must not be checked against, or write over, newer stored data.
-    private func refreshStaleSnapshot() -> Bool {
+    func refreshStaleSnapshot() -> Bool {
         guard data.isLoadFailing || !data.hasLoadedSnapshot else { return true }
         return reloadData()
     }
@@ -331,6 +357,7 @@ final class AppComposition {
     func sceneBecameActive() {
         isSceneActive = true
         reviewPrompt.appBecameActive()
+        lookForBackupToRestore()
     }
 
     /// Control Center, a notification or the app switcher covers the app.
@@ -342,6 +369,7 @@ final class AppComposition {
         isSceneActive = false
         reviewPrompt.appEnteredBackground()
         isReviewRequestPending = false
+        iCloudBackup?.flushPendingBackup()
     }
 
     /// The root view handed the pending moment to the system rating request.
@@ -560,6 +588,19 @@ final class AppComposition {
     func setSelfPerson(_ id: String?) {
         preferences.setSelfPersonID(id)
         data.setSelfPerson(id)
+        iCloudBackup?.journalChanged()
+    }
+
+    /// A restore into an empty journal brings back the backup's default currency and viewpoint, without
+    /// counting as the user changing them.
+    func applyRestoredPreferences(currency: SupportedCurrency?, selfPersonID: String?) {
+        if let currency, currency != defaultCurrency {
+            preferences.setCurrencyCode(currency.code)
+            defaultCurrency = currency
+        }
+        if let selfPersonID {
+            setSelfPerson(selfPersonID)
+        }
     }
 
     /// Changes only the currency new gifts start in; saved gifts keep their amounts and currencies.
@@ -569,6 +610,7 @@ final class AppComposition {
         defaultCurrency = currency
         analytics.track(.currencyChanged(currency: currency.code))
         publishAnalyticsContext()
+        iCloudBackup?.journalChanged()
     }
 }
 
