@@ -107,7 +107,8 @@ struct PersonDetailView: View {
                             GiftRow(
                                 gift: gift,
                                 subtitle: composition.data.giftSubtitle(gift),
-                                dateLabel: gift.date.giftShortLabel())
+                                dateLabel: gift.date.giftShortLabel(),
+                                isInferringIcon: composition.pendingGiftIcons.contains(gift.id))
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 12))
                         .swipeToDelete(
