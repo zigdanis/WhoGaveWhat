@@ -257,6 +257,13 @@ final class AppComposition {
             noteReviewSetback()
             return .failed
         }
+        var input = input
+        // Read only now: the refresh above may have brought a late icon the sheet never saw.
+        if input.keepsStoredEmoji, input.emoji == nil, let id = input.editingGiftID,
+            let stored = data.gifts.first(where: { $0.id == id }), !stored.emojiPickedByUser
+        {
+            input.aiEmoji = stored.emoji
+        }
         let gift: Gift
         do {
             guard let saved = try saveGiftUseCase.execute(input) else { return .invalid }
@@ -271,7 +278,15 @@ final class AppComposition {
         reloadData()
         analytics.track(.giftSaved(giftSavedProperties(for: gift, input: input)))
         haptics.play(.success)
-        if let iconRequest { followIcon(iconRequest, giftID: gift.id) }
+        if let iconRequest {
+            followIcon(iconRequest, giftID: gift.id)
+        } else if input.keepsStoredEmoji {
+            // The icon was left to the gift, so a late one may still replace it if the name is unchanged.
+            pendingGiftIcons.stopIfOutdated(giftID: gift.id, current: gift)
+        } else {
+            // This save decided the icon itself; an older request must not overwrite it.
+            pendingGiftIcons.stop(giftID: gift.id)
+        }
         if input.editingGiftID == nil,
             reviewPrompt.newGiftSaved(giftsCount: data.gifts.count, peopleCount: data.people.count)
         {
@@ -394,6 +409,7 @@ final class AppComposition {
             return .failed
         }
         noteReviewSetback()
+        pendingGiftIcons.stop(giftID: id)
         reloadData()
         analytics.track(.giftDeleted(source: source, giftsCount: data.gifts.count))
         return .deleted

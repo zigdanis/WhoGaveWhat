@@ -18,6 +18,9 @@ struct SaveGiftInput: Equatable {
     var occasion: String?
     var date: Date
     var createdAt: Date?
+    /// In an edit: the inferred icon is still the stored one. The gift keeps the icon stored when it is
+    /// saved, which may be newer than `aiEmoji` if a late icon arrived while the sheet was open.
+    var keepsStoredEmoji = false
 
     var canSave: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty

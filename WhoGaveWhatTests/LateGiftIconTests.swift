@@ -109,6 +109,29 @@ struct LateGiftIconTests {
         #expect(fixture.cloud.requests == ["Skateboard"])
     }
 
+    @Test func aNameEditedBackAfterTheAnswerIsFollowedAgain() async throws {
+        let fixture = try makeFixture()
+        let sheet = fixture.makeSheet(debounce: .seconds(30))
+        fill(sheet, name: "Skateboard")
+        sheet.save(using: fixture.composition)
+        let first = try #require(fixture.gift(named: "Skateboard"))
+        await fixture.composition.pendingGiftIcons.task(for: first.id)?.value
+        #expect(fixture.composition.deleteGift(id: first.id, source: .home) == .deleted)
+
+        // The answer arrived in this sheet, then a trailing space came and went before a quick Save.
+        let next = fixture.makeSheet()
+        fill(next, name: "Skateboard")
+        await next.suggestionTask?.value
+        #expect(next.effectiveEmoji == "🛹")
+        next.setName("Skateboard ")
+        next.setName("Skateboard")
+        saveAndClose(next, in: fixture.composition)
+
+        let saved = try #require(fixture.gift(named: "Skateboard"))
+        await fixture.composition.pendingGiftIcons.task(for: saved.id)?.value
+        #expect(fixture.gift(named: "Skateboard")?.emoji == "🛹")
+    }
+
     @Test func aHandPickedIconIsNotFollowed() async throws {
         let fixture = try makeFixture()
         fixture.cloud.holdsRequests = true
@@ -171,6 +194,8 @@ struct LateGiftIconTests {
         renameSheet.selectEmoji("🚲")
         saveAndClose(renameSheet, in: fixture.composition)
         #expect(fixture.composition.deleteGift(id: deleted.id, source: .home) == .deleted)
+        // Their rows stop waiting at once rather than when the requests end.
+        #expect(fixture.composition.pendingGiftIcons.giftIDs.isEmpty)
 
         fixture.cloud.releaseRequests()
         for gift in [picked, renamed, deleted] {
@@ -200,6 +225,77 @@ struct LateGiftIconTests {
         saveAndClose(editSheet, in: fixture.composition)
 
         let edited = try #require(fixture.gift(named: "Skateboard"))
+        #expect(edited.emoji == "🛹")
+        #expect(edited.value == 150)
+    }
+
+    @Test func anIconDecidedInALaterEditStopsTheOlderRequest() async throws {
+        let fixture = try makeFixture()
+        fixture.cloud.holdsRequests = true
+        let sheet = fixture.makeSheet()
+        fill(sheet, name: "Skateboard")
+        await fixture.cloud.waitForRequests(1)
+        saveAndClose(sheet, in: fixture.composition)
+        let saved = try #require(fixture.gift(named: "Skateboard"))
+
+        // The edit asks again for the same name and gets its answer in the sheet.
+        fixture.cloud.holdsRequests = false
+        fixture.cloud.results["Skateboard"] = GiftIntelligenceResult(emoji: "🏂", value: nil)
+        let editSheet = fixture.makeSheet(route: .edit(giftID: saved.id))
+        editSheet.setName("Skateboard ")
+        await editSheet.suggestionTask?.value
+        #expect(editSheet.effectiveEmoji == "🏂")
+        saveAndClose(editSheet, in: fixture.composition)
+        #expect(!fixture.composition.pendingGiftIcons.contains(saved.id))
+
+        // The first request answers last, with another icon; it must not undo the edit.
+        fixture.cloud.results["Skateboard"] = GiftIntelligenceResult(emoji: "🛹", value: nil)
+        fixture.cloud.releaseRequests()
+        // Nothing waits for it any more, so give a stray answer time to land if it would.
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(fixture.gift(named: "Skateboard")?.emoji == "🏂")
+    }
+
+    @Test func aFreshAnswerEqualToTheStoredIconIsNotMistakenForIt() async throws {
+        let fixture = try makeFixture()
+        fixture.cloud.holdsRequests = true
+        let sheet = fixture.makeSheet()
+        fill(sheet, name: "Skateboard")
+        await fixture.cloud.waitForRequests(1)
+        saveAndClose(sheet, in: fixture.composition)
+        let saved = try #require(fixture.gift(named: "Skateboard"))
+
+        // Renamed in an edit whose own answer happens to be the stored 🎁.
+        fixture.cloud.results["Bike"] = GiftIntelligenceResult(emoji: "🎁", value: nil)
+        let editSheet = fixture.makeSheet(route: .edit(giftID: saved.id))
+        editSheet.setName("Bike")
+        await fixture.cloud.waitForRequests(2)
+        fixture.cloud.holdsRequests = false
+        // Both answer; the old name's 🛹 lands on the stored gift while the edit is open.
+        fixture.cloud.releaseRequests()
+        await fixture.composition.pendingGiftIcons.task(for: saved.id)?.value
+        await editSheet.suggestionTask?.value
+        #expect(fixture.gift(named: "Skateboard")?.emoji == "🛹")
+
+        saveAndClose(editSheet, in: fixture.composition)
+        #expect(fixture.gift(named: "Bike")?.emoji == "🎁")
+    }
+
+    @Test func anEditKeepsALateIconThatOnlyARecoveredLoadShows() async throws {
+        let fixture = try makeFixture()
+        let gift = try #require(fixture.composition.data.gifts.first { !$0.emojiPickedByUser })
+        let editSheet = fixture.makeSheet(route: .edit(giftID: gift.id))
+
+        // The late icon was stored, but the load after it failed, so the screens still show the old one.
+        var landed = gift
+        landed.emoji = "🛹"
+        try fixture.composition.saveGiftUseCase.giftGateway.save(landed)
+        fixture.composition.data.noteLoadFailed()
+
+        editSheet.valueText = "150"
+        saveAndClose(editSheet, in: fixture.composition)
+
+        let edited = try #require(fixture.composition.data.gifts.first { $0.id == gift.id })
         #expect(edited.emoji == "🛹")
         #expect(edited.value == 150)
     }

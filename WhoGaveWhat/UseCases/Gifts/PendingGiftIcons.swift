@@ -21,6 +21,8 @@ final class PendingGiftIcons {
     /// Gifts whose icon is still being inferred.
     private(set) var giftIDs: Set<String> = []
     @ObservationIgnored private var tasks: [String: Task<Void, Never>] = [:]
+    /// The trimmed name each pending icon is for.
+    @ObservationIgnored private var names: [String: String] = [:]
     @ObservationIgnored private let suggestGift: SuggestGiftUseCase
 
     init(suggestGift: SuggestGiftUseCase) {
@@ -45,6 +47,7 @@ final class PendingGiftIcons {
     ) {
         tasks[giftID]?.cancel()
         giftIDs.insert(giftID)
+        names[giftID] = request.name
         let suggestGift = suggestGift
         let inference =
             request.task
@@ -58,8 +61,27 @@ final class PendingGiftIcons {
             // A replaced request leaves the gift to the newer one.
             guard !Task.isCancelled else { return }
             tasks[giftID] = nil
+            names[giftID] = nil
             giftIDs.remove(giftID)
             onAnswer(result)
         }
+    }
+
+    /// Stops waiting when the saved gift no longer wants the answer: it was renamed or has a hand-picked
+    /// icon. Its row then drops the spinner at once instead of when the request ends.
+    func stopIfOutdated(giftID: String, current gift: Gift) {
+        guard let name = names[giftID] else { return }
+        guard gift.emojiPickedByUser || gift.name.trimmingCharacters(in: .whitespacesAndNewlines) != name else {
+            return
+        }
+        stop(giftID: giftID)
+    }
+
+    /// Stops waiting for a gift's icon; its answer, if any comes, is dropped.
+    func stop(giftID: String) {
+        tasks[giftID]?.cancel()
+        tasks[giftID] = nil
+        names[giftID] = nil
+        giftIDs.remove(giftID)
     }
 }

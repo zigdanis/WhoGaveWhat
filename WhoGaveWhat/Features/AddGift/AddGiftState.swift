@@ -20,10 +20,11 @@ final class AddGiftState {
     private var pendingSuggestionName: String?
     /// The request that inference sent, once it was sent. Saving can hand it over to the app.
     private var inFlightRequest: GiftIconRequest?
-    /// The trimmed name the model last answered for in this sheet.
-    private var answeredName: String?
     /// The automatically chosen emoji a gift being edited already has; kept until a rename yields a better guess.
     private var storedEmoji: String?
+    /// True while the inferred icon is still the one the edited gift was stored with: nothing in this sheet
+    /// replaced it. Saving then keeps whatever icon the stored gift has by then, including a late one.
+    private var inheritsStoredEmoji = false
 
     init(
         route: GiftSheetRoute,
@@ -58,7 +59,10 @@ final class AddGiftState {
                 createdAt: gift.createdAt,
                 aiEmoji: gift.emojiPickedByUser ? nil : gift.emoji
             )
-            if !gift.emojiPickedByUser { storedEmoji = gift.emoji }
+            if !gift.emojiPickedByUser {
+                storedEmoji = gift.emoji
+                inheritsStoredEmoji = true
+            }
         }
     }
 
@@ -84,7 +88,8 @@ final class AddGiftState {
             paidByYou: draft.paidByYou,
             occasion: draft.occasion,
             date: draft.date,
-            createdAt: draft.createdAt
+            createdAt: draft.createdAt,
+            keepsStoredEmoji: draft.emoji == nil && inheritsStoredEmoji
         )
     }
 
@@ -150,7 +155,9 @@ final class AddGiftState {
         }
         draft.name = name
         // Without a specific keyword match, keep the emoji the gift already had instead of the generic one.
-        draft.aiEmoji = suggestGift.keywordSuggestion(for: name) == nil ? storedEmoji : nil
+        let keepsStoredEmoji = suggestGift.keywordSuggestion(for: name) == nil && storedEmoji != nil
+        draft.aiEmoji = keepsStoredEmoji ? storedEmoji : nil
+        inheritsStoredEmoji = keepsStoredEmoji
         scheduleSuggestion(after: debounce)
     }
 
@@ -183,7 +190,6 @@ final class AddGiftState {
             guard !isStale(trimmed) else { return }
             pendingSuggestionName = nil
             inFlightRequest = nil
-            answeredName = trimmed
             analytics.track(
                 .giftSuggestionCompleted(
                     provider: result?.provider ?? .cloud,
@@ -191,7 +197,10 @@ final class AddGiftState {
                     hasPrice: result?.value != nil,
                     latencyMilliseconds: Int(Date().timeIntervalSince(started) * 1_000)))
             aiLoading = false
-            if let emoji = result?.emoji, draft.emoji == nil { draft.aiEmoji = emoji }
+            if let emoji = result?.emoji, draft.emoji == nil {
+                draft.aiEmoji = emoji
+                inheritsStoredEmoji = false
+            }
             // The user's own value always wins; an answer without a price clears an earlier estimate.
             // A price for a currency the user has since switched away from is dropped; the switch asked again.
             if !draft.valueTouched, draft.currency == currency {
@@ -215,7 +224,7 @@ final class AddGiftState {
     /// answered for the saved name yet. It reuses the request already sent, if any.
     var pendingIconRequest: GiftIconRequest? {
         let trimmed = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard draft.emoji == nil, pendingSuggestionName == trimmed, answeredName != trimmed else { return nil }
+        guard draft.emoji == nil, pendingSuggestionName == trimmed else { return nil }
         if let inFlightRequest, inFlightRequest.name == trimmed { return inFlightRequest }
         return GiftIconRequest(name: trimmed, currency: draft.currency, startedAt: Date(), task: nil)
     }
@@ -286,7 +295,7 @@ final class AddGiftState {
     func save(using composition: AppComposition) {
         guard input.canSave else { return }
         let iconRequest = pendingIconRequest
-        switch composition.saveGift(saveInput(current: composition.data.gifts), iconRequest: iconRequest) {
+        switch composition.saveGift(input, iconRequest: iconRequest) {
         case .saved:
             // The app now owns the request and keeps it running after the sheet closes.
             if iconRequest != nil { inFlightRequest = nil }
@@ -300,18 +309,6 @@ final class AddGiftState {
         case .invalid:
             break
         }
-    }
-
-    /// The input to save. In an edit, an inferred icon still as it was when the sheet opened follows the
-    /// stored gift instead, which may have received its late icon while this sheet was open.
-    private func saveInput(current gifts: [Gift]) -> SaveGiftInput {
-        var input = self.input
-        if let editingGiftID, draft.emoji == nil, let storedEmoji, draft.aiEmoji == storedEmoji,
-            let gift = gifts.first(where: { $0.id == editingGiftID }), !gift.emojiPickedByUser
-        {
-            input.aiEmoji = gift.emoji
-        }
-        return input
     }
 
     func cancel() {
