@@ -1,5 +1,8 @@
 name: Tests
 
+# The one macOS workflow that runs on its own: Swift format and lint, one Debug build, the unit suite, and the tested
+# app kept as the `simulator-app` artifact that scripts/simulator-app.sh downloads for simulator checks. App Store
+# screenshots are never shot in CI; see the app-store-screenshots skill.
 on:
   push:
     branches: [master]
@@ -45,18 +48,44 @@ jobs:
       SIMULATOR_RUNTIME: iOS 27.1
       SIMULATOR_DEVICE: iPhone Duo
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_INSTALL_CLEANUP: '1'
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Show tool versions
         run: |
           swift --version
           xcodebuild -version
-          xcodebuild -showsdks
-          xcrun simctl help
+      # Format and lint first: a formatting slip fails in a minute instead of after the build.
+      - name: Install SwiftLint
+        run: brew install swiftlint
+      - name: Check Swift formatting
+        run: scripts/check-formatting.sh
+      - name: Lint Swift
+        run: scripts/lint-swift.sh
       - name: Install the iOS Simulator runtime for the selected Xcode
         run: scripts/install-simulator-runtime.sh "$SIMULATOR_RUNTIME" "$SIMULATOR_DEVICE"
+      # No build caches: on 2026-11-08 the Swift package cache (1 GB compressed, Sentry's binary frameworks) restored at
+      # 8 MB/s and timed out after two minutes, and Xcode's compilation cache restored fine but gave no faster build
+      # (SwiftCompile 157 s warm against 102 s cold on the same commit). xcodebuild fetches the packages in under a minute.
       - name: Run unit tests and check the built app's names and String Catalog
-        run: python3 scripts/run-unit-tests.py "$RUNNER_TEMP/unit-tests" --runtime "$SIMULATOR_RUNTIME" --device "$SIMULATOR_DEVICE" --fresh-ci-simulator
+        run: |
+          python3 scripts/run-unit-tests.py "$RUNNER_TEMP/unit-tests" --runtime "$SIMULATOR_RUNTIME" --device "$SIMULATOR_DEVICE" --fresh-ci-simulator \
+            --app-archive "$RUNNER_TEMP/simulator-app/WhoGaveWhat-simulator.tar.gz"
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-app
+          path: ${{ runner.temp }}/simulator-app/WhoGaveWhat-simulator.tar.gz
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 14
+      # Where the build spent its time, so a slow runner or a slower build shows in the job log.
+      - name: Show build timing
+        if: ${{ !cancelled() }}
+        run: sed -n '/Build Timing Summary/,/^\*\* /p' "$RUNNER_TEMP/unit-tests/xcodebuild-build.log" | head -30 || true
       - name: Upload test logs and result bundle
         if: failure()
         uses: actions/upload-artifact@v4

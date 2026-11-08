@@ -3,7 +3,7 @@
 ## Batch before CI
 
 - **Prepare:** collect known fixes and review findings, fetch `origin/master`, integrate it and run relevant local checks before pushing, so CI validates the combined result.
-- **Reuse:** use the automatic run from that push. Don't start duplicate runs or rerun successful checks for an unchanged commit. Superseded runs are cancelled automatically.
+- **Reuse:** use the automatic run from that push. Don't start duplicate runs or rerun successful checks for an unchanged commit. Superseded runs are cancelled automatically, but each push still restarts the macOS `Tests` job, and the free plan shares about five macOS runners across all PRs; AGENTS.md → "CI and pushing" has the push rules.
 - **Repeat only when needed:** meaningful changes, base synchronization or a diagnosed failure can require another run. Within an authorized delivery, proceed without asking for separate permission for each necessary run; respect any explicit user budget.
 - **Track:** keep run links and results with the task, including retries and cancellations.
 - **Diagnose:** if the same failure repeats, investigate before another attempt. Stop retrying blindly; explain the blocker and ask for input only when no concrete correction is available or continuing would materially expand cost or scope.

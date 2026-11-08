@@ -1,5 +1,8 @@
 name: Checks
 
+# Linux-only checks on every PR. Swift format and lint run in the Tests workflow, ahead of its build, so a PR does not
+# hold a second macOS runner for them.
+
 on:
   push:
     branches: [master]
@@ -52,22 +55,3 @@ jobs:
       - run: npx vitest run
       - name: Bundle without deploying
         run: npx wrangler deploy --dry-run --outdir "$RUNNER_TEMP/icon-worker-bundle"
-
-  quality:
-    name: Swift format and lint
-    runs-on: xcode-27
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Show tool versions
-        run: |
-          swift --version
-          xcodebuild -version
-      - name: Install SwiftLint
-        run: brew install swiftlint
-      - run: scripts/check-formatting.sh
-      - run: scripts/lint-swift.sh
-
