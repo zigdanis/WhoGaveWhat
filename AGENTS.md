@@ -13,7 +13,7 @@
 
 GitHub's free plan runs about five macOS jobs at once for all PRs together, so every needless macOS run makes someone wait. Minutes cost nothing; waiting does.
 
-- **What runs by itself:** `Checks` (Linux, every PR and master push: script tests, secret patterns, Icon Worker) and `Tests` (one macOS job, about 10 minutes; skipped when only docs, agent files or `icon-worker/` change): Swift format and lint, one Debug build, the unit suite, and the tested app kept as the `simulator-app` artifact. Nothing else starts on its own.
+- **What runs by itself:** `Checks` (Linux, every PR and master push: script tests, secret patterns, Icon Worker) and `Tests` (one macOS job, 7–12 minutes; skipped when only docs, agent files or `icon-worker/` change): Swift format and lint, one Debug build, the unit suite, and the tested app kept as the `simulator-app` artifact. Nothing else starts on its own.
 - **Only on request:** TestFlight (`scripts/testflight.py`) and `App Store metadata` are dispatched by hand. App Store screenshots are never shot in CI, only on MacPro (`app-store-screenshots` skill). Dispatch `Tests` by hand only for a master head that skipped it, or for a branch that needs a `simulator-app` and has no run.
 - **Push a batch, not a commit.** Commit locally as often as you like, but push only when the change is implemented, reviewed, master is merged in and the local checks below pass. Fold review and bot findings into one push. Each push to a PR cancels its running `Tests` and starts it again.
 - **A PR that must open before it is ready** (draft for review or screenshots): put `[skip ci]` in the pushed head commit's message. The last push, without it, runs CI once for the final head. A draft PR without `[skip ci]` still runs everything.
