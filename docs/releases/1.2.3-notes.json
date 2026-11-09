@@ -1,0 +1,4 @@
+{
+  "en": "What's New\n- With Russian as the app language, the Home Screen name is now 'Кто Чё' instead of 'кто че'.\n\nWhat to Test\n- With Russian as the iPhone or app language, check that the icon caption reads 'Кто Чё'.\n- Open the app once, then search Spotlight for 'кто че' and open the app from the result.\n- After updating, check that all gifts and people are still there.",
+  "ru": "Что нового\n- Если язык приложения русский, на главном экране iPhone оно теперь называется «Кто Чё», а не «кто че».\n\nЧто проверить\n- При русском языке iPhone или приложения проверьте, что под иконкой написано «Кто Чё».\n- Откройте приложение один раз, затем найдите в Spotlight «кто че» и откройте приложение из результата.\n- После обновления проверьте, что все подарки и люди на месте."
+}
