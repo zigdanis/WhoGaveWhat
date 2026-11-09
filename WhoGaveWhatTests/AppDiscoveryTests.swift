@@ -6,13 +6,13 @@ import Testing
 
 @MainActor
 struct AppDiscoveryTests {
-    @Test(arguments: ["Who Gave", "кто че"])
+    @Test(arguments: ["Who Gave", "Кто Чё"])
     func launcherKeepsBothPublicNamesRegardlessOfLocalizedTitle(title: String) {
         let item = AppDiscoveryIndexer.makeItem(title: title)
         let attributes = item.attributeSet
 
         #expect(attributes.title == title)
-        #expect(attributes.displayName == "Who Gave · кто че")
+        #expect(attributes.displayName == "Who Gave · Кто Чё")
         #expect(attributes.contentDescription == "Who Gave; Who Gave What; WhoGaveWhat; кто че; кто чё")
         for alias in ["Who Gave", "Who Gave What", "WhoGaveWhat", "кто че", "кто чё"] {
             #expect(attributes.alternateNames?.contains(alias) == true)
@@ -29,7 +29,7 @@ struct AppDiscoveryTests {
         let bundle = try #require(Bundle(path: path))
         #expect(
             bundle.localizedString(forKey: "app-discovery.display-name", value: nil, table: nil)
-                == "Who Gave · кто че"
+                == "Who Gave · Кто Чё"
         )
     }
 

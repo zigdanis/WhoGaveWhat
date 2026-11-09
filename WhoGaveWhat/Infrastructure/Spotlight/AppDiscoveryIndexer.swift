@@ -51,7 +51,7 @@ final class AppDiscoveryIndexer {
                 defer { isObservingLauncher = false }
                 await observeIndexedLauncher()
                 await observeLauncherUserQuery("Who Gave", keyboardLanguage: "en-US")
-                await observeLauncherUserQuery("кто че", keyboardLanguage: "ru-RU")
+                await observeLauncherUserQuery("Кто Чё", keyboardLanguage: "ru-RU")
             }
         }
 
@@ -59,7 +59,7 @@ final class AppDiscoveryIndexer {
             let context = CSSearchQueryContext()
             context.fetchAttributes = ["title", "displayName"]
             let query = CSSearchQuery(
-                queryString: "title == 'Who Gave'c || title == 'кто че'c",
+                queryString: "title == 'Who Gave'c || title == 'Кто Чё'c",
                 queryContext: context
             )
             logger.notice("Launcher index read-back started")
@@ -150,7 +150,7 @@ final class AppDiscoveryIndexer {
         let attributes = CSSearchableItemAttributeSet(contentType: .content)
         attributes.title = title
         attributes.displayName = String(
-            localized: "app-discovery.display-name", defaultValue: "Who Gave · кто че",
+            localized: "app-discovery.display-name", defaultValue: "Who Gave · Кто Чё",
             comment: "Public Spotlight launcher name. Keep both English and Russian app names in every translation."
         )
         attributes.contentDescription = aliases.joined(separator: "; ")
