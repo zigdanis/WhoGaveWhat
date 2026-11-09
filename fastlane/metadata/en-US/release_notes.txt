@@ -1,5 +1,8 @@
-• Empty People and Insights screens now greet you with a little animation and show where to start. Tip: begin with Add yourself.
-• Adding a person takes seconds: a compact sheet sits right above the keyboard, and Done saves.
-• Gift icons and price estimates pop up on the fly as you type.
-• Hello, iOS 18! Who Gave What now runs on iOS 18.4 and later — invite family with older iPhones.
-• We tightened the bolts, oiled the gears and squashed a few bugs, so everything feels livelier.
+• Your gifts are now safe in iCloud. The backup runs on its own, so a new iPhone or a reinstall won't lose a thing, and after a reinstall Home offers to bring everything back. You can turn it off in Settings → Backup.
+• Settings → Backup can also export all your data to one file and import it back. Restoring and importing only add what's missing and never delete anything.
+• Every gift now has its own currency: pick it next to the amount and set Default currency in Settings. Totals on Home, People and Insights are split by currency, so dollars and rubles never get mixed up.
+• A person's screen has an Add a gift button, with that person already filled in.
+• A new button swaps From and To in one tap.
+• Tapped Save too fast? The gift icon still shows up a moment later.
+• If something can't be saved or loaded, the app tells you and lets you try again. What you typed stays put.
+• In Russian, the app on your Home Screen is now called «Кто Чё».
