@@ -45,7 +45,7 @@ def verify_built_app_names(directory, metadata):
     """Check the compiled resources, not only the source strings and build settings."""
     bundle = directory / APP_RELATIVE_PATH
     names = {}
-    for language, expected in (("en", "Who Gave"), ("ru", "кто че")):
+    for language, expected in (("en", "Who Gave"), ("ru", "Кто Чё")):
         output = tools.run_command(directory, f"bundle-names-{language}", [
             "plutil", "-convert", "xml1", "-o", "-", str(bundle / f"{language}.lproj/InfoPlist.strings")], 30)
         info = plistlib.loads(output.stdout.encode())
@@ -54,7 +54,7 @@ def verify_built_app_names(directory, metadata):
         names[language] = expected
         output = tools.run_command(directory, f"bundle-spotlight-name-{language}", [
             "plutil", "-convert", "xml1", "-o", "-", str(bundle / f"{language}.lproj/Localizable.strings")], 30)
-        if plistlib.loads(output.stdout.encode()).get("app-discovery.display-name") != "Who Gave · кто че":
+        if plistlib.loads(output.stdout.encode()).get("app-discovery.display-name") != "Who Gave · Кто Чё":
             raise ValueError(f"Built {language} Spotlight display name does not preserve both public names")
     output = tools.run_command(directory, "bundle-info", [
         "plutil", "-convert", "xml1", "-o", "-", str(bundle / "Info.plist")], 30)

@@ -36,9 +36,9 @@ def native_outputs(failures=(), built_names=None):
         if label == 'simulator-list':
             output = json.dumps(booted_payload())
         elif label.startswith('bundle-names-'):
-            output = plist(names if label.endswith('en') else {'CFBundleDisplayName': 'кто че', 'CFBundleName': 'кто че'})
+            output = plist(names if label.endswith('en') else {'CFBundleDisplayName': 'Кто Чё', 'CFBundleName': 'Кто Чё'})
         elif label.startswith('bundle-spotlight-name-'):
-            output = plist({'app-discovery.display-name': 'Who Gave · кто че'})
+            output = plist({'app-discovery.display-name': 'Who Gave · Кто Чё'})
         elif label == 'bundle-info':
             output = plist({'NSUserActivityTypes': ['com.apple.corespotlightitem']})
         else:
@@ -90,7 +90,7 @@ class UnitTestRunTests(unittest.TestCase):
             self.assertEqual(('success', 'a' * 40, 'iPhone Duo', 'iOS 27.1', 'WhoGaveWhatTests only'),
                              (metadata['outcome'], metadata['head_sha'], metadata['device'], metadata['runtime'],
                               metadata['native_test']))
-            self.assertEqual({'en': 'Who Gave', 'ru': 'кто че'}, metadata['bundle_names'])
+            self.assertEqual({'en': 'Who Gave', 'ru': 'Кто Чё'}, metadata['bundle_names'])
             self.assertFalse((directory / 'DerivedData').exists())
 
     def test_fresh_ci_fixture_is_created_booted_and_cleaned_up_after_the_suite(self):
