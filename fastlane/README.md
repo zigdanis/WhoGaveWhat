@@ -16,6 +16,27 @@ no longer supported.
 `BETA_REVIEW_INFO` secret when it holds all four contact fields. With no contact field the upload leaves the
 App Review section (contact and notes) as entered in App Store Connect; with only some of them it fails. They never come from the repository; only `metadata/review_information/notes.txt` is committed.
 
+## Credentials
+
+The lanes read their credentials only from the `testflight` environment secrets in GitHub; nothing
+is needed on a developer machine. Owner copies live in Danis's SOPS vault (`~/myai/fleet-secrets`,
+opened by MacPro, MacAir and Raspi), with no plaintext files on any machine since 2026-11-15:
+
+| Vault file | Contents |
+| --- | --- |
+| `whogavewhat/asc-api-key.json` | App Store Connect Admin API key `fastlane`, fastlane JSON layout (`key_id`, `issuer_id`, `key`) |
+| `whogavewhat/match-password` | Match passphrase for `zigdanis/zigdanis-certificates`, branch `whogavewhat-ci` |
+| `whogavewhat/fastlane.env` | Former local `fastlane/.env`: Apple ID, beta feedback e-mail, ASC key/issuer IDs, `MATCH_GIT_URL` |
+
+The repository's Match deploy key (`MATCH_GIT_PRIVATE_KEY`) exists only as a GitHub secret. A
+read-only check of the Apple key without Fastlane:
+
+```sh
+cd ~/myai/fleet-secrets
+sops exec-file --no-fifo whogavewhat/asc-api-key.json \
+  'python3 ~/myai/fleet/skills/app-store-connect-api/scripts/asc.py --credentials {} apps'
+```
+
 Native unit tests use direct Apple tools through
 `scripts/run-unit-tests.py`, locally on macOS or in the `Tests` workflow.
 Run release helper tests with one Ruby process per file:

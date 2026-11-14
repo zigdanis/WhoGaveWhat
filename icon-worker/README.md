@@ -136,10 +136,12 @@ node --experimental-strip-types eval/bench.ts --picker ceiling          # best t
 node --experimental-strip-types eval/bench.ts --picker cldr             # local CLDR keyword match (ru + en)
 mkdir -p eval/results/$(date +%F)
 node --experimental-strip-types eval/bench.ts --picker worker --out eval/results/$(date +%F)/worker.json
-JEV_API_KEY=… node --experimental-strip-types eval/bench.ts --picker jev-two-stage --concurrency 2 --out eval/results/$(date +%F)/jev-two-stage.json
+JEV_API_KEY="$(sops decrypt ~/myai/fleet-secrets/whogavewhat/jev-api-key)" node --experimental-strip-types eval/bench.ts --picker jev-two-stage --concurrency 2 --out eval/results/$(date +%F)/jev-two-stage.json
 node --experimental-strip-types eval/bench.ts --compare eval/results/2026-10-27/2026-10-27-worker.json eval/results/<date>/worker.json
 ```
 
+Locally the Jev key comes only from Danis's SOPS vault (`whogavewhat/jev-api-key` in
+`~/myai/fleet-secrets`, opened by MacPro, MacAir and Raspi); there is no plaintext copy on any machine.
 Direct Jev runs default to one concurrent gift; `--concurrency 2` (up to 4) speeds up the run while
 each gift still makes its two stages sequentially. Worker runs require concurrency 1 to respect its
 rate limits. Results are checkpointed after every gift, retaining original case order.
