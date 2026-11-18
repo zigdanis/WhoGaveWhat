@@ -2,7 +2,7 @@
 // random sample of eval/cases1000 and writes machine- and human-readable results. Eval only; the Worker is untouched.
 //
 // Usage (from icon-worker/):
-//   JEV_API_KEY="$(sops decrypt ~/myai/fleet-secrets/whogavewhat/jev-api-key)" node --experimental-strip-types eval/prompt-study.ts --out-dir eval/results/<date>/<run>
+//   JEV_API_KEY="$(sops decrypt ~/myai/secrets/whogavewhat/jev-api-key)" node --experimental-strip-types eval/prompt-study.ts --out-dir eval/results/<date>/<run>
 //     [--limit 200]        sample size; 0 = all cases
 //     [--seed prompt-study-1]
 //     [--variants baseline,short,compact]

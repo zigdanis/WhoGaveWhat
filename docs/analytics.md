@@ -120,10 +120,10 @@ PostHog: `scripts/posthog-cli.sh` wraps [posthog-cli](https://github.com/PostHog
 (`npm install -g @posthog/cli`, or the script falls back to `npx`). It uses a personal API key
 (PostHog → Settings → User → Personal API keys, preset "MCP Server", scoped to the WhoGaveWhat
 project; the value starts with `phx_`) that lives only in Danis's SOPS vault,
-`~/myai/fleet-secrets/whogavewhat/posthog-cli.env` (MacPro, MacAir and Raspi open it; no plaintext
+`~/myai/secrets/whogavewhat/posthog-cli.env` (MacPro, MacAir and Raspi open it; no plaintext
 copies since 2026-11-15). The script decrypts it with `sops` into the CLI's environment; the script
 header shows the three lines of that file, with project id `320692` and host `https://eu.posthog.com`.
-To rotate the key: `sops edit` that file, then commit and push in `fleet-secrets`.
+To rotate the key: `sops edit` that file, then commit and push in `secrets`.
 `scripts/posthog-cli.sh api --agent-help` prints the agent guide; `execute-sql` runs HogQL, for
 example the events of the last day:
 

@@ -19,7 +19,7 @@ App Review section (contact and notes) as entered in App Store Connect; with onl
 ## Credentials
 
 The lanes read their credentials only from the `testflight` environment secrets in GitHub; nothing
-is needed on a developer machine. Owner copies live in Danis's SOPS vault (`~/myai/fleet-secrets`,
+is needed on a developer machine. Owner copies live in Danis's SOPS vault (`~/myai/secrets`,
 opened by MacPro, MacAir and Raspi), with no plaintext files on any machine since 2026-11-15:
 
 | Vault file | Contents |
@@ -32,7 +32,7 @@ The repository's Match deploy key (`MATCH_GIT_PRIVATE_KEY`) exists only as a Git
 read-only check of the Apple key without Fastlane:
 
 ```sh
-cd ~/myai/fleet-secrets
+cd ~/myai/secrets
 sops exec-file --no-fifo whogavewhat/asc-api-key.json \
   'python3 ~/myai/fleet/skills/app-store-connect-api/scripts/asc.py --credentials {} apps'
 ```
