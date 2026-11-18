@@ -1,6 +1,6 @@
 interface:
-  display_name: "Full send"
+  display_name: "Delivery"
   short_description: "WhoGaveWhat delivery through checked PR, merge and TestFlight beta"
-  default_prompt: "$full-send: Deliver this WhoGaveWhat task through checked PR, merge and TestFlight beta."
+  default_prompt: "$delivery: Deliver this WhoGaveWhat task through checked PR, merge and TestFlight beta."
 policy:
   allow_implicit_invocation: true

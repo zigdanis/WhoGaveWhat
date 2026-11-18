@@ -1,9 +1,9 @@
 ---
-name: full-send
-description: Deliver WhoGaveWhat features, fixes, improvements and new builds through implementation, review, checks, merge and TestFlight. Discussion, plan-only and read-only questions do not start delivery.
+name: delivery
+description: WhoGaveWhat's delivery workflow for features, fixes, improvements and new builds: implementation, review, checks, PR, merge and TestFlight. Use for any delivery request in this repository; when Danis says "full send" or "full stop", it supplies the steps those skills run. Discussion, plan-only and read-only questions do not start delivery.
 ---
 
-# Full send
+# Delivery
 
 - **Lead:** one coordinating thread runs the workflow for every PR and handles Git, PR, merge and release actions. No nested orchestrator thread per PR. After a sibling PR merges, sync the other open PRs with master immediately.
 - **Helpers:** a Sonnet 5.5 (high) implementer in an isolated worktree, an Opus 5.5 (medium) independent reviewer and a `gpt-6.2-sol` (high) second reviewer. They handle only their assigned tasks and do not delegate further. Fold reviewer and bot findings into one fix round per review cycle.
@@ -11,7 +11,7 @@ description: Deliver WhoGaveWhat features, fixes, improvements and new builds th
 ## Authorization and ownership
 
 - **Default:** a feature, fix, improvement or build request authorizes the full path through PR, merge and TestFlight after checks and reviews pass. Don't ask for permission again at any gate.
-- **Limits:** `PR-only` stops before merge. `Do-not-deploy` stops before TestFlight. App Store actions need separate approval.
+- **Limits:** `PR-only` and "full stop" stop before merge. `Do-not-deploy` stops before TestFlight. App Store actions need separate approval.
 - **Discussion:** loading or discussing this skill, or a plan-only request, does not authorize a release.
 - **Verification:** read the [verification policy](references/verification-policy.md) once at the start. Follow its batching, failure-handling and waiting rules throughout.
 
