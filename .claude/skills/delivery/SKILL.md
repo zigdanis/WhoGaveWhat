@@ -1,6 +1,6 @@
 ---
 name: delivery
-description: WhoGaveWhat's delivery workflow for features, fixes, improvements and new builds: implementation, review, checks, PR, merge and TestFlight. Use for any delivery request in this repository; when Danis says "full send" or "full stop", it supplies the steps those skills run. Discussion, plan-only and read-only questions do not start delivery.
+description: WhoGaveWhat's delivery workflow for features, fixes, improvements and new builds (implementation, review, checks, PR, merge and TestFlight). Use for any delivery request in this repository; when Danis says "full send" or "full stop", it supplies the steps those skills run. Discussion, plan-only and read-only questions do not start delivery.
 ---
 
 # Delivery
