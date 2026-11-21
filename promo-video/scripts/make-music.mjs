@@ -1,11 +1,21 @@
 // Synthesizes the soundtrack from code, so no third-party music licence is involved.
 // Usage: node scripts/make-music.mjs OUT.wav [seconds] [style]
+// With no arguments it writes both tracks the variants load: public/music-bright.wav and public/music-warm.wav.
 // style "warm": felt-piano arpeggios, soft pad, light pulse (default)
 // style "bright": faster plucks with a shaker, for the upbeat cut
 import {mkdirSync, writeFileSync} from 'node:fs';
 import {dirname} from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 
-const out = process.argv[2] ?? 'public/music-warm.wav';
+if (process.argv.length <= 2) {
+  for (const style of ['bright', 'warm']) {
+    execFileSync(process.execPath, [fileURLToPath(import.meta.url), `public/music-${style}.wav`, '30', style], {stdio: 'inherit'});
+  }
+  process.exit(0);
+}
+
+const out = process.argv[2];
 const seconds = Number(process.argv[3] ?? 30);
 const style = process.argv[4] ?? 'warm';
 const rate = 48000;

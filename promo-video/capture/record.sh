@@ -57,8 +57,11 @@ fi
 "$AD" press "label=\"$HOME_TAB\"" --settle >/dev/null
 sleep 1
 
-rec_start() { "$AD" record start "$OUT/$LOCALE-$1.mp4" --scope device ${TOUCHES[@]+"${TOUCHES[@]}"} >/dev/null; pause 1.2; }
-rec_stop() { pause "${1:-1.5}"; "$AD" record stop >/dev/null; echo "recorded $OUT/$LOCALE-$2.mp4"; }
+RECORDING=0
+# A step that fails mid-scene exits through set -e; stop that scene's recording instead of leaving it running.
+trap 'status=$?; if [ "$RECORDING" = 1 ]; then "$AD" record stop >/dev/null 2>&1 || true; fi; exit $status' EXIT
+rec_start() { "$AD" record start "$OUT/$LOCALE-$1.mp4" --scope device ${TOUCHES[@]+"${TOUCHES[@]}"} >/dev/null; RECORDING=1; pause 1.2; }
+rec_stop() { pause "${1:-1.5}"; "$AD" record stop >/dev/null; RECORDING=0; echo "recorded $OUT/$LOCALE-$2.mp4"; }
 
 # 1. Home: the gift journal, a gentle scroll down and back.
 if want home; then
