@@ -1,0 +1,10 @@
+node_modules/
+out/
+.sheets/
+public/footage/
+public/music-*.wav
+public/sfx-*.wav
+review/
+public/lift/
+.agents/
+.claude/
