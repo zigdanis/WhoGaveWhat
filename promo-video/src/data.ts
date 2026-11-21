@@ -208,7 +208,7 @@ const ramp = (clip: Clip, from: number, to: number, fade = 3, split = 0.7, slow 
 };
 
 /**
- * Variant D's app tour cut from the slow-animation recordings (public/footage/slow). Tap times come from
+ * An earlier cut of variant D from the slow-animation recordings (public/footage/slow; D now uses storyTour). Tap times come from
  * the recordings' telemetry and the motion spans from scripts/motion-spans.py; the still screen between
  * transitions is cut out on hard cuts, typing runs faster than real time.
  */

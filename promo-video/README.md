@@ -24,9 +24,9 @@ Large and generated inputs are not in git (see `.gitignore`):
 
 | Path | How to get it |
 |---|---|
-| `public/footage/` | Record with `capture/record.sh` on an iPhone 17 Pro Simulator (follow the Fleet simulator-queue skill). Variants D–F use `story/` (`STORY=1`, slow animations, `SLOW≈6`). An archived copy of the footage used for the current renders is on MacPro in `~/.t3/userdata/attachments/whogavewhat-promo/source/footage/`. |
+| `public/footage/` | Record with `capture/record.sh` on an iPhone 17 Pro Simulator (follow the Fleet simulator-queue skill). Variants D–F use `story/` (`STORY=1`, slow animations, `SLOW≈6`); A–C use `light/` and `dark/`; `slow/` is an earlier slow-motion take that `scripts/motion-spans.py` reads by default. An archived copy of the footage used for the current renders is on MacPro in `~/.t3/userdata/attachments/whogavewhat-promo/source/footage/`. |
 | `public/lift/` | `scripts/lift-crops.sh` (needs the footage). |
-| `public/music-*.wav` | `node scripts/make-music.mjs` |
+| `public/music-*.wav` | `node scripts/make-music.mjs public/music-bright.wav 30 bright` (C–E) and `node scripts/make-music.mjs public/music-warm.wav 30 warm` (A, B, F) |
 | `public/sfx-*.wav` | `node scripts/make-sfx.mjs` |
 | `.agents/`, `.claude/` | Remotion agent skills, pinned in `skills-lock.json`: `npx skills add remotion-dev/skills`. |
 

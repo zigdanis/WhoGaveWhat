@@ -2,9 +2,10 @@
 // Usage: node scripts/make-music.mjs OUT.wav [seconds] [style]
 // style "warm": felt-piano arpeggios, soft pad, light pulse (default)
 // style "bright": faster plucks with a shaker, for the upbeat cut
-import {writeFileSync} from 'node:fs';
+import {mkdirSync, writeFileSync} from 'node:fs';
+import {dirname} from 'node:path';
 
-const out = process.argv[2] ?? 'public/music.wav';
+const out = process.argv[2] ?? 'public/music-warm.wav';
 const seconds = Number(process.argv[3] ?? 30);
 const style = process.argv[4] ?? 'warm';
 const rate = 48000;
@@ -205,5 +206,6 @@ for (let i = 0; i < n; i++) {
   data.writeInt16LE(Math.round(Math.max(-1, Math.min(1, L[i] * gain)) * 32767), 44 + i * 4);
   data.writeInt16LE(Math.round(Math.max(-1, Math.min(1, R[i] * gain)) * 32767), 46 + i * 4);
 }
+mkdirSync(dirname(out), {recursive: true});
 writeFileSync(out, data);
 console.log(`wrote ${out}: ${seconds}s, ${style}, ${bpm} bpm`);

@@ -1,6 +1,6 @@
 // Synthesizes the soft sound accents for variant D's payoffs (price appears, row saved, "Even").
 // Usage: node scripts/make-sfx.mjs   → public/sfx-chime.wav (a two-note bell) and public/sfx-pop.wav
-import {writeFileSync} from 'node:fs';
+import {mkdirSync, writeFileSync} from 'node:fs';
 
 const rate = 48000;
 
@@ -24,6 +24,7 @@ function wav(path, samples) {
     data.writeInt16LE(v, 44 + i * 4);
     data.writeInt16LE(v, 46 + i * 4);
   }
+  mkdirSync('public', {recursive: true});
   writeFileSync(path, data);
 }
 

@@ -5,7 +5,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 IDS=("$@")
 if [ ${#IDS[@]} -eq 0 ]; then
-  IDS=(A-Clean-en A-Clean-ru B-Showcase-en B-Showcase-ru C-Story-en C-Story-ru D-StoryMotion-en D-StoryMotion-ru)
+  IDS=(E-Kinetic-en E-Kinetic-ru F-Calm-en F-Calm-ru A-Clean-en A-Clean-ru B-Showcase-en B-Showcase-ru C-Story-en C-Story-ru
+    D-StoryMotion-en D-StoryMotion-ru)
 fi
 mkdir -p out/raw out/final
 for id in "${IDS[@]}"; do

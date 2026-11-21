@@ -4,6 +4,7 @@
 # src/variants/Kinetic.tsx.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+mkdir -p public/lift
 crop() { # locale clip time name x y w h [ffmpeg filters after the crop]
   python3 - "$@" <<'PY'
 import subprocess, sys
