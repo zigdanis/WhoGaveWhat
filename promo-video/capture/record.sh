@@ -40,14 +40,19 @@ if [ "$STORY" = 1 ]; then
 fi
 
 "$AD" settings appearance "$APPEARANCE" >/dev/null
-"$AD" open "$APP" --relaunch --launch-args -KS_SAMPLE_DATA --launch-args 1 --launch-args -KS_RESET_SELF \
-  --launch-args 1 "${LANG_ARGS[@]}" >/dev/null
+"$AD" open "$APP" --relaunch --launch-args -KS_SAMPLE_DATA --launch-args 1 "${LANG_ARGS[@]}" >/dev/null
 sleep 2
 
-# Anton becomes "Me", so the person page and Insights show the viewpoint.
+# Anton becomes "Me", so the person page and Insights show the viewpoint. The viewpoint is a saved
+# preference that outlives the in-memory sample data (KS_RESET_SELF is read only from the environment,
+# which agent-device can't set), so a second recording on the same Simulator finds the switch already on:
+# press it only when it is off, then confirm it is on.
 "$AD" press "label=\"$PEOPLE_TAB\"" --settle >/dev/null
 "$AD" press "label=\"$ME\"" --settle >/dev/null
-"$AD" press 'id="person-detail.is-me"' --settle >/dev/null
+if ! "$AD" is exists 'id="person-detail.is-me" value="1"' >/dev/null 2>&1; then
+  "$AD" press 'id="person-detail.is-me"' --settle >/dev/null
+fi
+"$AD" wait 'id="person-detail.is-me" value="1"' >/dev/null
 "$AD" back --settle >/dev/null
 "$AD" press "label=\"$HOME_TAB\"" --settle >/dev/null
 sleep 1
